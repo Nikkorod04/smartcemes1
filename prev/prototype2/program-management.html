@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program Management (Redesign) · SmartCEMES</title>
+<script src="../../docs/prototype/assets/vendor/tailwind.js"></script>
+<script src="../../docs/prototype/assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../../docs/prototype/assets/css/smartcemes.css">
+<style>
+  .marker { position:absolute; top:-4px; bottom:-4px; width:0; border-left:2px dashed #D99A06; }
+  .legend-dot { width:9px; height:9px; border-radius:999px; display:inline-block; }
+</style>
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased">
+
+<!-- ================= SIDEBAR (prototype2 — preview only) ================= -->
+<aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col no-print">
+  <div class="h-16 flex items-center gap-3 px-5 border-b border-gray-100">
+    <div class="w-9 h-9 rounded-xl bg-lnu flex items-center justify-center shadow-sm">
+      <span class="text-white font-black text-sm tracking-tight">SC</span>
+    </div>
+    <div class="leading-tight">
+      <p class="font-extrabold text-charcoal text-[15px] tracking-tight">Smart<span class="text-gold-600">CEMES</span></p>
+      <p class="text-[10.5px] text-gray-400 font-medium">Leyte Normal University</p>
+    </div>
+  </div>
+  <div class="px-3 pt-3">
+    <span class="badge badge-gold w-full justify-center">Redesign preview · prototype2</span>
+  </div>
+  <div class="flex-1 overflow-y-auto px-3 py-4">
+    <div class="mb-5">
+      <p class="px-3 mb-2 text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">Overview</p>
+      <nav class="space-y-1">
+        <a href="admin-dashboard.html" class="sc-nav-link">[[grid]]<span>Dashboard</span></a>
+        <a href="../../docs/prototype/pages/analytics.html?role=admin" class="sc-nav-link">[[chart]]<span>Analytics (v1)</span></a>
+        <a href="../../docs/prototype/pages/calendar.html?role=admin" class="sc-nav-link">[[calendar]]<span>Calendar (v1)</span></a>
+      </nav>
+    </div>
+    <div class="mb-5">
+      <p class="px-3 mb-2 text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">Management</p>
+      <nav class="space-y-1">
+        <a href="program-management.html" class="sc-nav-link active">[[folder]]<span>Extension Programs</span></a>
+        <a href="../../docs/prototype/pages/communities.html?role=admin" class="sc-nav-link">[[pin]]<span>Communities (v1)</span></a>
+      </nav>
+    </div>
+    <div class="mb-5">
+      <p class="px-3 mb-2 text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">Approvals</p>
+      <nav class="space-y-1">
+        <a href="../../docs/prototype/pages/proposals.html?role=admin" class="sc-nav-link">[[doc]]<span>Proposals</span><span class="sc-nav-badge">3</span></a>
+        <a href="../../docs/prototype/pages/availability.html?role=admin" class="sc-nav-link">[[clock]]<span>Availability</span><span class="sc-nav-badge">3</span></a>
+        <a href="../../docs/prototype/pages/rendered-hours.html?role=admin" class="sc-nav-link">[[clipboard]]<span>Rendered Hours</span><span class="sc-nav-badge">3</span></a>
+      </nav>
+    </div>
+  </div>
+  <div class="border-t border-gray-100 p-3">
+    <div class="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-gray-50 transition cursor-pointer">
+      <span class="avatar w-9 h-9 text-xs">LQ</span>
+      <div class="min-w-0">
+        <p class="text-[13px] font-semibold text-charcoal truncate">Dr. Lowell A. Quisumbing</p>
+        <p class="text-[11px] text-gray-400 truncate">Director, CESO</p>
+      </div>
+      <span class="ml-auto w-5 h-5 text-gray-400">[[logout]]</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ================= TOPBAR ================= -->
+<header class="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center pl-72 pr-6 gap-4 no-print">
+  <div>
+    <h1 class="text-[17px] font-extrabold text-charcoal tracking-tight leading-none">Extension Programs</h1>
+    <p class="text-[11px] text-gray-400 mt-1 font-medium">Program management hub · Director view</p>
+  </div>
+  <div class="ml-auto flex items-center gap-2">
+    <label class="relative hidden md:block">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400">[[search]]</span>
+      <input class="input !w-64 !pl-9 !py-2 bg-gray-50 border-transparent focus:bg-white" placeholder="Search programs, communities…">
+    </label>
+    <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition text-gray-500">
+      <span class="w-5 h-5 inline-flex">[[bell]]</span>
+      <span class="bell-dot"></span>
+    </button>
+    <div class="w-px h-7 bg-gray-200 mx-1"></div>
+    <div class="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-100 transition cursor-pointer">
+      <span class="avatar w-8 h-8 text-[11px]">LQ</span>
+      <div class="hidden lg:block leading-tight">
+        <p class="text-[12.5px] font-bold text-charcoal">Dr. Lowell A. Quisumbing</p>
+        <p class="text-[10.5px] text-gray-400">Director, CESO</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <section class="pt-6">
+    <a href="admin-dashboard.html" class="text-[12px] font-bold text-gray-400 hover:text-lnu-700 transition">← Dashboard</a>
+  </section>
+
+  <!-- ================= HERO CARD ================= -->
+  <section class="mt-2 reveal-item">
+    <div class="sc-card overflow-hidden">
+      <div class="relative h-24 bg-gradient-to-r from-lnu-800 to-lnu-600"
+           style="background-image:radial-gradient(circle at 88% -30%, rgba(246,184,0,.4), transparent 46%), radial-gradient(rgba(255,255,255,.13) 1px, transparent 1.4px); background-size:auto, 16px 16px;"></div>
+      <div class="px-6 pb-5 -mt-8 relative">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div class="flex items-end gap-4 min-w-0">
+            <span class="avatar w-16 h-16 text-lg !ring-4 !ring-white shadow-pop">RA</span>
+            <div class="min-w-0 pb-0.5">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                <span class="badge badge-gold font-bold tracking-wide">EXT-2026-002</span>
+                <span class="badge badge-green">Ongoing</span>
+                <span class="badge badge-red">⚠ Budget over-allocated</span>
+              </div>
+              <h2 class="font-extrabold text-[19px] tracking-tight leading-tight">HANDA: Disaster Preparedness Training for Coastal Households</h2>
+            </div>
+          </div>
+          <div class="flex gap-2 pb-1">
+            <button class="btn btn-outline !py-2"><span class="w-4 h-4 inline-flex">[[edit]]</span>Edit Program</button>
+            <button class="btn btn-primary !py-2"><span class="w-4 h-4 inline-flex">[[calendar]]</span>Add Activity</button>
+          </div>
+        </div>
+        <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-x-7 gap-y-2.5 text-[12.5px] text-gray-600">
+          <span class="flex items-center gap-2"><span class="w-4 h-4 inline-flex text-lnu-600">[[people]]</span><span class="font-semibold">Prof. Ricmar P. Aquino</span><span class="text-gray-400">· Lead</span></span>
+          <span class="flex items-center gap-2"><span class="w-4 h-4 inline-flex text-red-400">[[pin]]</span>Brgy. El Reposo · Tacloban City</span>
+          <span class="flex items-center gap-2"><span class="w-4 h-4 inline-flex text-emerald-500">[[calendar]]</span>Feb 10, 2026 – Sep 15, 2026</span>
+          <span class="flex items-center gap-2"><span class="w-4 h-4 inline-flex text-gold-600">[[clipboard]]</span>2 activities · 2 completed</span>
+          <span class="flex items-center gap-2 font-semibold text-amber-700"><span class="w-4 h-4 inline-flex">[[clock]]</span>Ends in 22 days</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= D7 BANNER ================= -->
+  <section class="mt-4 reveal-item">
+    <div class="sc-card p-4 !border-amber-200 !bg-amber-50/70 flex items-start gap-3">
+      <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><span class="w-4 h-4 inline-flex">[[wallet]]</span></span>
+      <div>
+        <p class="text-[13px] font-bold text-amber-800">This program exceeded its ₱62,500 allocation by ₱2,000 (103%)</p>
+        <p class="text-[12px] text-amber-700 mt-0.5">Entries are still saved; overruns are written to the activity log (D7). Review is advisory, not blocking. The Budget tab highlights the overrun entry.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STAT TILES ================= -->
+  <section class="mt-4 grid grid-cols-4 gap-4 reveal-item">
+    <div class="sc-card sc-card-hover p-5 !border-red-100 !bg-gradient-to-br !from-white !to-red-50/50">
+      <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Budget</p><span class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center"><span class="w-4 h-4 inline-flex">[[wallet]]</span></span></div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱62,500</p>
+      <div class="relative mt-3">
+        <div class="progress"><span style="width:100%" class="bg-red-500"></span></div>
+        <span class="marker" style="left:90%"></span>
+      </div>
+      <p class="text-[11px] text-gray-500 font-semibold mt-2">₱64,500 utilized · <span class="text-red-600">103%</span></p>
+      <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">dashed mark = ≥90% target · over by ₱2,000</p>
+    </div>
+    <div class="sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Beneficiaries</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><span class="w-4 h-4 inline-flex">[[people]]</span></span></div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">171<span class="text-[14px] text-gray-400 font-bold"> / 180</span></p>
+      <div class="progress mt-3"><span style="width:95%" class="bg-emerald-500"></span></div>
+      <p class="text-[11px] text-gray-500 font-semibold mt-2">95% of target reached</p>
+      <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">178 enrolled in hub · 9 households remaining</p>
+    </div>
+    <div class="sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Activities</p><span class="w-8 h-8 rounded-lg bg-gold-50 text-gold-700 flex items-center justify-center"><span class="w-4 h-4 inline-flex">[[clipboard]]</span></span></div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">2</p>
+      <div class="progress mt-3"><span style="width:100%" class="bg-emerald-500"></span></div>
+      <p class="text-[11px] text-gray-500 font-semibold mt-2">2 completed · 100% completion rate</p>
+      <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">no cancelled activities (8.6 denominator)</p>
+    </div>
+    <div class="sc-card sc-card-hover p-5 !border-emerald-100 !bg-gradient-to-br !from-white !to-emerald-50/60">
+      <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Knowledge Gain</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><span class="w-4 h-4 inline-flex">[[chart]]</span></span></div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600">+11.8 pts</p>
+      <p class="text-[11px] text-gray-400 font-medium mt-1">mean post − pre across scored activities</p>
+      <p class="text-[10.5px] text-gray-400 font-medium mt-1.5">Typhoon drill: 61.0 → 72.8 · 1 of 2 activities scored</p>
+    </div>
+  </section>
+
+  <!-- ================= KPI SCORECARD + ATTENDANCE ================= -->
+  <section class="mt-4 grid grid-cols-3 gap-4 reveal-item">
+    <div class="sc-card p-6 col-span-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <h3 class="font-bold text-[14px] flex items-center gap-2"><span class="w-[18px] h-[18px] inline-flex text-lnu-700">[[chart]]</span> KPI Scorecard vs Targets</h3>
+        <div class="flex items-center gap-3 text-[11px] text-gray-400 font-medium">
+          <span class="flex items-center gap-1.5"><span class="legend-dot" style="background:#10b981"></span>meets target</span>
+          <span class="flex items-center gap-1.5"><span class="legend-dot" style="background:#ef4444"></span>below / over</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-0 border-t-2 border-dashed border-gold-600"></span>target</span>
+        </div>
+      </div>
+      <p class="text-[11.5px] text-gray-400 font-medium mb-4">Actuals auto-computed live from program data (8.6) · targets from the program's results framework</p>
+
+      <div class="space-y-4">
+        <!-- reach -->
+        <div>
+          <div class="flex items-center justify-between text-[12.5px]"><span class="font-semibold">Community Reach</span><span class="font-bold">171 / 180 <span class="text-gray-400 font-semibold">· 95%</span></span></div>
+          <div class="relative mt-1.5">
+            <div class="progress !h-2"><span style="width:95%" class="bg-emerald-500"></span></div>
+            <span class="marker" style="left:100%"></span>
+          </div>
+          <p class="text-[10.5px] text-gray-400 mt-1">Distinct households served · on pace for Sep 15</p>
+        </div>
+        <!-- participation -->
+        <div>
+          <div class="flex items-center justify-between text-[12.5px]"><span class="font-semibold">Participation Rate</span><span class="font-bold">96% <span class="text-gray-400 font-semibold">· 171 of 178 enrolled</span></span></div>
+          <div class="relative mt-1.5">
+            <div class="progress !h-2"><span style="width:96%" class="bg-lnu-800"></span></div>
+          </div>
+          <p class="text-[10.5px] text-gray-400 mt-1">≥1 present/late attendance among enrolled beneficiaries (8.6)</p>
+        </div>
+        <!-- consistency -->
+        <div>
+          <div class="flex items-center justify-between text-[12.5px]"><span class="font-semibold">Attendance Consistency</span><span class="font-bold text-emerald-600">84% <span class="text-gray-400 font-semibold">· target ≥80%</span></span></div>
+          <div class="relative mt-1.5">
+            <div class="progress !h-2"><span style="width:84%" class="bg-emerald-500"></span></div>
+            <span class="marker" style="left:80%"></span>
+          </div>
+          <p class="text-[10.5px] text-gray-400 mt-1">Mean sessions attended per participating household (8.6)</p>
+        </div>
+        <!-- budget -->
+        <div>
+          <div class="flex items-center justify-between text-[12.5px]"><span class="font-semibold">Budget Utilization</span><span class="font-bold text-red-600">103% <span class="text-gray-400 font-semibold">· target ≥90%</span></span></div>
+          <div class="relative mt-1.5">
+            <div class="progress !h-2"><span style="width:100%" class="bg-red-500"></span></div>
+            <span class="marker" style="left:90%"></span>
+          </div>
+          <p class="text-[10.5px] text-red-500 font-semibold mt-1">Over-allocated by ₱2,000 — advisory warning (D7), not a hard block</p>
+        </div>
+        <!-- completion -->
+        <div>
+          <div class="flex items-center justify-between text-[12.5px]"><span class="font-semibold">Activity Completion Rate</span><span class="font-bold text-emerald-600">100%</span></div>
+          <div class="relative mt-1.5">
+            <div class="progress !h-2"><span style="width:100%" class="bg-emerald-500"></span></div>
+          </div>
+          <p class="text-[10.5px] text-gray-400 mt-1">Completed ÷ (total − cancelled) (8.6)</p>
+        </div>
+      </div>
+
+      <div class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-3 gap-3">
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Cost per Beneficiary</p>
+          <p class="text-[15px] font-extrabold mt-1">₱377</p>
+          <p class="text-[10.5px] text-gray-400">₱64,500 ÷ 171 served</p>
+        </div>
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Knowledge Gain</p>
+          <p class="text-[15px] font-extrabold mt-1 text-emerald-600">+11.8 pts</p>
+          <p class="text-[10.5px] text-gray-400">1 scored activity</p>
+        </div>
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Avg Satisfaction</p>
+          <p class="text-[15px] font-extrabold mt-1">4.6 / 5</p>
+          <p class="text-[10.5px] text-gray-400">activity evaluation ratings</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-card p-6">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-[14px]">Attendance &amp; Satisfaction</h3>
+        <span class="badge badge-blue">per activity</span>
+      </div>
+      <p class="text-[11.5px] text-gray-400 font-medium mb-3">Completed activities · attendees recorded</p>
+      <div class="relative h-56"><canvas id="chAttendance"></canvas></div>
+      <div class="mt-3 space-y-1.5">
+        <p class="text-[11px] text-gray-500 flex items-center justify-between"><span>Typhoon Drill · Jun 21</span><span class="badge badge-green">4.6/5</span></p>
+        <p class="text-[11px] text-gray-500 flex items-center justify-between"><span>First-Aid &amp; Water Rescue · Aug 9</span><span class="badge badge-green">4.5/5</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TABS ================= -->
+  <section class="mt-5 reveal-item">
+    <div class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
+      <button class="tab on" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="activities">Activities</button>
+      <button class="tab" data-tab="beneficiaries">Beneficiaries</button>
+      <button class="tab" data-tab="budget">Budget</button>
+    </div>
+
+    <!-- ===== OVERVIEW ===== -->
+    <div id="panel-overview" class="mt-4 grid grid-cols-3 gap-4">
+      <div class="sc-card p-6 col-span-2">
+        <h3 class="font-bold text-[14px] mb-2 flex items-center gap-2"><span class="w-[18px] h-[18px] inline-flex text-lnu-700">[[folder]]</span> Program Goal</h3>
+        <p class="text-[13.5px] text-gray-600 leading-relaxed">Equip coastal households in Tacloban City with evacuation planning and first-response skills.</p>
+        <div class="mt-5 pt-4 border-t border-gray-100">
+          <p class="label">Linked Communities &amp; Partners</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="chip on !py-1.5 !text-[12px]">Brgy. El Reposo · Tacloban City</span>
+            <span class="chip !py-1.5 !text-[12px]">Tacloban City DRRMO</span>
+            <span class="chip !py-1.5 !text-[12px]">LNU College of Arts and Sciences</span>
+          </div>
+        </div>
+        <div class="mt-5 pt-4 border-t border-gray-100">
+          <p class="label">Beneficiary Categories</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="chip !py-1.5 !text-[12px]">Fisherfolk</span>
+            <span class="chip !py-1.5 !text-[12px]">Vendor</span>
+            <span class="chip !py-1.5 !text-[12px]">Housewife</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Results Framework</h3>
+          <button class="btn btn-outline !px-2.5 !py-1.5 !text-[11px]">Manage</button>
+        </div>
+        <div class="space-y-4">
+          <!-- objective 1 -->
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-[12.5px] font-semibold leading-snug">Train coastal households in evacuation &amp; first response</p>
+              <span class="badge badge-blue shrink-0">On track</span>
+            </div>
+            <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">Community Reach (count) · households · due Sep 15, 2026</p>
+            <div class="progress mt-2"><span style="width:95%" class="bg-lnu-800"></span></div>
+            <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline 0 → Target 180 → Actual <span class="text-charcoal">171</span> <span class="text-gray-400 font-medium">· auto (live)</span></p>
+            <p class="text-[11px] text-gray-400 mt-1"><span class="font-semibold text-gray-500">Evidence:</span> Drill participation logs</p>
+          </div>
+          <!-- objective 2 -->
+          <div class="pt-4 border-t border-gray-100">
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-[12.5px] font-semibold leading-snug">Achieve ≥90% budget utilization without overrun</p>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="badge badge-green">Achieved</span>
+                <span class="badge badge-red">overrun</span>
+              </div>
+            </div>
+            <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">Budget Utilization (%) · due Sep 15, 2026</p>
+            <div class="progress mt-2"><span style="width:100%" class="bg-red-500"></span></div>
+            <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline 0 → Target 90 → Actual <span class="text-charcoal">103</span> <span class="text-gray-400 font-medium">· auto (live)</span></p>
+            <p class="text-[11px] text-red-500 mt-1 font-semibold">Numeric target met, but D7 flags the ₱2,000 overrun for the Director's review.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXECUTIVE NARRATIVE -->
+      <div class="sc-card p-6 col-span-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-[14px] flex items-center gap-2"><span class="w-[18px] h-[18px] inline-flex text-gold-500">[[sparkles]]</span> Executive Narrative <span class="badge badge-gold">Director-only</span></h3>
+          <div class="flex gap-2">
+            <a href="../../docs/prototype/pages/program-narratives.html?role=admin" class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">History →</a>
+            <button class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">Generate program narrative</button>
+          </div>
+        </div>
+        <div class="mt-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="narrative-health on-track">On track</span>
+            <span class="text-[11px] text-gray-400 font-medium">Generated Aug 24, 2026 8:15 AM · Dr. Lowell A. Quisumbing · gemini-3.6-flash · prompt v1</span>
+          </div>
+          <p class="text-[13px] text-gray-600 leading-relaxed">HANDA is nearing completion with 171 of 180 households trained (95%). Budget utilization is above the 90% target — watch for overrun on remaining logistics. The final water-rescue refresher is the remaining deliverable.</p>
+          <div class="grid grid-cols-2 gap-3 mt-3">
+            <div class="p-3 rounded-lg bg-red-50/70 border border-red-100">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-red-600">Top risk</p>
+              <p class="text-[12px] text-red-700 mt-1">Budget is ₱2,000 above allocation — close remaining logistics at zero marginal cost.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-emerald-50/70 border border-emerald-100">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Recommended next action</p>
+              <p class="text-[12px] text-emerald-800 mt-1">Run make-up drills at the barangay hall for the remaining 9 households (High priority).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ACTIVITIES ===== -->
+    <div id="panel-activities" class="mt-4 hidden">
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h3 class="font-bold text-[14px]">Program Activities</h3>
+            <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Planned dates must fall within Feb 10, 2026 – Sep 15, 2026 (8.8)</p>
+          </div>
+          <button class="btn btn-primary">[[calendar]]<span class="ml-1.5">Add Activity</span></button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table">
+            <thead><tr><th>Activity</th><th>Date</th><th>Time</th><th>Venue</th><th>Status</th><th class="!text-right">Attendees</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="font-semibold text-charcoal">Typhoon Drill &amp; Evacuation Simulation</td>
+                <td>Jun 21, 2026</td>
+                <td>7:00 AM – 12:00 PM</td>
+                <td>El Reposo Barangay Hall</td>
+                <td><span class="badge badge-green">Completed</span></td>
+                <td class="!text-right font-bold">154</td>
+              </tr>
+              <tr>
+                <td class="font-semibold text-charcoal">First-Aid &amp; Water Rescue Training</td>
+                <td>Aug 9, 2026</td>
+                <td>9:00 AM – 4:00 PM</td>
+                <td>Tacloban City Convention Center</td>
+                <td><span class="badge badge-green">Completed</span></td>
+                <td class="!text-right font-bold">141</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="px-5 py-3 text-[11.5px] text-gray-400 border-t border-gray-50">Marking an activity Completed auto-drafts rendered hours for assigned faculty (8.9).</p>
+      </div>
+    </div>
+
+    <!-- ===== BENEFICIARIES ===== -->
+    <div id="panel-beneficiaries" class="mt-4 hidden space-y-4">
+      <section class="grid grid-cols-4 gap-4">
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Enrolled</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">178<span class="text-[14px] text-gray-400 font-bold"> / 180</span></p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">enrolled of program target</p>
+        </div>
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Reached</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600">171</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">distinct beneficiaries served</p>
+        </div>
+        <div class="sc-card p-5 col-span-2 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Enrollment is program-scoped</p>
+          <p class="text-[12.5px] text-gray-600 mt-2 leading-relaxed">Enroll from the global registry, register new beneficiaries directly into this program, or unenroll. Duplicates are warned before save (never silently merged).</p>
+          <div class="flex gap-2 mt-3">
+            <button class="btn btn-outline !py-1.5 !text-[11.5px]">Enroll existing</button>
+            <button class="btn btn-primary !py-1.5 !text-[11.5px]">[[people]]<span class="ml-1.5">Register new</span></button>
+            <button class="btn btn-outline !py-1.5 !text-[11.5px]">Import XLSX</button>
+          </div>
+        </div>
+      </section>
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="font-bold text-[14px]">Enrolled Beneficiaries</h3>
+          <span class="badge badge-gray">178 enrolled</span>
+        </div>
+        <table class="sc-table">
+          <thead><tr><th>Beneficiary</th><th>Barangay</th><th>Category</th><th>Age / Sex</th><th>Contact</th><th class="!text-right">Enrollment</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="font-semibold text-charcoal">Roberto G. Tan Jr.</td>
+              <td>San Jose</td>
+              <td><span class="chip !py-1 !text-[11px]">Farmer</span></td>
+              <td>37 / Male</td>
+              <td>09123456789</td>
+              <td class="!text-right"><button class="btn btn-ghost !px-2 !py-1 !text-[11px]">Unenroll</button></td>
+            </tr>
+            <tr>
+              <td class="font-semibold text-charcoal">Rebecca S. Dolina</td>
+              <td>El Reposo</td>
+              <td><span class="chip !py-1 !text-[11px]">Vendor</span></td>
+              <td>45 / Female</td>
+              <td>09123456789</td>
+              <td class="!text-right"><button class="btn btn-ghost !px-2 !py-1 !text-[11px]">Unenroll</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="px-5 py-3 text-[11.5px] text-gray-400 border-t border-gray-50">Secretary can manage enrollment and attendance here (scoped permission, v4.12); program structure and budget remain Director-only.</p>
+      </div>
+    </div>
+
+    <!-- ===== BUDGET ===== -->
+    <div id="panel-budget" class="mt-4 hidden space-y-4">
+      <section class="grid grid-cols-4 gap-4">
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Allocated</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱62,500</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">FY 2026 allocation</p>
+        </div>
+        <div class="sc-card p-5 !border-red-100 !bg-gradient-to-br !from-white !to-red-50/50">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Utilized</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-red-600">₱64,500</p>
+          <div class="progress mt-3"><span style="width:100%" class="bg-red-500"></span></div>
+          <p class="text-[11px] text-red-600 font-semibold mt-2">103% · over by ₱2,000 (D7)</p>
+        </div>
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Remaining</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-red-600">−₱2,000</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">no headroom — approvals advised</p>
+        </div>
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Entries</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">3</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">1 unattributed to an activity</p>
+        </div>
+      </section>
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="font-bold text-[14px]">Budget Entries</h3>
+          <button class="btn btn-primary !py-1.5 !text-[11.5px]">Add Expense</button>
+        </div>
+        <table class="sc-table">
+          <thead><tr><th>Item</th><th>Activity</th><th>Date</th><th>Reference</th><th class="!text-right">Amount</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="font-semibold text-charcoal">Drill equipment &amp; PPE</td>
+              <td>Typhoon Drill &amp; Evacuation Simulation</td>
+              <td>Jun 21, 2026</td>
+              <td>REC-2026-0201</td>
+              <td class="!text-right font-bold">₱21,400</td>
+            </tr>
+            <tr>
+              <td class="font-semibold text-charcoal">First-aid consumables &amp; rescue gear</td>
+              <td>First-Aid &amp; Water Rescue Training</td>
+              <td>Aug 9, 2026</td>
+              <td>REC-2026-0202</td>
+              <td class="!text-right font-bold">₱18,600</td>
+            </tr>
+            <tr class="!bg-red-50/60">
+              <td class="font-semibold text-charcoal">Venue &amp; transport <span class="badge badge-red ml-1">overrun entry</span></td>
+              <td class="text-gray-400">— not attributed —</td>
+              <td>Aug 28, 2026</td>
+              <td>REC-2026-0203</td>
+              <td class="!text-right font-bold text-red-600">₱24,500</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="px-5 py-3 text-[11.5px] text-gray-400 border-t border-gray-50">Over-allocation never blocks a save — the warning persists here and an activity-log entry is written (D7).</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES · Community Extension Services Office · Leyte Normal University · redesign preview (prototype2)
+  </footer>
+</main>
+
+<script src="../../docs/prototype/assets/vendor/chart.umd.min.js"></script>
+<script>
+/* ----------------------------- icons ----------------------------- */
+const ICONS = {
+  grid:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>',
+  chart:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>',
+  calendar:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>',
+  folder:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>',
+  pin:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>',
+  people:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>',
+  wallet:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 12.75h.008v.008H12v-.008z"/></svg>',
+  clock:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  doc:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>',
+  clipboard:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>',
+  sparkles:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9.375 17.25l-.438-1.346a4.5 4.5 0 00-2.842-2.841L4.75 12.625l1.345-.438a4.5 4.5 0 002.842-2.841L9.375 8l.438 1.346a4.5 4.5 0 002.842 2.841l1.345.438-1.345.438a4.5 4.5 0 00-2.842 2.84zM18 9.75l-.375 1.152-.375-1.152a2.25 2.25 0 00-1.423-1.423L14.676 9l1.151-.375a2.25 2.25 0 001.423-1.423L17.625 6l.377 1.202a2.25 2.25 0 001.423 1.423l1.15.375-1.15.375a2.25 2.25 0 00-1.423 1.423z"/></svg>',
+  bell:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>',
+  search:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>',
+  logout:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>',
+  edit:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zM19.5 14.25v4.125A2.625 2.625 0 0116.875 21H5.625A2.625 2.625 0 013 18.375V7.125A2.625 2.625 0 015.625 4.5H9.75"/></svg>'
+};
+
+(function expandIcons() {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n => {
+    if (!n.nodeValue || n.nodeValue.indexOf('[[') === -1) return;
+    const frag = document.createDocumentFragment();
+    n.nodeValue.split(/(\[\[[a-z][a-z0-9-]*\]\])/).forEach(part => {
+      const m = part.match(/^\[\[([a-z][a-z0-9-]*)\]\]$/);
+      if (m && ICONS[m[1]]) {
+        const tmp = document.createElement('span');
+        tmp.className = 'w-5 h-5 inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full';
+        tmp.innerHTML = ICONS[m[1]];
+        frag.appendChild(tmp);
+      } else if (part) {
+        frag.appendChild(document.createTextNode(part));
+      }
+    });
+    n.parentNode.replaceChild(frag, n);
+  });
+})();
+
+/* ----------------------------- tabs ----------------------------- */
+document.querySelectorAll('[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b === btn));
+    ['overview', 'activities', 'beneficiaries', 'budget'].forEach(t => {
+      document.getElementById('panel-' + t).classList.toggle('hidden', t !== btn.dataset.tab);
+    });
+  });
+});
+
+/* ----------------------------- chart theme ----------------------------- */
+Chart.defaults.font.family = 'Figtree, sans-serif';
+Chart.defaults.font.size = 11.5;
+Chart.defaults.color = '#6b7280';
+Chart.defaults.borderColor = '#f1f2f5';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 7;
+Chart.defaults.plugins.tooltip.backgroundColor = '#0a2a66';
+Chart.defaults.plugins.tooltip.padding = 12;
+Chart.defaults.plugins.tooltip.cornerRadius = 10;
+Chart.defaults.plugins.tooltip.titleFont = { weight: '700' };
+
+/* ----------------------------- attendance chart ----------------------------- */
+new Chart(document.getElementById('chAttendance'), {
+  type: 'bar',
+  data: {
+    labels: ['Typhoon Drill · Jun 21', 'First-Aid & Rescue · Aug 9'],
+    datasets: [{
+      label: 'Attendees',
+      data: [154, 141],
+      backgroundColor: ['#003599', '#2547eb'],
+      borderRadius: 7, maxBarThickness: 24
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    maintainAspectRatio: false,
+    scales: {
+      x: { beginAtZero: true, suggestedMax: 180, grid: { drawTicks: false } },
+      y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} attendees recorded` } }
+    }
+  }
+});
+</script>
+</body>
+</html>

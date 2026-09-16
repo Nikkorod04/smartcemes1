@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Analysis Review · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="secretary" data-page="ai-analysis">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== AI HERO ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="ai-panel p-6 flex items-start justify-between gap-6">
+      <div class="min-w-0">
+        <span class="ai-chip">[[sparkles]] AI Insight Engine</span>
+        <h1 class="mt-3 text-white font-extrabold text-xl tracking-tight leading-snug">Brgy. San Jose · Q2 2026 Needs-Assessment Analysis</h1>
+        <div id="heroMeta" class="mt-3 flex flex-wrap items-center gap-2"></div>
+      </div>
+      <div class="text-right shrink-0">
+        <p id="generatedAt" class="text-[11px] text-blue-100/70 font-medium"></p>
+        <div id="heroStatus" class="mt-2">
+          <span class="badge badge-yellow !bg-gold-500/15 !text-gold-200 !border-gold-300/30"><span class="w-1.5 h-1.5 rounded-full bg-gold-400 pulse-dot"></span>DRAFT — AWAITING REVIEW</span>
+        </div>
+      </div>
+    </div>
+    <p class="mt-2.5 text-[11.5px] text-gray-400 leading-relaxed max-w-4xl">Only aggregate counts and percentages derived from validated summaries were sent to the language model. Raw responses never leave the server. Human approval is required before this analysis is cited institutionally.</p>
+  </section>
+
+  <!-- ===================== NARRATIVE + INTERVENTIONS ===================== -->
+  <section class="mt-4 grid grid-cols-3 gap-4 items-start">
+
+    <div class="reveal-item sc-card p-6 col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-[14px]">Analysis Narrative</h3>
+        <span id="narrativeBadge" class="badge badge-gray">auto-generated draft</span>
+      </div>
+      <div id="narrativeBody" class="space-y-5"></div>
+    </div>
+
+    <div class="reveal-item sc-card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-[14px]">Recommended Interventions</h3>
+        <span id="interventionsBadge" class="badge badge-gold">5 actions</span>
+      </div>
+      <ol id="interventionsList" class="space-y-2.5"></ol>
+    </div>
+  </section>
+
+  <!-- ===================== ACTION BAR ===================== -->
+  <section class="sticky bottom-4 mt-4 z-20 reveal-item no-print" x-data="{discardOpen:false}">
+    <div class="sc-card p-4 flex items-center gap-3 shadow-pop">
+      <span class="w-9 h-9 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0">[[shield]]</span>
+      <div class="min-w-0">
+        <p class="text-[13px] font-bold leading-snug">As CESO Secretary, your approval makes this analysis citable in reports.</p>
+        <p class="text-[11px] text-gray-400 mt-0.5">Approval is signed with your name and timestamp, then archived to the audit log.</p>
+      </div>
+      <div id="actionBtns" class="ml-auto flex items-center gap-2 shrink-0">
+        <button onclick="regenerate()" class="btn btn-outline">⟳ Regenerate</button>
+        <button @click="discardOpen=true" class="btn btn-danger-soft">Discard</button>
+        <button onclick="approveAnalysis()" class="btn btn-primary !px-4 tracking-wide">[[shield]] APPROVE ANALYSIS</button>
+      </div>
+    </div>
+
+    <div x-cloak x-show="discardOpen" x-transition.opacity.duration.150ms class="fixed inset-0 z-[60] p-6 overflow-auto" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="discardOpen=false"></div>
+      <div class="sc-modal relative max-w-md mx-auto mt-32 sc-card p-6 shadow-pop">
+        <div class="flex items-start gap-3">
+          <span class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0">[[logout]]</span>
+          <div>
+            <h3 class="font-extrabold text-[15px] tracking-tight">Discard this analysis?</h3>
+            <p class="text-[12px] text-gray-500 mt-0.5 leading-relaxed">The draft for Brgy. San Jose · Q2 2026 will be deleted. A new draft can be regenerated from validated summaries at any time.</p>
+          </div>
+        </div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button @click="discardOpen=false" class="btn btn-ghost">Keep Draft</button>
+          <button @click="discardOpen=false; SC.toast('Analysis discarded','warn')" class="btn btn-danger-soft">Discard Analysis</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+const A = window.DATA.aiAnalysis;
+const SC = window.SC;
+
+const SECTION_HEADERS = ['Situation Overview', 'Livelihood Readiness', 'Structural Observations', 'Organizational Capacity'];
+const RANK_TONE = r => r <= 2 ? 'bg-lnu text-white' : r <= 4 ? 'bg-gold-100 text-gold-800' : 'bg-gray-100 text-gray-500';
+const PRIORITY_BADGE = p => p === 'High' ? '<span class="badge badge-red">High</span>'
+  : p === 'Medium' ? '<span class="badge badge-gold">Medium</span>'
+  : '<span class="badge badge-gray">Low</span>';
+
+function renderNarrative() {
+  document.getElementById('narrativeBody').innerHTML = A.narrative.map((para, i) => `
+    <div>
+      <p class="flex items-center gap-2 text-[10.5px] font-extrabold uppercase tracking-[.14em] ${i === 0 ? 'text-lnu-800' : 'text-gray-400'}">
+        <span class="w-1.5 h-1.5 rounded-sm ${i === 0 ? 'bg-gold' : 'bg-gray-300'}"></span>${SECTION_HEADERS[i] || 'Observation ' + (i + 1)}
+      </p>
+      <p class="mt-1.5 leading-relaxed ${i === 0 ? 'text-[14px] text-charcoal font-medium' : 'text-[13px] text-gray-600'}">${para}</p>
+    </div>`).join('');
+}
+
+function renderInterventions() {
+  document.getElementById('interventionsList').innerHTML = A.interventions.map(it => `
+    <li class="flex gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+      <span class="w-8 h-8 rounded-full flex items-center justify-center text-[12.5px] font-extrabold shrink-0 ${RANK_TONE(it.rank)}">${it.rank}</span>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-start justify-between gap-2">
+          <p class="text-[13px] font-bold leading-snug">${it.title}</p>
+          ${PRIORITY_BADGE(it.priority)}
+        </div>
+        <p class="text-[11.5px] text-gray-500 mt-1 leading-relaxed">${it.detail}</p>
+      </div>
+    </li>`).join('');
+}
+
+function renderHeroMeta() {
+  const modelShort = A.model.split(' ')[0];
+  const n = A.summaryCommunity.responses;
+  const chips = [
+    ['sparkles', 'model ' + modelShort],
+    ['shield', 'aggregated inputs only — no PII transmitted'],
+    ['people', 'n = ' + n + ' respondents'],
+    ['check', 'confidence ' + A.confidence]
+  ];
+  document.getElementById('heroMeta').innerHTML = chips.map(([ic, label]) =>
+    `<span class="ai-chip">${SC.svg(ic, 'w-3.5 h-3.5')}${label}</span>`).join('');
+  document.getElementById('generatedAt').textContent = 'Generated · ' + A.generatedAt;
+}
+
+/* ---------- Regenerate: shimmer then restore ---------- */
+let regenBusy = false;
+let narSnapshot = null, intSnapshot = null;
+
+const skelLines = ws => `<div class="space-y-2.5">${ws.map(w => `<div class="skeleton h-3.5 rounded-md" style="width:${w}%"></div>`).join('')}</div>`;
+const skelRows = n => Array.from({ length: n }, () => `
+  <li class="flex gap-3 items-center p-3 rounded-xl border border-gray-100">
+    <div class="skeleton w-8 h-8 rounded-full shrink-0"></div>
+    <div class="flex-1 space-y-2"><div class="skeleton h-3.5 w-3/4"></div><div class="skeleton h-3 w-1/2"></div></div>
+  </li>`).join('');
+
+function regenerate() {
+  if (regenBusy || A.approvalStatus !== 'draft') return;
+  regenBusy = true;
+  narSnapshot = narSnapshot || document.getElementById('narrativeBody').innerHTML;
+  intSnapshot = intSnapshot || document.getElementById('interventionsList').innerHTML;
+  const nar = document.getElementById('narrativeBody');
+  const int = document.getElementById('interventionsList');
+  nar.innerHTML = skelLines([38, 96, 92, 98, 88, 64]) + '<div class="h-4"></div>' + skelLines([34, 94, 90, 58]);
+  int.innerHTML = skelRows(4);
+  setTimeout(() => {
+    renderNarrative();
+    renderInterventions();
+    regenBusy = false;
+    SC.toast('Narrative regenerated from latest aggregates', 'info');
+  }, 1600);
+}
+
+/* ---------- Approve / Discard ---------- */
+function approveAnalysis() {
+  if (A.approvalStatus !== 'draft') return;
+  A.approvalStatus = 'approved';
+  document.getElementById('heroStatus').innerHTML =
+    `<span class="badge badge-green !bg-emerald-400/15 !text-emerald-200 !border-emerald-300/30">${SC.svg('check', 'w-3.5 h-3.5')} APPROVED · Prof. Angela D. Salazar · Aug 24, 2026 10:12 AM</span>`;
+  document.getElementById('narrativeBadge').textContent = 'approved · citable';
+  document.getElementById('narrativeBadge').className = 'badge badge-green';
+  const btns = document.getElementById('actionBtns');
+  btns.classList.add('opacity-50', 'pointer-events-none');
+  btns.innerHTML = `<span class="flex items-center gap-2 text-[12.5px] font-semibold text-gray-500">${SC.svg('shield', 'w-4 h-4')} Locked — approved analyses are immutable and logged.</span>`;
+  SC.toast('AI analysis approved and archived to audit log', 'success');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderHeroMeta();
+  renderNarrative();
+  renderInterventions();
+});
+</script>
+</body>
+</html>

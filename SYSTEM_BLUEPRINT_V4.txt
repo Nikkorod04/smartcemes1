@@ -1,0 +1,1562 @@
+SMARTCEMES SYSTEM BLUEPRINT v4.14
+=================================
+AI-Powered Community Extension Monitoring and Evaluation System
+for Leyte Normal University
+
+System Name: SmartCEMES
+
+Project Goal:
+SmartCEMES is a web-based Community Extension Management System that helps
+Leyte Normal University monitor, evaluate, and manage extension programs,
+faculty participation, community engagements, beneficiary impact, budget
+utilization, and administrative approvals. The system centralizes extension
+data and supports evidence-based decision-making through dashboards,
+AI-assisted summaries, and role-based workflows.
+
+The system is scoped as an MVP-first capstone build: every core workflow must
+be complete and demonstrable end-to-end, while high-risk or low-value items
+are explicitly parked as future work (1.2).
+
+IMPLEMENTATION STATUS: nothing has been built yet. This blueprint is the
+authoritative target design; every feature described here is pending
+implementation (see Section 11). The HTML prototype under docs/prototype (v4)
+is the PRIMARY visual design reference - a floor, not a ceiling: its design
+tokens (lnu/gold palettes, Figtree) and component classes are ported into a
+proper Vite + Tailwind production build, and the UI is improved wherever this
+blueprint demands it. prev/prototype is a v3 HISTORICAL reference only; it
+must not drive structure (its standalone Activities/Beneficiaries/Budget
+pages and secretary AI access are superseded by this blueprint). Wherever any
+prototype differs from this blueprint, the blueprint wins.
+
+Core purpose: make extension work visible, measurable, accountable, and
+actionable. Faculty and staff record data as a byproduct of their normal
+workflow (proposals, attendance, hours); the Director gets decision-ready
+answers computed from it, with AI summaries as the garnish, not the meal.
+
+
+1. PROJECT OVERVIEW & SCOPE
+----------------------------
+SmartCEMES supports the university's Community Extension Services Office
+(CESO) and the Director's office. The system:
+
+- manages extension programs and activities
+- assigns faculty to programs and activities
+- monitors communities and beneficiaries served
+- collects and stores assessment data via structured encoding forms and XLSX
+  template imports
+- reviews and approves submitted proposals
+- tracks budget utilization and rendered work
+- generates dashboards and print-ready reports for monitoring and evaluation
+- generates one AI-assisted analysis per community summary, subject to Admin
+  approval
+- generates Admin-only executive program narratives for at-a-glance program
+  status
+
+The flagship AI capability is "AI-assisted decision support for CESO" - ONE
+governed pipeline with TWO output types (community insights + program
+narratives), done completely rather than many AI features done partially.
+
+1.1 IN SCOPE (MVP)
+- Authentication and role-based access (admin, secretary, faculty)
+- Faculty management with automatic employee IDs
+- Programs, communities, beneficiaries, activities CRUD with relationships
+- Program-scoped management hub (tabbed program detail page)
+- Program results framework: measurable objectives per program with
+  baseline/target/actual, auto-derived status, and evidence notes
+- Manual needs-assessment encoding (full structured form, Sections I-IX)
+- Needs-assessment XLSX import from the official template (one file = one
+  respondent) with preview-and-confirm modal, vocabulary auto-mapping to
+  "Other", on-screen per-field error list, and source file archiving
+- Assessment summaries per community per quarter (computed aggregates)
+- ONE AI pipeline over those aggregates, Admin-only, with approval gate for
+  community analyses
+- Admin-only program narrative generation (executive program status)
+- Proposal workflow with attachments, optional Special Order document,
+  auto-created activity on approval
+- Availability requests: Admin-initiated, faculty accepts/declines (required
+  decline reason)
+- Budget allocation vs utilization tracking with warnings
+- Attendance recording via the official per-activity XLSX template import
+  (import-only; v4.13)
+- Per-activity evaluation score import (pre/post/satisfaction) aggregated
+  into the activity's D13 columns (v4.13)
+- Calendars (activities + accepted availability requests + deadlines) with
+  conflict markers
+- Rendered hours lifecycle (auto-draft -> faculty adjust/submit -> Admin
+  approve -> locked)
+- Six dashboards, action center, database notifications
+- Print-optimized institutional reports
+
+1.2 OUT OF SCOPE (FUTURE WORK)
+Deliberate exclusions, not omissions:
+- OCR / scanned form ingestion
+- Multi-day / per-session attendance sheets (v4.13 imports one attendance
+  date per activity — the activity's planned start date; the attendance,
+  pre/post evaluation, and satisfaction imports themselves are now IN
+  scope via the same template-based pattern)
+- Community Partner / Stakeholder portal
+- PDF and Excel export generators (MVP reports are browser-print views)
+- Predictive analytics
+- Narrative/insight generation beyond the two in-scope AI output types
+- Dark mode variant
+- University ERP / HR integration
+- Mobile application
+- Multi-role accounts
+
+
+2. USERS & ROLE WORKFLOWS
+--------------------------
+Three fixed roles (admin, secretary, faculty) stored as a single role column.
+Separation of duties is enforced: no role can perform another role's
+approvals.
+
+2.1 Admin (Director persona)
+- oversees all extension programs, communities, beneficiaries, and faculty work
+- manages faculty accounts (account provisioning is Admin-only)
+- reviews pending proposals; approves or rejects with remarks; may attach the
+  Special Order document during approval
+- creates availability requests for faculty (tied to activities); reviews
+  faculty responses
+- defines and manages program objectives via the program hub's objective
+  manager; faculty view the results framework read-only
+- approves or rejects rendered-hours submissions
+- generates, reviews, and approves/discards AI community assessment analyses
+- generates and views program narratives (executive summaries)
+- monitors system-wide performance; sees dashboards and print-ready reports
+- AI ACCESS RULE: only the Admin can generate, view, and approve AI outputs;
+  Secretary and Faculty have no AI access (see 8.5, D4)
+
+2.2 Secretary
+- reviews and validates needs-assessment submissions (review lifecycle)
+- imports needs-assessment records from the official XLSX template
+- validates (approves) or returns submissions with remarks
+- monitors compliance, pending documentation, and extension status updates
+- manages program-scoped beneficiaries (v4.12): enrolls from the global
+  registry, registers new (dedup-checked), imports from the beneficiary XLSX
+  template, unenrolls, and imports per-activity attendance / evaluation
+  records from the official generated templates (v4.13) — via the "Manage
+  Beneficiaries" page (program list → program hub Beneficiaries/Activities
+  tabs). Program structure, objectives, activities, and budget remain
+  Director-only (scoped permission, 5.4)
+- has NO access to AI features
+
+2.3 Faculty
+- logs in with provisioned account credentials
+- submits activity proposals for approval
+- encodes needs-assessment responses via the structured form or the official
+  XLSX template import
+- responds to availability requests (accept, or decline with a required
+  reason)
+- reviews, adjusts down, and submits rendered hours for completed activities
+- views per-activity attendance and evaluation records (recording is
+  import-only, performed by the Director's office or the Secretary — v4.13)
+- views assigned programs, activities, and schedules (program detail hub is
+  read-only for faculty)
+- views the program results framework read-only; contributes evidence through
+  activity and attendance records
+- monitors personal extension progress and rendered hours
+
+2.4 Default Accounts (provisioned by Phase 1 seeders)
+The system ships with six seeded accounts (one per role requirement; no
+self-registration exists in the system - accounts are provisioned by the
+Admin per 5.1):
+
+- CESO Director (Admin):
+    Dr. Lowell A. Quisumbing - admin@lnu.com
+- CESO Secretary:
+    Jhoanna Ayles - secretary@lnu.com
+- Faculty (four accounts, one per faculty member):
+    Carlo Sumile - faculty1@lnu.com
+    Bianca Oledan - faculty2@lnu.com
+    Nikko Villas - faculty3@lnu.com
+    Kent Naputo - faculty4@lnu.com
+
+Rules for these accounts:
+- seeded with realistic Faculty profile records (department,
+  specialization, position) and auto-assigned employee IDs in the
+  LNU-{year}-{seq} format
+- used for demos, testing, and the defense walkthrough of all three role
+  workflows
+
+
+3. SYSTEM OBJECTIVES
+---------------------
+3.1 Core Objectives
+- centralize extension data in one system
+- improve transparency in program execution and monitoring
+- reduce manual documentation and reporting burden
+- support efficient staff and faculty coordination
+- provide data-driven insights for decision making
+- improve accountability and auditability
+
+3.2 Monitoring & Evaluation Objectives
+- track program outputs, outcomes, and impact using the KPI definitions in 8.6
+- monitor budget use and resource allocation
+- track activity completion and attendance
+- evaluate community reach and beneficiary engagement
+- support compliance with university extension reporting standards
+
+3.3 Decision Support Objectives
+- provide dashboard summaries for director decisions
+- show pending approvals and risk areas
+- analyze program performance indicators
+- deliver human-approved AI-generated summaries for operational review
+
+3.4 Study Objectives
+- design and implement a centralized extension database that records and
+  monitors quarterly planning, implementation, and completion status of
+  community extension projects
+- provide standardized digital data collection forms and flexible input
+  mechanisms (manual entry and structured XLSX uploads) for field reports,
+  satisfaction surveys, community feedback, and assessment data
+- develop system modules for workflow management, monitoring, and scheduling:
+  proposal submission, approval with Special Order (SO), assessment validation
+  by the secretary, and tracking of personnel availability, schedules,
+  project progress, and related activities
+- integrate LLM-assisted analytical features that interpret quantitative and
+  qualitative M&E data, identify trends and issues, and generate
+  decision-support recommendations for the CESO
+- provide AI-assisted summarization that transforms validated M&E data into
+  structured narrative summaries and reports
+- evaluate the system against ISO/IEC 25010 quality standards: functional
+  suitability, performance efficiency, usability, reliability, and security
+
+3.5 Scope Boundaries
+- The MVP cut line is Phases 1-4 fully plus the Phase 5 AI pipeline (one
+  pipeline, two output types - Section 11).
+- Everything in 1.2 is deliberately excluded; its absence is a documented
+  scoping decision.
+- A smaller finished system is preferred over a larger incomplete one. All
+  success criteria (Section 15) are satisfiable within the MVP.
+
+
+4. VISUAL IDENTITY
+-------------------
+Clean institutional dashboard style with strong academic branding.
+
+Brand:
+- Primary color: LNU blue (#003599) - navigation, primary actions, headers,
+  institutional identity
+- Accent color: LNU gold (#F6B800) - active states, highlights, notifications,
+  status emphasis
+- Neutrals: white, gray-50 to gray-200, charcoal text; no dark mode
+- Typeface: Figtree (default sans-serif)
+
+Style guidelines:
+- White cards on soft gray backgrounds; rounded corners, soft shadows,
+  subtle transitions
+- Primary buttons: blue background, white text, hover darker blue
+- Secondary buttons: gold background, dark text, hover deeper gold
+- Sidebar navigation: light background, blue active state, gold left border
+  on the selected item
+- Status badges: green = approved/completed, yellow = pending/draft,
+  red = rejected/cancelled, blue = informational
+
+Layout standards:
+- Left-side navigation; top header for page title, user profile, and
+  notification bell
+- KPI panels as metric cards (large numbers, small trend indicators)
+- Tables with structured rows, hover states, subtle borders, action buttons
+- Dashboards and reports use clean card layouts, not dense text panels
+
+
+5. FEATURES & MODULES
+----------------------
+5.1 Faculty Management
+- create/manage faculty profiles (soft delete)
+- automatic globally unique employee ID: LNU-{year}-{4-digit zero-padded
+  sequence}, e.g. LNU-2026-0001
+- employee ID generation must be race-safe (dedicated sequence table or
+  atomic DB-level increment); never read-max-then-write in application code
+- department, specialization, position, phone, address
+- account credentials managed by Admin only
+
+5.2 Extension Program Management (Program Hub)
+- create and manage extension programs: description, narrative goals and
+  high-level objectives, planned dates, target beneficiaries, beneficiary
+  categories, allocated budget, program lead (existing Faculty), linked
+  communities and partners, attachments, status (draft | ongoing |
+  completed | cancelled)
+- THE PROGRAM DETAIL PAGE IS THE MANAGEMENT HUB: a tabbed page (Overview |
+  Activities | Beneficiaries | Budget) reached from the Programs list.
+  Admin manages it; Faculty view it read-only for programs they lead or are
+  assigned to. Standalone Beneficiaries/Activities/Budget pages do not
+  exist; aggregate cross-program views live in Analytics (5.13) and the
+  Calendar (5.9)
+- Overview tab carries the results framework and objective manager:
+  Admin-only CRUD for ProgramObjectives (6.15) via modal; kpi_metric is
+  validated against the locked 8.6 vocabulary; numeric objectives
+  auto-compute actuals live per 8.6; qualitative objectives tracked manually
+  with evidence
+
+5.3 Community Management (Communities & Partner Schools)
+- Admin creates and manages community profiles: municipality, barangay,
+  province, address
+- status: active | prospecting (see 6.18)
+- partner contacts (person, number, email)
+- link programs to communities; maintain relationship history
+- Partner schools share the same registry (6.3 `type` = school) with a
+  school level (elementary | secondary | higher_ed); schools are always
+  active partners and surface through a type filter on the same page
+
+5.4 Beneficiary Management
+- single global beneficiary registry; de-duplication is inherently global
+- demographics, income, occupation, educational attainment, household data
+- classification by type/category (controlled vocabulary)
+- PROGRAM-SCOPED UI: enrollment is managed from a program's Beneficiaries tab
+  - "enroll existing": search the global registry (including beneficiaries
+    not yet linked to any program)
+  - "register new": create a profile and auto-enroll it into the program
+  - "import XLSX" (v4.7): download an official authored template (fixed
+    headers: First Name, Middle Name, Last Name, Age, Sex, Contact Number,
+    Barangay, Municipality / City, Beneficiary Category; one row = one
+    beneficiary, max 500 rows) and upload it for bulk creation — parse to
+    an on-screen preview (D10 confirm-before-create), then create + enroll.
+    Required: First Name, Last Name, Barangay, Beneficiary Category. Blank
+    contact numbers default to 09123456789. Unknown categories auto-map to
+    "Other" (D9 convention, raw label shown in the preview). Rows with
+    errors or de-duplication matches (first + last + barangay, inside the
+    file or against the registry) are skipped and reported per row —
+    never a whole-file reject. Admin and Secretary (v4.12 scoped
+    beneficiary-manage permission; the Secretary reaches the hub through
+    the "Manage Beneficiaries" page).
+  - "unenroll": detach from the program pivot
+- a beneficiary may belong to multiple programs
+  (extension_program_beneficiary pivot); track activity participation
+- de-duplication check on create: if first_name + last_name + barangay match
+  an existing beneficiary anywhere in the registry, show a warning and
+  require confirmation; never silently merge
+- SCOPED HUB PERMISSION (v4.12): beneficiary enrollment/registry actions and
+  per-activity attendance / evaluation XLSX imports (v4.13) are granted to
+  Admin AND Secretary
+  (ProgramPolicy::manageBeneficiaries); the Secretary's entry point is the
+  "Manage Beneficiaries" page (program list with Beneficiaries/Attendance
+  deep links). Program edit, objectives, activity CRUD, and budget stay
+  Admin-only (manage). Faculty view the hub read-only as before.
+
+5.5 Activity Management
+- activities are created and managed inside the parent program's Activities
+  tab (per-program table with create/edit modals; the program is preselected
+  and locked in context); auto-created activities from approved proposals
+  land here
+- schedules: planned start/end dates AND start/end times; venue; status
+  (draft | ongoing | completed | cancelled); remarks and notes
+- activity planned dates MUST fall within the parent program's date range
+  (8.8): date pickers constrained to the range, server-side validation as
+  backstop
+- faculty assignment is HARD-BLOCKED if it overlaps the faculty's other
+  assignments (8.8)
+- per-activity records are import-only (v4.13): the Records modal on each
+  activity row serves a generated attendance template (roster pre-filled,
+  one row = one enrolled beneficiary, non-strict present | absent | excused
+  | late dropdown, 500-row cap) and a generated evaluation template
+  (pre/post 0-100, satisfaction 1-5). Upload -> parse -> per-row preview
+  with state/errors (D10, screen-only) -> confirm; never a whole-file
+  reject. One attendance date per activity (planned_start_date); multi-day
+  attendance is future work (1.2). The manual attendance panel is REMOVED
+- marking an activity Completed (with confirm) triggers rendered-hours
+  auto-drafts (5.16)
+- rescheduling updates schedule fields and writes an activity log entry;
+  re-approval is not required; the program-range rule and conflict rule
+  still apply
+
+5.6 Assessment Management
+- needs assessments are encoded manually through the structured form defined
+  in 6.9 (Sections I-IX)
+- needs assessments can also be imported from the official XLSX template
+  (one file = one respondent); the template is downloadable from the
+  assessment form and covers the full questionnaire including Section I
+  respondent information plus a context block carrying community, quarter,
+  year, and optional activity proposal reference
+- the official template is AUTHORED by this project as the first Phase 2
+  deliverable (D11). As of v4.8 it is a VERTICAL form-style sheet: column
+  A carries the fixed field labels grouped under Section I-IX separator
+  rows, column B is the answer cell, and column C carries fill-up guides
+  (full Section 7 option lists) so the sheet is self-contained for field
+  encoding. Single-choice, Yes/No, and reason answer cells carry NON-STRICT
+  dropdown suggestions — typed free text is still accepted, so the D9
+  auto-map-to-Other flow is unchanged. Multi-select fields get guides only
+  (comma-separated answers would fight a single-pick list). Older
+  horizontal (v1) template files are no longer accepted by the import
+- Faculty and Secretary may both import; imported records enter review status
+  "pending" (same as manual entry), so the Secretary's validation flow is
+  unchanged
+- import flow: upload -> parse -> preview modal showing parsed values plus
+  per-field errors -> uploader confirms -> record created; validation errors
+  are shown on screen only and never persisted
+- import validation: values are checked against the 6.9 vocabularies; unknown
+  or misspelled values auto-map to "Other" with raw text preserved in
+  other_text; a per-field error list reports unmapped fields (never
+  whole-file rejection)
+- the source import file is archived to needs_assessments.file_path for audit
+  (never machine-read)
+- evaluation assessments capture pre/post scores per activity; baseline and
+  post-activity comparison. v4.13: scores enter via the per-activity
+  evaluation XLSX import (generated template pre-filled with the enrolled
+  roster); per-row values are validated (pre/post 0-100, satisfaction 1-5;
+  row errors screen-only per D10) and on confirm aggregated as per-metric
+  MEANS into activities.pre_assessment_score / post_assessment_score /
+  satisfaction_rating (D13). A metric with no values in the file leaves the
+  existing aggregate untouched (per-metric merge); no per-beneficiary
+  evaluation rows are ever stored. Both activity imports archive the source
+  file and record provenance in activity_imports (6.19); Admin + Secretary
+  only (5.4 scoped permission), viewing stays open to all hub viewers
+- each submission carries a Secretary-handled review lifecycle: pending ->
+  validated | returned (with remarks)
+- assessment summary dashboards; improvement monitoring across activities and
+  communities
+
+5.7 Budget & Resource Monitoring
+- allocated budget per program; optional allocated budget per activity
+- utilization is recorded on the program hub's Budget tab: entries attach to
+  the program (required) and optionally to an activity
+- expenditure exceeding allocation: entry is still saved, a persistent
+  warning badge shows on the program, and an activity log entry is written
+  (D7)
+- compute budget utilization percentages per 8.6; show cost per beneficiary
+  and program efficiency
+- aggregate cross-program budget views live in Analytics (5.13)
+
+5.8 Availability Management (ADMIN-INITIATED)
+- Admin creates an availability request for ONE faculty member, tied to a
+  specific activity (6.8)
+- the request carries date + start/end time (defaulted from the linked
+  activity's schedule, admin-editable) + remarks to the faculty
+- faculty receives a notification and ACCEPTS or DECLINES with remarks;
+  decline reason is REQUIRED
+- accepted requests feed the shared calendar and planning views; declined
+  requests remain in history with the reason
+- no approval step exists: Admin requests, Faculty responds
+
+5.9 Calendar & Scheduling
+- shared across all three roles; faculty sees only their own activities with
+  a "(You)" marker
+- custom month-grid calendar with a day-details side panel and a 60-day list
+  view, built in the app's own design system (no external CDN dependency)
+- three feeds: activities, accepted availability requests, program/objective
+  deadlines
+- event click-through to detail screens; month navigation with today
+  ring/highlight
+- conflicting events (8.8 overlap) are marked red with a "conflict" indicator
+
+5.10 Monitoring, KPI & M&E Metrics
+- all KPIs are computed strictly per the formulas in 8.6 (single source of
+  truth): participation rate, activity completion rate, attendance
+  consistency, budget utilization, knowledge gain, cost per beneficiary,
+  community reach, rendered hours
+- program-level indicators for outputs, outcomes, and impact
+- comparison views across communities, programs, and quarters
+- objective tracking: each ProgramObjective shows baseline -> target ->
+  actual progress with auto-derived status (achieved / on_track / not_met /
+  not_started); numeric objectives live-compute per 8.6, qualitative
+  objectives use manual status + evidence
+
+5.11 Assessment Summary & AI Analysis (flagship - output type 1)
+- ONE governed AI pipeline with TWO output types sharing the same
+  job/retry/provenance backbone (8.5): community assessment insights (this
+  section) and program narratives (5.15)
+- aggregate assessment summaries are computed per community per quarter
+  (AssessmentSummary, 6.10): gender, education, livelihood, health, and
+  service patterns
+- ONLY the aggregate statistics (counts, percentages, distributions) are sent
+  to the LLM (D3)
+- LLM returns: situation summary, identified priority needs, top 5
+  recommended interventions with brief rationale
+- the result is stored as an AssessmentAnalysis draft (6.11); the Admin
+  reviews and approves or discards it; approved analyses display an
+  "Approved" provenance label
+- analysis history is retained with timestamps, confidence indicator, and
+  approving officer
+- failure state ("analysis unavailable") is a first-class UI state, never a
+  silent error
+- ACCESS: Admin-only (generate, view, approve/discard)
+
+5.12 Activity Proposal Workflow
+- faculty submits an activity proposal with attachment(s); the proposal
+  specifies the target program and community
+- Admin reviews and approves/rejects with remarks (rejection requires a
+  reason)
+- Admin MAY attach a Special Order document (PDF) before final approval; its
+  presence/absence is shown on the review screen
+- ON APPROVAL: the system auto-creates a linked Activity in "draft" status
+  under the chosen program/community, copying title and dates, and stamps
+  the proposal with created_activity_id
+- proposed start/end dates are validated against the target program's date
+  range BEFORE approval; approval is blocked if they fall outside (8.8)
+- after approval the proposal enters the assessment stage; the Secretary
+  validates resulting assessment submissions
+- full transition log for every state change
+
+5.13 Reporting & Dashboarding
+- six dashboards delivered as ONE Admin Analytics page with six tabs:
+  Overview, Program Performance, Budget Utilization, Community Reach, Faculty
+  Contribution, Pending Actions (Section 12)
+- program performance includes per-objective progress bars (baseline ->
+  target -> actual) and objective status breakdown
+- KPI cards, charts (Chart.js), recent activity feed, alerts
+- PRINT-OPTIMIZED report views (@media print CSS) covering all institutional
+  reports in Section 12
+- PDF/Excel generators are future work
+
+5.14 Notifications
+- Laravel database notifications wired to the top-header bell icon;
+  mark-as-read per user
+- triggered on: proposal submitted / approved / rejected; availability
+  requested (to faculty) / accepted or declined (to admin); assessment
+  returned / validated; AI analysis ready for review (Admin); rendered hours
+  submitted (to admin) / approved or rejected (to faculty)
+- DEADLINE SCHEDULER: a daily scheduled command notifies Admin of programs
+  ending within 14 days and on-track objectives approaching target dates,
+  with 7-day de-duplication
+
+5.15 Program Narrative (executive summary - output type 2)
+- Admin (Director) only: generates and views program narratives
+- manual trigger: "Generate program narrative" on the program detail screen
+- input (all aggregate, no PII): program metadata (title, status, lead,
+  dates, communities), ProgramObjective statuses, 8.6 KPIs (budget
+  utilization, participation rate, activity completion, knowledge gain, cost
+  per beneficiary, community reach), activity completion counts, budget
+  overrun warnings, at-risk signals (objectives not_met / approaching
+  target_date, overdue activities)
+- LLM returns: overall program health statement, objective achievement
+  summary (X of Y met), budget + participation health, top 3 risks/red
+  flags, recommended next actions with brief rationale
+- result stored in ProgramNarrative (6.16) with full provenance (model,
+  prompt version, generated_at, generated_by)
+- NO approval gate: narratives are Admin-internal decision support (contrast
+  5.11, which requires Admin approval for institutional use); provenance is
+  still recorded for audit
+- history retained: each generation creates a new row; the Director can
+  browse past versions per program
+- failure state ("narrative unavailable") is a first-class UI state
+
+5.16 Rendered Hours (faculty service hours)
+- auto-drafts generated when an activity is marked Completed: one
+  RenderedHours draft per assigned faculty, hours = activity duration
+  (end - start), source = auto (6.17)
+- faculty reviews drafts; may adjust DOWN for partial participation (with a
+  note), never above the activity duration
+- faculty submits -> pending; Admin approves or rejects with remarks
+- approved entries are LOCKED and immutable (audit-logged); no edits after
+  approval
+- faculty dashboard shows "My Rendered Hours" (approved hours per semester);
+  Admin sees an approval queue
+- rendered hours feed the 8.6 KPI and the faculty rendered-hours report
+
+
+6. DATA MODELS
+---------------
+Conventions:
+- monetary columns: DECIMAL(12,2)
+- JSON fields are stored as JSON, cast to array, and contain arrays of
+  strings (per 6.9 rules)
+- all tables use timestamps and soft deletes
+- enum-like columns are string columns constrained by application-level
+  validation to the vocabularies in Section 7 and 6.18
+
+6.1 User
+Fields: id, name, email (unique), password, role (admin | secretary |
+faculty), email_verified_at, remember_token, timestamps, soft deletes
+Relationships: has one Faculty profile
+
+6.2 Faculty
+Fields: id, user_id, employee_id (unique, auto: LNU-{year}-{4-digit seq}),
+department, specialization, position, avatar, phone, address, notes,
+timestamps, soft deletes
+Relationships: belongs to User; has many ExtensionPrograms (as program lead);
+belongs to many Activities (pivot activity_faculty); has many
+AvailabilityRequests; has many ActivityProposals
+
+6.3 Community (registry: Communities & Partner Schools)
+Fields: id, name, municipality, province, type (community | school,
+default community), school_level (elementary | secondary | higher_ed;
+nullable, school records only), description, contact_person,
+contact_number, email, address, status (active | prospecting), notes,
+timestamps, soft deletes
+Relationships: has many NeedsAssessments; has many AssessmentSummaries;
+belongs to many ExtensionPrograms (pivot)
+Note (v4.5): the communities table doubles as the partner-schools
+registry — one CRUD, one page, distinguished by `type`. School records
+are extension partners (program partners / activity venues), not
+beneficiary-enrollment targets; schools are always status=active.
+
+6.4 ExtensionProgram
+Fields: id, title, description, goals (narrative text), objectives (text;
+high-level narrative summary - the measurable objectives are structured per
+ProgramObjective, 6.15), planned_start_date, planned_end_date,
+target_beneficiaries (integer), beneficiary_categories (JSON array,
+controlled vocabulary), allocated_budget (decimal 12,2), program_lead_id
+(FK faculties), partners (JSON array of strings), cover_image (path),
+gallery_images (JSON array of paths), attachments (JSON array of paths),
+status (draft | ongoing | completed | cancelled), notes, created_by /
+updated_by (FK users), timestamps, soft deletes
+Baseline rule: pre/post baseline is aggregated from activity-level scores
+(6.5); no program-level baseline columns exist.
+Relationships: belongs to Faculty (program lead); has many Activities; has
+many ProgramObjectives; belongs to many Communities (pivot); has many
+BudgetUtilizations; belongs to many Beneficiaries (pivot)
+
+6.5 Activity
+Fields: id, extension_program_id, activity_proposal_id (nullable FK; set when
+auto-created from an approved proposal), title, description,
+planned_start_date, planned_end_date, start_time, end_time,
+actual_start_date (nullable), actual_end_date (nullable), venue, status
+(draft | ongoing | completed | cancelled), notes, allocated_budget (nullable
+decimal 12,2), pre_assessment_score, post_assessment_score,
+satisfaction_rating, timestamps, soft deletes
+Relationships: belongs to ExtensionProgram; belongs to ActivityProposal
+(optional); belongs to many Faculty (pivot); has many Attendances; has many
+BudgetUtilizations (via budget_utilizations.activity_id)
+Note: pre_assessment_score, post_assessment_score, and satisfaction_rating
+are SINGLE AGGREGATE columns - one pre/post pair and one rating per
+activity (D13). As of v4.13 they are populated by the per-activity
+evaluation XLSX import as per-metric means of the imported per-beneficiary
+values; a metric with no values in the file keeps its existing aggregate.
+No separate evaluation-submissions table exists in the MVP.
+
+6.6 Beneficiary
+Fields: id, first_name, middle_name, last_name, age, gender, email (nullable),
+phone, address, barangay, municipality, province, community_id,
+beneficiary_category, monthly_income, occupation, educational_attainment,
+marital_status, number_of_dependents, status, notes, timestamps, soft deletes
+Relationships: belongs to Community; belongs to many ExtensionPrograms
+(pivot); has many Attendances
+Note (v4.7): phone is surfaced as "Contact number" everywhere (register form,
+hub table, XLSX import); blank values default to 09123456789 (demo default
+per project owner; one-time migration backfilled existing rows).
+
+6.7 Attendance
+Fields: id, activity_id, beneficiary_id, attendance_date, status (present |
+absent | excused | late), remarks, timestamps, soft deletes
+Relationships: belongs to Activity; belongs to Beneficiary
+Note (v4.13): rows are written by the per-activity attendance XLSX import,
+keyed (activity_id, beneficiary_id, attendance_date) with one attendance
+date per activity (planned_start_date); a blank Status cell leaves the
+beneficiary unrecorded (no row written or cleared), and unknown, duplicate,
+or name-mismatched rows are skipped per row (screen-only, D10).
+
+6.8 AvailabilityRequest
+Fields: id, activity_id (FK; the activity this request is tied to),
+faculty_id, date, start_time, end_time (defaulted from the linked activity's
+schedule; admin-editable at creation), status (pending | accepted |
+declined), requested_by (FK users), requested_at, remarks (admin's message to
+the faculty), responded_by (FK users, nullable), responded_at (nullable),
+decline_reason (nullable; REQUIRED when status = declined), timestamps
+Relationships: belongs to Activity; belongs to Faculty; belongs to User
+(requester); belongs to User (responder)
+
+6.9 NeedsAssessment
+Fields: id, community_id, quarter (1-4, calendar quarter), year,
+activity_proposal_id (nullable FK; links intake to a proposal's assessment
+stage when applicable), file_path (nullable; source import XLSX archived for
+audit only - NEVER machine-read), uploaded_by (FK users), review_status
+(pending | validated | returned), reviewed_by (FK users, nullable),
+reviewed_at (nullable), review_remarks (nullable text),
+respondent_first_name, respondent_middle_name, respondent_last_name,
+respondent_age, respondent_civil_status, respondent_sex, respondent_religion,
+respondent_educational_attainment, family_composition,
+livelihood_options, desired_training, barangay_educational_facilities (JSON),
+household_member_currently_studying, interested_in_continuing_studies,
+areas_of_educational_interest, preferred_training_time,
+preferred_training_days (JSON), common_illnesses, action_when_sick,
+barangay_medical_supplies_available (JSON),
+has_barangay_health_programs, benefits_from_barangay_programs,
+programs_benefited_from (JSON), water_source, water_source_distance,
+garbage_disposal_method, has_own_toilet, toilet_type,
+keeps_animals, animals_kept (JSON), house_type, tenure_status,
+has_electricity, light_source_without_power, appliances_owned (JSON),
+barangay_recreational_facilities (JSON), use_of_free_time (JSON),
+member_of_organization, organization_types,
+organization_meeting_frequency, organization_usual_activities,
+household_members_in_organization, position_in_organization,
+family_problems (JSON), health_problems (JSON), educational_problems (JSON),
+employment_problems (JSON), infrastructure_problems (JSON),
+economic_problems (JSON), security_problems (JSON), barangay_service_ratings
+(JSON), general_feedback, available_for_training, reason_not_available,
+other_text (JSON, nullable; map of field => raw text preserved whenever
+"Other" is selected or an unknown value is auto-mapped to "Other"),
+timestamps, soft deletes
+Note (v4.9): fields marked (JSON) are multi-select arrays; every other
+enumerated field is a single-select string (nullable). The former
+interested_in_livelihood_training column was REMOVED from the instrument and
+the schema. Type changes are handled by a data migration that flattens the
+former JSON arrays to their first value.
+Relationships: belongs to Community; belongs to ActivityProposal (optional);
+has many AssessmentAnalysis
+
+6.10 AssessmentSummary
+Fields: id, community_id, quarter (1-4), year, total_responses,
+gender_distribution (JSON), religion_distribution (JSON),
+education_distribution (JSON), civil_status_distribution (JSON),
+livelihood_interests (JSON), educational_interests (JSON), health_problems
+(JSON), family_problems (JSON), employment_problems (JSON),
+infrastructure_problems (JSON), economic_problems (JSON), security_problems
+(JSON), water_sources (JSON), house_types (JSON),
+electricity_access_percentage, organization_membership_percentage,
+training_availability_percentage, avg_service_satisfaction,
+baseline_satisfaction_score, ai_analysis (text; latest approved analysis
+summary; nullable), ai_interventions (JSON; from latest approved analysis;
+nullable), ai_analysis_sections (JSON), ai_analysis_generated_at,
+last_calculated_at, timestamps, soft deletes
+UNIQUE CONSTRAINT: (community_id, quarter, year)
+Relationships: belongs to Community; has many AssessmentAnalysis
+Recalculation policy: recomputed whenever a NeedsAssessment for the same
+community/quarter/year is created or its review_status changes;
+last_calculated_at stamped on every recompute.
+
+6.11 AssessmentAnalysis
+Fields: id, needs_assessment_id (FK; the triggering submission batch
+context), assessment_summary_id (FK; the aggregates actually sent to the
+LLM), raw_extracted_data (JSON snapshot of aggregates sent),
+extracted_fields (JSON), problems_identified (JSON), recommendations (JSON),
+summary (text), confidence_score (decimal 3,2; DERIVED data-confidence —
+Gemini reports no confidence indicator, so a deterministic heuristic over
+sample size, aggregate completeness, and output completeness is persisted,
+clamped to [0.10, 0.95]; displayed as guidance only, never treated as
+ground truth; v4.6), approval_status
+(draft | approved | discarded), approved_by (FK users, nullable),
+approved_at (nullable), status (pending | completed | failed), error_message
+(nullable), metadata (JSON: model name, prompt version, token usage),
+timestamps
+Relationships: belongs to NeedsAssessment; belongs to AssessmentSummary;
+belongs to User (approver)
+Access: Admin-only generate/view/approve-discard (D4).
+
+6.12 BudgetUtilization
+Fields: id, extension_program_id, activity_id (nullable FK; allows expense
+attribution to an activity), item_name, description, amount (decimal 12,2),
+date_used, receipt_reference, timestamps
+Relationships: belongs to ExtensionProgram; belongs to Activity (optional)
+
+6.13 ActivityProposal
+Fields: id, faculty_id, extension_program_id (FK; the proposal targets an
+existing program), community_id (FK; the proposal targets a community),
+created_activity_id (nullable FK; stamped on approval when the linked
+Activity is auto-created), title, description, proposed_start_date,
+proposed_end_date, special_order_path (nullable; optional Special Order PDF
+attached by Admin before final approval), status (pending | approved |
+rejected), submitted_at, admin_remarks, admin_approved_at,
+admin_approved_by, assessment_deadline (nullable), secretary_remarks,
+secretary_approved_at, secretary_approved_by, rejection_reason (required
+when rejected), rejected_by, rejected_at, timestamps, soft deletes
+Status machine:
+- pending -> approved: requires admin_approved_by/at; if special_order_path
+  is null, the approval screen displays an informational notice
+- pending -> rejected: requires rejection_reason, rejected_by, rejected_at
+- ON APPROVAL: auto-create Activity (status = draft) under
+  extension_program_id/community_id copying title and proposed dates; stamp
+  created_activity_id
+Relationships: belongs to Faculty; belongs to ExtensionProgram; belongs to
+Community; has one Activity (created on approval); has many
+ProposalDocuments; belongs to User (approved/rejected by)
+
+6.14 ProposalDocument
+Fields: id, activity_proposal_id, file_name, file_path, file_size, file_type,
+uploaded_at, timestamps, soft deletes
+Relationships: belongs to ActivityProposal
+
+6.15 ProgramObjective
+Fields: id, extension_program_id (FK), objective (text; measurable statement
+of the goal), kpi_metric (nullable; MUST be one of the locked keys in 8.6 -
+participation_rate, activity_completion_rate, attendance_consistency,
+budget_utilization, knowledge_gain, cost_per_beneficiary, community_reach;
+NULL = qualitative objective, tracked manually), baseline_value (nullable
+decimal; starting measurement for numeric objectives), target_value (nullable
+decimal; single target for the whole program, no per-quarter milestones),
+actual_value (nullable decimal; live-computed for kpi_metric objectives per
+8.6; manual entry for qualitative objectives), unit (nullable; %, count,
+points, etc.), target_date (nullable; when "met" is evaluated), status
+(not_started | on_track | achieved | not_met), evidence_notes (nullable
+text; evidence/remarks for qualitative objectives and manual actuals),
+timestamps, soft deletes
+Relationships: belongs to ExtensionProgram. Activity-level linkage is
+deliberately NOT modeled - all program activities implicitly contribute to
+program objectives.
+Status derivation: see 8.6.
+
+6.16 ProgramNarrative
+Fields: id, extension_program_id (FK), generated_by (FK users; admin/director
+only), status (pending | completed | failed), summary (text; overall program
+health statement and objective achievement summary), health_label (nullable;
+e.g. "on track", "at risk", "needs attention" - derived by the LLM), risks
+(JSON; top 3 risks/red flags), recommendations (JSON; recommended next
+actions with brief rationale), raw_extracted_data (JSON snapshot of the
+KPI/objective/activity aggregates actually sent to the LLM),
+confidence_score (decimal 3,2; DERIVED data-confidence, same heuristic as
+6.11 — v4.6; guidance only), error_message (nullable), metadata (JSON: model
+name, prompt version, token usage), generated_at, timestamps, soft deletes
+Relationships: belongs to ExtensionProgram; belongs to User (generator)
+Notes: NO approval gate (Admin-internal decision support); history kept -
+every generation creates a new row.
+
+6.17 RenderedHours
+Fields: id, faculty_id (FK), activity_id (FK; REQUIRED - only activity time
+counts toward rendered hours), date (the activity date), hours (decimal 3,2),
+source (auto | manual; auto = suggested from the activity schedule, manual =
+adjusted by faculty), status (pending | approved | rejected), submitted_by
+(FK users, nullable; auto-drafts have null until faculty submits),
+submitted_at (nullable), approved_by (FK users, nullable), approved_at
+(nullable), remarks (nullable; faculty note on adjustment and/or admin
+approval/rejection remarks), timestamps, soft deletes
+UNIQUE CONSTRAINT: (faculty_id, activity_id) - one rendered-hours entry per
+faculty per activity
+Relationships: belongs to Faculty; belongs to Activity; belongs to User
+(submitted_by / approved_by)
+
+6.18 Status Enumerations Reference
+- users.role: admin | secretary | faculty
+- communities.status: active | prospecting
+- programs.status: draft | ongoing | completed | cancelled
+- activities.status: draft | ongoing | completed | cancelled
+- activity_proposals.status: pending | approved | rejected
+- availability_requests.status: pending | accepted | declined
+- needs_assessments.review_status: pending | validated | returned
+- assessment_analyses.approval_status: draft | approved | discarded
+- assessment_analyses.status: pending | completed | failed
+- attendances.status: present | absent | excused | late
+- activity_imports.type: attendance | evaluation
+- program_objectives.status: not_started | on_track | achieved | not_met
+- program_narratives.status: pending | completed | failed
+- rendered_hours.status: pending | approved | rejected
+
+
+6.19 ActivityImport (v4.13)
+Fields: id, activity_id (FK), type (attendance | evaluation), file_path,
+original_name, imported_by (FK users), imported_at, rows_processed,
+rows_applied, rows_skipped, summary (JSON: the parse/confirm summary - row
+states and status counts for attendance; per-metric means plus before/after
+aggregates for evaluation), timestamps, soft deletes
+Relationships: belongs to Activity; belongs to User (importer)
+Notes: provenance only - imported attendance lives on attendances (6.7) and
+imported evaluation values aggregate into the activity's D13 columns; no
+per-beneficiary evaluation table exists. Every confirmed import archives the
+source file to the public disk under activity-imports/{type}/Y/m and writes
+a Spatie activity-log event (attendance_import / evaluation_import).
+
+
+7. CONTROLLED VOCABULARIES (NEEDS-ASSESSMENT FORM)
+---------------------------------------------------
+Complete dropdown option dictionary for the 6.9 form (v4.9 revision).
+Each field is annotated single (one answer) or multi (array of strings).
+Multi fields may declare an EXCLUSIVE option (selecting it clears all
+others; selecting anything else drops it) and/or a MAX selection count.
+Fields listed under "Conditional rules" below appear in the encoding
+wizard only when their parent answer allows it; flipping a parent to a
+hiding value clears the hidden children's values. The XLSX import does
+NOT enforce conditionals — parsed values are saved as-is per D10.
+
+Section I: Respondent Information
+- respondent_first_name / respondent_middle_name / respondent_last_name
+  (text): letters only (spaces, periods, hyphens, apostrophes, Ñ allowed —
+  enforced in the wizard UI only)
+- respondent_age (number): whole number 15-120
+- respondent_sex (single): ['Male', 'Female', 'Prefer not to say', 'Other']
+- respondent_civil_status (single): ['Single', 'Married', 'Widowed', 'Separated', 'Divorced']
+- respondent_religion (single, CLOSED LIST — no Other): ['Roman Catholic', 'Islam', 'Iglesia ni Cristo', 'Evangelical Christianity', 'United Church of Christ in the Philippines', 'Assemblies of God', 'Seventh-day Adventist Church', 'Philippine Independent Church (Aglipayan)', 'Baptist', "Jehovah's Witnesses", 'Church of Jesus Christ of Latter-day Saints (Mormon)', 'Methodist', 'Church of Christ', 'Buddhism', 'Indigenous / Tribal Religions', 'Prefer not to say']
+- respondent_educational_attainment — "Highest Educational Attainment"
+  (single): ['Elementary Undergraduate', 'Elementary Graduate', 'Junior High School Undergraduate', 'Junior High School Graduate', 'Senior High School Undergraduate', 'Senior High School Graduate', 'College Undergraduate', 'College Graduate', 'Vocational / Technical', 'Postgraduate', 'Other']
+
+Section II: Family Composition
+- family_composition (single, CLOSED LIST): ['2 members', '3 members', '4 members', '5 members', '6 members', '7 members', '8+ members']
+- household_member_currently_studying (single): ['Yes', 'No']
+- household_members_in_organization (single): ['1 member', '2 members', '3 members', '4 members', '5 members', '6+ members', 'None']
+
+Section III: Economic / Livelihood
+- livelihood_options — "Main Source of Household Livelihood" (single):
+  ['Agriculture', 'Farming', 'Fishing', 'Retail / sari-sari store', 'Food vending', 'Construction work', 'Transportation', 'Home-based income', 'Skilled labor', 'OFW family remittance', 'Unemployed', 'Other']
+- (v4.9 removed: interested_in_livelihood_training)
+- desired_training (single): ['Food processing', 'Rice/corn farming', 'Livestock raising', 'Vegetable production', 'Dressmaking / sewing', 'Soap making', 'Fish processing', 'Handicraft making', 'Beauty care', 'Household enterprise', 'Other']
+
+Section IV: Education
+- barangay_educational_facilities (multi): ['Elementary school', 'High school', 'Day care center', 'Library', 'Computer lab', 'Adult learning center', 'Scholarship support', 'Other']
+- interested_in_continuing_studies (single): ['Yes', 'No']
+- areas_of_educational_interest — "Area of Educational Interest" (single):
+  ['Literacy', 'Basic education', 'Computer literacy', 'TESDA skills', 'Agriculture training', 'Livelihood entrepreneurship', 'Food processing', 'Beauty care', 'Tailoring / sewing', 'Other']
+- preferred_training_time (single): ['Morning 8:00-12:00', 'Afternoon 1:00-5:00', 'Evening', 'Flexible']
+- preferred_training_days (multi, EXCLUSIVE 'Flexible'): ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Flexible']
+
+Section V: Health and Sanitation
+- common_illnesses — "Most Common Illness" (single): ['Fever', 'Cough / colds', 'Diarrhea', 'Hypertension', 'Diabetes', 'Asthma', 'Skin infection', 'Headache', 'Toothache', 'Respiratory illness', 'Other']
+- action_when_sick (single): ['Self-medication', 'Consult barangay health worker', 'Visit clinic', 'Go to hospital', 'Traditional healer', 'Ask family members', 'No action', 'Other']
+- barangay_medical_supplies_available (multi, EXCLUSIVE 'No supplies'): ['First aid kit', 'Paracetamol', 'Antibiotics', 'Vitamins', 'Bandages', 'Basic wound care', 'No supplies', 'Other']
+- has_barangay_health_programs (single): ['Yes', 'No']
+- benefits_from_barangay_programs (single): ['Yes', 'No']
+- programs_benefited_from (multi): ['Vaccination', 'Maternal and child health', 'Nutrition program', 'Health education', 'Disease prevention', 'Sanitation drive', 'None', 'Other']
+- water_source (single, CLOSED after removing 'Bottled water'): ['Deep well', 'Level II / piped', 'Community water system', 'Spring', 'Rainwater', 'River / stream', 'Other']
+- water_source_distance (single): ['Just outside', '250 meters away', '500 meters away', 'More than 500 meters', 'No idea']
+- garbage_disposal_method (single): ['Burning', 'Open dumping', 'Burial', 'Segregation / composting', 'Collected by barangay', 'Burying', 'Other']
+- has_own_toilet (single): ['Yes', 'No']
+- toilet_type (single): ['Flush toilet', 'Pour flush', 'Ventilated improved pit', 'Shared toilet', 'Open pit', 'No toilet', 'Other']
+- keeps_animals (single): ['Yes', 'No']
+- animals_kept (multi): ['Chicken', 'Duck', 'Pig', 'Goat', 'Cow', 'Carabao', 'Dog', 'Cat', 'Other']
+
+Section VI: Housing and Basic Amenities
+- house_type (single): ['Concrete / solid house', 'Semi-concrete', 'Wooden house', 'Bamboo / nipa', 'Makeshift / improvised', 'Other']
+- tenure_status (single): ['Owner', 'Renter', 'Living with relatives', 'Caretaker', 'Informal occupancy', 'Other']
+- has_electricity (single): ['Yes', 'No']
+- light_source_without_power (single): ['Kerosene lamp', 'Solar lamp', 'Candles', 'Battery lantern', 'Generator', 'None', 'Other']
+- appliances_owned (multi, CLOSED LIST): ['Television', 'Radio', 'Cellphone', 'Electric fan', 'Refrigerator', 'Rice cooker', 'Gas stove', 'Washing machine']
+
+Section VII: Recreation, Organization, and Social Participation
+- barangay_recreational_facilities (multi, CLOSED LIST): ['Playground', 'Basketball court', 'Community center', 'Park', 'Sports field', 'Function hall']
+- use_of_free_time (multi, CLOSED LIST): ['Household chores', 'Resting', 'Watching TV', 'Socializing', 'Community meeting', 'Sports / recreation', 'Helping in livelihood work']
+- member_of_organization (single): ['Yes', 'No']
+- organization_types — "Organization Type" (single, CLOSED LIST): ['Farmers group', 'Women organization', 'Youth group', 'Fisherfolk group', 'Cooperative', 'Religious organization', 'Barangay council']
+- organization_meeting_frequency (single): ['Weekly', 'Monthly', 'Twice a month', 'Quarterly', 'Yearly', 'Not regular']
+- organization_usual_activities — "Organization Usual" (single, CLOSED LIST): ['Meetings', 'Training', 'Community clean-up', 'Livelihood activities', 'Disaster response', 'Planning sessions']
+- position_in_organization (single, CLOSED LIST): ['Officer', 'Member', 'Volunteer', 'Leader', 'Treasurer', 'Secretary', 'President']
+
+Section VIII: Problems and Priorities (all multi, CLOSED LISTS, MAX 3)
+- family_problems (multi, MAX 3): ['Low income', 'Insufficient food', 'Lack of employment', 'Large family size', 'Poor housing', 'Education expenses', 'Medical expenses', 'Family conflict']
+- health_problems (multi, MAX 3): ['Malnutrition', 'High blood pressure', 'Diabetes', 'Respiratory illness', 'Skin disease', 'Infectious disease', 'Poor sanitation', 'Limited medical access']
+- educational_problems (multi, MAX 3): ['Lack of school supplies', 'Distance to school', 'No available scholarship', 'Poor reading skills', 'Low school attendance', 'No internet access']
+- employment_problems (multi, MAX 3): ['Lack of jobs', 'Low wages', 'No skills training', 'Seasonal employment', 'Underemployment', 'Transport to work']
+- infrastructure_problems (multi, MAX 3): ['Poor roads', 'No drainage', 'No electricity', 'No potable water', 'Poor sanitation', 'No flood control', 'No community facilities']
+- economic_problems (multi, MAX 3): ['Low income', 'Price inflation', 'Debt', 'Lack of capital', 'Market access', 'No savings']
+- security_problems (multi, MAX 3): ['Illegal drugs', 'Crime', 'Traffic issues', 'Land dispute', 'Domestic conflict', 'Fire hazard', 'No street lights']
+
+Section IX: Service Ratings and Summary
+- barangay_service_ratings (rating scale): ['Very poor', 'Poor', 'Fair', 'Good', 'Very good']
+- available_for_training (single): ['Yes', 'No']
+- reason_not_available (single, CLOSED LIST): ['Work schedule conflict', 'Health reasons', 'Family obligation', 'Distance / transportation', 'No interest']
+
+Conditional rules (v4.9; wizard-side show/hide + clear-on-hide):
+1. interested_in_continuing_studies = Yes -> show areas_of_educational_interest
+2. has_barangay_health_programs = Yes -> show benefits_from_barangay_programs
+3. benefits_from_barangay_programs = Yes -> show programs_benefited_from
+4. has_own_toilet = Yes -> show toilet_type
+5. keeps_animals = Yes -> show animals_kept
+6. has_electricity = Yes -> show appliances_owned; = No -> show
+   light_source_without_power; unanswered -> both hidden (values cleared)
+7. member_of_organization = Yes -> show organization_types,
+   organization_meeting_frequency, organization_usual_activities,
+   position_in_organization
+8. available_for_training = No -> show reason_not_available
+9. household_members_in_organization = 'None' (the household count includes
+   the respondent) -> Member of Organization is hidden and auto-answered
+   'No' (org detail fields hidden and cleared); changing away from None
+   re-shows the question with its value cleared for an explicit re-answer
+
+General rules for all dropdowns:
+- dropdowns/chips for single-choice fields; checkbox/multi-select arrays for
+  multiple-answer fields
+- keep values in consistent title case; avoid mixed-case duplicates
+- "Other (please specify)" exists ONLY on lists annotated with 'Other' —
+  CLOSED LISTS have no Other, and unknown values on import become
+  per-field on-screen errors (D9 applies only where Other exists)
+- store both the selected option and the raw additional text when "Other" is
+  chosen
+- JSON-based multi fields store arrays of strings; single fields store
+  nullable strings
+- do not leave sensitive data as plain text when a fixed list exists
+
+
+8. CORE BUSINESS LOGIC
+-----------------------
+8.1 Program Tracking
+- each extension program is traceable from concept to completion
+- each program can have assigned communities, beneficiaries, activities, and
+  budget; progress is visible to administrators and faculty
+- every status transition writes an activity log entry
+
+8.2 Participation Monitoring
+- attendance is recorded per beneficiary per activity with defined statuses
+  via the official per-activity XLSX import (v4.13) — manual attendance
+  entry is not part of the MVP
+- reach is measured as DISTINCT beneficiaries served (never raw attendance
+  count)
+- engagement is estimated through repeated interactions
+
+8.3 Budget Accountability
+- allocated vs actual expenditures compared at program level; activity
+  attribution optional
+- entries exceeding allocation: the save succeeds, a warning badge persists
+  on the program, and a log entry is written (D7)
+- reports surface over- and under-utilization for director evaluation
+
+8.4 Approval Workflow
+- proposals and assessments have visible status transitions per the enums in
+  6.18; every stage writes an audit/activity log (Spatie Activity Log -
+  REQUIRED)
+- Admin approves/rejects proposals with remarks; Admin creates availability
+  requests and Faculty responds (accept/decline)
+- Secretary validates assessments; Admin approves/discards AI drafts
+- separation of duties: no role can perform another role's approvals
+
+8.5 AI-Assisted Insights (single pipeline, two output types)
+- shared backbone: queued job, retry with backoff, terminal failure state
+  persisted as failed with error_message; the UI shows a graceful fallback
+- ACCESS: BOTH output types are Admin (Director)-only. Only the Admin can
+  generate, view, and approve AI outputs; Secretary and Faculty have NO AI
+  access (D4). This is the single unified AI access rule for the whole system.
+- Output type 1 - AssessmentAnalysis (community): input is AssessmentSummary
+  aggregates ONLY (D3 - no PII transmission); output is summary + prioritized
+  interventions stored as an AssessmentAnalysis draft; Admin approval
+  required before institutional use (D4)
+- Output type 2 - ProgramNarrative (program): input is aggregate
+  program-level data ONLY (ProgramObjective statuses, 8.6 KPIs, activity
+  completion, budget warnings; no PII); output is executive narrative +
+  risks + recommended next actions stored as ProgramNarrative; Admin-only
+  generate/view, NO approval gate (internal decision support); history kept
+  per program
+- both output types record provenance metadata (model, prompt version,
+  generated_at/by) for audit
+- NO mock/demo mode exists (D12): every generation calls the live OpenAI
+  API; the persisted terminal failure state ("analysis unavailable" /
+  "narrative unavailable" first-class UI states) is the only fallback. API
+  key and quota are verified before any demo or defense run.
+
+8.6 KPI METRIC DICTIONARY (single source of truth for all dashboards/reports)
+- Participation Rate (%)
+    = DISTINCT beneficiaries with >= 1 attendance in the program
+      / beneficiaries linked to the program * 100
+- Activity Completion Rate (%)
+    = activities with status completed / (total activities - cancelled
+      activities) * 100
+- Attendance Consistency (%)
+    = mean over participating beneficiaries of
+      (activities attended / activities eligible to attend) * 100
+- Budget Utilization (%)
+    = SUM(budget_utilizations.amount for program) / allocated_budget * 100
+- Knowledge Gain (points)
+    = MEAN(post_assessment_score - pre_assessment_score) across activities
+      in the program
+- Cost per Beneficiary (currency)
+    = SUM(budget_utilizations.amount for program)
+      / DISTINCT beneficiaries served by the program
+- Community Reach (count)
+    = DISTINCT beneficiaries served, grouped by municipality/barangay for
+      map/bar charts
+- Rendered Hours (hours)
+    = SUM(rendered_hours.hours) per faculty where status = approved
+      (tracked per faculty per semester; not a ProgramObjective indicator)
+
+KPI metric key list (locked vocabulary for ProgramObjective.kpi_metric):
+- participation_rate, activity_completion_rate, attendance_consistency,
+  budget_utilization, knowledge_gain, cost_per_beneficiary, community_reach
+- Rendered hours is a faculty-level KPI (8.9) and is NOT part of the
+  ProgramObjective.kpi_metric vocabulary.
+- Objective indicators MUST reference one of these exact keys, or be
+  qualitative (kpi_metric = NULL)
+
+Objective actuals and status derivation:
+- numeric objectives (kpi_metric set) store actual_value = NULL and derive
+  their EFFECTIVE actual LIVE from the 8.6 formula over the program's data;
+  if the formula yields no data yet (e.g. no scored activities), any
+  stored/manual value is used as fallback. Stored actual_value is
+  authoritative only for qualitative objectives.
+- objective status and progress ALWAYS derive from the effective actual
+  (never a stale column) on dashboards, reports, calendar, at-risk lists,
+  and the deadline scheduler
+- achieved: actual_value >= target_value
+- not_met: target_date passed and actual_value < target_value
+- on_track: target_date not passed and 0 < actual_value < target_value
+- not_started: no target/actual activity yet
+- objective progress is always displayed as baseline -> target -> actual
+  (single target, no per-quarter milestones)
+
+Bench markers must derive from real targets, never invented numbers
+(v4.14): the program-hub scorecard uses results-framework objective targets
+(hidden when none exists); the admin dashboard uses the combined program
+beneficiary target, the allocation-weighted mean of budget_utilization
+objective targets, and live 8.6 status counts.
+
+Target benchmarks (LNU/CHED-aligned; reference values for dashboards and
+reports, NOT hard system rules):
+- Input: budget utilization target >= 90%; staff involvement tracked
+- Process: activity timeliness target >= 95% on-schedule
+- Output: beneficiaries reached target >= 500 per quarter
+- Outcome: improvement rates (e.g., >= 20% skill uplift)
+- Impact: sustainability index (e.g., >= 80% of programs self-sustaining
+  after 2 years)
+
+8.7 Data Quality Rules
+- beneficiary de-duplication warning per 5.4 (warn + confirm; no silent
+  merge)
+- controlled vocabularies enforced server-side for every enumerated field
+- "Other" selections must persist companion free text
+- AssessmentSummary uniqueness enforced at database level (community_id,
+  quarter, year)
+
+8.8 Scheduling Rules (HARD CONSTRAINTS)
+- Activity dates within program range: an Activity's planned dates MUST fall
+  within the parent ExtensionProgram's [planned_start_date,
+  planned_end_date]. Enforced on manual create/edit, rescheduling (5.5), and
+  proposal approval/auto-create (5.12 validates proposed dates against the
+  target program before approval). UI constrains date pickers to the program
+  range; server-side validation is the backstop.
+- Faculty assignment hard-block: a Faculty member cannot be assigned to an
+  activity whose schedule overlaps any other activity they are already
+  assigned to. The save is REFUSED with a clear message (no
+  warn-and-confirm). Overlap = two activities whose date ranges overlap AND
+  whose start/end times overlap.
+- Availability request acceptance hard-block: a Faculty member cannot ACCEPT
+  an availability request whose date/time overlaps their accepted requests
+  or existing activity assignments. The accept is refused.
+- Activity times: activities carry start_time/end_time (6.5); availability
+  requests default their date/time from the linked activity but the Admin
+  may adjust (6.8).
+- Calendar conflict markers: events that violate the overlap rule are
+  flagged red with a "conflict" indicator on the calendar (5.9).
+
+8.9 Rendered Hours (faculty service hours)
+- Auto-draft: when an Activity is marked Completed, the system creates a
+  RenderedHours draft for EACH assigned faculty with hours = activity
+  duration (end_time - start_time), source = auto (6.17).
+- Overnight/invalid schedule guard: if end_time <= start_time, no auto-draft
+  is generated; the faculty records hours manually (source = manual).
+- Faculty review & adjust: faculty may adjust hours DOWN for partial
+  participation (with a note), never above the auto-computed duration.
+- Submission: faculty submits the draft -> status pending.
+- Approval: Admin approves or rejects with remarks (Admin-only gate).
+- Locked after approval: approved entries are immutable and audit-logged
+  (Spatie); no edits after approval.
+- Uniqueness: one entry per faculty per activity (faculty_id, activity_id
+  unique).
+- KPI: Rendered Hours = SUM(approved hours) per faculty per semester (8.6);
+  surfaced on the faculty dashboard and the faculty rendered-hours report.
+
+
+9. TECHNICAL STACK
+-------------------
+All choices locked:
+- Laravel 11+ / PHP 8.2+
+- MySQL or MariaDB (host-dependent, either acceptable)
+- Laravel Breeze (Blade stack) for authentication scaffolding
+- Livewire 3 + Blade templates
+- Tailwind CSS (Vite production build; the prototype's Play CDN is
+  dev-only) + Alpine.js
+- Chart.js (bundled locally via npm; no CDN)
+- calendar implemented as a custom month-grid + day panel + list view in the
+  app's own design system (no external CDN)
+- maatwebsite/excel (PhpSpreadsheet) for official XLSX template import
+- Spatie Activity Log (REQUIRED - audit trail backbone)
+- Spatie Activity Log (REQUIRED - audit trail backbone)
+- Google Gemini API, flash-class model (free tier; e.g. gemini-3.6-flash
+  class) generated synchronously in-request (immediate result; owner
+  decision v4.4, supersedes the earlier queued-jobs spec) — supersedes the
+  earlier OpenAI spec, sanctioned by the project owner (v4.2); all pipeline
+  rules unchanged (D3/D4/D12)
+- local public disk storage for uploads (S3/cloud: future work)
+- Laravel database notifications
+- roles via a single role column + middleware (no permission packages)
+
+
+10. SYSTEM ARCHITECTURE
+------------------------
+10.1 Presentation Layer
+- Blade views, Livewire components, Tailwind UI patterns
+- admin/secretary/faculty dashboards; program detail hub
+- print-optimized report layouts
+
+10.2 Application Layer
+- controllers, services, Livewire components
+- form-request validation mirroring all vocabularies in Section 7
+- approval transitions implemented in dedicated service classes with
+  activity logging
+
+10.3 Data Layer
+- MySQL database, Eloquent models, JSON casts
+- relationships and pivots per Section 6
+- soft deletes everywhere; unique constraint on AssessmentSummary
+- activity log tables (Spatie)
+
+10.4 AI/Analytics Layer
+- queued job pipeline with two output types: (1) gather AssessmentSummary
+  aggregates -> build anonymized prompt -> call LLM -> persist
+  AssessmentAnalysis; (2) gather program-level aggregates (objectives, KPIs,
+  activities, budget) -> build anonymized prompt -> call LLM -> persist
+  ProgramNarrative
+- retry with backoff; terminal failure state surfaced in UI
+- prompt template versioned in metadata for reproducibility
+- access control: both AI output types are Admin-only (D4)
+
+10.5 Security Layer
+- role middleware + route protection
+- upload MIME/size validation
+- session hardening, login throttling
+- DPA-aligned AI boundary (aggregation-before-send)
+- audit logs for all sensitive actions
+
+
+11. IMPLEMENTATION PHASES
+--------------------------
+IMPLEMENTATION STATUS: ALL PHASES PENDING - the build starts from scratch.
+MVP = Phases 1-5; Phase 6 hardens and ships the system.
+
+Phase 1: Foundation
+- set up Laravel app and database
+- Breeze auth + role column/middleware
+- User/Faculty models, employee ID generation
+- core seeders with realistic Leyte-context sample data (Tacloban/Leyte
+  barangays, Filipino names, plausible livelihoods)
+- default accounts seeded exactly per 2.4 (Director/Secretary + the four
+  named faculty accounts)
+- SEEDER REFERENCE RULE: before writing any seeder, check the
+  prev/seeders/ folder from the previous build for reusable reference
+  (existing seeder classes plus seed data lists: NeedsAssessmentSeeder.php,
+  ExtensionProgramSeeder.php, namelist.txt,
+  listofschoolsandcommunities.txt). Reuse/adapt real names, communities,
+  and program definitions from there instead of inventing data from
+  scratch; only fill gaps with new realistic sample data
+- SEEDER REMAPPING RULE: legacy seeder data is re-keyed before reuse -
+  needs-assessment values mapped to the Section 7 vocabularies (e.g.
+  'Catholic' -> 'Roman Catholic', 'NAWASA' -> 'Level II / piped',
+  'Oil lamp' -> 'Kerosene lamp', 'Half concrete/wood' -> 'Semi-concrete'),
+  quarters as integers 1-4 (never 'Q1' strings), JSON fields as arrays of
+  strings, role 'admin' (legacy 'director' rows), the fixed 2.4 accounts
+  with auto-generated LNU-{year}-{seq} employee IDs (legacy F001/F002
+  discarded), beneficiary_categories as a JSON array of strings
+
+Phase 2: Core Data Modules
+- communities, beneficiaries (incl. dedup warning), programs (detail hub),
+  activities, assessments (structured encoding form + XLSX import), budgets
+- AUTHOR the official needs-assessment XLSX template first (fixed headers +
+  context header row per D11); the import flow is built against it
+
+Phase 3: Workflow Modules
+- proposal submission -> admin approval (+ Special Order option, auto-create
+  Activity)
+- availability request & response flow (admin-initiated, faculty
+  accept/decline)
+- assessment validation (secretary)
+- rendered hours flow (auto-draft on activity completion, faculty submit,
+  admin approve)
+- database notifications
+
+Phase 4: Dashboard and Reporting
+- KPI cards per 8.6, charts, recent activity, action center
+- custom month-grid calendar (three feeds, conflict markers)
+- print-optimized institutional reports
+
+Phase 5: AI & Decision Support (ONE PIPELINE, TWO OUTPUT TYPES, ADMIN-ONLY)
+- AssessmentSummary -> AI insight pipeline with Admin approval gate
+  (AssessmentAnalysis)
+- ProgramNarrative pipeline: program-level aggregates -> executive summary,
+  risks, recommended next actions; Admin-only generate/view; history views
+- failure states and history views for both output types
+
+Phase 6: Hardening & Deployment
+- query optimization, permission/workflow validation passes
+- feature tests for the three approval workflows
+- production environment setup, nightly DB backup script
+- security testing, final documentation
+
+
+12. DASHBOARDS & REPORTS
+-------------------------
+12.1 Dashboards
+- the six dashboards are delivered as ONE Admin Analytics page with six
+  tabs: Overview, Program Performance, Budget Utilization, Community Reach,
+  Faculty Contribution, Pending Actions
+- the three role dashboards (admin/secretary/faculty) are the daily-entry
+  pages; each program's detail hub carries its own KPI cards + results
+  framework plus a v4.14 KPI scorecard vs targets: 8.6 actuals auto-computed
+  live, dashed target markers ONLY from the program's results-framework
+  objective targets (no target = no marker), and cost per beneficiary,
+  knowledge gain and average satisfaction tiles; a per-activity attendance
+  & satisfaction card charts attendees (present/late) of completed
+  activities with each activity's satisfaction rating
+- Admin dashboard sections (v4.14): KPI summary cards (programs with a
+  status mini-seg; distinct beneficiaries served vs the combined program
+  target with a dashed target marker; budget used vs allocated with
+  over-allocation red (D7) and the objective target marker; objectives
+  achieved with a live status mini-seg + legend; pending approvals with a
+  proposals/availability/hours breakdown); program portfolio doughnut with
+  the program total in the center; budget utilization grouped bars
+  (allocated vs utilized, over-allocated bars red, ₱ axis, utilization-rate
+  tooltip per D7); community reach as a horizontal top-10 chart grouped by
+  municipality · barangay with the remainder collapsed into "Others";
+  recent activity panel; action center; AI panel
+- ACTION CENTER contents: proposals awaiting approval, availability requests
+  awaiting faculty response, rendered hours awaiting approval, programs
+  nearing deadline, AI analyses awaiting Admin approval, objectives at risk
+  (not_met / on_track approaching target_date)
+- Admin dashboard adds an "AI" panel combining the community assessment
+  analyses queue (generate/approve/discard) and the Program Narratives panel
+  (latest health label per program), plus "Generate program narrative" on
+  each program detail screen. Only the Admin sees any AI surfaces.
+- Faculty dashboard: assigned programs/activities, personal participation
+  stats, own proposals status, pending availability requests to respond to,
+  "My Rendered Hours" summary
+- Secretary dashboard: pending validations queue, compliance tracker (no AI
+  surfaces)
+
+12.2 Institutional Reports (print-optimized views with university letterhead
+and signatory blocks)
+Four report views:
+1. Annual Extension Performance Report (sections I-VII)
+2. Program Results Framework (per program: each objective's statement,
+   baseline, target, actual, status, evidence notes)
+3. Faculty Rendered Hours (per semester, by activity and program)
+4. Community Partner Impact Summary
+Additional report content: number of programs per year, total beneficiaries
+served (distinct), faculty participation by program, budget utilization by
+project, assessment outcomes and approved recommendations, program executive
+narrative (latest ProgramNarrative per program with generated_at provenance;
+placeholder until the AI phase).
+All figures MUST derive exclusively from the 8.6 metric dictionary.
+
+
+13. SECURITY & PRIVACY
+-----------------------
+- role-based access control via middleware; director functions restricted to
+  the admin role
+- admin-only account provisioning
+- login rate limiting/throttling; session hardening
+- file upload validation: max 10 MB per file; allowed types pdf/jpg/png/
+  docx/xlsx; MIME + extension validated; sanitized filenames; stored on the
+  local public disk under dated folders
+- CSRF protection, mass-assignment guards, authorization policies on every
+  controller/Livewire action
+- DATA PRIVACY ACT COMPLIANCE:
+  * beneficiary PII (income, health, household data) never leaves the system
+    unaggregated
+  * AI requests contain aggregate statistics only (D3)
+  * AI access is Admin-only; AssessmentAnalysis outputs are drafts until the
+    Admin (named officer) approves them (D4); ProgramNarrative is
+    Admin-internal decision support with recorded provenance
+- audit logs (Spatie Activity Log) on all sensitive actions: approvals,
+  rejections, deletions, account changes
+- nightly database backups (deployment checklist item)
+
+
+14. DESIGN DECISIONS
+---------------------
+Final for this build; defend as-is.
+
+D1. Quarter convention: calendar quarters (Q1 = Jan-Mar ... Q4 = Oct-Dec).
+D2. Role model: three fixed roles (admin, secretary, faculty) in a single
+    role column; no permission packages.
+D3. AI privacy policy - aggregation-before-send: only counts, percentages,
+    and distributions (from AssessmentSummary aggregates or program-level
+    aggregates such as objective statuses and 8.6 KPIs) are transmitted to
+    the LLM API. Raw respondent data never leaves the server.
+D4. Human-in-the-loop, Admin-only AI: only the Admin can generate, view, and
+    approve AI outputs. AssessmentAnalysis records are drafts with status
+    "draft"; only the Admin moves them to "approved", and approved content
+    is what appears in institutional outputs. ProgramNarrative is
+    Admin-internal decision support with NO approval gate, but full
+    provenance is recorded for audit.
+D5. Needs-assessment data enters via the manual structured form OR the
+    official XLSX template import (one file = one respondent).
+D6. Reports are browser-printable views in the MVP; PDF/Excel generation is
+    future work.
+D7. Budget entries exceeding allocation trigger a visible warning but never
+    hard-block (recorded against program notes and the activity log).
+D8. Audit logging (Spatie Activity Log) is REQUIRED, not optional.
+D9. XLSX import validation: unknown or misspelled values auto-map to the
+      "Other" option with the raw text preserved as companion free text in the
+      other_text column (per Section 7 rules) — but ONLY for vocabularies
+      that still offer "Other" (v4.9: several lists are CLOSED and carry no
+      Other; unknown values there become per-field on-screen errors).
+      Imports never hard-reject a file; the on-screen per-field error list
+      reports any fields that could not be mapped.
+D10. XLSX import confirmation: the uploader uploads the file, the system
+     shows a preview modal with parsed values plus any per-field errors, and
+     the record is only created when the uploader confirms. Validation
+     errors are shown on screen only (no import log table).
+D11. The XLSX import template is the official, downloadable template
+      distributed with the system. It is AUTHORED by this project as a Phase
+      2 deliverable (none exists upstream). As of v4.8 the needs-assessment
+      template is a VERTICAL form: fixed field labels in column A (grouped
+      under Section I-IX separator rows), shaded answer cells in column B,
+      and fill-up guides in column C (full Section 7 option lists); the
+      context block (community, quarter, year, optional proposal reference)
+      leads the sheet. Single-choice / Yes-No / reason answer cells carry
+      NON-STRICT dropdown suggestions (typed free text still accepted, D9
+      intact). Users do not map labels to fields; the import flow is built
+      against this layout. The beneficiary import template (v4.7) remains
+      horizontal (one row = one beneficiary). As of v4.13 the activity
+      attendance and evaluation templates are GENERATED on demand per
+      activity (enrolled roster pre-filled, 500-row cap) rather than
+      authored static files; the import flow is unchanged
+      (upload -> parse -> preview -> confirm).
+D12. AI integration is LIVE-API ONLY: no mock or demo mode is built. The
+     first-class terminal failure states ("analysis unavailable" /
+     "narrative unavailable") are the only fallback. The API key and quota
+     are verified before any demo or defense run.
+D13. Activity evaluation data is stored as single aggregate columns on
+     activities (pre_assessment_score, post_assessment_score,
+     satisfaction_rating). No separate evaluation-submissions table exists
+     in the MVP. As of v4.13 these columns are populated by the
+     per-activity evaluation XLSX import, which validates per-row values and
+     averages them (MEAN) per metric; a metric with no values in the file
+     keeps its existing value (per-metric merge).
+
+
+15. SUCCESS CRITERIA
+---------------------
+The system is successful when:
+- admins can monitor all major extension activities in one place
+- faculty can submit proposals, encode assessments, and update their
+  information
+- proposals and assessments move through a clear, auditable workflow
+- the proposal -> approval -> activity -> assessment chain works end-to-end
+  without manual database edits
+- AI analyses are always human-approved before institutional use, and their
+  provenance (model, timestamp, approver) is traceable
+- all dashboard KPIs match the 8.6 metric dictionary exactly
+- data is accurate, accessible, and auditable
+- dashboards provide timely decision-ready insights
+- the system reduces manual effort in extension monitoring and evaluation
+
+
+16. PROJECT SUMMARY
+--------------------
+SmartCEMES is a university extension management system designed to improve
+how Leyte Normal University monitors community extension programs and
+evaluates their impact. It combines data management, faculty workflows,
+financial tracking, approval processes, and one well-governed AI-assisted
+analysis pipeline into a single integrated platform.
+
+The system is built around one central purpose:
+To make extension work visible, measurable, accountable, and actionable.
+
+REVISION HISTORY
+- v4.1: clarified prototype reference policy (docs/prototype = primary v4
+  reference and floor-not-ceiling; prev/prototype = v3 historical only),
+  added seeder remapping rule (Section 7 vocabularies, integer quarters,
+  2.4 accounts, auto employee IDs), XLSX template authored as Phase 2
+  deliverable, live-API-only AI with no mock mode (D12), race-safe employee
+  ID generation, communities.status vocabulary (active | prospecting),
+  overnight rendered-hours auto-draft guard, Activity aggregate score
+  columns confirmed (D13), Vite/Tailwind production build note.
+- v4.2: AI provider changed from OpenAI to Google Gemini (flash class, free
+  tier) by owner decision; pipeline rules (queued jobs, aggregation-only
+  inputs D3, Admin-only gates D4, live-API-only D12, provenance metadata)
+  unchanged; references to "gpt-4o-mini" in prototype demo data are
+  historical demo strings.
+- v4.3: default model id updated gemini-2.0-flash → gemini-3.6-flash after
+  Google retired the 2.0 flash endpoint (live API 404; surfaced by smoke
+  test 2026-09-13). No pipeline rule changes (D3/D4/D12 intact).
+- v4.4: AI generation dispatch changed from queued jobs to synchronous
+  in-request execution (immediate generation; owner request 2026-09-13) —
+  the "generating" pending state is transient within the request; failure
+  still persists the first-class unavailable state (D12). Jobs remain
+  ShouldQueue-compatible for future async use. D3/D4 rules unchanged.
+- v4.5: Communities module renamed "Communities & Partner Schools" —
+  the communities registry gains `type` (community | school) and
+  `school_level` (elementary | secondary | higher_ed) columns (6.3);
+  demo geography corrected (Brgy. El Reposo and Brgy. Salvacion are
+  Tacloban City barangays, previously misassigned to Palo/Tanauan) and
+  the seed set expanded to 46 communities + 12 partner schools verified
+  against PhilAtlas/PSA barangay lists.
+- v4.6: confidence_score on AssessmentAnalysis (6.11) and ProgramNarrative
+  (6.16) changed from "provider-reported" to a DERIVED data-confidence
+  heuristic (Gemini reports no confidence indicator; score = sample/coverage
+  + output completeness, clamped [0.10, 0.95], basis recorded in metadata.
+  confidence_basis) — still displayed as guidance only. No pipeline rule
+  changes (D3/D4/D12 intact).
+- v4.7: Beneficiary XLSX import added (5.4) — authored official template
+  (fixed headers, one row = one beneficiary, max 500), parse → preview →
+  confirm flow (D10), unknown categories auto-map to "Other" (D9), duplicate
+  and error rows skipped per row, imported rows auto-enrolled into the
+  uploading program; Admin-only. phone surfaced as "Contact number" (6.6)
+  with blank/default 09123456789 (owner request; migration backfilled
+  existing rows). Route /beneficiaries/template (Admin).
+- v4.8: Needs-assessment import template redesigned as a VERTICAL form
+  (D11/5.6, owner request) — column A field labels with Section I-IX
+  separator rows, shaded answer cells in column B, fill-up guides in
+  column C (full Section 7 option lists), NON-STRICT dropdowns on
+  single-choice / Yes-No / reason cells (typed free text still accepted;
+  D3/D9/D10 unchanged). Template filename assessment-template-v2.xlsx;
+  horizontal v1 files are no longer accepted (clear re-download error).
+  Import parser now matches labels in column A; guides, separators, and
+  unknown rows are ignored.
+- v4.9: Needs-assessment instrument adjustments (owner request): 16 former
+  multi-select fields became SINGLE-select with renamed labels (Highest
+  Educational Attainment, Main Source of Household Livelihood, Area of
+  Educational Interest, Most Common Illness, Organization Type,
+  Organization Usual); civil status drops Live-in/Unknown, adds Divorced;
+  religion replaced by a 16-option closed list; water source drops Bottled
+  water; appliances/recreational facilities/use of free time/org fields/
+  all 7 problem lists drop "Other" (closed lists); problems capped at 3
+  selections per field; Preferred Training Days "Flexible" and Medical
+  Supplies "No supplies" are exclusive options; 9 conditional show/hide
+  rules (incl. Household-Members-in-Org = None auto-deriving Member of
+  Organization = No); name inputs are letters-only (wizard UI);
+  interested_in_livelihood_training removed from the instrument and schema;
+  reason_not_available is a closed 5-option single-select. Template
+  assessment-template-v3.xlsx (long vocabs fall back to a hidden Lists
+  sheet for range-based dropdowns). Data migration flattens the former
+  JSON arrays and remaps dropped values.
+- v4.10: Objective-status derivation ENFORCED everywhere (8.6 was already
+  the spec; five consumers were reading the stale program_objectives.status
+  column instead of deriving): admin dashboard at-risk list, analytics
+  objective chart + pending actions, program-narratives "Objectives met"
+  chip, and the 5.14 deadline scheduler now all derive status live via
+  the 8.6 effective-actual rules (the stored column is never written or
+  read; it remains schema-only). Objective manager UX (5.2): the manager
+  list shows derived status badge, progress bar, baseline → target →
+  actual, and an actual-source tag (auto live / stored fallback / manual);
+  the objective form hides the Manual actual field for numeric KPI
+  objectives (switching metric mode clears it — a manual actual is never
+  silently discarded on save) and shows a live "Currently computed"
+  preview from program data; objective create/update/delete now write
+  Spatie   activity-log entries (D8).
+- v4.11: Program/employee code generation made drift-proof (owner-reported
+  duplicate EXT-2026-001 on program creation, 2026-09-15). Two defects
+  fixed: (1) ExtensionProgram::nextCode() called SequenceService::next()
+  statically (fatal on first form use — the New Program modal was the only
+  runtime caller and had no test coverage); (2) seeders hardcode codes
+  (EXT-2026-001..006, LNU-2026-0001..) without reserving sequence slots,
+  so the sequences row starts behind the data and hands out duplicates.
+  SequenceService::next() now accepts a floor: the reserved value is
+  max(sequence row, floor) + 1, where the floor is the max code suffix
+  already stored (soft-deleted rows included — the unique index applies
+  to them). The locked sequence row remains the serializer (5.1
+  read-max-then-write prohibition intact); the floor only ever raises it,
+  self-healing seeded/manual drift. EmployeeIdService received the same
+  floor treatment. Failed inserts still consume a sequence value (gaps
+  are acceptable; duplicates are not).
+- v4.12: Secretary beneficiary management (owner request 2026-09-16):
+  ProgramPolicy gains manageBeneficiaries (Admin OR Secretary) scoping the
+  hub's beneficiary cluster (enroll existing / register new with dedup /
+  XLSX import / unenroll) and attendance recording; attendance viewing
+  stays open to all hub viewers. New Secretary-only page /beneficiaries
+  ("Manage Beneficiaries") lists programs with Beneficiaries/Attendance
+  deep links (hub tab is now URL-bound). Secretary nav gains the Management
+  section (the phantom never-built "Compliance Tracker" config entry was
+  removed). Director-only powers unchanged: program edit, objectives,
+  activity CRUD, budget, AI. Form-opener actions (newObjective,
+  editObjective) gained admin guards for defense-in-depth (§11 rule 4).
+   Blueprint 2.2 and 5.4 updated.
+- v4.13: Activity records imports (owner request 2026-09-16; owner decisions:
+  attendance recording becomes IMPORT-ONLY — the manual attendance panel is
+  removed; evaluation scores import the same way and aggregate into the
+  activity columns, D13 intact). Per-activity XLSX templates are GENERATED
+  on demand (enrolled roster pre-filled, non-strict validations, 500-row
+  cap) and downloadable from the hub Records modal by Admin/Secretary
+  (routes activities.attendance-template / activities.evaluation-template);
+  imports run parse -> per-row preview (D10, screen-only errors) -> confirm.
+  Attendance rows are matched by Beneficiary ID + name against the program
+  roster and upserted on (activity, beneficiary, planned_start_date); one
+  attendance date per activity — multi-day attendance remains future work
+  (1.2). Evaluation rows aggregate per-metric means into
+  activities.pre_assessment_score / post_assessment_score /
+  satisfaction_rating; a metric with no values in the file leaves the
+  existing aggregate untouched. Confirmed imports archive the source file
+  and record provenance in the new activity_imports table (6.19) with
+  Spatie events attendance_import / evaluation_import; both imports are
+  Admin/Secretary (manageBeneficiaries guard, 5.4) while viewing stays open
+  to all hub viewers. Sections 1.1/1.2, 2.2/2.3, 5.5/5.6, 6.5/6.7, 8.2,
+  D11/D13 updated.
+- v4.14: Admin dashboard + program hub UI redesign (owner-approved
+  2026-09-16; the prototype2 review mockups ported to Blade/Livewire).
+  KPI cards gain dashed target markers (.marker), status/objective mini-segs
+  (.mini-seg) and legend dots; the program portfolio chart becomes a
+  doughnut with the program total in the center; budget bars turn red for
+  over-allocated programs (D7) with ₱ axis ticks and utilization-rate
+  tooltips; community reach becomes a horizontal top-10 grouped by
+  municipality · barangay with the remainder collapsed into "Others"; the
+  action center moves above the AI panel and AI narrative cards show the
+  latest executive summary text. Hub scorecard targets come ONLY from
+  results-framework objectives (marker hidden otherwise). Review-found
+  fixes included: Analytics pending tab now lists real draft AI analyses
+  (was a hardcoded empty collection with no render branch); knowledge gain
+  no longer hardcodes '+' (negative gains render correctly on the hub,
+  analytics overview and performance table). No new persisted data; the
+  Program Health Snapshot and quarter filter shown in the mockups are
+  intentionally deferred.
+END OF BLUEPRINT v4.14

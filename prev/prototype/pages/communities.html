@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Communities · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="communities">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== TOOLBAR ===================== -->
+  <section class="pt-6">
+    <p class="text-[13px] text-gray-400 font-medium mb-3">Semester 1, AY 2026–2027 · 6 partner communities across 4 municipalities</p>
+    <div class="reveal-item flex flex-wrap items-center gap-3">
+      <label class="relative flex-1 min-w-[230px] max-w-xs">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 [&>span]:w-4 [&>span]:h-4">[[search]]</span>
+        <input id="comSearch" oninput="applyComFilters()" class="input !pl-9 bg-white" placeholder="Search community or municipality…">
+      </label>
+
+      <select id="provFilter" onchange="applyComFilters()" class="input !w-auto bg-white">
+        <option value="">All Provinces</option>
+        <option value="Leyte">Leyte</option>
+        <option value="Southern Leyte">Southern Leyte</option>
+        <option value="Biliran">Biliran</option>
+      </select>
+
+      <div class="ml-auto" x-data="{open:false}">
+        <button @click="open=true" class="btn btn-primary">
+          <span class="[&>span]:w-4 [&>span]:h-4">[[pin]]</span>Add Community
+        </button>
+
+        <div x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+          <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+          <form @submit.prevent="SC.toast('Community profile created — status set to Prospecting','success'); open=false"
+                class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
+            <div class="flex items-start justify-between mb-5">
+              <div>
+                <h3 class="font-extrabold text-[16px] tracking-tight">New Community Partner</h3>
+                <p class="text-[12px] text-gray-400 mt-0.5">New entries enter the prospecting pipeline for needs assessment.</p>
+              </div>
+              <button type="button" @click="open=false" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition">✕</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="col-span-2">
+                <label class="label">Barangay / Community Name</label>
+                <input required class="input" placeholder="Brgy. Sample">
+              </div>
+              <div>
+                <label class="label">Municipality</label>
+                <input required class="input" placeholder="e.g. Palo">
+              </div>
+              <div>
+                <label class="label">Province</label>
+                <select class="input">
+                  <option>Leyte</option>
+                  <option>Southern Leyte</option>
+                  <option>Biliran</option>
+                  <option>Samar</option>
+                  <option>Eastern Samar</option>
+                </select>
+              </div>
+              <div>
+                <label class="label">Contact Person</label>
+                <input class="input" placeholder="Kagawad / Barangay Captain">
+              </div>
+              <div>
+                <label class="label">Contact Number</label>
+                <input class="input" placeholder="09XX XXX XXXX">
+              </div>
+              <div class="col-span-2">
+                <label class="label">Estimated Beneficiaries</label>
+                <input type="number" min="1" class="input" placeholder="e.g. 150">
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6">
+              <button type="button" @click="open=false" class="btn btn-ghost">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Community</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== COMMUNITY GRID ===================== -->
+  <section class="mt-4">
+    <div id="communityGrid" class="grid grid-cols-3 gap-4"></div>
+    <div id="comEmpty" class="reveal-item hidden sc-card px-5 py-12 text-center">
+      <p class="text-[13.5px] font-semibold text-gray-500">No communities match your filters</p>
+      <p class="text-[12px] text-gray-400 mt-1">Try a different keyword or province.</p>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</main>
+
+<!-- ===================== COMMUNITY DETAIL MODAL ===================== -->
+<div id="comOverlay" class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeCommunity()"></div>
+  <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+    <div id="comBody"></div>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+const D = window.DATA;
+
+function trunc(s,n){ return s.length>n ? s.slice(0,n-1)+'…' : s; }
+function progBadge(s){ return (s==='Ongoing'||s==='Completed') ? 'badge-green' : 'badge-yellow'; }
+
+/* ---------- Cards ---------- */
+(function renderCommunities(){
+  document.getElementById('communityGrid').innerHTML = D.communities.map(c => `
+    <div class="reveal-item sc-card sc-card-hover p-5 cursor-pointer flex flex-col"
+         data-prov="${c.province}"
+         data-hay="${(c.name+' '+c.municipality+' '+c.province+' '+c.contactPerson).toLowerCase()}"
+         onclick="openCommunity(${c.id})">
+      <div class="flex items-start gap-3">
+        <span class="w-10 h-10 rounded-xl ${c.status==='Active'?'bg-lnu-50 text-lnu-800':'bg-gold-50 text-gold-700'} flex items-center justify-center shrink-0">[[pin]]</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-[14px] truncate">${c.name}</p>
+          <p class="text-[11.5px] text-gray-400 mt-0.5 truncate">${c.municipality}, ${c.province}</p>
+        </div>
+        <span class="badge ${c.status==='Active'?'badge-green':'badge-gray'}">${c.status}</span>
+      </div>
+
+      <div class="mt-3 flex items-center gap-2 text-[11.5px] text-gray-500 min-w-0">
+        <span class="[&>span]:w-4 [&>span]:h-4 shrink-0">[[people]]</span>
+        <span class="truncate">${c.contactPerson} · ${c.contactNumber}</span>
+      </div>
+
+      <div class="mt-auto pt-4 border-t border-gray-50 flex items-end justify-between gap-3">
+        <div class="flex items-end gap-4">
+          <div>
+            <p class="text-[22px] font-extrabold leading-none tracking-tight"><span data-count="${c.beneficiaries}">0</span></p>
+            <p class="text-[10.5px] text-gray-400 font-medium mt-1">beneficiaries</p>
+          </div>
+          <div class="w-px h-8 bg-gray-100"></div>
+          <div>
+            <p class="text-[22px] font-extrabold leading-none tracking-tight">${c.programs}</p>
+            <p class="text-[10.5px] text-gray-400 font-medium mt-1">programs linked</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-ghost !px-2 !py-1.5 text-[11px]">View profile</button>
+      </div>
+    </div>`).join('');
+})();
+
+/* ---------- Filters ---------- */
+function applyComFilters(){
+  const q = document.getElementById('comSearch').value.trim().toLowerCase();
+  const prov = document.getElementById('provFilter').value;
+  let shown = 0;
+  document.querySelectorAll('#communityGrid > div').forEach(card => {
+    const ok = card.dataset.hay.includes(q) && (prov==='' || card.dataset.prov===prov);
+    card.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  });
+  document.getElementById('comEmpty').classList.toggle('hidden', shown>0);
+}
+applyComFilters();
+
+/* ---------- Detail modal ---------- */
+function openCommunity(id){
+  const c = D.communities.find(x => x.id===id);
+  const progs = D.programs.filter(p => p.community && p.community.id===c.id);
+  const summaries = D.assessmentSummaries.filter(s => s.community && s.community.id===c.id);
+
+  document.getElementById('comBody').innerHTML = `
+    <div class="flex items-start justify-between gap-3 mb-5">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="w-11 h-11 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0">${SC.svg('pin')}</span>
+        <div class="min-w-0">
+          <h3 class="font-extrabold text-[16px] tracking-tight truncate">${c.name}</h3>
+          <p class="text-[12px] text-gray-400 mt-0.5">${c.municipality}, ${c.province}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span class="badge ${c.status==='Active'?'badge-green':'badge-gray'}">${c.status}</span>
+        <button onclick="closeCommunity()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition">✕</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/70 border border-gray-100 mb-5">
+      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Contact Person</p><p class="text-[12.5px] font-semibold mt-1">${c.contactPerson}</p></div>
+      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Contact Number</p><p class="text-[12.5px] font-semibold mt-1">${c.contactNumber}</p></div>
+      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Municipality</p><p class="text-[12.5px] font-semibold mt-1">${c.municipality}</p></div>
+      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Beneficiaries</p><p class="text-[12.5px] font-semibold mt-1">${c.beneficiaries.toLocaleString('en-PH')} registered</p></div>
+    </div>
+
+    <div class="mb-5">
+      <div class="flex items-center justify-between mb-2.5">
+        <p class="font-bold text-[13.5px] flex items-center gap-2">${SC.svg('folder','w-4 h-4 text-lnu-800')}Linked Programs</p>
+        <span class="badge badge-blue">${progs.length}</span>
+      </div>
+      ${progs.length ? progs.map(p => `
+        <div class="group flex items-center gap-2.5 p-3 rounded-xl border border-gray-100 mb-2 last:mb-0 cursor-pointer hover:border-lnu-200 hover:bg-lnu-50/40 transition"
+             onclick="SC.toast('${p.code} program file opened','info')">
+          <span class="badge badge-gray shrink-0">${p.code}</span>
+          <p class="text-[12px] font-semibold truncate flex-1 min-w-0 group-hover:text-lnu-800 transition">${p.title}</p>
+          <span class="badge ${progBadge(p.status)} shrink-0">${p.status}</span>
+        </div>`).join('')
+        : `<div class="flex items-center gap-2.5 p-3 rounded-xl border border-dashed border-gray-200 text-[12.5px] text-gray-400 italic">
+             No linked programs yet — community is in the prospecting pipeline.
+           </div>`}
+    </div>
+
+    <div class="mb-1">
+      <p class="font-bold text-[13.5px] flex items-center gap-2 mb-2.5">${SC.svg('clipboard','w-4 h-4 text-lnu-800')}Needs-Assessment History</p>
+      ${summaries.length ? summaries.map(s => `
+        <div class="flex items-center gap-2 py-1.5">
+          <span class="badge badge-blue">${s.quarter} ${s.year}</span>
+          <span class="badge badge-gray">${s.responses} responses</span>
+          <span class="text-[11.5px] text-gray-400 ml-auto">avg satisfaction ${s.avgSatisfaction.toFixed(1)}/5</span>
+        </div>`).join('')
+        : '<p class="text-[12.5px] text-gray-400 italic py-1">No needs-assessment encoded yet.</p>'}
+    </div>
+
+    <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-gray-100">
+      <button onclick="closeCommunity()" class="btn btn-ghost">Close</button>
+      <button onclick="SC.toast('Assessment visit request sent — secretary notified','success')" class="btn btn-primary">Schedule Needs Assessment</button>
+    </div>`;
+
+  document.getElementById('comOverlay').style.display = 'block';
+}
+function closeCommunity(){ document.getElementById('comOverlay').style.display = 'none'; }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeCommunity(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+SAMPLE NAMES - LEYTE / EASTERN VISAYAS
+
+These names are fictional sample data intended for testing, demos, prototypes, and database seeding. They should not be treated as a list of real persons.
+
+REFERENCE NOTE:
+When using these names to create sample records, assign realistic age brackets based on the person's role or category. For example:
+- Children: use an appropriate child/elementary-school age range.
+- Students/Youth: use a realistic school-age or youth range.
+- Working-age adults: generally use an appropriate working-age range.
+- Senior citizens: use age 60 and above.
+- Parents/Beneficiaries: use an age appropriate for the role.
+- Other roles: choose an age that realistically fits the person's occupation or community role.
+
+For testing, vary ages naturally rather than assigning the same age to everyone.
+
+LIST OF SAMPLE NAMES
+
+1. John Mark Flores
+2. Maria Angela Cinco
+3. Carlo Perez
+4. Jan Michael Mendoza
+5. Angelica Garcia
+6. Joshua Villamor
+7. Mary Grace Dela Cruz
+8. Christian Fernandez
+9. Jennifer Canete
+10. Mark Anthony Pepito
+11. Rhea Mae De Paz
+12. Jeffrey Sanchez
+13. Michael Lopez
+14. Princess Gonzales
+15. Kevin Rosales
+16. Arvin Gonzaga
+17. Michelle Avila
+18. Ryan Malinao
+19. Jayson Diaz
+20. Lovely Mae Martinez
+21. Vincent Morales
+22. John Paul Laurente
+23. Cherry Ann Tan
+24. Emmanuel Malate
+25. Joshua Nunez
+26. Mark Joseph Ramirez
+27. Daniel Advincula
+28. Ronald Ramos
+29. Maricel Delima
+30. Bryan Espina
+31. Kenneth Arpon
+32. Rose Ann Villanueva
+33. Patrick Reyes
+34. Albert Ibanez
+35. Kristine Asis
+36. Joel Mercado
+37. Francis Bohol
+38. Gerald Fuentes
+39. Mary Jane Omega
+40. Adrian Bautista
+41. Leah Mae Penaranda
+42. Joseph Rojas
+43. Mark Vincent Silvano
+44. Carla Mae Yu
+45. Vincent Go
+46. Noel Francisco
+47. Hannah Mae Salazar
+48. Dennis Estrera
+49. Roberto Romero
+50. Aira Mae Medalla
+51. Josephine Baronda
+52. Reynaldo Dagasdas
+53. Bryan Daclitan
+54. Marlon Meracap
+55. Sheila Mae Negad
+56. Rommel Pelipel
+57. Jonathan Dacallos
+58. Mary Rose Mahilom
+59. Edwin Loto
+60. Carlo Subito

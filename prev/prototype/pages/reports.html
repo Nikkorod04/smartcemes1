@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reports · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="reports">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== TOOLBAR (no-print) ===================== -->
+  <section class="pt-6 reveal-item no-print">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
+        <button class="tab on">Annual Extension Performance Report</button>
+        <button class="tab opacity-45 cursor-not-allowed" tabindex="-1" title="Generated after every semester close">Semester Accomplishment Report</button>
+        <button class="tab opacity-45 cursor-not-allowed" tabindex="-1" title="Available once all Q3 assessments are validated">Community Needs Assessment Consolidation</button>
+        <button class="tab opacity-45 cursor-not-allowed" tabindex="-1" title="Mirrors the Budget Monitoring page — coming soon">Quarterly Budget Utilization Report</button>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <span class="text-[11.5px] text-gray-400 font-medium max-w-[220px] leading-snug">Prints clean A4 landscape via browser dialog</span>
+        <button onclick="SC.toast('Summary exported (demo)','success')" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Export summary</button>
+        <button onclick="window.print()" class="btn btn-primary">[[doc]] Print / Save PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRINT AREA ===================== -->
+  <div id="print-area" class="reveal-item sc-card max-w-5xl mx-auto p-10 shadow-card mt-6 bg-white"
+       style="print-color-adjust:exact;-webkit-print-color-adjust:exact">
+
+    <div class="h-1.5 rounded-full bg-gradient-to-r from-lnu-800 to-gold-500 mb-8"></div>
+
+    <!-- Letterhead -->
+    <header class="text-center">
+      <div class="mx-auto w-16 h-16 rounded-full border-2 border-lnu-800 flex items-center justify-center">
+        <span class="font-black text-lnu-800 text-lg tracking-tight">SC</span>
+      </div>
+      <p class="mt-3 text-[12px] text-gray-600">Republic of the Philippines</p>
+      <p class="text-[17px] font-black tracking-wide text-charcoal uppercase">Leyte Normal University</p>
+      <p class="text-[12px] text-gray-600">Tacloban City, Leyte</p>
+      <div class="mt-4 mx-auto w-full" style="border-bottom:3px double #003599"></div>
+    </header>
+
+    <!-- Title block -->
+    <div class="text-center mt-7 mb-8">
+      <h1 class="text-[16px] font-black tracking-wide text-charcoal uppercase">Annual Extension Performance Report</h1>
+      <p class="text-[12.5px] text-gray-500 font-semibold mt-1">Mid-Year Summary · Academic Year 2026–2027</p>
+      <p class="text-[11px] text-gray-400 mt-0.5">Generated Aug 24, 2026 · SmartCEMES v3</p>
+    </div>
+
+    <!-- Section I -->
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section I · Extension Programs per College</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">College</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Programs</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Ongoing</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Completed</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Budget Utilized</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">College of Education (COEd)</td><td class="border border-gray-200 px-3 py-2 text-center">3</td><td class="border border-gray-200 px-3 py-2 text-center">2</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-right">₱63,500</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">College of Arts and Sciences (CAS)</td><td class="border border-gray-200 px-3 py-2 text-center">2</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-right">₱73,100</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">College of Business Administration (CBA)</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-right">₱33,750</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">College of Nursing (CON)</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-right">₱21,000</td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2">TOTALS</td><td class="border border-gray-300 px-3 py-2 text-center">7</td><td class="border border-gray-300 px-3 py-2 text-center">3</td><td class="border border-gray-300 px-3 py-2 text-center">1</td><td class="border border-gray-300 px-3 py-2 text-right">₱191,350</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section II -->
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section II · Beneficiaries Served per Municipality</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Municipality</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Distinct Beneficiaries</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Share</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">Tacloban City</td><td class="border border-gray-200 px-3 py-2 text-right">288</td><td class="border border-gray-200 px-3 py-2 text-right">42.3%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Palo</td><td class="border border-gray-200 px-3 py-2 text-right">171</td><td class="border border-gray-200 px-3 py-2 text-right">25.1%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Tanauan</td><td class="border border-gray-200 px-3 py-2 text-right">126</td><td class="border border-gray-200 px-3 py-2 text-right">18.5%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Dulag</td><td class="border border-gray-200 px-3 py-2 text-right">96</td><td class="border border-gray-200 px-3 py-2 text-right">14.1%</td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2">TOTAL</td><td class="border border-gray-300 px-3 py-2 text-right">681</td><td class="border border-gray-300 px-3 py-2 text-right">100%</td></tr>
+        </tbody>
+      </table>
+      <p class="mt-2 text-[10.5px] text-gray-400 italic">Note: Beneficiaries are counted distinctly per person across programs within the reporting period; a participant served by two programs is counted once under their municipality.</p>
+    </section>
+
+    <!-- Section III -->
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section III · Budget Utilization Summary</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Program</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Allocated</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Utilized</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">%</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">LITRAWIYA: Barangay Reading Proficiency Program</td><td class="border border-gray-200 px-3 py-2 text-right">₱48,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱31,500</td><td class="border border-gray-200 px-3 py-2 text-right">66%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">HANDA: Disaster Preparedness Training</td><td class="border border-gray-200 px-3 py-2 text-right">₱62,500</td><td class="border border-gray-200 px-3 py-2 text-right">₱58,900</td><td class="border border-gray-200 px-3 py-2 text-right">94%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">KABUHIAN: Livelihood Skills Training</td><td class="border border-gray-200 px-3 py-2 text-right">₱35,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱33,750</td><td class="border border-gray-200 px-3 py-2 text-right">96%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">e-LITERACY: Digital Literacy for Parents &amp; Senior Citizens</td><td class="border border-gray-200 px-3 py-2 text-right">₱40,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱14,200</td><td class="border border-gray-200 px-3 py-2 text-right">36%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE: Health &amp; Wellness Program</td><td class="border border-gray-200 px-3 py-2 text-right">₱55,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱21,000</td><td class="border border-gray-200 px-3 py-2 text-right">38%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">BATANG MATINIK: Sports &amp; Values Formation Clinic</td><td class="border border-gray-200 px-3 py-2 text-right">₱28,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱0</td><td class="border border-gray-200 px-3 py-2 text-right">0%</td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2">OVERALL</td><td class="border border-gray-300 px-3 py-2 text-right">₱268,500</td><td class="border border-gray-300 px-3 py-2 text-right">₱159,350</td><td class="border border-gray-300 px-3 py-2 text-right">59%</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section IV -->
+    <section class="mb-10">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section IV · Assessment Outcomes</h3>
+      <ul class="space-y-2.5 text-[12.5px] leading-relaxed text-charcoal list-disc pl-5 marker:text-gold-600">
+        <li>Participants evaluated across LITRAWIYA and HANDA batches posted an average knowledge gain of <strong>+12.4 points</strong> between pre- and post-tests, with the largest improvements in evacuation planning and early-grade reading comprehension.</li>
+        <li>Weighted activity satisfaction stands at <strong>3.9 out of 5.0</strong> from 412 post-activity response forms; venue accessibility and session pacing received the most favorable remarks.</li>
+        <li>Community needs assessments continue to flag household income insufficiency and lack of local employment as the top concerns in San Jose and Salvacion, while potable water access and sanitation remain structural concerns in Palo and Dulag — informing next semester's program mix toward livelihood and water-safety interventions.</li>
+      </ul>
+    </section>
+
+    <!-- Signatures -->
+    <section>
+      <div class="grid grid-cols-3 gap-8 mt-14">
+        <div class="text-center">
+          <div class="h-12"></div>
+          <p class="border-t border-gray-800 pt-1.5 mx-4 text-[12px] font-bold text-charcoal">Prof. Angela D. Salazar</p>
+          <p class="text-[11px] text-gray-500 mt-0.5">Prepared by · CESO Secretary</p>
+        </div>
+        <div class="text-center">
+          <div class="h-12"></div>
+          <p class="border-t border-gray-800 pt-1.5 mx-4 text-[12px] font-bold text-charcoal">Dr. Ma. Cristina A. Peñaranda</p>
+          <p class="text-[11px] text-gray-500 mt-0.5">Noted by · Director, CESO</p>
+        </div>
+        <div class="text-center">
+          <div class="h-12"></div>
+          <p class="border-t border-gray-800 pt-1.5 mx-4 text-[12px] font-bold text-charcoal">&nbsp;</p>
+          <p class="text-[11px] text-gray-500 mt-0.5">Recommending Approval · VP for Research &amp; Extension</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-10 text-center text-[10px] text-gray-400">
+      System-generated from SmartCEMES — figures consistent with KPI definitions v3.
+    </footer>
+  </div>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+</body>
+</html>

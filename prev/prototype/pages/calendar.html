@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="calendar">
+
+<script>const R=(new URLSearchParams(location.search).get('role'))||document.body.dataset.role||'admin';document.body.dataset.role=R;</script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 id="calTitle" class="text-[20px] font-extrabold tracking-tight leading-tight">August 2026</h2>
+        <p id="calCaption" class="text-[12.5px] text-gray-400 font-medium mt-0.5"></p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center gap-4 text-[11.5px] text-gray-500 font-medium">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu-600"></span>Activity</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold-500"></span>Availability</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full border-2 border-red-500 bg-white"></span>Deadline</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="btnPrev" title="Previous month" class="btn btn-ghost !p-2 rounded-xl"></button>
+          <button id="btnNext" title="Next month" class="btn btn-ghost !p-2 rounded-xl"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GRID + DAY PANEL ===================== -->
+  <section class="mt-4 grid lg:grid-cols-[1fr_20rem] gap-4 items-start">
+
+    <div class="reveal-item min-w-0">
+      <div class="grid grid-cols-7 gap-2 mb-2">
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Sun</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Mon</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Tue</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Wed</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Thu</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Fri</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Sat</p>
+      </div>
+      <div id="calGrid" class="grid grid-cols-7 gap-2"></div>
+    </div>
+
+    <aside class="reveal-item w-full lg:w-80 lg:sticky lg:top-24">
+      <div id="dayPanel" class="sc-card p-5"></div>
+    </aside>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+(() => {
+  const ROLE = document.body.dataset.role || 'admin';
+  const ico = (n,c) => `<span class="${c} inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${SC.icons[n]}</span}`;
+
+  /* ---------- Seeded events (inline) ---------- */
+  const EVENTS = [
+    { d:'2026-08-22', kind:'activity',     time:'8:00 AM – 12:00 PM', title:'Mid-Year Reading Proficiency Evaluation', org:'LITRAWIYA · San Jose Elementary School', link:'program-detail.html', mine:true },
+    { d:'2026-08-27', kind:'activity',     time:'1:00 PM – 4:00 PM',  title:'e-LIT Basic Computer Workshop 3',         org:'e-LITERACY · Sagkahan Learning Hub',     link:'program-detail.html' },
+    { d:'2026-08-30', kind:'activity',     time:'8:00 AM – 11:00 AM', title:'BP Screening & Wellness Talk',            org:'SENIOR CARE · San Rafael Health Station',link:'program-detail.html' },
+    { d:'2026-09-02', kind:'availability', time:'8:00 AM – 12:00 PM', title:'Availability — Prof. Bautista',           org:'Filed Jul 28 · Pending approval',        link:'availability.html', mine:true },
+    { d:'2026-09-04', kind:'availability', time:'1:00 PM – 5:00 PM',  title:'Availability — Prof. Maglasang',          org:'Filed Aug 20 · Pending approval',        link:'availability.html' },
+    { d:'2026-09-09', kind:'availability', time:'Whole Day',          title:'Availability — Prof. Aquino',             org:'Approved · Coordinate with HANDA team',  link:'availability.html' },
+    { d:'2026-09-15', kind:'deadline',     time:'5:00 PM cut-off',    title:'Q3 Assessment Encoding Cutoff',           org:'All active communities · CESO',          link:'reports.html' }
+  ];
+  const KIND = {
+    activity:     { label:'Activity',     pill:'bg-lnu-50 text-lnu-700',                       dot:'bg-lnu-600' },
+    availability: { label:'Availability', pill:'bg-gold-50 text-gold-800',                     dot:'bg-gold-500' },
+    deadline:     { label:'Deadline',     pill:'bg-red-50 border border-red-200 text-red-600', dot:'bg-red-500' }
+  };
+  const BY_DAY = {};
+  EVENTS.forEach(e => (BY_DAY[e.d] = BY_DAY[e.d] || []).push(e));
+
+  /* ---------- Calendar state ---------- */
+  const TODAY = { y:2026, m:7, d:24 };               // Aug 24, 2026
+  let vy = 2026, vm = 7;                             // viewing August 2026
+  let sel = null;                                    // selected date key
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS_S = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const DAYS_L = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const pad = n => String(n).padStart(2,'0');
+  const keyOf = dt => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+
+  calCaption.textContent = ROLE === 'faculty'
+    ? 'Your extension schedule — items marked (You) involve you directly'
+    : 'Office-wide schedule of activities, availability, and deadlines';
+
+  /* ---------- Grid rendering ---------- */
+  function renderGrid() {
+    calTitle.textContent = `${MONTHS[vm]} ${vy}`;
+    const first = new Date(vy, vm, 1);
+    const lead = first.getDay();
+    const count = new Date(vy, vm + 1, 0).getDate();
+    const cells = Math.ceil((lead + count) / 7) * 7;
+
+    let html = '';
+    for (let i = 0; i < cells; i++) {
+      const dt = new Date(vy, vm, i - lead + 1);
+      const k = keyOf(dt);
+      const inMonth = dt.getMonth() === vm;
+      const isToday = dt.getFullYear() === TODAY.y && dt.getMonth() === TODAY.m && dt.getDate() === TODAY.d;
+      const isSel = k === sel;
+      const evs = BY_DAY[k] || [];
+
+      let dayNum = `<span class="${isToday
+        ? 'w-6 h-6 rounded-full bg-gold-500 text-charcoal flex items-center justify-center font-bold'
+        : ''} text-[12px] ${inMonth ? 'font-semibold text-charcoal' : 'text-gray-300'}">${dt.getDate()}</span>`;
+
+      let pills = '';
+      if (inMonth && evs.length) {
+        pills = evs.slice(0, 2).map(e => {
+          const kd = KIND[e.kind];
+          const t = e.title + (ROLE === 'faculty' && e.mine ? ' (You)' : '');
+          return `<span class="block truncate text-[10px] font-semibold px-1.5 py-[3px] rounded-md mb-1 ${kd.pill}" title="${t}">${t}</span>`;
+        }).join('');
+        if (evs.length > 2) pills += `<span class="block text-[10px] font-semibold text-gray-400 pl-1">+${evs.length - 2} more</span>`;
+      }
+
+      html += `
+      <button data-key="${k}" title="${DAYS_L[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()} — click to view"
+        class="text-left min-h-[96px] rounded-lg border p-2 transition cursor-pointer overflow-hidden
+        ${isToday ? 'ring-2 ring-gold-500 border-gold-200 bg-white hover:bg-lnu-50' : 'border-gray-200'}
+        ${isSel ? '!bg-lnu-50 !border-lnu-300' : ''}
+        ${inMonth ? 'bg-white hover:bg-lnu-50' : 'bg-gray-50/60 hover:bg-gray-100'}">${dayNum}${pills}</button>`;
+    }
+    calGrid.innerHTML = html;
+  }
+
+  /* ---------- Day panel ---------- */
+  function renderPanel(k) {
+    if (!k) {
+      dayPanel.innerHTML = `
+        <div class="text-center py-8">
+          <span class="mx-auto w-12 h-12 rounded-2xl bg-lnu-50 text-lnu-700 flex items-center justify-center">${ico('calendar','w-6 h-6')}</span>
+          <p class="mt-3 font-bold text-[13.5px]">Select a day</p>
+          <p class="text-[12px] text-gray-400 mt-1 leading-relaxed">Click any date on the grid to see its activities, availability slots, and deadlines.</p>
+        </div>`;
+      return;
+    }
+    const [y, m, d] = k.split('-').map(Number);
+    const dow = new Date(y, m - 1, d).getDay();
+    const evs = BY_DAY[k] || [];
+
+    const items = evs.map(e => {
+      const kd = KIND[e.kind];
+      const t = e.title + (ROLE === 'faculty' && e.mine ? ' <span class="badge badge-gold !text-[9.5px] !px-2 !py-0.5">(You)</span>' : '');
+      return `
+      <li class="flex gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+        <span class="mt-1 w-2.5 h-2.5 rounded-full shrink-0 ${kd.dot}"></span>
+        <div class="min-w-0 flex-1">
+          <p class="text-[12.5px] font-bold leading-snug">${t}</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">${e.org}</p>
+          <div class="mt-1.5 flex items-center gap-2.5">
+            <span class="inline-flex items-center gap-1 text-[10.5px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">${ico('clock','w-3 h-3')} ${e.time}</span>
+            <a href="${e.link}?role=${ROLE}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open ${kd.label.toLowerCase()} →</a>
+          </div>
+        </div>
+      </li>`;
+    }).join('');
+
+    dayPanel.innerHTML = `
+      <div class="flex items-center justify-between gap-2 pb-3 border-b border-gray-100">
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">${DAYS_L[dow]}</p>
+          <h3 class="font-extrabold text-[15px] tracking-tight">${MONTHS[m-1]} ${d}, ${y}</h3>
+        </div>
+        <span class="badge ${evs.length ? 'badge-blue' : 'badge-gray'}">${evs.length || 'No'} event${evs.length === 1 ? '' : 's'}</span>
+      </div>
+      ${evs.length ? `<ul class="mt-3 space-y-2.5">${items}</ul>`
+        : `<div class="text-center py-7">
+             <span class="mx-auto w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">${ico('check','w-5 h-5')}</span>
+             <p class="mt-3 font-bold text-[13px]">Nothing scheduled</p>
+             <p class="text-[11.5px] text-gray-400 mt-1">Enjoy the breather — no activities or deadlines on this day.</p>
+           </div>`}`;
+  }
+
+  /* ---------- Wiring ---------- */
+  btnPrev.innerHTML = `<span class="w-5 h-5 inline-flex"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg></span>`;
+  btnNext.innerHTML = `<span class="w-5 h-5 inline-flex"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg></span>`;
+  btnPrev.onclick = () => { vm--; if (vm < 0) { vm = 11; vy--; } sel = null; renderGrid(); renderPanel(null); };
+  btnNext.onclick = () => { vm++; if (vm > 11) { vm = 0; vy++; } sel = null; renderGrid(); renderPanel(null); };
+  calGrid.addEventListener('click', e => {
+    const cell = e.target.closest('[data-key]');
+    if (!cell) return;
+    sel = cell.dataset.key;
+    renderGrid(); renderPanel(sel);
+  });
+
+  renderGrid();
+  renderPanel(keyOf(new Date(TODAY.y, TODAY.m, TODAY.d)));
+})();
+</script>
+</body>
+</html>

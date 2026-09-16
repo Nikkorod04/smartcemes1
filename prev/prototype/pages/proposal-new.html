@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Submit Proposal · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="faculty" data-page="proposal-new">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <section class="pt-6 reveal-item">
+    <p class="text-[13px] text-gray-400 font-medium">Draft autosaves locally · Route: Faculty → Director's Office → Special Order → Activity</p>
+  </section>
+
+  <div class="mt-4 grid grid-cols-3 gap-4 items-start">
+
+    <!-- ===================== MAIN FORM ===================== -->
+    <div class="reveal-item sc-card p-6 col-span-2 relative">
+
+      <!-- 1 · Program Context -->
+      <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">1 · Program Context</p>
+      <div class="grid grid-cols-2 gap-4 mt-3">
+        <div>
+          <label class="label" for="pfProgram">Extension Program</label>
+          <select id="pfProgram" class="input"><option value="">Select program…</option></select>
+        </div>
+        <div>
+          <label class="label" for="pfCommunity">Community</label>
+          <select id="pfCommunity" class="input"><option value="">Select community…</option></select>
+        </div>
+      </div>
+      <p class="flex items-center gap-1.5 text-[11.5px] text-gray-400 font-medium mt-2.5">[[people]] Lead: you — Prof. John Ryl E. Bautista · co-leads may be added after approval</p>
+
+      <!-- 2 · Proposal Details -->
+      <div class="border-t border-gray-50 pt-5 mt-5">
+        <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">2 · Proposal Details</p>
+        <div class="mt-3 space-y-4">
+          <div>
+            <label class="label" for="pfTitle">Proposal Title</label>
+            <input id="pfTitle" class="input" value="SOLID Start: Solid Waste Segregation IEC Campaign">
+          </div>
+          <div>
+            <label class="label" for="pfDesc">Description</label>
+            <textarea id="pfDesc" rows="4" class="input resize-none">The campaign will run house-to-house information and education sessions on proper solid waste segregation across all puroks of Brgy. Apitong. Color-coded bin guides and posters will reinforce the campaign messages.</textarea>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="label" for="pfStart">Proposed Start</label>
+              <input id="pfStart" type="date" class="input" value="2026-09-07">
+            </div>
+            <div>
+              <label class="label" for="pfEnd">Proposed End</label>
+              <input id="pfEnd" type="date" class="input" value="2026-11-27">
+            </div>
+            <div>
+              <label class="label" for="pfVenue">Venue</label>
+              <input id="pfVenue" class="input" value="Brgy. Apitong Barangay Hall">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 · Budget -->
+      <div class="border-t border-gray-50 pt-5 mt-5">
+        <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">3 · Budget</p>
+        <div class="grid grid-cols-2 gap-4 mt-3">
+          <div>
+            <label class="label" for="pfAmount">Amount Requested</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[13.5px] font-bold text-gray-400">₱</span>
+              <input id="pfAmount" type="number" min="0" step="500" class="input !pl-8 font-semibold" value="42000">
+            </div>
+          </div>
+          <div>
+            <label class="label" for="pfBreakdown">Breakdown</label>
+            <textarea id="pfBreakdown" rows="1" class="input resize-none" placeholder="IEC materials ₱15,000 · Printing ₱8,500 · Transport ₱6,000 · Meals ₱7,500 · Contingency ₱5,000"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 · Objectives -->
+      <div class="border-t border-gray-50 pt-5 mt-5">
+        <div class="flex items-center justify-between">
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">4 · Objectives</p>
+          <span class="text-[11px] text-gray-300 font-medium">at least one required</span>
+        </div>
+        <div id="pfObjectives" class="mt-3 space-y-2">
+          <div class="obj-row flex items-center gap-2">
+            <input class="input flex-1" value="Raise household compliance with proper waste segregation in at least 70% of target puroks.">
+            <button type="button" class="btn btn-ghost obj-remove !px-2 !py-2 text-[13px] text-gray-300 hover:text-red-500" title="Remove objective">✕</button>
+          </div>
+          <div class="obj-row flex items-center gap-2">
+            <input class="input flex-1" value="Train 30 youth volunteers as sustained IEC advocates for the barangay.">
+            <button type="button" class="btn btn-ghost obj-remove !px-2 !py-2 text-[13px] text-gray-300 hover:text-red-500" title="Remove objective">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="PF.addObjective()" class="w-full border-2 border-dashed border-gray-200 rounded-xl py-2.5 mt-2 text-[12.5px] font-bold text-gray-400 hover:border-lnu-300 hover:text-lnu-700 hover:bg-lnu-50/40 transition">+ Add Objective</button>
+      </div>
+
+      <!-- 5 · Attachments -->
+      <div class="border-t border-gray-50 pt-5 mt-5">
+        <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">5 · Attachments</p>
+        <div id="pfDropzone" class="border-2 border-dashed border-gray-200 rounded-xl py-7 mt-3 text-center cursor-pointer hover:border-lnu-300 hover:bg-lnu-50/40 transition">
+          <span class="inline-flex w-11 h-11 rounded-xl bg-lnu-50 text-lnu-800 items-center justify-center mb-2">[[doc]]</span>
+          <p class="text-[13px] font-bold">Click to attach files</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-0.5">PDF / DOCX / JPG up to 10 MB each</p>
+        </div>
+        <div id="pfFiles" class="flex flex-wrap gap-2 mt-3"></div>
+      </div>
+
+      <!-- Sticky footer bar -->
+      <div x-data="{open:false}" class="sticky bottom-4 z-20 -mx-6 -mb-6 mt-6 px-6 py-3.5 border-t border-gray-100 bg-white/95 backdrop-blur rounded-b-[14px] flex items-center gap-3 shadow-[0_-6px_16px_-12px_rgba(16,24,40,.25)]">
+        <p class="text-[11.5px] text-gray-400 font-medium mr-auto">Description: <span id="pfDescCount" class="font-bold text-charcoal">0</span>/1000</p>
+        <button onclick="history.back()" class="btn btn-ghost">Cancel</button>
+        <button id="pfSubmitBtn" @click="open=true; PF.fillSummary()" class="btn btn-primary">Submit Proposal</button>
+
+        <!-- Confirm modal -->
+        <div x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+          <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+          <div class="sc-modal relative max-w-lg mx-auto mt-24 sc-card p-6 shadow-pop">
+            <h3 class="font-extrabold text-[15px] tracking-tight">Submit proposal for review?</h3>
+            <p class="text-[12px] text-gray-400 mt-1">Your submission will be routed to the Director's Office.</p>
+            <dl class="mt-4 divide-y divide-gray-50 border border-gray-100 rounded-xl px-4">
+              <div class="py-2.5 grid grid-cols-[120px_1fr] gap-3">
+                <dt class="text-[11.5px] font-semibold text-gray-400">Title</dt>
+                <dd id="msTitle" class="text-[12.5px] font-semibold">—</dd>
+              </div>
+              <div class="py-2.5 grid grid-cols-[120px_1fr] gap-3">
+                <dt class="text-[11.5px] font-semibold text-gray-400">Program</dt>
+                <dd id="msProgram" class="text-[12.5px] font-medium">—</dd>
+              </div>
+              <div class="py-2.5 grid grid-cols-[120px_1fr] gap-3">
+                <dt class="text-[11.5px] font-semibold text-gray-400">Community</dt>
+                <dd id="msCommunity" class="text-[12.5px] font-medium">—</dd>
+              </div>
+              <div class="py-2.5 grid grid-cols-[120px_1fr] gap-3">
+                <dt class="text-[11.5px] font-semibold text-gray-400">Schedule</dt>
+                <dd id="msDates" class="text-[12.5px] font-medium">—</dd>
+              </div>
+              <div class="py-2.5 grid grid-cols-[120px_1fr] gap-3">
+                <dt class="text-[11.5px] font-semibold text-gray-400">Amount</dt>
+                <dd id="msAmount" class="text-[12.5px] font-extrabold text-lnu-800">—</dd>
+              </div>
+            </dl>
+            <div class="flex justify-end gap-2 mt-5">
+              <button @click="open=false" class="btn btn-ghost">Cancel</button>
+              <button @click="open=false; PF.confirm()" class="btn btn-primary">Confirm Submit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== HELPER RAIL ===================== -->
+    <div class="space-y-4 lg:sticky lg:top-20">
+      <div class="reveal-item sc-card p-5">
+        <p class="font-extrabold text-[14px] tracking-tight mb-4">How approval flows</p>
+        <ol>
+          <li class="flex gap-3">
+            <div class="flex flex-col items-center">
+              <span class="step-dot done !w-8 !h-8 !text-[11px]">✓</span>
+              <span class="w-px flex-1 bg-gray-100 my-1"></span>
+            </div>
+            <div class="pb-5">
+              <p class="text-[12.5px] font-bold leading-snug">You submit</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Received by CESO · timestamped</p>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <div class="flex flex-col items-center">
+              <span class="step-dot on !w-8 !h-8 !text-[11px]">2</span>
+              <span class="w-px flex-1 bg-gray-100 my-1"></span>
+            </div>
+            <div class="pb-5">
+              <p class="text-[12.5px] font-bold leading-snug text-lnu-800">Director reviews · ~3 days</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">You'll get a notification either way</p>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <div class="flex flex-col items-center">
+              <span class="step-dot !w-8 !h-8 !text-[11px]">3</span>
+              <span class="w-px flex-1 bg-gray-100 my-1"></span>
+            </div>
+            <div class="pb-5">
+              <p class="text-[12.5px] font-bold leading-snug">Special Order attached if required</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">For MOA-funded engagements</p>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <div class="flex flex-col items-center">
+              <span class="step-dot !w-8 !h-8 !text-[11px]">4</span>
+              <span class="w-px flex-1 bg-gray-100 my-1"></span>
+            </div>
+            <div class="pb-5">
+              <p class="text-[12.5px] font-bold leading-snug">Activity auto-created</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Appears in Activities &amp; Calendar</p>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <div class="flex flex-col items-center">
+              <span class="step-dot !w-8 !h-8 !text-[11px]">5</span>
+            </div>
+            <div>
+              <p class="text-[12.5px] font-bold leading-snug">Encode assessments</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Feeds community needs data</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="reveal-item sc-card p-5 space-y-3">
+        <div class="border-l-4 border-gold bg-gold-50 rounded-r-xl p-3.5">
+          <p class="text-[12px] font-extrabold text-gold-800 flex items-center gap-1.5">[[wallet]] FY allocation ceiling per proposal: ₱50,000</p>
+          <p class="text-[11px] text-gold-700/80 font-medium mt-1">Requests above the ceiling are returned for phase-splitting.</p>
+        </div>
+        <div class="border-l-4 border-lnu-300 bg-lnu-50 rounded-r-xl p-3.5">
+          <p class="text-[12px] font-extrabold text-lnu-800 flex items-center gap-1.5">[[doc]] Attach signed MOA scan when available</p>
+          <p class="text-[11px] text-lnu-700/80 font-medium mt-1">You can upload anytime before Director review.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+window.PF = (() => {
+  const $ = id => document.getElementById(id);
+  const attached = new Set();
+
+  const fmtDate = iso => {
+    if (!iso) return '—';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-PH', { month:'short', day:'2-digit', year:'numeric' });
+  };
+
+  function fillSelect(sel, items, preferred) {
+    items.forEach((t, i) => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      if (preferred && t === preferred) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  function addObjective() {
+    const row = document.createElement('div');
+    row.className = 'obj-row flex items-center gap-2';
+    row.innerHTML = '<input class="input flex-1" placeholder="State a specific, measurable objective…">' +
+      '<button type="button" class="btn btn-ghost obj-remove !px-2 !py-2 text-[13px] text-gray-300 hover:text-red-500" title="Remove objective">✕</button>';
+    $('pfObjectives').appendChild(row);
+    row.querySelector('input').focus();
+  }
+
+  function addFileChip() {
+    const name = 'solid-start-proposal.pdf';
+    if (attached.has(name)) { SC.toast('File already attached','info'); return; }
+    attached.add(name);
+    const chip = document.createElement('div');
+    chip.className = 'flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-[12px] font-semibold text-gray-600';
+    chip.innerHTML = '<span class="text-[10px] bg-white border border-gray-200 rounded px-1.5 py-0.5 text-gray-400 font-bold">PDF</span>' +
+      '<span>' + name + ' · 1.2 MB ✓</span>' +
+      '<button type="button" class="ml-1 text-gray-400 hover:text-red-500 transition" title="Remove">✕</button>';
+    chip.querySelector('button').addEventListener('click', () => { chip.remove(); attached.delete(name); });
+    $('pfFiles').appendChild(chip);
+  }
+
+  function fillSummary() {
+    $('msTitle').textContent = $('pfTitle').value || 'Untitled proposal';
+    $('msProgram').textContent = $('pfProgram').value || '—';
+    $('msCommunity').textContent = $('pfCommunity').value || '—';
+    $('msDates').textContent = fmtDate($('pfStart').value) + ' – ' + fmtDate($('pfEnd').value) + ' · ' + ($('pfVenue').value || 'TBA');
+    $('msAmount').textContent = SC.money($('pfAmount').value || 0);
+  }
+
+  function confirm() {
+    const amt = parseFloat($('pfAmount').value || '0');
+    if (amt > 50000) { SC.toast('Amount exceeds the ₱50,000 FY ceiling — revise costing','warn'); return; }
+    const btn = $('pfSubmitBtn');
+    btn.disabled = true;
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-success-soft');
+    btn.textContent = 'Submitted ✓';
+    SC.toast("Proposal submitted — routed to the Director's Office",'success');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fillSelect($('pfProgram'), window.DATA.programs.map(p => p.title), 'LITRAWIYA: Barangay Reading Proficiency Program');
+    fillSelect($('pfCommunity'), window.DATA.communities.map(c => c.name), 'Brgy. Apitong');
+    $('pfDropzone').addEventListener('click', addFileChip);
+    $('pfObjectives').addEventListener('click', e => {
+      const btn = e.target.closest('.obj-remove');
+      if (!btn) return;
+      if ($('pfObjectives').querySelectorAll('.obj-row').length === 1) { SC.toast('At least one objective is required','warn'); return; }
+      btn.closest('.obj-row').remove();
+    });
+    const desc = $('pfDesc');
+    const update = () => { $('pfDescCount').textContent = desc.value.length; };
+    desc.addEventListener('input', update);
+    update();
+  });
+
+  return { addObjective, fillSummary, confirm };
+})();
+</script>
+</body>
+</html>

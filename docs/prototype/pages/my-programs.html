@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Programs · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="faculty" data-page="my-programs">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== GREETING BAND ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="sc-card p-6 !border-lnu-800 !bg-gradient-to-r !from-lnu-800 !to-lnu-600 flex flex-wrap items-center gap-5">
+      <span class="avatar gold w-14 h-14 text-lg ring-4 ring-white/20">JB</span>
+      <div class="min-w-0">
+        <h2 class="text-[19px] font-extrabold tracking-tight text-white leading-tight">Good afternoon, Prof. Bautista</h2>
+        <p class="text-[12.5px] text-white/70 font-medium mt-1">Semester 1 · AY 2026–2027 · College of Education — here is your extension workload at a glance.</p>
+      </div>
+      <div class="ml-auto flex items-center gap-2.5">
+        <a href="proposal-new.html?role=faculty" class="btn btn-secondary">[[doc]] Submit Proposal</a>
+        <a href="assessment-form.html?role=faculty" class="btn !bg-white/10 !text-white border border-white/25 hover:!bg-white/20">[[clipboard]] Encode Assessment</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== KPI ROW ===================== -->
+  <section class="mt-4">
+    <div class="reveal-item grid grid-cols-4 gap-4">
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[folder]]</span>
+          <span class="badge badge-yellow">+1 draft</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="3">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">My Programs</p>
+      </div>
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[clipboard]]</span>
+          <span class="badge badge-green">+2 this month</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="3">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Sessions Handled</p>
+      </div>
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[clock]]</span>
+          <span class="badge badge-blue">this sem</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="7">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Hours Rendered</p>
+      </div>
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[people]]</span>
+          <span class="badge badge-gray">distinct</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-lnu-800"><span data-count="186">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Beneficiaries Reached</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MAIN GRID ===================== -->
+  <section class="mt-4 grid grid-cols-3 gap-4 items-start">
+
+    <!-- Program cards -->
+    <div class="col-span-2 space-y-4">
+
+      <!-- LITRAWIYA — lead, ongoing -->
+      <article class="reveal-item sc-card sc-card-hover overflow-hidden">
+        <div class="relative h-16 bg-gradient-to-r from-lnu-800 to-lnu-500 overflow-hidden">
+          <span class="absolute right-16 -top-8 w-24 h-24 rounded-full bg-white/10"></span>
+          <span class="absolute -right-2 -bottom-6 text-[52px] font-black text-white/15 leading-none select-none">LITRAWIYA</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide">EXT-2026-001</span>
+              <span class="badge badge-green">Ongoing</span>
+            </div>
+            <span class="badge badge-gold">Program Lead</span>
+          </div>
+          <h3 class="mt-2.5 font-bold text-[15px] leading-snug">LITRAWIYA: Barangay Reading Proficiency Program</h3>
+          <p class="mt-1 text-[11.5px] text-gray-400 leading-relaxed line-clamp-2">Raise reading proficiency of Grades 2–4 pupils in Brgy. San Jose through structured remedial reading sessions.</p>
+
+          <div class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-[11.5px] text-gray-500">
+            <p class="flex items-center gap-1.5"><span class="text-gray-400 w-3.5 h-3.5 inline-flex">[[users]]</span> Team · 4 faculty · 12 student volunteers</p>
+            <p class="flex items-center gap-1.5"><span class="text-gray-400 w-3.5 h-3.5 inline-flex">[[pin]]</span> Brgy. San Jose · Tacloban City</p>
+          </div>
+
+          <div class="mt-3.5 flex items-center justify-between text-[11px] mb-1.5">
+            <span class="text-gray-400 font-medium">Budget · ₱31,500 of ₱48,000</span>
+            <span class="font-bold text-charcoal">66%</span>
+          </div>
+          <div class="progress"><span style="width:66%" class="bg-lnu-600"></span></div>
+          <div class="mt-2.5 flex items-center justify-between">
+            <p class="text-[10.5px] text-gray-400 font-medium">You lead this program</p>
+            <a href="program-detail.html?role=faculty&program=EXT-2026-001" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open hub →</a>
+          </div>
+
+          <div class="mt-4 rounded-xl border-l-4 border-gold-500 bg-gold-50/70 px-4 py-3 flex flex-wrap items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-white text-gold-700 border border-gold-100 flex items-center justify-center shrink-0">[[calendar]]</span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[12px] font-bold leading-snug">Next: Mid-Year Reading Proficiency Evaluation · Aug 22 · San Jose Elementary School</p>
+              <p class="text-[10.5px] text-gray-500 mt-0.5">8:00 AM – 12:00 PM · 34 pupils scheduled for post-test</p>
+            </div>
+            <button onclick="SC.toast('Attendance confirmed — this activity request was already accepted','info')" class="btn btn-secondary !px-3 !py-1.5 text-[11px] shrink-0">Details</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- HANDA — membership, ongoing -->
+      <article class="reveal-item sc-card sc-card-hover overflow-hidden">
+        <div class="relative h-16 bg-gradient-to-r from-gold-400 to-gold-600 overflow-hidden">
+          <span class="absolute right-16 -top-8 w-24 h-24 rounded-full bg-white/10"></span>
+          <span class="absolute -right-2 -bottom-6 text-[52px] font-black text-white/20 leading-none select-none">HANDA</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide">EXT-2026-002</span>
+              <span class="badge badge-green">Ongoing</span>
+            </div>
+            <span class="badge badge-gray">Member</span>
+          </div>
+          <h3 class="mt-2.5 font-bold text-[15px] leading-snug">HANDA: Disaster Preparedness Training for Coastal Households</h3>
+          <p class="mt-1 text-[11.5px] text-gray-400 leading-relaxed line-clamp-2">Equip coastal households in Palo with evacuation planning and first-response skills.</p>
+
+          <div class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-[11.5px] text-gray-500">
+            <p class="flex items-center gap-1.5"><span class="text-gray-400 w-3.5 h-3.5 inline-flex">[[users]]</span> Lead · Prof. Ricmar P. Aquino</p>
+            <p class="flex items-center gap-1.5"><span class="text-gray-400 w-3.5 h-3.5 inline-flex">[[pin]]</span> Brgy. El Reposo · Palo</p>
+          </div>
+
+          <div class="mt-3.5 flex items-center justify-between text-[11px] mb-1.5">
+            <span class="text-gray-400 font-medium">Budget · <span class="text-red-600 font-semibold">₱64,500 of ₱62,500 — over-allocated</span></span>
+            <span class="font-bold text-red-600">103%</span>
+          </div>
+          <div class="progress"><span style="width:100%" class="bg-red-500"></span></div>
+          <div class="mt-2.5 flex items-center justify-between">
+            <p class="text-[10.5px] text-gray-400 font-medium">Overrun flagged for Director review (D7)</p>
+            <a href="program-detail.html?role=faculty&program=EXT-2026-002" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open hub →</a>
+          </div>
+
+          <div class="mt-4 rounded-xl border-l-4 border-gold-500 bg-gold-50/70 px-4 py-3 flex flex-wrap items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-white text-emerald-600 border border-gold-100 flex items-center justify-center shrink-0">[[check]]</span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[12px] font-bold leading-snug">Milestone: 95% of beneficiary target reached (171/180)</p>
+              <p class="text-[10.5px] text-gray-500 mt-0.5">Validate attendance sheets before the Sep 15 encoding cutoff</p>
+            </div>
+            <a href="assessment-form.html?role=faculty" class="btn btn-outline !px-3 !py-1.5 text-[11px] shrink-0">Encode results</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- BATANG MATINIK — draft -->
+      <article class="reveal-item sc-card sc-card-hover overflow-hidden">
+        <div class="relative h-16 bg-gradient-to-r from-emerald-500 to-teal-600 overflow-hidden">
+          <span class="absolute right-16 -top-8 w-24 h-24 rounded-full bg-white/10"></span>
+          <span class="absolute -right-2 -bottom-6 text-[38px] font-black text-white/15 leading-none select-none">BATANG MATINIK</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide">EXT-2026-006</span>
+              <span class="badge badge-yellow">Draft</span>
+            </div>
+            <span class="badge badge-gray">Member</span>
+          </div>
+          <h3 class="mt-2.5 font-bold text-[15px] leading-snug">BATANG MATINIK: Sports & Values Formation Clinic</h3>
+          <p class="mt-1 text-[11.5px] text-gray-400 leading-relaxed line-clamp-2">Channel youth energy into sports while instilling discipline and teamwork values.</p>
+
+          <div class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-[11.5px] text-gray-500">
+            <p class="flex items-center gap-1.5"><span class="text-gray-400 w-3.5 h-3.5 inline-flex">[[users]]</span> Lead · Prof. Lovelyn F. Maglasang</p>
+            <p class="flex items-center gap-1.5"><span class="text-gray-400 w-3.5 h-3.5 inline-flex">[[pin]]</span> Brgy. San Jose · Tacloban City</p>
+          </div>
+
+          <div class="mt-3.5 flex items-center justify-between text-[11px] mb-1.5">
+            <span class="text-gray-400 font-medium">Budget · ₱0 of ₱28,000</span>
+            <span class="font-bold text-charcoal">0%</span>
+          </div>
+          <div class="progress"><span style="width:0%" class="bg-gray-300"></span></div>
+          <div class="mt-2.5 flex items-center justify-between">
+            <p class="text-[10.5px] text-gray-400 font-medium">Results framework defined — awaiting kickoff</p>
+            <a href="program-detail.html?role=faculty&program=EXT-2026-006" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open hub →</a>
+          </div>
+
+          <div class="mt-4 rounded-xl border-l-4 border-gold-500 bg-gold-50/70 px-4 py-3 flex flex-wrap items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-white text-gold-700 border border-gold-100 flex items-center justify-center shrink-0">[[clock]]</span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[12px] font-bold leading-snug">Draft on hold — attach MOA and budget matrix before submission</p>
+              <p class="text-[10.5px] text-gray-500 mt-0.5">Target rollout Jan 11, 2027 · Director review recommended by Oct</p>
+            </div>
+            <a href="proposal-new.html?role=faculty" class="btn btn-outline !px-3 !py-1.5 text-[11px] shrink-0">Resume draft</a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Right rail -->
+    <div class="space-y-4">
+
+      <!-- Personal contribution chart -->
+      <div class="reveal-item sc-card p-5">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-[14px]">My Contribution</h3>
+          <span class="badge badge-blue">Feb – Aug</span>
+        </div>
+        <p class="text-[11.5px] text-gray-400 font-medium mb-2">Hours rendered per month</p>
+        <div class="relative h-40"><canvas id="chHours"></canvas></div>
+        <p class="mt-2 text-[11px] text-gray-400 text-center">7 hrs this semester · 4.0 approved · 3.0 pending</p>
+      </div>
+
+      <!-- Upcoming commitments -->
+      <div class="reveal-item sc-card p-5">
+        <h3 class="font-bold text-[14px] mb-3">Upcoming Commitments</h3>
+        <ol class="relative border-l border-gray-100 ml-2 space-y-4">
+          <li class="ml-4 relative">
+            <span class="absolute -left-[7px] top-1 w-3.5 h-3.5 rounded-full bg-gold ring-4 ring-gold-50"></span>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-[13px] font-semibold leading-snug">Mid-Year Reading Proficiency Evaluation</p>
+                <p class="text-[11.5px] text-gray-400 mt-0.5">LITRAWIYA · San Jose Elementary School</p>
+              </div>
+              <span class="shrink-0 text-[10.5px] font-bold px-2 py-1 rounded-lg bg-gold-50 text-gold-800 border border-gold-100">Aug 22</span>
+            </div>
+          </li>
+          <li class="ml-4 relative">
+            <span class="absolute -left-[7px] top-1 w-3.5 h-3.5 rounded-full bg-gold ring-4 ring-gold-50"></span>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-[13px] font-semibold leading-snug">Availability requested · BP Screening support</p>
+                <p class="text-[11.5px] text-gray-400 mt-0.5">Aug 30 · 1:00–5:00 PM — respond accept or decline</p>
+              </div>
+              <a href="availability.html?role=faculty" class="shrink-0 text-[10.5px] font-bold px-2 py-1 rounded-lg bg-gold-50 text-gold-800 border border-gold-100 hover:bg-gold-100 transition">Respond</a>
+            </div>
+          </li>
+          <li class="ml-4 relative">
+            <span class="absolute -left-[7px] top-1 w-3.5 h-3.5 rounded-full bg-red-500 ring-4 ring-red-50"></span>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-[13px] font-semibold leading-snug">Q3 assessment encoding cutoff</p>
+                <p class="text-[11.5px] text-gray-400 mt-0.5">LITRAWIYA & HANDA records due to CESO</p>
+              </div>
+              <span class="shrink-0 text-[10.5px] font-bold px-2 py-1 rounded-lg bg-red-50 text-red-600 border border-red-100">Sep 15</span>
+            </div>
+          </li>
+        </ol>
+        <a href="calendar.html?role=faculty" class="btn btn-outline w-full mt-3 !py-2 !justify-center text-[12px]">Open calendar</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const ctx = chHours.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, 160);
+  g.addColorStop(0, '#003599');
+  g.addColorStop(1, '#2547eb');
+
+  new Chart(chHours, {
+    type: 'bar',
+    data: {
+      labels: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+      datasets: [{ label: 'Hours rendered', data: [4, 0, 0, 0, 0, 3, 0],
+        backgroundColor: g, borderRadius: 6, maxBarThickness: 18 }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 2 }, grid: { drawTicks: false } },
+        x: { grid: { display: false } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+});
+</script>
+</body>
+</html>

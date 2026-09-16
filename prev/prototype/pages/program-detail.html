@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LITRAWIYA · Program Detail · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="programs">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <section class="pt-6 reveal-item">
+    <a href="programs.html?role=admin" class="text-[12px] font-bold text-gray-400 hover:text-lnu-700 transition">← Extension Programs</a>
+  </section>
+
+  <!-- HERO CARD -->
+  <section class="mt-2 reveal-item">
+    <div class="sc-card overflow-hidden">
+      <div class="relative h-24 bg-gradient-to-r from-lnu-800 to-lnu-600"
+           style="background-image:radial-gradient(circle at 88% -30%, rgba(246,184,0,.4), transparent 46%), radial-gradient(rgba(255,255,255,.13) 1px, transparent 1.4px); background-size:auto, 16px 16px;">
+      </div>
+      <div class="px-6 pb-5 -mt-8 relative">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div class="flex items-end gap-4 min-w-0">
+            <span class="avatar w-16 h-16 text-lg !ring-4 !ring-white shadow-pop">JB</span>
+            <div class="min-w-0 pb-0.5">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                <span class="badge badge-gold font-bold tracking-wide">EXT-2026-001</span>
+                <span class="badge badge-blue">Ongoing</span>
+                <span class="badge badge-gray">Literacy · Education sector</span>
+              </div>
+              <h1 class="font-extrabold text-[19px] tracking-tight leading-tight truncate">LITRAWIYA: Barangay Reading Proficiency Program</h1>
+            </div>
+          </div>
+          <div class="flex gap-2 pb-1">
+            <button onclick="SC.toast('Program report exported (PDF)','success')" class="btn btn-outline !py-2">Export</button>
+            <button onclick="SC.toast('Activity draft added to LITRAWIYA','success')" class="btn btn-primary !py-2">[[calendar]] Add Activity</button>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-x-7 gap-y-2.5 text-[12.5px] text-gray-600">
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="people" data-cls="!w-4 !h-4 text-lnu-600"></span><span class="font-semibold">Prof. John Ryl E. Bautista</span><span class="text-gray-400">· Lead</span></span>
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="pin" data-cls="!w-4 !h-4 text-red-400"></span>Brgy. San Jose, Tacloban City, Leyte</span>
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="calendar" data-cls="!w-4 !h-4 text-emerald-500"></span>Jan 20 – Oct 30, 2026</span>
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="clipboard" data-cls="!w-4 !h-4 text-gold-600"></span>3 activities scheduled</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAT TILES -->
+  <section class="mt-4 grid grid-cols-4 gap-4">
+    <div class="reveal-item sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Budget</p>
+        <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center">[[wallet]]</span>
+      </div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱<span data-count="48000">0</span></p>
+      <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">allocated · FY 2026</p>
+      <div class="progress"><span style="width:66%" class="bg-lnu"></span></div>
+      <p class="text-[11px] text-gray-500 font-semibold mt-2">₱31,500 utilized · 66%</p>
+    </div>
+
+    <div class="reveal-item sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Beneficiaries</p>
+        <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">[[people]]</span>
+      </div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none"><span data-count="186">0</span><span class="text-[14px] text-gray-400 font-bold"> / 250</span></p>
+      <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">reached of target</p>
+      <div class="progress"><span style="width:74%" class="bg-emerald-500"></span></div>
+      <p class="text-[11px] text-gray-500 font-semibold mt-2">74% participation rate</p>
+    </div>
+
+    <div class="reveal-item sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Activities</p>
+        <span class="w-8 h-8 rounded-lg bg-gold-50 text-gold-700 flex items-center justify-center">[[clipboard]]</span>
+      </div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none flex items-center gap-2"><span data-count="3">0</span><span class="badge badge-blue">1 upcoming</span></p>
+      <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">this semester</p>
+      <div class="progress"><span style="width:67%" class="bg-gold"></span></div>
+      <p class="text-[11px] text-gray-500 font-semibold mt-2">2 completed · on schedule</p>
+    </div>
+
+    <div class="reveal-item sc-card sc-card-hover p-5 !border-emerald-100 !bg-gradient-to-br !from-white !to-emerald-50/60">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Knowledge Gain</p>
+        <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">[[chart]]</span>
+      </div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600 flex items-center gap-1.5">
+        <span data-count="12.4" data-decimals="1" data-prefix="+" data-suffix=" pts">+0.0 pts</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"/></svg>
+      </p>
+      <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">average score uplift</p>
+      <p class="text-[11px] text-gray-500 font-semibold mt-auto">Baseline 58.2 → Post-test 70.6</p>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <section class="reveal-item mt-5" x-data="{t:'overview'}">
+    <div class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
+      <button :class="t==='overview' ? 'tab on' : 'tab'" @click="t='overview'">Overview</button>
+      <button :class="t==='activities' ? 'tab on' : 'tab'" @click="t='activities'; window.initPDChart('activities')">Activities</button>
+      <button :class="t==='budget' ? 'tab on' : 'tab'" @click="t='budget'; window.initPDChart('budget')">Budget</button>
+      <button :class="t==='assessments' ? 'tab on' : 'tab'" @click="t='assessments'; window.initPDChart('assessments')">Assessments</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div x-show="t==='overview'" class="mt-4 grid grid-cols-3 gap-4">
+      <div class="sc-card p-6 col-span-2">
+        <h3 class="font-bold text-[14px] mb-2 flex items-center gap-2"><span class="js-icon" data-icon="sparkles" data-cls="!w-[18px] !h-[18px] text-gold-500"></span> Program Goal</h3>
+        <p class="text-[13.5px] text-gray-600 leading-relaxed">Raise reading proficiency of Grades 2–4 pupils in Brgy. San Jose through structured remedial reading sessions.</p>
+        <div class="mt-5 pt-4 border-t border-gray-100">
+          <p class="label">Linked Community & Partners</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="chip on !py-1.5 !text-[12px]">[[pin]] Brgy. San Jose · Primary community</span>
+            <span class="chip !py-1.5 !text-[12px]">San Jose Elementary School · Venue partner</span>
+            <span class="chip !py-1.5 !text-[12px]">San Jose Day Care Center · Venue partner</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card p-6">
+        <h3 class="font-bold text-[14px] mb-3">Objectives</h3>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-2.5"><span class="js-icon shrink-0 mt-0.5" data-icon="check" data-cls="!w-[18px] !h-[18px] text-emerald-500"></span><span class="text-[12.5px] text-gray-600 leading-snug">Deliver structured remedial reading sessions to at least 250 Grades 2–4 pupils</span></li>
+          <li class="flex items-start gap-2.5"><span class="js-icon shrink-0 mt-0.5" data-icon="check" data-cls="!w-[18px] !h-[18px] text-emerald-500"></span><span class="text-[12.5px] text-gray-600 leading-snug">Raise average reading proficiency scores by at least 10 points over baseline</span></li>
+          <li class="flex items-start gap-2.5"><span class="js-icon shrink-0 mt-0.5" data-icon="check" data-cls="!w-[18px] !h-[18px] text-emerald-500"></span><span class="text-[12.5px] text-gray-600 leading-snug">Train 30 parent-volunteers as reading buddies for take-home practice</span></li>
+          <li class="flex items-start gap-2.5"><span class="js-icon shrink-0 mt-0.5" data-icon="check" data-cls="!w-[18px] !h-[18px] text-emerald-500"></span><span class="text-[12.5px] text-gray-600 leading-snug">Establish a barangay reading corner stocked with 500 curated titles</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ACTIVITIES -->
+    <div x-show="t==='activities'" x-cloak class="mt-4">
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 class="font-bold text-[14px]">Program Activities</h3>
+          <span class="badge badge-gray">3 records</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table">
+            <thead><tr><th>Activity</th><th>Date</th><th>Venue</th><th class="!text-right">Attendees</th><th>Status</th><th></th></tr></thead>
+            <tbody id="pdActivities"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUDGET -->
+    <div x-show="t==='budget'" x-cloak class="mt-4 grid grid-cols-3 gap-4 items-start">
+      <div class="sc-card p-5">
+        <h3 class="font-bold text-[14px] mb-1">Fund Utilization</h3>
+        <p class="text-[11.5px] text-gray-400 font-medium mb-2">₱48,000 allocated · FY 2026</p>
+        <div class="relative h-56">
+          <canvas id="chPdBudget"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <p class="text-[26px] font-extrabold tracking-tight leading-none text-charcoal">66%</p>
+            <p class="text-[11px] text-gray-400 font-semibold mt-1">utilized</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Recent Expenses</h3>
+          <a href="budget.html?role=admin" class="text-[12px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open ledger →</a>
+        </div>
+        <ul class="divide-y divide-gray-50">
+          <li class="py-2.5 flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0"><span class="js-icon" data-icon="doc" data-cls="!w-4 !h-4"></span></span>
+            <div class="min-w-0 flex-1"><p class="text-[12.5px] font-bold leading-snug">Printing of Decodable Readers</p><p class="text-[11px] text-gray-400">200 booklets · Mar 12, 2026 · REC-2026-0382</p></div>
+            <p class="text-[13px] font-extrabold whitespace-nowrap">₱6,850</p>
+          </li>
+          <li class="py-2.5 flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0"><span class="js-icon" data-icon="doc" data-cls="!w-4 !h-4"></span></span>
+            <div class="min-w-0 flex-1"><p class="text-[12.5px] font-bold leading-snug">Reading Corner Shelf & Story Bags</p><p class="text-[11px] text-gray-400">2 shelves, 40 kits · May 08, 2026 · REC-2026-0533</p></div>
+            <p class="text-[13px] font-extrabold whitespace-nowrap">₱20,560</p>
+          </li>
+          <li class="py-2.5 flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0"><span class="js-icon" data-icon="doc" data-cls="!w-4 !h-4"></span></span>
+            <div class="min-w-0 flex-1"><p class="text-[12.5px] font-bold leading-snug">A4 Bond Paper & Supplies</p><p class="text-[11px] text-gray-400">Session kits · Feb 02, 2026 · REC-2026-0114</p></div>
+            <p class="text-[13px] font-extrabold whitespace-nowrap">₱2,340</p>
+          </li>
+          <li class="py-2.5 flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0"><span class="js-icon" data-icon="doc" data-cls="!w-4 !h-4"></span></span>
+            <div class="min-w-0 flex-1"><p class="text-[12.5px] font-bold leading-snug">Snacks — Reading Camp Volunteers</p><p class="text-[11px] text-gray-400">28 volunteers · Feb 03, 2026 · REC-2026-0121</p></div>
+            <p class="text-[13px] font-extrabold whitespace-nowrap">₱1,750</p>
+          </li>
+        </ul>
+        <div class="mt-2 pt-3 border-t border-gray-100 flex items-center justify-between">
+          <p class="text-[12px] font-bold text-gray-500 uppercase tracking-wide">Utilized to date</p>
+          <p class="text-[15px] font-extrabold text-lnu-800">₱31,500 <span class="text-[11.5px] text-gray-400 font-semibold">· ₱16,500 remaining</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSESSMENTS -->
+    <div x-show="t==='assessments'" x-cloak class="mt-4 grid grid-cols-3 gap-4 items-start">
+      <div class="reveal-item sc-card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-[14px]">Reading Proficiency Scores by Batch</h3>
+          <div class="flex items-center gap-4 text-[11.5px] text-gray-400 font-medium">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu-100"></span>Baseline</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu"></span>Post-test</span>
+          </div>
+        </div>
+        <div class="relative h-60"><canvas id="chPdScores"></canvas></div>
+      </div>
+
+      <div class="reveal-item sc-card p-5">
+        <h3 class="font-bold text-[14px]">Participant Satisfaction</h3>
+        <div class="mt-3 flex items-end gap-2">
+          <p class="text-[34px] font-extrabold tracking-tight leading-none">3.9</p>
+          <p class="text-[13px] text-gray-400 font-semibold mb-1">/ 5 average</p>
+        </div>
+        <div class="mt-2 flex gap-1 text-[20px] leading-none">
+          <span class="text-gold-500">★</span><span class="text-gold-500">★</span><span class="text-gold-500">★</span><span class="text-gold-500">★</span><span class="text-gray-200">★</span>
+        </div>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-2">112 responses · Sessions Batches 1–3</p>
+
+        <div class="mt-5 space-y-2.5">
+          <div class="flex items-center gap-2"><span class="w-6 text-[11px] font-bold text-gray-400">5★</span><div class="progress flex-1"><span style="width:61%" class="bg-gold"></span></div><span class="w-9 text-right text-[11px] font-bold text-gray-500">61%</span></div>
+          <div class="flex items-center gap-2"><span class="w-6 text-[11px] font-bold text-gray-400">4★</span><div class="progress flex-1"><span style="width:27%" class="bg-gold"></span></div><span class="w-9 text-right text-[11px] font-bold text-gray-500">27%</span></div>
+          <div class="flex items-center gap-2"><span class="w-6 text-[11px] font-bold text-gray-400">3★</span><div class="progress flex-1"><span style="width:9%" class="bg-gold"></span></div><span class="w-9 text-right text-[11px] font-bold text-gray-500">9%</span></div>
+          <div class="flex items-center gap-2"><span class="w-6 text-[11px] font-bold text-gray-400">2★</span><div class="progress flex-1"><span style="width:3%" class="bg-gold"></span></div><span class="w-9 text-right text-[11px] font-bold text-gray-500">3%</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+const GOLD = '#F6B800', BLUE = '#003599', SLATE = '#e5e7eb';
+
+function renderPdActivities() {
+  const list = DATA.activities.filter(a => a.program.title.indexOf('LITRAWIYA') === 0);
+  document.getElementById('pdActivities').innerHTML = list.map(a => `
+    <tr class="cursor-pointer" onclick="SC.toast('Opening “${a.title}” — activity profile','info')">
+      <td class="font-bold text-[13px]">${a.title}</td>
+      <td class="whitespace-nowrap text-[12.5px] text-gray-500">${a.date}</td>
+      <td class="whitespace-nowrap text-[12.5px]">${a.venue}</td>
+      <td class="whitespace-nowrap !text-right font-semibold text-[13px]">${a.attendees == null ? '<span class="text-gray-300 font-normal">—</span>' : a.attendees}</td>
+      <td><span class="badge ${a.status === 'Completed' ? 'badge-green' : 'badge-blue'}">${a.status}</span></td>
+      <td class="!text-right row-actions"><button class="btn btn-ghost !px-2.5 !py-1.5 text-[11px]" onclick="event.stopPropagation();SC.toast('Opening “${a.title}” — activity profile','info')">View</button></td>
+    </tr>`).join('');
+}
+
+window.initPDChart = (tab) => {
+  if (!window.Chart) return;
+  if (tab === 'budget') {
+    const cv = document.getElementById('chPdBudget');
+    if (!cv || cv.dataset.done) return;
+    cv.dataset.done = '1';
+    new Chart(cv, {
+      type:'doughnut',
+      data:{
+        labels:['Utilized','Remaining'],
+        datasets:[{ data:[31500,16500], backgroundColor:[GOLD,SLATE], borderWidth:3, borderColor:'#fff', hoverOffset:8 }]
+      },
+      options:{ maintainAspectRatio:false, cutout:'70%',
+        plugins:{ legend:{ position:'bottom' }, tooltip:{ callbacks:{ label:c => c.label + ': ' + SC.money(c.parsed) } } } }
+    });
+  }
+  if (tab === 'assessments') {
+    const cv = document.getElementById('chPdScores');
+    if (!cv || cv.dataset.done) return;
+    cv.dataset.done = '1';
+    new Chart(cv, {
+      type:'bar',
+      data:{
+        labels:['Batch 1','Batch 2','Batch 3'],
+        datasets:[
+          { label:'Baseline', data:[57.5,59.8,57.3], backgroundColor:'#dbe6fe', borderRadius:7, maxBarThickness:26 },
+          { label:'Post-test', data:[69.4,72.1,70.3], backgroundColor:BLUE, borderRadius:7, maxBarThickness:26 }
+        ]
+      },
+      options:{ maintainAspectRatio:false,
+        scales:{ y:{ min:40, max:80, ticks:{ callback:v => v }, grid:{ drawTicks:false } }, x:{ grid:{ display:false } } },
+        plugins:{ legend:{ display:false } } }
+    });
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-icon').forEach(el => { el.innerHTML = SC.svg(el.dataset.icon, el.dataset.cls || ''); });
+  renderPdActivities();
+});
+</script>
+</body>
+</html>

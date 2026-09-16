@@ -1,0 +1,435 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Availability Requests Â· SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="availability">
+
+<script> const R = (new URLSearchParams(location.search).get('role')) || document.body.dataset.role || 'admin'; document.body.dataset.role = R; </script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== ADMIN VARIANT ===================== -->
+  <div data-variant="admin">
+
+    <section class="pt-6 reveal-item">
+      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 Â· Request faculty availability for scheduled activities</p>
+      <div class="mt-3 flex items-center gap-2 flex-wrap">
+        <button onclick="openNewRequest()" class="btn btn-primary">+ New Availability Request</button>
+        <p class="text-[12.5px] text-gray-400">Requests are tied to an activity; faculty accept or decline with a reason.</p>
+      </div>
+    </section>
+
+    <section class="mt-3 grid lg:grid-cols-5 gap-4 items-start">
+
+      <!-- LEFT: awaiting response -->
+      <div class="lg:col-span-2">
+        <div class="reveal-item flex items-center justify-between mb-3">
+          <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">Awaiting Response
+            <span id="avPendBadge" class="badge badge-gold">0 waiting</span>
+          </h3>
+        </div>
+        <div id="avCards" class="space-y-3"></div>
+        <div id="avEmpty" class="hidden sc-card p-8 text-center">
+          <span class="js-icon mx-auto" data-icon="check" data-cls="!w-9 !h-9 text-emerald-500"></span>
+          <p class="mt-2 font-bold text-[14px]">All caught up</p>
+          <p class="text-[12.5px] text-gray-400 mt-0.5">No availability requests awaiting a faculty response.</p>
+        </div>
+      </div>
+
+      <!-- RIGHT: request history -->
+      <div class="reveal-item lg:col-span-3">
+        <div class="sc-card p-0 overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-[14px]">Request History</h3>
+            <div class="flex items-center gap-2">
+              <label class="relative">
+                <span class="js-icon absolute left-3 top-1/2 -translate-y-1/2" data-icon="search" data-cls="!w-4 !h-4 text-gray-400"></span>
+                <input id="avQ" class="input !w-56 !pl-9 !py-2 bg-white" placeholder="Search historyâ€¦">
+              </label>
+              <select id="avStatus" class="input !w-36 !py-2 bg-white">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="declined">Declined</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="sc-table">
+              <thead>
+                <tr><th>Activity</th><th>Faculty</th><th>Date &amp; Time</th><th>Status</th><th>Notes</th></tr>
+              </thead>
+              <tbody id="avHistory"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW REQUEST MODAL -->
+    <div x-data="{open:false, a:null, f:null}" @open-av-new.window="open=true" @close-av-new.window="open=false"
+         x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+      <div class="sc-modal relative max-w-xl mx-auto mt-16 sc-card p-6 shadow-pop">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
+            <span class="js-icon" data-icon="clock" data-cls="!w-5 !h-5 text-lnu-700"></span> New Availability Request
+          </h3>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="label">Activity <span class="text-red-500">*</span></label>
+            <select id="nrActivity" class="input"></select>
+            <p id="nrActMeta" class="text-[11.5px] text-gray-400 mt-1"></p>
+          </div>
+          <div>
+            <label class="label">Faculty Member <span class="text-red-500">*</span></label>
+            <select id="nrFaculty" class="input"></select>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="label">Date <span class="text-red-500">*</span></label>
+              <input id="nrDate" type="date" class="input">
+            </div>
+            <div>
+              <label class="label">Start</label>
+              <select id="nrStart" class="input">
+                <option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option>
+                <option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">End</label>
+              <select id="nrEnd" class="input">
+                <option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option>
+                <option>4:00 PM</option><option>5:00 PM</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="label">Remarks to Faculty <span class="text-gray-400 font-normal">(optional)</span></label>
+            <textarea id="nrRemarks" rows="3" class="input resize-none" placeholder="e.g., Proctoring for the mid-year reading evaluationâ€¦"></textarea>
+          </div>
+          <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3">
+            <span class="js-icon" data-icon="clock" data-cls="!w-4 !h-4 text-lnu-600 shrink-0"></span>
+            <p class="text-[12px] text-gray-500 leading-snug">Date and time default to the selected activity's schedule â€” adjust if the faculty member will only be free for part of it. The faculty will be notified and must accept or decline.</p>
+          </div>
+        </div>
+
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button @click="open=false" class="btn btn-outline">Cancel</button>
+          <button onclick="createRequest()" class="btn btn-primary">Send Request</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /admin variant -->
+
+  <!-- ===================== FACULTY VARIANT ===================== -->
+  <div data-variant="faculty" style="display:none">
+
+    <section class="pt-6 reveal-item">
+      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 Â· Respond to availability requests from the Director's Office</p>
+    </section>
+
+    <!-- PENDING REQUESTS -->
+    <section class="reveal-item">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">Requests For You
+          <span id="faPendBadge" class="badge badge-gold">0 to respond</span>
+        </h3>
+      </div>
+      <div id="faCards" class="space-y-3"></div>
+      <div id="faEmpty" class="hidden sc-card p-8 text-center">
+        <span class="js-icon mx-auto" data-icon="check" data-cls="!w-9 !h-9 text-emerald-500"></span>
+        <p class="mt-2 font-bold text-[14px]">You're all caught up</p>
+        <p class="text-[12.5px] text-gray-400 mt-0.5">No availability requests waiting on your response.</p>
+      </div>
+    </section>
+
+    <!-- MY RESPONSE HISTORY -->
+    <section class="reveal-item mt-5">
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 class="font-bold text-[14px]">My Response History</h3>
+          <span id="faCount" class="badge badge-gray"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table">
+            <thead>
+              <tr><th>Activity</th><th>Date &amp; Time</th><th>Status</th><th>Notes</th></tr>
+            </thead>
+            <tbody id="faTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESPOND MODAL -->
+    <div x-data="{open:false, mode:'accept', r:''}" @open-av-respond.window="open=true; mode=$event.detail.mode; r=''"
+         x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+      <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
+            <span class="js-icon" data-icon="clock" data-cls="!w-5 !h-5 text-lnu-700"></span>
+            <span x-text="mode==='accept' ? 'Accept Request' : 'Decline Request'"></span>
+          </h3>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+        </div>
+        <p id="avrWho" class="text-[13px] text-gray-500 -mt-2 mb-4"></p>
+
+        <label class="label" x-text="mode==='accept' ? 'Remarks (optional)' : 'Reason for Declining' + ' ' + ' *'"></label>
+        <textarea x-model="r" rows="4" class="input resize-none" :placeholder="mode==='accept' ? 'e.g., Confirmed â€” will coordinate with the venue.' : 'State your reason â€” e.g., class conflict, prior commitmentâ€¦'"></textarea>
+        <p x-show="mode==='decline'" class="mt-1.5 text-[11.5px] font-medium" :class="r.trim().length >= 10 ? 'text-emerald-600' : 'text-gray-400'">
+          <span x-text="r.trim().length"></span> / 10 characters minimum
+        </p>
+
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button @click="open=false" class="btn btn-outline">Cancel</button>
+          <button x-show="mode==='decline'" :disabled="r.trim().length < 10" @click="open=false; window.confirmAvRespond('decline', r)"
+                  :class="r.trim().length < 10 ? 'btn btn-danger-soft opacity-50 cursor-not-allowed' : 'btn btn-danger-soft'">Decline Request</button>
+          <button x-show="mode==='accept'" @click="open=false; window.confirmAvRespond('accept', r)" class="btn btn-success-soft">Accept Request</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /faculty variant -->
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype Â· Community Extension Services Office Â· Leyte Normal University</footer>
+</main>
+
+<script>
+(() => {
+  const role = document.body.dataset.role || 'admin';
+  const vrole = ['admin','faculty'].includes(role) ? role : 'admin';
+  document.querySelectorAll('[data-variant]').forEach(el => {
+    el.style.display = el.dataset.variant === vrole ? '' : 'none';
+  });
+})();
+</script>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+let AV_ACTIVE = null;
+let AV_Q = '';
+let AV_STATUS = 'all';
+
+const statusBadge = s => s === 'accepted' ? 'badge-green' : s === 'pending' ? 'badge-yellow' : 'badge-red';
+const statusLabel = s => s === 'accepted' ? 'Accepted' : s === 'pending' ? 'Pending' : 'Declined';
+const initials = n => n.replace('Prof. ', '').replace('Dr. ', '').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+/* ---------- ADMIN ---------- */
+function renderAvCards() {
+  const pend = DATA.availabilityRequests.filter(a => a.status === 'pending');
+  const box = document.getElementById('avCards');
+  document.getElementById('avPendBadge').textContent = pend.length + ' waiting';
+  document.getElementById('avEmpty').classList.toggle('hidden', pend.length > 0);
+  box.innerHTML = pend.map(a => `
+    <div class="sc-card sc-card-hover p-4">
+      <div class="flex items-center gap-3">
+        <span class="avatar ${a.faculty.id % 2 === 0 ? 'gold' : ''} w-10 h-10 text-[12px]">${initials(a.faculty.name)}</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-[13px] truncate">${a.activity.title}</p>
+          <p class="text-[11px] text-gray-400 truncate">${a.faculty.name} Â· ${a.faculty.dept}</p>
+        </div>
+        <span class="w-2 h-2 rounded-full bg-gold-500 pulse-dot shrink-0"></span>
+      </div>
+      <div class="mt-3 flex items-end justify-between gap-3">
+        <div>
+          <p class="text-[17px] font-extrabold tracking-tight leading-none">${a.date}</p>
+          <span class="badge badge-gold mt-1.5">${a.start} â€“ ${a.end}</span>
+        </div>
+        <div class="text-[11.5px] text-gray-400 text-right leading-snug">Requested ${a.requestedAt}<br>Remarks: â€œ${a.remarks || 'â€”'}â€</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderAvHistory() {
+  const q = AV_Q.trim().toLowerCase();
+  const list = DATA.availabilityRequests.filter(a =>
+    (AV_STATUS === 'all' || a.status === AV_STATUS) &&
+    (!q || (a.activity.title + ' ' + a.faculty.name + ' ' + a.date + ' ' + (a.decline_reason || a.remarks || '')).toLowerCase().includes(q))
+  );
+  const tb = document.getElementById('avHistory');
+  tb.innerHTML = list.length ? list.map(a => `
+    <tr>
+      <td>
+        <div class="flex items-center gap-2.5">
+          <span class="js-icon" data-icon="clipboard" data-cls="!w-4 !h-4 text-lnu-600"></span>
+          <div><p class="font-semibold text-[13px] leading-tight">${a.activity.title}</p><p class="text-[11px] text-gray-400">${a.activity.program.title}</p></div>
+        </div>
+      </td>
+      <td>
+        <div class="flex items-center gap-2.5">
+          <span class="avatar ${a.faculty.id % 2 === 0 ? 'gold' : ''} w-8 h-8 text-[10px]">${initials(a.faculty.name)}</span>
+          <div><p class="font-semibold text-[13px] leading-tight">${a.faculty.name}</p><p class="text-[11px] text-gray-400">${a.faculty.dept}</p></div>
+        </div>
+      </td>
+      <td class="whitespace-nowrap text-[12.5px]">${a.date}<br><span class="text-gray-400 text-[11.5px]">${a.start} â€“ ${a.end}</span></td>
+      <td><span class="badge ${statusBadge(a.status)}">${statusLabel(a.status)}</span></td>
+      <td class="text-[12.5px] italic text-gray-400 max-w-[220px]">${a.decline_reason ? 'â€œ' + a.decline_reason + 'â€' : (a.remarks ? 'â€œ' + a.remarks + 'â€' : '<span class="not-italic text-gray-300">â€”</span>')}</td>
+    </tr>`).join('')
+    : '<tr><td colspan="5" class="!py-10 text-center text-gray-400 text-[13px]">No matching records.</td></tr>';
+}
+
+function openNewRequest() {
+  const selA = document.getElementById('nrActivity');
+  const selF = document.getElementById('nrFaculty');
+  selA.innerHTML = DATA.activities.map(a => `<option value="${a.id}">${a.title}</option>`).join('');
+  selF.innerHTML = DATA.faculty.filter(f => f.status === 'Active').map(f => `<option value="${f.id}">${f.name} â€” ${f.dept}</option>`).join('');
+  selA.value = DATA.activities.find(a => a.status === 'Upcoming')?.id || DATA.activities[0].id;
+  syncActivityMeta(); // defaults the date/time fields from the linked activity's schedule
+  document.getElementById('nrRemarks').value = '';
+  document.getElementById('nrActivity').onchange = syncActivityMeta;
+  window.dispatchEvent(new CustomEvent('open-av-new'));
+}
+
+/* Date/time default FROM the linked activity's schedule (admin-editable afterwards) */
+function toISODate(s) { const d = new Date(s); return isNaN(d) ? '' : d.toISOString().slice(0,10); }
+function fmtDateHuman(iso) { if (!iso) return ''; const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'2-digit',year:'numeric'}); }
+const t2m = t => { const m = String(t||'').match(/(\d+):(\d+)\s*(AM|PM)/i); if (!m) return 0; let h = +m[1] % 12; if (m[3]==='PM') h += 12; return h*60 + +m[2]; };
+
+function syncActivityMeta() {
+  const a = DATA.activities.find(x => x.id === Number(document.getElementById('nrActivity').value));
+  if (!a) return;
+  document.getElementById('nrActMeta').textContent = a.program.title + ' Â· ' + a.venue + ' Â· ' + a.date + ' (' + a.start + ' â€“ ' + a.end + ')';
+  document.getElementById('nrDate').value = toISODate(a.date);
+  document.getElementById('nrStart').value = a.start;
+  document.getElementById('nrEnd').value = a.end;
+}
+
+window.createRequest = () => {
+  const act = DATA.activities.find(x => x.id === Number(document.getElementById('nrActivity').value));
+  const fac = DATA.faculty.find(x => x.id === Number(document.getElementById('nrFaculty').value));
+  if (!act || !fac) { SC.toast('Please pick an activity and faculty member', 'warn'); return; }
+  const iso = document.getElementById('nrDate').value;
+  if (!iso) { SC.toast('A date is required', 'warn'); return; }
+  DATA.availabilityRequests.unshift({
+    id: Date.now(),
+    activity: act, faculty: fac,
+    date: fmtDateHuman(iso),
+    start: document.getElementById('nrStart').value,
+    end: document.getElementById('nrEnd').value,
+    status: 'pending',
+    requestedBy: DATA.users.admin.name,
+    requestedAt: 'Aug 24, 2026',
+    remarks: document.getElementById('nrRemarks').value.trim(),
+    decline_reason: null, respondedAt: null
+  });
+  SC.toast('Availability request sent to ' + fac.name, 'success');
+  window.dispatchEvent(new CustomEvent('close-av-new'));
+  renderAvCards(); renderAvHistory();
+};
+
+/* ---------- FACULTY ---------- */
+function renderFaCards() {
+  const mine = DATA.availabilityRequests.filter(a => a.faculty.id === 1); // demo faculty
+  const pend = mine.filter(a => a.status === 'pending');
+  document.getElementById('faPendBadge').textContent = pend.length + ' to respond';
+  document.getElementById('faEmpty').classList.toggle('hidden', pend.length > 0);
+  document.getElementById('faCards').innerHTML = pend.map(a => `
+    <div class="sc-card sc-card-hover p-4">
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[clipboard]]</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-[13px] truncate">${a.activity.title}</p>
+          <p class="text-[11px] text-gray-400 truncate">${a.activity.program.title} Â· ${a.activity.venue}</p>
+        </div>
+        <span class="w-2 h-2 rounded-full bg-gold-500 pulse-dot shrink-0"></span>
+      </div>
+      <div class="mt-3 flex items-end justify-between gap-3">
+        <div>
+          <p class="text-[17px] font-extrabold tracking-tight leading-none">${a.date}</p>
+          <span class="badge badge-gold mt-1.5">${a.start} â€“ ${a.end}</span>
+        </div>
+        <div class="flex gap-1.5 pb-0.5">
+          <button onclick="openAvRespond(${a.id},'accept')" class="btn btn-success-soft !px-3 !py-1.5 text-[12px]">âœ“ Accept</button>
+          <button onclick="openAvRespond(${a.id},'decline')" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[12px]">Decline</button>
+        </div>
+      </div>
+      ${a.remarks ? `<p class="mt-2 text-[11.5px] italic text-gray-500">From the Director: â€œ${a.remarks}â€</p>` : ''}
+    </div>`).join('');
+}
+
+function renderFaTable() {
+  const mine = DATA.availabilityRequests.filter(a => a.faculty.id === 1);
+  document.getElementById('faCount').textContent = mine.length + ' requests';
+  document.getElementById('faTable').innerHTML = mine.map(a => `
+    <tr>
+      <td class="font-semibold text-[13px] leading-tight">${a.activity.title}</td>
+      <td class="whitespace-nowrap text-[12.5px]">${a.date}<br><span class="text-gray-400 text-[11.5px]">${a.start} â€“ ${a.end}</span></td>
+      <td><span class="badge ${statusBadge(a.status)}">${statusLabel(a.status)}</span></td>
+      <td class="text-[12.5px] italic text-gray-400 max-w-[280px]">${a.decline_reason ? 'â€œ' + a.decline_reason + 'â€' : (a.remarks ? 'â€œ' + a.remarks + 'â€' : '<span class="not-italic text-gray-300">â€”</span>')}</td>
+    </tr>`).join('');
+}
+
+function openAvRespond(id, mode) {
+  const a = DATA.availabilityRequests.find(x => x.id === id); if (!a) return;
+  AV_ACTIVE = a;
+  document.getElementById('avrWho').textContent = a.activity.title + ' Â· ' + a.date + ' Â· ' + a.start + ' â€“ ' + a.end;
+  window.dispatchEvent(new CustomEvent('open-av-respond', { detail: { mode } }));
+}
+
+/* Demo faculty-assignment map (activityId -> faculty ids) mirroring the hub */
+const ASSIGN_DEMO = { 1:[1,2], 2:[1], 4:[3], 5:[3], 6:[7], 8:[2], 9:[4] };
+
+/* HARD BLOCK (8.8): a faculty member cannot ACCEPT a request whose date/time
+   overlaps their accepted requests or existing activity assignments. */
+function acceptOverlap(a) {
+  const sameDay = x => x.date === a.date;
+  const overlaps = x => t2m(a.start) < t2m(x.end) && t2m(x.start) < t2m(a.end);
+  const acceptedHits = DATA.availabilityRequests.filter(x =>
+    x.id !== a.id && x.faculty.id === a.faculty.id && x.status === 'accepted' && sameDay(x) && overlaps(x));
+  if (acceptedHits.length) return { type: 'accepted availability request', other: acceptedHits[0] };
+  const assignedActs = DATA.activities.filter(x =>
+    x.id !== a.activity.id && (ASSIGN_DEMO[x.id] || []).includes(a.faculty.id) && sameDay(x) && overlaps(x));
+  if (assignedActs.length) return { type: 'assigned activity', other: assignedActs[0] };
+  return null;
+}
+
+window.confirmAvRespond = (mode, remarks) => {
+  if (!AV_ACTIVE) return;
+  if (mode === 'decline' && (remarks || '').trim().length < 10) { SC.toast('A reason of at least 10 characters is required', 'warn'); return; }
+  if (mode === 'accept') {
+    const hit = acceptOverlap(AV_ACTIVE);
+    if (hit) {
+      SC.toast('Cannot accept â€” overlaps your ' + hit.type + ' â€œ' + hit.other.title + 'â€ (' + hit.other.start + ' â€“ ' + hit.other.end + ')', 'error');
+      return; // accept is refused
+    }
+  }
+  AV_ACTIVE.status = mode;
+  AV_ACTIVE.decline_reason = mode === 'decline' ? remarks.trim() : null;
+  AV_ACTIVE.respondedAt = 'Aug 24, 2026';
+  SC.toast(mode === 'accept' ? 'Request accepted â€” conflict-free Â· calendar updated' : 'Request declined', mode === 'accept' ? 'success' : 'info');
+  renderFaCards(); renderFaTable();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-icon').forEach(el => { el.innerHTML = SC.svg(el.dataset.icon, el.dataset.cls || ''); });
+
+  const role = ['admin', 'faculty'].includes(document.body.dataset.role) ? document.body.dataset.role : 'admin';
+  if (role === 'admin') {
+    renderAvCards(); renderAvHistory();
+    document.getElementById('avQ').addEventListener('input', e => { AV_Q = e.target.value; renderAvHistory(); });
+    document.getElementById('avStatus').addEventListener('change', e => { AV_STATUS = e.target.value; renderAvHistory(); });
+  } else {
+    renderFaCards(); renderFaTable();
+  }
+});
+</script>
+</body>
+</html>

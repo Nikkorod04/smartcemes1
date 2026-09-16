@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rendered Hours · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="rendered-hours">
+
+<script> const R = (new URLSearchParams(location.search).get('role')) || document.body.dataset.role || 'admin'; document.body.dataset.role = R; </script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== ADMIN VARIANT ===================== -->
+  <div data-variant="admin">
+
+    <section class="pt-6 reveal-item">
+      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 · Approve faculty service hours for completed activities</p>
+    </section>
+
+    <section class="mt-3 grid lg:grid-cols-5 gap-4 items-start">
+
+      <!-- LEFT: pending approval -->
+      <div class="lg:col-span-2">
+        <div class="reveal-item flex items-center justify-between mb-3">
+          <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">Awaiting Approval
+            <span id="rhPendBadge" class="badge badge-gold">0 waiting</span>
+          </h3>
+        </div>
+        <div id="rhCards" class="space-y-3"></div>
+        <div id="rhEmpty" class="hidden sc-card p-8 text-center">
+          <span class="js-icon mx-auto" data-icon="check" data-cls="!w-9 !h-9 text-emerald-500"></span>
+          <p class="mt-2 font-bold text-[14px]">All caught up</p>
+          <p class="text-[12.5px] text-gray-400 mt-0.5">No rendered-hours submissions awaiting your approval.</p>
+        </div>
+      </div>
+
+      <!-- RIGHT: history -->
+      <div class="reveal-item lg:col-span-3">
+        <div class="sc-card p-0 overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-[14px]">Approval History</h3>
+            <div class="flex items-center gap-2">
+              <label class="relative">
+                <span class="js-icon absolute left-3 top-1/2 -translate-y-1/2" data-icon="search" data-cls="!w-4 !h-4 text-gray-400"></span>
+                <input id="rhQ" class="input !w-56 !pl-9 !py-2 bg-white" placeholder="Search history…">
+              </label>
+              <select id="rhStatus" class="input !w-36 !py-2 bg-white">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="sc-table">
+              <thead>
+                <tr><th>Faculty</th><th>Activity</th><th>Date</th><th class="!text-right">Hours</th><th>Source</th><th>Status</th></tr>
+              </thead>
+              <tbody id="rhHistory"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REJECT MODAL -->
+    <div x-data="{open:false, r:''}" @open-rh-reject.window="open=true; r=''"
+         x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+      <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
+            <span class="js-icon" data-icon="clock" data-cls="!w-5 !h-5 text-red-500"></span> Reject Rendered Hours
+          </h3>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">×</button>
+        </div>
+        <p id="rhRejWho" class="text-[13px] text-gray-500 -mt-2 mb-4"></p>
+
+        <label class="label">Remarks to Faculty <span class="text-red-500">*</span></label>
+        <textarea x-model="r" rows="4" class="input resize-none" placeholder="State the reason — e.g., activity not yet completed, hours exceed activity duration…"></textarea>
+        <p class="mt-1.5 text-[11.5px] font-medium" :class="r.trim().length >= 10 ? 'text-emerald-600' : 'text-gray-400'">
+          <span x-text="r.trim().length"></span> / 10 characters minimum
+        </p>
+
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button @click="open=false" class="btn btn-outline">Cancel</button>
+          <button :disabled="r.trim().length < 10" @click="open=false; window.confirmRhReject(r)"
+                  :class="r.trim().length < 10 ? 'btn btn-danger-soft opacity-50 cursor-not-allowed' : 'btn btn-danger-soft'">Reject Submission</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /admin variant -->
+
+  <!-- ===================== FACULTY VARIANT ===================== -->
+  <div data-variant="faculty" style="display:none">
+
+    <section class="pt-6 reveal-item">
+      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 · Review your rendered hours for completed activities</p>
+    </section>
+
+    <!-- SUMMARY -->
+    <section class="reveal-item grid grid-cols-4 gap-4">
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Approved Hours</p>
+        <p class="mt-3 text-[24px] font-extrabold tracking-tight leading-none"><span id="rhApprovedTotal" class="text-[13px] font-bold text-gray-400">—</span></p>
+        <p class="text-[11px] text-gray-400 mt-1 mb-2">this semester · locked after approval</p>
+        <div class="progress"><span id="rhApprovedBar" style="width:0%" class="bg-lnu"></span></div>
+        <p class="text-[11px] text-gray-500 font-semibold mt-2">Target 40 hrs / semester</p>
+      </div>
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Pending</p>
+        <p class="mt-3 text-[24px] font-extrabold tracking-tight leading-none" id="rhPendTotal">0</p>
+        <p class="text-[11px] text-gray-400 mt-1 mb-2">awaiting your submission or approval</p>
+        <div class="progress"><span style="width:20%" class="bg-gold"></span></div>
+      </div>
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Auto-drafts</p>
+        <p class="mt-3 text-[24px] font-extrabold tracking-tight leading-none" id="rhDraftTotal">0</p>
+        <p class="text-[11px] text-gray-400 mt-1 mb-2">generated when activities complete</p>
+        <div class="progress"><span style="width:10%" class="bg-gray-300"></span></div>
+      </div>
+      <div class="sc-card p-5 !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Hours Recorded</p>
+        <p class="mt-3 text-[24px] font-extrabold tracking-tight leading-none text-gold-700" id="rhRecTotal">0</p>
+        <p class="text-[11px] text-gray-400 mt-1 mb-2">this semester · incl. pending</p>
+        <div class="progress"><span style="width:35%" class="bg-gold"></span></div>
+      </div>
+    </section>
+
+    <!-- MY ENTRIES -->
+    <section class="reveal-item mt-5">
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 class="font-bold text-[14px]">My Rendered Hours</h3>
+          <span id="rhCount" class="badge badge-gray"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table">
+            <thead>
+              <tr><th>Activity</th><th>Date</th><th class="!text-right">Auto Hours</th><th class="!text-right">Adjusted</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody id="rhTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADJUST / SUBMIT MODAL -->
+    <div x-data="{open:false}" @open-rh-adjust.window="open=true"
+         x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+      <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
+            <span class="js-icon" data-icon="clock" data-cls="!w-5 !h-5 text-lnu-700"></span> Review Rendered Hours
+          </h3>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">×</button>
+        </div>
+        <p id="rhAdjWho" class="text-[13px] text-gray-500 -mt-2 mb-4"></p>
+
+        <label class="label">Hours to Submit</label>
+        <div class="flex items-center gap-2">
+          <input id="rhAdjHours" type="number" step="0.25" min="0" class="input !w-28" value="0">
+          <span class="text-[13px] text-gray-500 font-semibold">hrs</span>
+          <span id="rhAdjMax" class="text-[11.5px] text-gray-400 ml-auto">max 3.0 hrs (activity duration)</span>
+        </div>
+
+        <label class="label mt-3">Remarks <span class="text-gray-400 font-normal">(optional)</span></label>
+        <textarea id="rhAdjRemarks" rows="3" class="input resize-none" placeholder="e.g., Co-led session — attended first 2 of 3 hours…"></textarea>
+
+        <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3 mt-3">
+          <span class="js-icon" data-icon="clock" data-cls="!w-4 !h-4 text-lnu-600 shrink-0"></span>
+          <p class="text-[12px] text-gray-500 leading-snug">You may only <b>adjust down</b> from the auto-computed activity duration for partial participation. Approved hours are <b>locked</b> and cannot be edited.</p>
+        </div>
+
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button @click="open=false" class="btn btn-outline">Cancel</button>
+          <button onclick="submitRhAdjust()" class="btn btn-primary">Submit for Approval</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /faculty variant -->
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script>
+(() => {
+  const role = document.body.dataset.role || 'admin';
+  const vrole = ['admin','faculty'].includes(role) ? role : 'admin';
+  document.querySelectorAll('[data-variant]').forEach(el => {
+    el.style.display = el.dataset.variant === vrole ? '' : 'none';
+  });
+})();
+</script>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+let RH_ACTIVE = null;
+let RH_Q = '';
+let RH_STATUS = 'all';
+
+const rhBadge = s => s === 'approved' ? 'badge-green' : s === 'pending' ? 'badge-yellow' : 'badge-red';
+const rhLabel = s => s === 'approved' ? 'Approved' : s === 'pending' ? 'Pending' : 'Rejected';
+const initials = n => n.replace('Prof. ', '').replace('Dr. ', '').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+/* ---------- ADMIN ---------- */
+function renderRhCards() {
+  const pend = DATA.renderedHours.filter(r => r.status === 'pending');
+  const box = document.getElementById('rhCards');
+  document.getElementById('rhPendBadge').textContent = pend.length + ' waiting';
+  document.getElementById('rhEmpty').classList.toggle('hidden', pend.length > 0);
+  box.innerHTML = pend.map(r => `
+    <div class="sc-card sc-card-hover p-4">
+      <div class="flex items-center gap-3">
+        <span class="avatar ${r.faculty.id % 2 === 0 ? 'gold' : ''} w-10 h-10 text-[12px]">${initials(r.faculty.name)}</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-[13px] truncate">${r.activity.title}</p>
+          <p class="text-[11px] text-gray-400 truncate">${r.faculty.name} · ${r.faculty.dept}</p>
+        </div>
+        <span class="w-2 h-2 rounded-full bg-gold-500 pulse-dot shrink-0"></span>
+      </div>
+      <div class="mt-3 flex items-end justify-between gap-3">
+        <div>
+          <p class="text-[17px] font-extrabold tracking-tight leading-none">${r.hours} hrs</p>
+          <span class="badge badge-gray mt-1.5">${r.date}</span>
+        </div>
+        <div class="flex gap-1.5 pb-0.5">
+          <button onclick="approveRh(${r.id})" title="Approve" class="btn btn-success-soft !px-3 !py-1.5 text-[12px]">✓ Approve</button>
+          <button onclick="openRhReject(${r.id})" title="Reject" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[12px]">✕</button>
+        </div>
+      </div>
+      ${r.remarks ? `<p class="mt-2 text-[11.5px] italic text-gray-500">“${r.remarks}”</p>` : ''}
+    </div>`).join('');
+}
+
+function renderRhHistory() {
+  const q = RH_Q.trim().toLowerCase();
+  const list = DATA.renderedHours.filter(r =>
+    (RH_STATUS === 'all' || r.status === RH_STATUS) &&
+    (!q || (r.faculty.name + ' ' + r.activity.title + ' ' + r.date).toLowerCase().includes(q))
+  );
+  const tb = document.getElementById('rhHistory');
+  tb.innerHTML = list.length ? list.map(r => `
+    <tr>
+      <td>
+        <div class="flex items-center gap-2.5">
+          <span class="avatar ${r.faculty.id % 2 === 0 ? 'gold' : ''} w-8 h-8 text-[10px]">${initials(r.faculty.name)}</span>
+          <div><p class="font-semibold text-[13px] leading-tight">${r.faculty.name}</p><p class="text-[11px] text-gray-400">${r.activity.program.code}</p></div>
+        </div>
+      </td>
+      <td class="font-semibold text-[13px] max-w-[220px] truncate">${r.activity.title}</td>
+      <td class="whitespace-nowrap text-[12.5px]">${r.date}</td>
+      <td class="whitespace-nowrap !text-right font-extrabold text-[13px]">${r.hours} hrs</td>
+      <td><span class="badge ${r.source === 'auto' ? 'badge-blue' : 'badge-gray'} !text-[10px]">${r.source === 'auto' ? 'auto-draft' : 'manual'}</span></td>
+      <td>${r.status === 'approved'
+        ? `<span class="badge badge-green">Approved 🔒</span>`
+        : `<span class="badge ${rhBadge(r.status)}">${rhLabel(r.status)}</span>`}</td>
+    </tr>`).join('')
+    : '<tr><td colspan="6" class="!py-10 text-center text-gray-400 text-[13px]">No matching records.</td></tr>';
+}
+
+function approveRh(id) {
+  const r = DATA.renderedHours.find(x => x.id === id); if (!r) return;
+  r.status = 'approved';
+  r.approvedBy = DATA.users.admin.name;
+  r.approvedAt = 'Aug 24, 2026';
+  SC.toast('Rendered hours approved — locked and logged', 'success');
+  renderRhCards(); renderRhHistory();
+}
+
+function openRhReject(id) {
+  const r = DATA.renderedHours.find(x => x.id === id); if (!r) return;
+  RH_ACTIVE = r;
+  document.getElementById('rhRejWho').textContent = r.faculty.name + ' · ' + r.activity.title + ' · ' + r.hours + ' hrs';
+  window.dispatchEvent(new CustomEvent('open-rh-reject'));
+}
+
+window.confirmRhReject = (remarks) => {
+  if (!RH_ACTIVE || (remarks || '').trim().length < 10) return;
+  RH_ACTIVE.status = 'rejected';
+  RH_ACTIVE.remarks = remarks.trim();
+  SC.toast('Rendered hours rejected', 'warn');
+  renderRhCards(); renderRhHistory();
+};
+
+/* ---------- FACULTY ---------- */
+function renderRhFaculty() {
+  const mine = DATA.renderedHours.filter(r => r.faculty.id === 1); // demo faculty
+  const approved = mine.filter(r => r.status === 'approved').reduce((s, r) => s + r.hours, 0);
+  const pend = mine.filter(r => r.status === 'pending').length;
+  const drafts = mine.filter(r => r.status === 'pending' && r.source === 'auto').length;
+
+  document.getElementById('rhApprovedTotal').textContent = approved + ' hrs';
+  document.getElementById('rhApprovedBar').style.width = Math.min(100, Math.round(approved / 40 * 100)) + '%';
+  document.getElementById('rhPendTotal').textContent = pend;
+  document.getElementById('rhDraftTotal').textContent = drafts;
+  document.getElementById('rhRecTotal').textContent = (approved + mine.filter(r => r.status === 'pending').reduce((s, r) => s + r.hours, 0)) + ' hrs';
+  document.getElementById('rhCount').textContent = mine.length + ' entries';
+
+  document.getElementById('rhTable').innerHTML = mine.map(r => `
+    <tr>
+      <td class="font-semibold text-[13px] max-w-[220px] truncate">${r.activity.title}</td>
+      <td class="whitespace-nowrap text-[12.5px]">${r.date}</td>
+      <td class="whitespace-nowrap !text-right text-[12.5px]">${r.hours} hrs</td>
+      <td class="whitespace-nowrap !text-right font-semibold text-[12.5px]">${r.source === 'auto' && r.status === 'pending' ? '<span class="text-lnu-700">editable</span>' : '—'}</td>
+      <td><span class="badge ${rhBadge(r.status)}">${rhLabel(r.status)}</span></td>
+      <td class="!text-right row-actions">
+        ${r.status === 'pending' ? `<button onclick="openRhAdjust(${r.id})" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px]">Review</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function openRhAdjust(id) {
+  const r = DATA.renderedHours.find(x => x.id === id); if (!r) return;
+  RH_ACTIVE = r;
+  document.getElementById('rhAdjWho').textContent = r.activity.title + ' · ' + r.date + ' · ' + r.activity.start + ' – ' + r.activity.end;
+  document.getElementById('rhAdjHours').value = r.hours;
+  document.getElementById('rhAdjHours').max = r.hours;
+  document.getElementById('rhAdjMax').textContent = 'max ' + r.hours + ' hrs (activity duration)';
+  document.getElementById('rhAdjRemarks').value = '';
+  window.dispatchEvent(new CustomEvent('open-rh-adjust'));
+}
+
+window.submitRhAdjust = () => {
+  if (!RH_ACTIVE) return;
+  const h = parseFloat(document.getElementById('rhAdjHours').value);
+  const remarks = document.getElementById('rhAdjRemarks').value.trim();
+  if (isNaN(h) || h <= 0) { SC.toast('Enter a valid hour amount', 'warn'); return; }
+  if (h > RH_ACTIVE.hours) { SC.toast('Cannot exceed the activity duration', 'error'); return; }
+  RH_ACTIVE.hours = h;
+  RH_ACTIVE.remarks = remarks;
+  SC.toast('Rendered hours submitted for approval', 'success');
+  renderRhFaculty();
+  document.querySelector('[x-data*="open-rh-adjust"]')?.setAttribute?.('x-show', 'false');
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-icon').forEach(el => { el.innerHTML = SC.svg(el.dataset.icon, el.dataset.cls || ''); });
+
+  const role = ['admin', 'faculty'].includes(document.body.dataset.role) ? document.body.dataset.role : 'admin';
+  if (role === 'admin') {
+    renderRhCards(); renderRhHistory();
+    document.getElementById('rhQ').addEventListener('input', e => { RH_Q = e.target.value; renderRhHistory(); });
+    document.getElementById('rhStatus').addEventListener('change', e => { RH_STATUS = e.target.value; renderRhHistory(); });
+  } else {
+    renderRhFaculty();
+  }
+});
+</script>
+</body>
+</html>

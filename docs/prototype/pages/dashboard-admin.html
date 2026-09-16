@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="dashboard-admin">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== KPI ROW ===================== -->
+  <section class="pt-6">
+    <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 · Semester 1, AY 2026–2027</p>
+    <p class="text-[11.5px] text-gray-400 font-medium mt-1">All figures derive from the 8.6 KPI dictionary · aggregated from validated records</p>
+    <div class="reveal-item grid grid-cols-5 gap-4 mt-3">
+
+      <!-- Programs -->
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[folder]]</span>
+          <span class="badge badge-gray">AY 2026–2027</span>
+        </div>
+        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none"><span data-count="6">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Extension Programs</p>
+        <div class="mini-seg mt-3">
+          <span style="width:66.7%; background:#003599"></span>
+          <span style="width:16.7%; background:#10b981"></span>
+          <span style="width:16.6%; background:#F6B800"></span>
+        </div>
+        <p class="text-[11px] text-gray-400 font-medium mt-2">4 ongoing · 1 completed · 1 draft</p>
+      </div>
+
+      <!-- Beneficiaries vs combined program target -->
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[people]]</span>
+          <span class="badge badge-green">target 1,040</span>
+        </div>
+        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none text-emerald-600"><span data-count="653">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Distinct Beneficiaries Served</p>
+        <div class="relative mt-3">
+          <div class="progress"><span style="width:63%" class="bg-emerald-500"></span></div>
+          <span class="marker" style="left:100%"></span>
+        </div>
+        <p class="text-[11px] text-gray-400 font-medium mt-2">63% of the combined program target · dashed mark = target (8.6)</p>
+      </div>
+
+      <!-- Budget vs objective target -->
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[wallet]]</span>
+          <span class="badge badge-yellow">61% utilized</span>
+        </div>
+        <p class="mt-4 text-[24px] font-extrabold tracking-tight leading-none">₱<span data-count="164950">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Budget Utilized of ₱268,500</p>
+        <div class="relative mt-3">
+          <div class="progress"><span style="width:61%" class="bg-lnu-800"></span></div>
+          <span class="marker" style="left:90%"></span>
+        </div>
+        <p class="text-[11px] text-gray-400 font-medium mt-2"><span class="font-bold text-red-600">1 program over-allocated (D7)</span> · dashed mark = objective target</p>
+      </div>
+
+      <!-- Objectives achieved -->
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[chart]]</span>
+          <span class="badge badge-blue">14 total</span>
+        </div>
+        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">3<span class="text-[15px] text-gray-400 font-bold"> / 14</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Objectives Achieved</p>
+        <div class="mini-seg mt-3">
+          <span style="width:21.4%; background:#10b981"></span>
+          <span style="width:64.3%; background:#003599"></span>
+          <span style="width:7.2%; background:#ef4444"></span>
+          <span style="width:7.1%; background:#cbd5e1"></span>
+        </div>
+        <p class="text-[11px] text-gray-400 font-medium mt-2">
+          <span class="legend-dot bg-emerald-500"></span> 3 achieved ·
+          <span class="legend-dot bg-lnu-800"></span> 9 on track ·
+          <span class="legend-dot bg-red-500"></span> 1 not met ·
+          <span class="legend-dot bg-gray-300"></span> 1 not started
+        </p>
+      </div>
+
+      <!-- Pending approvals -->
+      <div class="sc-card p-5 !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-100 text-gold-700 flex items-center justify-center">[[clock]]</span>
+          <span class="badge badge-red">action needed</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-gold-700"><span data-count="9">0</span></p>
+        <p class="text-[12.5px] text-gray-600 font-medium mt-1.5">Pending Approvals</p>
+        <p class="text-[11px] text-gray-500 font-medium mt-2">3 proposals · 3 availability · 3 rendered hours</p>
+        <a href="ai-analysis.html?role=admin" class="text-[11px] font-bold text-gold-800 hover:text-gold-600 transition inline-block mt-1.5">1 AI analysis awaiting approval →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CHARTS ROW 1 ===================== -->
+  <section class="mt-5 grid grid-cols-3 gap-4">
+    <div class="reveal-item sc-card p-5">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-bold text-[14px]">Program Portfolio</h3>
+        <span class="text-[11.5px] text-gray-400 font-medium">by status</span>
+      </div>
+      <div class="relative h-56"><canvas id="chStatus"></canvas></div>
+    </div>
+
+    <div class="reveal-item sc-card p-5 col-span-2">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-[14px]">Budget Utilization</h3>
+        <div class="flex items-center gap-4 text-[11.5px] text-gray-400 font-medium">
+          <span class="flex items-center gap-1.5"><span class="legend-dot" style="background:#dbe6fe"></span>Allocated</span>
+          <span class="flex items-center gap-1.5"><span class="legend-dot bg-gold-500"></span>Utilized</span>
+          <span class="flex items-center gap-1.5"><span class="legend-dot bg-red-500"></span>Over-allocated (D7)</span>
+        </div>
+      </div>
+      <p class="text-[11.5px] text-gray-400 font-medium mb-2">Hover a bar for the utilization rate against allocation</p>
+      <div class="relative h-56"><canvas id="chBudget"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ===================== CHARTS ROW 2 ===================== -->
+  <section class="mt-4 grid grid-cols-3 gap-4">
+    <div class="reveal-item sc-card p-5 col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-bold text-[14px]">Community Reach</h3>
+        <span class="badge badge-blue">top 10 · distinct beneficiaries served</span>
+      </div>
+      <div class="relative h-64"><canvas id="chReach"></canvas></div>
+      <p class="text-[11px] text-gray-400 font-medium mt-2">Remaining barangays are grouped into “Others”. Grouped by municipality · barangay (8.6).</p>
+    </div>
+
+    <div class="reveal-item sc-card p-5">
+      <h3 class="font-bold text-[14px] mb-3">Recent Activity</h3>
+      <ol class="relative border-l border-gray-100 ml-2 space-y-4">
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-lnu-800 ring-4 ring-lnu-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">New proposal: “SOLID Start”</p>
+          <p class="text-[11.5px] text-gray-400">Prof. Aquino · 12 minutes ago</p>
+        </li>
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-gold-500 ring-4 ring-gold-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">Special order attached to “PEACE corners”</p>
+          <p class="text-[11.5px] text-gray-400">CESO Office · 1 hour ago</p>
+        </li>
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">Assessment validated — Brgy. Salvacion Q2</p>
+          <p class="text-[11.5px] text-gray-400">Secretary Ayles · Yesterday</p>
+        </li>
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-blue-400 ring-4 ring-blue-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">HANDA hit 95% beneficiary target</p>
+          <p class="text-[11.5px] text-gray-400">System · Yesterday</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== ACTION CENTER ===================== -->
+  <section class="mt-4">
+    <div class="reveal-item sc-card p-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">[[clipboard]] Action Center</h3>
+        <span class="badge badge-red">9 items</span>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Proposals awaiting approval</p>
+          <p class="mt-2 text-[15px] font-extrabold text-red-600 leading-none">3</p>
+          <a href="proposals.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">“SOLID Start: Solid Waste Segregation IEC”</a>
+          <a href="proposals.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">“GULAYAN SA PAARALAN: School Vegetable…”</a>
+        </div>
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Availability awaiting response</p>
+          <p class="mt-2 text-[15px] font-extrabold text-amber-600 leading-none">3</p>
+          <a href="availability.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Gabo · Aug 30 — BP screening</a>
+          <a href="availability.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Lumbre · Aug 30 — e-LIT demo booth</a>
+        </div>
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Rendered hours awaiting approval</p>
+          <p class="mt-2 text-[15px] font-extrabold text-lnu-700 leading-none">3</p>
+          <a href="rendered-hours.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Bautista · 2.5 hrs</a>
+          <a href="rendered-hours.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Aquino · 7.0 hrs</a>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mt-3">
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Objectives at risk</p>
+          <p class="mt-2 text-[15px] font-extrabold text-red-600 leading-none">2</p>
+          <a href="program-detail.html?role=admin&program=EXT-2026-003" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">KABUHIAN · association objective missed</a>
+          <p class="text-[10.5px] text-gray-400 mt-0.5">Target date Jun 27</p>
+        </div>
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Programs nearing deadline (≤14d)</p>
+          <p class="mt-2 text-[15px] font-extrabold text-amber-600 leading-none">1</p>
+          <a href="program-detail.html?role=admin&program=EXT-2026-002" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">HANDA · ends Sep 15 (22 days)</a>
+          <p class="text-[10.5px] text-gray-400 mt-0.5">Only 9 households remaining to target</p>
+        </div>
+        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">AI analyses awaiting approval</p>
+          <p class="mt-2 text-[15px] font-extrabold text-gold-700 leading-none">1</p>
+          <a href="ai-analysis.html?role=admin" class="text-[11px] font-bold text-lnu-700 mt-2 inline-block">Brgy. San Jose · Q2 2026 →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== AI DECISION SUPPORT (Director-only) ===================== -->
+  <section class="mt-4">
+    <div class="reveal-item flex flex-wrap items-center justify-between gap-2 mb-3">
+      <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">
+        [[sparkles]] AI Decision Support
+        <span class="badge badge-blue">Director-only · aggregated inputs only</span>
+      </h3>
+      <a href="ai-analysis.html?role=admin" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open AI workspace →</a>
+    </div>
+    <div class="reveal-item grid grid-cols-3 gap-4">
+
+      <!-- Community insights queue -->
+      <div class="sc-card p-5 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/50">
+        <div class="flex items-center justify-between mb-2">
+          <p class="font-bold text-[13.5px]">Community Insights Queue</p>
+          <span class="badge badge-gold">1 draft</span>
+        </div>
+        <p class="text-[11.5px] text-gray-400 font-medium mb-2.5">Assessment analyses awaiting Admin approval</p>
+        <div class="p-3 rounded-xl border border-gray-100 bg-white">
+          <p class="text-[12.5px] font-bold truncate">Brgy. San Jose · Q2 2026</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">86 responses · gemini-3.6-flash · aggregated only</p>
+          <div class="flex gap-2 mt-2.5">
+            <a href="ai-analysis.html?role=admin" class="btn btn-primary !px-2.5 !py-1.5 text-[11px]">Review &amp; approve</a>
+          </div>
+        </div>
+        <p class="text-[10.5px] text-gray-400 mt-2.5">Failed generations appear here as “Analysis unavailable” with a retry — never a silent error.</p>
+      </div>
+
+      <!-- Program narratives -->
+      <div class="sc-card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-2">
+          <p class="font-bold text-[13.5px]">Program Narratives — latest health label per program</p>
+          <a href="program-narratives.html?role=admin" class="text-[12px] font-bold text-lnu-800 hover:text-lnu-600 transition">View all narratives →</a>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="sc-card p-4 ai-panel relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[12.5px] font-bold flex items-center gap-1.5 text-white">[[sparkles]] HANDA</p>
+              <span class="narrative-health on-track">On track</span>
+            </div>
+            <p class="text-[11.5px] text-white/85 leading-snug">171 of 180 households trained (95%). Budget is 4 points above target — watch for overrun.</p>
+            <p class="text-[10px] text-white/60 mt-1.5">Aug 24 · gemini-3.6-flash</p>
+          </div>
+          <div class="sc-card p-4 ai-panel relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[12.5px] font-bold flex items-center gap-1.5 text-white">[[sparkles]] e-LITERACY</p>
+              <span class="narrative-health needs-attention">Needs attention</span>
+            </div>
+            <p class="text-[11.5px] text-white/85 leading-snug">74 of 150 reached (49%); uplift 1.5/5 vs 1.9 target. Weekend cohorts recommended.</p>
+            <p class="text-[10px] text-white/60 mt-1.5">Aug 24 · gemini-3.6-flash</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+          <span class="badge badge-green">LITRAWIYA · on track</span>
+          <span class="badge badge-green">KABUHIAN · on track</span>
+          <span class="badge badge-green">SENIOR CARE · on track</span>
+          <a href="program-narratives.html?role=admin" class="text-[11px] font-bold text-gray-400 hover:text-lnu-700 transition ml-auto">+ history per program →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const BLUE='#003599', GOLD='#F6B800', EMERALD='#10b981', RED='#ef4444', SLATE='#cbd5e1';
+  const peso = n => '₱' + Number(n).toLocaleString('en-PH');
+
+  /* 1. Program Portfolio — doughnut with center total */
+  new Chart(document.getElementById('chStatus'), {
+    type:'doughnut',
+    data:{
+      labels:['Ongoing','Completed','Draft'],
+      datasets:[{ data:[4,1,1], backgroundColor:[BLUE,EMERALD,GOLD], borderWidth:3, borderColor:'#fff', hoverOffset:8 }]
+    },
+    options:{ maintainAspectRatio:false, cutout:'66%',
+      plugins:{ legend:{ position:'bottom' },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed} program${ctx.parsed === 1 ? '' : 's'}` } } } },
+    plugins:[{
+      id:'centerText',
+      afterDraw(chart){
+        const { ctx, chartArea } = chart;
+        const x = (chartArea.left + chartArea.right) / 2;
+        const y = (chartArea.top + chartArea.bottom) / 2;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1f2937';
+        ctx.font = '800 26px Figtree, sans-serif';
+        ctx.fillText('6', x, y + 2);
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '600 10px Figtree, sans-serif';
+        ctx.fillText('PROGRAMS', x, y + 18);
+        ctx.restore();
+      }
+    }]
+  });
+
+  /* 2. Budget Utilization — red over-allocated bars, ₱ axis, D7 tooltip */
+  const bLabels = ['LITRAWIYA','HANDA','KABUHIAN','e-LITERACY','SENIOR CARE','BATANG MATINIK'];
+  const bPlanned = [48000,62500,35000,40000,55000,28000];
+  const bUsed    = [31500,64500,33750,14200,21000,0];
+  const bOver    = bUsed.map((u,i) => u > bPlanned[i]);
+
+  new Chart(document.getElementById('chBudget'), {
+    type:'bar',
+    data:{
+      labels:bLabels,
+      datasets:[
+        { label:'Allocated', data:bPlanned, backgroundColor:'#dbe6fe', borderRadius:6, maxBarThickness:18 },
+        { label:'Utilized',  data:bUsed, backgroundColor:bUsed.map((u,i) => bOver[i] ? RED : GOLD), borderRadius:6, maxBarThickness:18 }
+      ]
+    },
+    options:{ maintainAspectRatio:false,
+      scales:{
+        y:{ beginAtZero:true, ticks:{ callback:v => '₱' + Number(v).toLocaleString('en-PH') }, grid:{ drawTicks:false } },
+        x:{ grid:{ display:false } }
+      },
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label(ctx){
+          const i = ctx.dataIndex;
+          if (ctx.dataset.label === 'Utilized') {
+            const pct = bPlanned[i] ? Math.round(bUsed[i] / bPlanned[i] * 100) : 0;
+            return ` Utilized: ${peso(ctx.parsed.y)} · ${pct}% of allocation${bOver[i] ? ' — over (D7)' : ''}`;
+          }
+          return ` Allocated: ${peso(ctx.parsed.y)}`;
+        } } } }
+    }
+  });
+
+  /* 3. Community Reach — horizontal top 10 + Others, rank ramp */
+  new Chart(document.getElementById('chReach'), {
+    type:'bar',
+    data:{
+      labels:[
+        'San Jose · Tacloban City','El Reposo · Tacloban City','Salvacion · Tacloban City','San Rafael · Dulag',
+        'Sagkahan · Tacloban City','Apitong · Tacloban City','Others (2 barangays)'
+      ],
+      datasets:[{ label:'Served', data:[186,171,126,96,74,52,63],
+        backgroundColor:[BLUE,BLUE,'#2547eb','#2547eb','#93b4fd','#93b4fd',SLATE],
+        borderRadius:7, maxBarThickness:20 }]
+    },
+    options:{ indexAxis:'y', maintainAspectRatio:false,
+      scales:{ x:{ beginAtZero:true, grid:{ drawTicks:false } }, y:{ grid:{ display:false }, ticks:{ font:{ size:11.5, weight:'600' } } } },
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.parsed.x} distinct beneficiaries served` } } } }
+  });
+});
+</script>
+</body>
+</html>

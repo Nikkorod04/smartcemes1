@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redirecting… · SmartCEMES</title>
+<script>
+  (function () {
+    var r = new URLSearchParams(location.search).get('role');
+    location.replace('analytics.html' + (r ? '?role=' + r : ''));
+  })();
+</script>
+</head>
+<body style="font-family:'Segoe UI',sans-serif;padding:2.5rem;color:#6b7280">
+  <p style="font-weight:600">Activities now live inside each program's hub, with cross-program aggregates in Analytics. Redirecting…</p>
+  <p><a href="analytics.html" style="color:#003599">Go to Analytics</a></p>
+</body>
+</html>

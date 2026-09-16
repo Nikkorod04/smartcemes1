@@ -1,0 +1,721 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encode Assessment Â· SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="faculty" data-page="assessment-form">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12" id="wizScope">
+
+  <!-- ===================== HEADER CARD ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="sc-card p-5 flex items-center justify-between gap-6 flex-wrap">
+      <div class="flex items-center gap-4">
+        <span class="w-11 h-11 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[clipboard]]</span>
+        <div>
+          <h2 class="text-[17px] font-extrabold tracking-tight leading-tight">Needs-Assessment Encoding</h2>
+          <p class="text-[12px] text-gray-400 font-medium mt-0.5">Community Needs-Assessment Instrument Â· entries autosave to this device</p>
+        </div>
+      </div>
+      <div class="flex items-end gap-5 flex-wrap">
+        <div>
+          <label class="label !mb-1 !text-[11px]" for="afCommunity">Community</label>
+          <select id="afCommunity" class="input !w-44 !py-2"></select>
+        </div>
+        <div>
+          <label class="label !mb-1 !text-[11px]" for="afQuarter">Quarter</label>
+          <select id="afQuarter" class="input !w-24 !py-2">
+            <option>Q1</option><option>Q2</option><option selected>Q3</option><option>Q4</option>
+          </select>
+        </div>
+        <div>
+          <label class="label !mb-1 !text-[11px]" for="afYear">Year</label>
+          <select id="afYear" class="input !w-24 !py-2">
+            <option>2025</option><option selected>2026</option><option>2027</option>
+          </select>
+        </div>
+        <div>
+          <label class="label !mb-1 !text-[11px]" for="afProposal">Activity Proposal <span class="text-gray-300 font-normal">(optional)</span></label>
+          <select id="afProposal" class="input !w-52 !py-2">
+            <option>None — standalone encoding</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-3 pl-4 border-l border-gray-100">
+          <button onclick="openImportModal()" class="btn btn-outline !py-2 !px-3 text-[12px]">
+            <span class="[&>span]:w-4 [&>span]:h-4">[[doc]]</span> Import from template
+          </button>
+        </div>
+        <div class="flex items-center gap-3 pl-4 border-l border-gray-100">
+          <div class="relative w-16 h-16">
+            <svg viewBox="0 0 64 64" class="w-16 h-16 -rotate-90">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="#eef0f4" stroke-width="7"/>
+              <circle id="afRing" cx="32" cy="32" r="26" fill="none" stroke="#003599" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="163.36" style="transition:stroke-dashoffset .5s cubic-bezier(.21,.61,.35,1)"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="afNum" class="text-[13px] font-extrabold leading-none">0</span>
+              <span class="text-[8.5px] font-bold text-gray-400 mt-0.5">of 52</span>
+            </div>
+          </div>
+          <div class="leading-tight">
+            <p class="text-[12px] font-extrabold">Fields answered</p>
+            <p class="text-[10.5px] text-gray-400 font-medium mt-0.5 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot"></span>Autosave on</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== WIZARD ===================== -->
+  <section class="mt-4 reveal-item" id="wizRoot" x-data="{s:1}" x-effect="window.AF && AF.onStep(s)">
+
+    <!-- Stepper header -->
+    <div class="sc-card px-6 py-4 flex items-center">
+      <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
+        <button type="button" class="step-dot" :class="s>1?'step-dot done':(s===1?'step-dot on':'step-dot')" @click="s=1"><span x-text="s>1?'âœ“':1">1</span></button>
+        <span class="text-[10px] font-bold tracking-wide" :class="s===1?'text-lnu-800':'text-gray-400'">Profile</span>
+      </div>
+      <div class="step-line mt-[17px]" :class="s>1?'done':''"></div>
+      <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
+        <button type="button" class="step-dot" :class="s>2?'step-dot done':(s===2?'step-dot on':'step-dot')" @click="s=2"><span x-text="s>2?'âœ“':2">2</span></button>
+        <span class="text-[10px] font-bold tracking-wide text-center leading-tight" :class="s===2?'text-lnu-800':'text-gray-400'">Livelihood &amp; Education</span>
+      </div>
+      <div class="step-line mt-[17px]" :class="s>2?'done':''"></div>
+      <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
+        <button type="button" class="step-dot" :class="s>3?'step-dot done':(s===3?'step-dot on':'step-dot')" @click="s=3"><span x-text="s>3?'âœ“':3">3</span></button>
+        <span class="text-[10px] font-bold tracking-wide text-center leading-tight" :class="s===3?'text-lnu-800':'text-gray-400'">Health &amp; Housing</span>
+      </div>
+      <div class="step-line mt-[17px]" :class="s>3?'done':''"></div>
+      <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
+        <button type="button" class="step-dot" :class="s>4?'step-dot done':(s===4?'step-dot on':'step-dot')" @click="s=4"><span x-text="s>4?'âœ“':4">4</span></button>
+        <span class="text-[10px] font-bold tracking-wide text-center leading-tight" :class="s===4?'text-lnu-800':'text-gray-400'">Community Life</span>
+      </div>
+      <div class="step-line mt-[17px]" :class="s>4?'done':''"></div>
+      <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
+        <button type="button" class="step-dot" :class="s===5?'step-dot on':'step-dot'" @click="s=5"><span x-text="s>5?'âœ“':5">5</span></button>
+        <span class="text-[10px] font-bold tracking-wide" :class="s===5?'text-lnu-800':'text-gray-400'">Review</span>
+      </div>
+    </div>
+
+    <!-- ============ STEP 1 Â· PROFILE ============ -->
+    <div x-cloak x-show="s===1" class="sc-card p-6 mt-4">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-extrabold text-[15px] tracking-tight">Respondent Profile</h3>
+        <span class="badge badge-blue">Instrument Sections I–II</span>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="label" for="afFn">First Name</label>
+          <input id="afFn" class="input" value="Lucia Riza" data-unit>
+        </div>
+        <div>
+          <label class="label" for="afMn">Middle Name</label>
+          <input id="afMn" class="input" value="Amistoso" data-unit>
+        </div>
+        <div>
+          <label class="label" for="afLn">Last Name</label>
+          <input id="afLn" class="input" value="Dolina" data-unit>
+        </div>
+        <div>
+          <label class="label" for="afAge">Age</label>
+          <input id="afAge" type="number" min="15" max="120" class="input" value="41" data-unit>
+        </div>
+        <div>
+          <label class="label" for="afCivil">Civil Status</label>
+          <select id="afCivil" class="input" data-unit>
+            <option>Single</option><option selected>Married</option><option>Widowed</option><option>Separated</option><option>Divorced</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="afReligion">Religion</label>
+          <select id="afReligion" class="input" data-unit>
+            <option selected>Roman Catholic</option><option>Islam</option><option>Iglesia ni Cristo</option><option>Evangelical Christianity</option><option>United Church of Christ in the Philippines</option><option>Assemblies of God</option><option>Seventh-day Adventist Church</option><option>Philippine Independent Church (Aglipayan)</option><option>Baptist</option><option>Jehovah's Witnesses</option><option>Church of Jesus Christ of Latter-day Saints (Mormon)</option><option>Methodist</option><option>Church of Christ</option><option>Buddhism</option><option>Indigenous / Tribal Religions</option><option>Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-[12px] font-semibold mb-2">Sex</p>
+        <div class="chip-group flex flex-wrap gap-2" data-single id="gSex">
+          <button type="button" class="chip on">Female</button>
+          <button type="button" class="chip">Male</button>
+          <button type="button" class="chip">Prefer not to say</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-5">
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Highest Educational Attainment</p>
+          <div class="chip-group flex flex-wrap gap-2" data-single id="gEdu">
+            <button type="button" class="chip">Elementary Undergraduate</button>
+            <button type="button" class="chip on">Elementary Graduate</button>
+            <button type="button" class="chip">Junior High School Graduate</button>
+            <button type="button" class="chip">Senior High School Graduate</button>
+            <button type="button" class="chip">College Undergraduate</button>
+            <button type="button" class="chip">College Graduate</button>
+            <button type="button" class="chip">Vocational / Technical</button>
+          </div>
+        </div>
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Family Composition</p>
+          <div class="chip-group flex flex-wrap gap-2" data-single id="gFam">
+            <button type="button" class="chip">1 member</button>
+            <button type="button" class="chip">2 members</button>
+            <button type="button" class="chip on">3 members</button>
+            <button type="button" class="chip">4 members</button>
+            <button type="button" class="chip">5 members</button>
+            <button type="button" class="chip">6 or more</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ STEP 2 Â· LIVELIHOOD & EDUCATION ============ -->
+    <div x-cloak x-show="s===2" class="sc-card p-6 mt-4">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-extrabold text-[15px] tracking-tight">Livelihood &amp; Education</h3>
+        <span class="badge badge-blue">Instrument Sections III–IV</span>
+      </div>
+
+      <div>
+        <p class="text-[12px] font-semibold mb-2">Main Source of Household Livelihood <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+        <div class="chip-group flex flex-wrap gap-2" data-single id="gLiv">
+          <button type="button" class="chip on">Farming</button>
+          <button type="button" class="chip">Fishing</button>
+          <button type="button" class="chip">Retail / sari-sari store</button>
+          <button type="button" class="chip">Food vending</button>
+          <button type="button" class="chip">Construction work</button>
+          <button type="button" class="chip">Home-based income</button>
+          <button type="button" class="chip">Transportation</button>
+          <button type="button" class="chip">Skilled labor</button>
+          <button type="button" class="chip">OFW family remittance</button>
+          <button type="button" class="chip">Unemployed</button>
+          <button type="button" class="chip">Other</button>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-[12px] font-semibold mb-2">Preferred Training Schedule</p>
+        <div class="chip-group flex flex-wrap gap-2" data-single id="gTime">
+          <button type="button" class="chip on">Morning</button>
+          <button type="button" class="chip">Afternoon</button>
+          <button type="button" class="chip">Evening</button>
+          <button type="button" class="chip">Weekend only</button>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-[12px] font-semibold mb-2">Desired Livelihood Training <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+        <div class="chip-group flex flex-wrap gap-2" data-single id="gDesire">
+          <button type="button" class="chip on">Food processing</button>
+          <button type="button" class="chip">Soap making</button>
+          <button type="button" class="chip">Dressmaking / sewing</button>
+          <button type="button" class="chip">Handicraft making</button>
+          <button type="button" class="chip">Vegetable production</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-5">
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Education Facilities Present in Community</p>
+          <div class="chip-group flex flex-wrap gap-2" id="gEduFac">
+            <button type="button" class="chip on">Elementary school</button>
+            <button type="button" class="chip on">Day care center</button>
+            <button type="button" class="chip">High school</button>
+            <button type="button" class="chip">Health center</button>
+            <button type="button" class="chip">Barangay hall</button>
+            <button type="button" class="chip">Chapel / church</button>
+          </div>
+        </div>
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Other Areas of Interest</p>
+          <div class="chip-group flex flex-wrap gap-2" id="gAreas">
+            <button type="button" class="chip">Cookery / culinary</button>
+            <button type="button" class="chip on">Computer literacy</button>
+            <button type="button" class="chip on">Beauty care</button>
+            <button type="button" class="chip">First aid</button>
+            <button type="button" class="chip">Sports coaching</button>
+            <button type="button" class="chip">Music / choir</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-[12px] font-semibold mb-2">Preferred Days for Activities</p>
+        <div class="chip-group flex flex-wrap gap-2" id="gDays">
+          <button type="button" class="chip on">Saturday</button>
+          <button type="button" class="chip">Sunday</button>
+          <button type="button" class="chip">Weekdays</button>
+          <button type="button" class="chip">Any day</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ STEP 3 Â· HEALTH & HOUSING ============ -->
+    <div x-cloak x-show="s===3" class="sc-card p-6 mt-4">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-extrabold text-[15px] tracking-tight">Health &amp; Housing</h3>
+        <span class="badge badge-blue">Instrument Sections V–VI</span>
+      </div>
+
+      <div>
+        <p class="text-[12px] font-semibold mb-2">Most Common Illness <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+        <div class="chip-group flex flex-wrap gap-2" data-single id="gIll">
+          <button type="button" class="chip on">Hypertension</button>
+          <button type="button" class="chip">Fever</button>
+          <button type="button" class="chip">Cough / colds</button>
+          <button type="button" class="chip">Diarrhea</button>
+          <button type="button" class="chip">Headache</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-5">
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Main Water Source <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+          <div class="chip-group flex flex-wrap gap-2" data-single id="gWater">
+            <button type="button" class="chip on">Deep well</button>
+            <button type="button" class="chip">Community water system</button>
+            <button type="button" class="chip">Spring</button>
+            <button type="button" class="chip">Other</button>
+          </div>
+        </div>
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Distance to Water Source</p>
+          <div class="chip-group flex flex-wrap gap-2" data-single id="gDist">
+            <button type="button" class="chip on">Within the community</button>
+            <button type="button" class="chip">1â€“3 km walk</button>
+            <button type="button" class="chip">More than 3 km</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-5">
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Toilet Type</p>
+          <div class="chip-group flex flex-wrap gap-2" data-single id="gToilet">
+            <button type="button" class="chip on">Water-sealed</button>
+            <button type="button" class="chip">Latrine</button>
+            <button type="button" class="chip">None</button>
+          </div>
+        </div>
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Has Electricity?</p>
+          <div class="chip-group flex flex-wrap gap-2" data-single id="gElec">
+            <button type="button" class="chip on">Yes</button>
+            <button type="button" class="chip">No</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-[12px] font-semibold mb-2">Appliances Owned <span class="text-[11px] text-gray-400 font-normal">Â· select all that apply</span></p>
+        <div class="chip-group flex flex-wrap gap-2" id="gApp">
+          <button type="button" class="chip on">Television</button>
+          <button type="button" class="chip on">Cellphone</button>
+          <button type="button" class="chip on">Electric fan</button>
+          <button type="button" class="chip">Radio</button>
+          <button type="button" class="chip">Refrigerator</button>
+          <button type="button" class="chip">Washing machine</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ STEP 4 Â· COMMUNITY LIFE ============ -->
+    <div x-cloak x-show="s===4" class="sc-card p-6 mt-4">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-extrabold text-[15px] tracking-tight">Community Life</h3>
+        <span class="badge badge-blue">Instrument Sections VII–IX</span>
+      </div>
+
+      <div>
+        <p class="text-[12px] font-semibold mb-2">Member of a Community Organization?</p>
+        <div class="chip-group flex flex-wrap gap-2" data-single id="gOrg">
+          <button type="button" class="chip">Yes</button>
+          <button type="button" class="chip on">No</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-5">
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Recreational Facilities Present</p>
+          <div class="chip-group flex flex-wrap gap-2" id="gRec">
+            <button type="button" class="chip on">Basketball court</button>
+            <button type="button" class="chip on">Covered court</button>
+            <button type="button" class="chip">Park / garden</button>
+            <button type="button" class="chip">Library / reading center</button>
+            <button type="button" class="chip">Sports complex</button>
+          </div>
+        </div>
+        <div>
+          <p class="text-[12px] font-semibold mb-2">How Residents Spend Free Time</p>
+          <div class="chip-group flex flex-wrap gap-2" id="gFree">
+            <button type="button" class="chip on">Listening to radio / music</button>
+            <button type="button" class="chip">Watching television</button>
+            <button type="button" class="chip">Sports</button>
+            <button type="button" class="chip">Community gatherings</button>
+            <button type="button" class="chip">Reading</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-[12px] font-semibold mt-5 mb-2">Problems Experienced <span class="text-[11px] text-gray-400 font-normal">Â· select up to 3 per area</span></p>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="rounded-xl border border-gray-100 p-4">
+          <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2.5">Family</p>
+          <div class="chip-group flex flex-wrap gap-2" id="gPFam">
+            <button type="button" class="chip on">Low income</button>
+            <button type="button" class="chip">Unemployment</button>
+            <button type="button" class="chip">Education expenses</button>
+            <button type="button" class="chip">Housing repair</button>
+          </div>
+        </div>
+        <div class="rounded-xl border border-gray-100 p-4">
+          <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2.5">Health</p>
+          <div class="chip-group flex flex-wrap gap-2" id="gPHealth">
+            <button type="button" class="chip">Poor sanitation</button>
+            <button type="button" class="chip">No potable water</button>
+            <button type="button" class="chip">Medical expenses</button>
+            <button type="button" class="chip">Malnutrition</button>
+          </div>
+        </div>
+        <div class="rounded-xl border border-gray-100 p-4">
+          <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2.5">Economic</p>
+          <div class="chip-group flex flex-wrap gap-2" id="gPEcon">
+            <button type="button" class="chip on">Insufficient food</button>
+            <button type="button" class="chip">Lack of employment</button>
+            <button type="button" class="chip">Debt</button>
+            <button type="button" class="chip">Low farm yield</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-5 items-start">
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Rating of Community Services</p>
+          <div class="flex items-center gap-3">
+            <div id="afStars" class="flex gap-1">
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="1">â˜…</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="2">â˜…</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="3">â˜…</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="4">â˜…</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="5">â˜…</button>
+            </div>
+            <span id="afStarsLabel" class="text-[11.5px] text-gray-400 font-semibold">Good</span>
+          </div>
+        </div>
+        <div>
+          <p class="text-[12px] font-semibold mb-2">Available for Trainings?</p>
+          <div class="chip-group flex flex-wrap gap-2" data-single id="gAvail">
+            <button type="button" class="chip on">Yes</button>
+            <button type="button" class="chip">No</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <label class="label" for="afFeedback">General Feedback</label>
+        <textarea id="afFeedback" rows="2" class="input resize-none" data-unit>Most residents hope for additional livelihood trainings and cleaner water sources.</textarea>
+      </div>
+    </div>
+
+    <!-- ============ STEP 5 Â· REVIEW ============ -->
+    <div x-cloak x-show="s===5" class="mt-4 grid grid-cols-3 gap-4 items-start">
+      <div class="sc-card p-6 col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-extrabold text-[15px] tracking-tight">Review Responses</h3>
+          <span class="badge badge-gold">auto-composed from selections</span>
+        </div>
+        <dl id="afReview" class="divide-y divide-gray-50 border border-gray-100 rounded-xl px-4"></dl>
+      </div>
+      <div class="sc-card p-5 space-y-4">
+        <div>
+          <p class="text-[12px] font-extrabold mb-2">Completeness</p>
+          <div class="progress"><span id="afMeterBar" style="width:0%" class="bg-lnu"></span></div>
+          <p id="afMeterText" class="text-[11.5px] text-gray-400 font-medium mt-2">â€”</p>
+        </div>
+        <div class="border-l-4 border-gold bg-gold-50 rounded-r-xl p-3.5">
+          <p class="text-[12px] font-extrabold text-gold-800">Before you submit</p>
+          <p class="text-[11px] text-gold-700/80 font-medium mt-1">Entries route to the CESO Secretary for validation, then feed the community needs summaries used in reports.</p>
+        </div>
+        <button type="button" onclick="AF.submit()" class="btn btn-primary w-full !justify-center">Submit Assessment</button>
+      </div>
+    </div>
+
+    <!-- Wizard nav -->
+    <div class="mt-4 flex items-center justify-between no-print">
+      <p class="text-[11.5px] text-gray-400 font-medium">Step <span x-text="s">1</span> of 5 Â· answers autosave to this device</p>
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-outline" :class="s===1?'opacity-40 pointer-events-none':''" @click="s=Math.max(1,s-1)">â† Back</button>
+        <button type="button" x-show="s<5" class="btn btn-primary" @click="s=Math.min(5,s+1)">Next Step â†’</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v4.1 Prototype Â· Community Extension Services Office Â· Leyte Normal University
+  </footer>
+</main>
+
+<!-- ===================== XLSX IMPORT MODAL ===================== -->
+<div x-data="{open:false, step:'upload'}" @open-import.window="open=true; step='upload'">
+  <div x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-[70] p-6 overflow-auto no-print" style="display:none">
+    <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="window.dispatchEvent(new CustomEvent('close-import'))"></div>
+    <div class="sc-modal relative max-w-2xl mx-auto mt-16 sc-card p-6 shadow-pop">
+      <div class="flex items-start justify-between mb-4">
+        <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
+          <span class="[&>span]:w-5 [&>span]:h-5 text-lnu-700">[[doc]]</span> Import from Official Template
+        </h3>
+        <button @click="window.dispatchEvent(new CustomEvent('close-import'))" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+      </div>
+
+      <!-- STEP: upload -->
+      <div x-show="step==='upload'" class="space-y-4">
+        <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3">
+          <span class="[&>span]:w-4 [&>span]:h-4 text-lnu-600 shrink-0">[[clipboard]]</span>
+          <p class="text-[12px] text-gray-500 leading-snug">One file = <b>one respondent</b>. Use the official template — a vertical form: fill the shaded answer cells (column B) next to each field label, grouped into Sections I–IX with fill-up guides in column C. Labels cannot be changed. Values that don't match the standard lists are auto-mapped to <b>Other</b> with the raw text preserved.</p>
+        </div>
+        <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-lnu-300 transition cursor-pointer">
+          <span class="mx-auto w-12 h-12 rounded-2xl bg-lnu-50 text-lnu-700 flex items-center justify-center">[[doc]]</span>
+          <p class="mt-3 font-bold text-[13.5px]">Drop your .xlsx file here, or click to browse</p>
+          <p class="text-[11.5px] text-gray-400 mt-1">Max 10 MB Â· official template only Â· .xlsx</p>
+        </div>
+        <div class="flex items-center justify-between pt-2">
+          <button onclick="SC.toast('Official template downloaded — assessment-template-v2.xlsx','info')" class="btn btn-ghost !px-3 text-[12px]">↓ Download official template</button>
+          <button @click="step='preview'; window.dispatchEvent(new CustomEvent('import-parsed'))" class="btn btn-primary">Parse file â†’</button>
+        </div>
+      </div>
+
+      <!-- STEP: preview & confirm -->
+      <div x-show="step==='preview'" class="space-y-4">
+        <div class="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-3">
+          <span class="[&>span]:w-4 [&>span]:h-4 text-lnu-600 shrink-0">[[clipboard]]</span>
+          <p class="text-[12px] text-gray-500 leading-snug">Imported from <b>brgy-san-jose-q3-respondent-01.xlsx</b> â€” review the parsed values. <b>2 fields</b> were auto-mapped to "Other" (shown in gold). Fix or confirm to create the assessment.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="rounded-xl border border-gray-100 p-3">
+            <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Respondent Profile</p>
+            <div class="kv"><span class="k">Name</span><span class="v">Lucia R. Amistoso</span></div>
+            <div class="kv"><span class="k">Age</span><span class="v">41</span></div>
+            <div class="kv"><span class="k">Sex</span><span class="v">Female</span></div>
+            <div class="kv"><span class="k">Civil status</span><span class="v">Married</span></div>
+            <div class="kv"><span class="k">Livelihood</span><span class="v">Food vending</span></div>
+          </div>
+          <div class="rounded-xl border border-gray-100 p-3">
+            <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Auto-mapped to "Other"</p>
+            <div class="kv"><span class="k">Main livelihood</span><span class="v !text-gold-700">“Sari-sari store” <span class="text-[10px]">(as-is)</span></span></div>
+            <div class="kv"><span class="k">Water source</span><span class="v !text-gold-700">“Community water” <span class="text-[10px]">(as-is)</span></span></div>
+            <p class="text-[11px] text-gray-400 mt-2 italic">Raw text is preserved in other_text for audit. Fields without an "Other" option (e.g. Religion) report unknown values as per-field errors instead.</p>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-red-200 bg-red-50/70 p-3">
+          <p class="text-[10.5px] font-bold uppercase tracking-wide text-red-500 mb-2">Fields needing attention <span class="badge badge-red !text-[10px] ml-1">2 — on-screen only</span></p>
+          <ul class="space-y-1.5 text-[12px] text-red-700">
+            <li class="flex items-start gap-2"><span class="font-mono text-[10px] bg-red-100 rounded px-1.5 py-0.5 mt-0.5 shrink-0">respondent_religion</span><span>Value “Roman Catolic” is not in the standard list — closed list, no auto-map. Fix the cell and re-upload, or confirm without it.</span></li>
+            <li class="flex items-start gap-2"><span class="font-mono text-[10px] bg-red-100 rounded px-1.5 py-0.5 mt-0.5 shrink-0">barangay_service_ratings</span><span>Cell value “So-so” is not in the standard list — left blank. Complete the rating manually if the respondent answered it.</span></li>
+          </ul>
+          <p class="text-[11px] text-red-500/80 mt-2 italic">Per-field errors are shown on screen only and never persisted. Import never rejects the whole file — values on lists with "Other" still auto-map with raw text kept.</p>
+        </div>
+
+        <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <span class="[&>span]:w-4 [&>span]:h-4 text-amber-600 shrink-0">[[clock]]</span>
+          <p class="text-[12px] text-gray-600 leading-snug">On confirm, the record is created in <b>Pending</b> review status and routed to the Secretary for validation â€” same as manual entry. Errors can be corrected here before saving.</p>
+        </div>
+
+        <div class="mt-4 flex items-center justify-end gap-2">
+          <button @click="step='upload'" class="btn btn-outline">â† Back</button>
+          <button @click="window.dispatchEvent(new CustomEvent('close-import')); SC.toast('Assessment created (pending) from import','success')" class="btn btn-primary">Confirm & Create Assessment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SUCCESS OVERLAY ===================== -->
+<div id="afOverlay" class="fixed inset-0 z-[80] hidden items-center justify-center p-6 no-print">
+  <div class="absolute inset-0 bg-charcoal/45 backdrop-blur-[2px]"></div>
+  <div class="sc-modal relative max-w-sm w-full sc-card p-8 text-center shadow-pop">
+    <div class="mx-auto w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-pop">
+      <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="w-10 h-10 text-white"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+    </div>
+    <h3 class="font-extrabold text-[17px] tracking-tight mt-5">Assessment encoded successfully</h3>
+    <p id="afMeta" class="text-[12px] text-gray-400 font-medium mt-1.5">â€”</p>
+    <div class="flex gap-2 mt-6">
+      <button type="button" onclick="AF.reset()" class="btn btn-outline flex-1">Encode Another</button>
+      <a href="dashboard-faculty.html?role=faculty" class="btn btn-primary flex-1">Back to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+window.openImportModal = () => window.dispatchEvent(new CustomEvent('open-import'));
+document.addEventListener('close-import', () => document.querySelector('[x-data*="open-import"]')?.setAttribute('x-show','false'));
+
+window.AF = (() => {
+  const $ = id => document.getElementById(id);
+  const TOTAL = 52;
+  const RATING_LABELS = ['Needs improvement','Fair','Good','Very good','Excellent'];
+  let rating = 3;
+
+  const chipsOn = sel => [...document.querySelectorAll(sel + ' .chip.on')].map(c => c.textContent.trim());
+  const val = id => ($(id).value || '').trim();
+
+  function countAnswered() {
+    let n = 0;
+    document.querySelectorAll('#wizRoot [data-unit]').forEach(el => {
+      if ((el.value || '').trim() !== '') n++;
+    });
+    document.querySelectorAll('#wizRoot .chip.on').forEach(() => n++);
+    if (document.querySelector('#afStars .star-btn.on')) n++;
+    return Math.min(n, TOTAL);
+  }
+
+  function paintStars() {
+    document.querySelectorAll('#afStars .star-btn').forEach(b => {
+      const on = parseInt(b.dataset.star) <= rating;
+      b.classList.toggle('on', on);
+      b.classList.toggle('text-gold-400', on);
+      b.classList.toggle('drop-shadow-sm', on);
+      b.classList.toggle('text-gray-300', !on);
+    });
+    $('afStarsLabel').textContent = RATING_LABELS[rating - 1];
+  }
+
+  function refresh() {
+    const n = countAnswered();
+    const pct = Math.round(n / TOTAL * 100);
+    $('afNum').textContent = n;
+    $('afRing').style.strokeDashoffset = (163.36 * (1 - n / TOTAL)).toFixed(2);
+    $('afMeterBar').style.width = pct + '%';
+    $('afMeterText').textContent = n + ' of ' + TOTAL + ' fields answered Â· ' + pct + '% complete';
+    return n;
+  }
+
+  function reviewRow(label, value) {
+    return '<div class="py-2.5 grid grid-cols-[190px_1fr] gap-4">' +
+      '<dt class="text-[11.5px] font-semibold text-gray-400">' + label + '</dt>' +
+      '<dd class="text-[12.5px] font-medium text-charcoal break-words">' + (value || 'â€”') + '</dd></div>';
+  }
+
+  function buildReview() {
+    const stars = 'â˜…â˜…â˜…â˜…â˜…'.slice(0, rating) + 'â˜†â˜†â˜†â˜†â˜†'.slice(0, 5 - rating) + ' Â· ' + RATING_LABELS[rating - 1];
+    const fb = val('afFeedback');
+    const rows = [
+      ['Respondent', (val('afFn') + ' ' + val('afMn') + ' ' + val('afLn')).replace(/\s+/g, ' ').trim()],
+      ['Age Â· Civil status', (val('afAge') || 'â€”') + ' Â· ' + val('afCivil')],
+      ['Sex', chipsOn('#gSex').join(', ')],
+      ['Religion', val('afReligion')],
+      ['Educational attainment', chipsOn('#gEdu').join(', ')],
+      ['Family composition', chipsOn('#gFam').join(', ')],
+      ['Livelihood sources', chipsOn('#gLiv').join(', ')],
+      ['Interested in livelihood training', chipsOn('#gInterest').join(', ')],
+      ['Desired trainings', chipsOn('#gDesire').join(', ')],
+      ['Education facilities present', chipsOn('#gEduFac').join(', ')],
+      ['Areas of interest', chipsOn('#gAreas').join(', ')],
+      ['Preferred schedule', [...chipsOn('#gTime'), ...chipsOn('#gDays')].join(' Â· ')],
+      ['Common illnesses', chipsOn('#gIll').join(', ')],
+      ['Main water source', chipsOn('#gWater').join(', ')],
+      ['Distance to water', chipsOn('#gDist').join(', ')],
+      ['Toilet type', chipsOn('#gToilet').join(', ')],
+      ['Has electricity', chipsOn('#gElec').join(', ')],
+      ['Appliances owned', chipsOn('#gApp').join(', ')],
+      ['Organization membership', chipsOn('#gOrg').join(', ')],
+      ['Recreational facilities', chipsOn('#gRec').join(', ')],
+      ['Free time', chipsOn('#gFree').join(', ')],
+      ['Problems Â· family', chipsOn('#gPFam').join(', ')],
+      ['Problems Â· health', chipsOn('#gPHealth').join(', ')],
+      ['Problems Â· economic', chipsOn('#gPEcon').join(', ')],
+      ['Service rating', stars],
+      ['Available for training', chipsOn('#gAvail').join(', ')],
+      ['General feedback', fb.length > 96 ? fb.slice(0, 96) + 'â€¦' : fb]
+    ];
+    $('afReview').innerHTML = rows.map(r => reviewRow(r[0], r[1])).join('');
+    refresh();
+  }
+
+  function onStep(s) {
+    if (s === 5) buildReview();
+    if (AF.ready) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+function submit() {
+    const n = countAnswered();
+    const prop = $('afProposal').value;
+    $('afMeta').textContent = $('afCommunity').value + ' · ' + $('afQuarter').value + ' ' + $('afYear').value + (prop.startsWith('None') ? '' : ' · ref: ' + prop) + ' · ' + n + ' fields';
+    const ov = $('afOverlay');
+    ov.classList.remove('hidden');
+    ov.classList.add('flex');
+    SC.toast('Assessment encoded successfully','success');
+  }
+
+  function reset() {
+    document.querySelectorAll('#wizRoot .chip.on').forEach(c => c.classList.remove('on'));
+    rating = 0;
+    paintStars();
+    refresh();
+    const ov = $('afOverlay');
+    ov.classList.add('hidden');
+    ov.classList.remove('flex');
+    document.querySelector('#wizRoot .step-dot').click();
+    SC.toast('Cleared â€” ready for a fresh encoding','info');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const cs = window.DATA.communities.map(c => c.name);
+    cs.forEach(name => {
+      const o = document.createElement('option');
+      o.textContent = name; o.selected = name === 'Brgy. San Jose';
+      $('afCommunity').appendChild(o);
+    });
+
+    const ps = window.DATA.proposals.filter(p => p.status === 'Pending');
+    ps.forEach(p => {
+      const o = document.createElement('option');
+      o.textContent = p.title + ' · ' + p.community.name;
+      $('afProposal').appendChild(o);
+    });
+
+    document.addEventListener('click', e => {
+      const chip = e.target.closest('#wizRoot .chip');
+      if (!chip) return;
+      const group = chip.closest('.chip-group');
+      if (group.hasAttribute('data-single')) {
+        group.querySelectorAll('.chip.on').forEach(x => x.classList.remove('on'));
+        chip.classList.add('on');
+      } else {
+        chip.classList.toggle('on');
+      }
+      refresh();
+    });
+
+    document.getElementById('afStars').addEventListener('click', e => {
+      const b = e.target.closest('.star-btn');
+      if (!b) return;
+      rating = parseInt(b.dataset.star);
+      paintStars();
+      refresh();
+    });
+
+    paintStars();
+    refresh();
+    AF.ready = true;
+  });
+
+  const AF = { countAnswered, refresh, buildReview, onStep, submit, reset, ready:false };
+  return AF;
+})();
+</script>
+</body>
+</html>

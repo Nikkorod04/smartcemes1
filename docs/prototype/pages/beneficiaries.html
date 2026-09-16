@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redirecting… · SmartCEMES</title>
+<script>
+  (function () {
+    var r = new URLSearchParams(location.search).get('role');
+    location.replace('programs.html' + (r ? '?role=' + r : ''));
+  })();
+</script>
+</head>
+<body style="font-family:'Segoe UI',sans-serif;padding:2.5rem;color:#6b7280">
+  <p style="font-weight:600">Beneficiary enrollment is managed inside each program's hub (Beneficiaries tab). Redirecting…</p>
+  <p><a href="programs.html" style="color:#003599">Go to Extension Programs</a></p>
+</body>
+</html>

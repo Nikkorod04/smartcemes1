@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reports · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="reports">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== TOOLBAR (no-print) ===================== -->
+  <section class="pt-6 reveal-item no-print">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
+        <button class="tab on" data-report="annual" onclick="switchReport(this)">Annual Extension Performance Report</button>
+        <button class="tab" data-report="framework" onclick="switchReport(this)">Program Results Framework</button>
+        <button class="tab" data-report="hours" onclick="switchReport(this)">Faculty Rendered Hours</button>
+        <button class="tab" data-report="impact" onclick="switchReport(this)">Community Partner Impact Summary</button>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <span class="text-[11.5px] text-gray-400 font-medium max-w-[220px] leading-snug">Prints clean A4 landscape via browser dialog</span>
+        <button onclick="SC.toast('Summary exported (demo)','success')" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Export summary</button>
+        <button onclick="window.print()" class="btn btn-primary">[[doc]] Print / Save PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRINT AREA ===================== -->
+  <div id="print-area" class="reveal-item sc-card max-w-5xl mx-auto p-10 shadow-card mt-6 bg-white"
+       style="print-color-adjust:exact;-webkit-print-color-adjust:exact">
+
+    <div class="h-1.5 rounded-full bg-gradient-to-r from-lnu-800 to-gold-500 mb-8"></div>
+
+    <!-- Letterhead -->
+    <header class="text-center">
+      <div class="mx-auto w-16 h-16 rounded-full border-2 border-lnu-800 flex items-center justify-center">
+        <span class="font-black text-lnu-800 text-lg tracking-tight">SC</span>
+      </div>
+      <p class="mt-3 text-[12px] text-gray-600">Republic of the Philippines</p>
+      <p class="text-[17px] font-black tracking-wide text-charcoal uppercase">Leyte Normal University</p>
+      <p class="text-[12px] text-gray-600">Tacloban City, Leyte</p>
+      <div class="mt-4 mx-auto w-full" style="border-bottom:3px double #003599"></div>
+    </header>
+
+    <!-- ============ VIEW 1 · ANNUAL EXTENSION PERFORMANCE REPORT (I–VII) ============ -->
+  <div data-report-view="annual">
+
+    <!-- Title block -->
+    <div class="text-center mt-7 mb-8">
+      <h1 class="text-[16px] font-black tracking-wide text-charcoal uppercase">Annual Extension Performance Report</h1>
+      <p class="text-[12.5px] text-gray-500 font-semibold mt-1">Mid-Year Summary · Academic Year 2026–2027</p>
+      <p class="text-[11px] text-gray-400 mt-0.5">Generated Aug 24, 2026 · SmartCEMES v4.1 · figures per the 8.6 KPI dictionary</p>
+    </div>
+
+    <!-- Section I -->
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section I · Extension Programs per College</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">College</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Programs</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Ongoing</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Completed</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Budget Utilized</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">College of Education (COEd)</td><td class="border border-gray-200 px-3 py-2 text-center">3</td><td class="border border-gray-200 px-3 py-2 text-center">2</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-right">₱63,500</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">College of Arts and Sciences (CAS)</td><td class="border border-gray-200 px-3 py-2 text-center">2</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-right">₱73,100</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">College of Business Administration (CBA)</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-right">₱33,750</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">College of Nursing (CON)</td><td class="border border-gray-200 px-3 py-2 text-center">1</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-center">0</td><td class="border border-gray-200 px-3 py-2 text-right">₱21,000</td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2">TOTALS</td><td class="border border-gray-300 px-3 py-2 text-center">7</td><td class="border border-gray-300 px-3 py-2 text-center">3</td><td class="border border-gray-300 px-3 py-2 text-center">1</td><td class="border border-gray-300 px-3 py-2 text-right">₱191,350</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section II -->
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section II · Beneficiaries Served per Municipality</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Municipality</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Distinct Beneficiaries</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Share</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">Tacloban City</td><td class="border border-gray-200 px-3 py-2 text-right">260</td><td class="border border-gray-200 px-3 py-2 text-right">39.8%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Palo</td><td class="border border-gray-200 px-3 py-2 text-right">171</td><td class="border border-gray-200 px-3 py-2 text-right">26.2%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Tanauan</td><td class="border border-gray-200 px-3 py-2 text-right">126</td><td class="border border-gray-200 px-3 py-2 text-right">19.3%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Dulag</td><td class="border border-gray-200 px-3 py-2 text-right">96</td><td class="border border-gray-200 px-3 py-2 text-right">14.7%</td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2">TOTAL</td><td class="border border-gray-300 px-3 py-2 text-right">653</td><td class="border border-gray-300 px-3 py-2 text-right">100%</td></tr>
+        </tbody>
+      </table>
+      <p class="mt-2 text-[10.5px] text-gray-400 italic">Note: Beneficiaries are counted distinctly per person across programs within the reporting period; a participant served by two programs is counted once under their municipality.</p>
+    </section>
+
+    <!-- Section III -->
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section III · Budget Utilization Summary</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Program</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Allocated</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Utilized</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">%</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">LITRAWIYA: Barangay Reading Proficiency Program</td><td class="border border-gray-200 px-3 py-2 text-right">₱48,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱31,500</td><td class="border border-gray-200 px-3 py-2 text-right">66%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">HANDA: Disaster Preparedness Training</td><td class="border border-gray-200 px-3 py-2 text-right">₱62,500</td><td class="border border-gray-200 px-3 py-2 text-right text-red-700 font-bold">₱64,500</td><td class="border border-gray-200 px-3 py-2 text-right text-red-700 font-bold">103% ⚠</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">KABUHIAN: Livelihood Skills Training</td><td class="border border-gray-200 px-3 py-2 text-right">₱35,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱33,750</td><td class="border border-gray-200 px-3 py-2 text-right">96%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">e-LITERACY: Digital Literacy for Parents &amp; Senior Citizens</td><td class="border border-gray-200 px-3 py-2 text-right">₱40,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱14,200</td><td class="border border-gray-200 px-3 py-2 text-right">36%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE: Health &amp; Wellness Program</td><td class="border border-gray-200 px-3 py-2 text-right">₱55,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱21,000</td><td class="border border-gray-200 px-3 py-2 text-right">38%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">BATANG MATINIK: Sports &amp; Values Formation Clinic</td><td class="border border-gray-200 px-3 py-2 text-right">₱28,000</td><td class="border border-gray-200 px-3 py-2 text-right">₱0</td><td class="border border-gray-200 px-3 py-2 text-right">0%</td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2">OVERALL</td><td class="border border-gray-300 px-3 py-2 text-right">₱268,500</td><td class="border border-gray-300 px-3 py-2 text-right">₱164,950</td><td class="border border-gray-300 px-3 py-2 text-right">61%</td></tr>
+        </tbody>
+      </table>
+      <p class="mt-2 text-[10.5px] text-gray-400 italic">Note: HANDA exceeded its allocation by ₱2,000 — the entry was saved, a persistent warning badge is shown on the program, and the overrun was written to the activity log (D7). Utilization % per 8.6: SUM(expenses) ÷ allocated × 100.</p>
+    </section>
+
+    <!-- Section IV -->
+    <section class="mb-10">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section IV · Assessment Outcomes</h3>
+      <ul class="space-y-2.5 text-[12.5px] leading-relaxed text-charcoal list-disc pl-5 marker:text-gold-600">
+        <li>Across scored activities, the mean knowledge gain (post − pre, per 8.6) is <strong>+0.7 of 5.0 points</strong> — reading proficiency rose from 2.1 to 2.8 (LITRAWIYA), livelihood confidence from 1.8 to 2.7 (KABUHIAN), and health literacy from 2.0 to 2.1 (SENIOR CARE).</li>
+        <li>Weighted community satisfaction stands at <strong>3.6 out of 5.0</strong> across <strong>207 validated responses</strong> (San Jose 86 · El Reposo 64 · Salvacion 57, Q1–Q2 2026); training availability interest is strongest in food processing (38%) and dressmaking (26%).</li>
+        <li>Community needs assessments continue to flag household income insufficiency and lack of local employment as the top concerns in San Jose and Salvacion, while potable water access and sanitation remain structural concerns in Palo — informing next semester's program mix toward livelihood and water-safety interventions.</li>
+      </ul>
+    </section>
+
+    <!-- Section V: Program Results Framework -->
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section V · Program Results Framework</h3>
+      <p class="text-[11px] text-gray-400 italic mb-4">Per-objective baseline → target → actual with derived status, per ProgramObjective (6.15).</p>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Program / Objective</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Baseline</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Target</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Actual</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">LITRAWIYA · Enroll Grades 2–4 pupils</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">250</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">186</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">LITRAWIYA · Raise reading proficiency</td><td class="border border-gray-200 px-3 py-2 text-right">2.1</td><td class="border border-gray-200 px-3 py-2 text-right">3.2</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">2.8</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">LITRAWIYA · ≥80% attendance consistency</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">80%</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">76%</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">HANDA · Train coastal households</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">180</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">171</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">HANDA · Budget utilization ≥ 90%</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">90%</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">94%</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Achieved</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">KABUHIAN · Deliver livelihood skills</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">120</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">126</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Achieved</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">KABUHIAN · Improve livelihood confidence</td><td class="border border-gray-200 px-3 py-2 text-right">1.8</td><td class="border border-gray-200 px-3 py-2 text-right">2.6</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">2.7</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Achieved</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">KABUHIAN · Graduate enterprise association (qualitative)</td><td class="border border-gray-200 px-3 py-2 text-right">—</td><td class="border border-gray-200 px-3 py-2 text-right">1</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">0</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Not met</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">e-LITERACY · Reach parents &amp; seniors</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">150</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">74</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">e-LITERACY · ≥20% skill uplift</td><td class="border border-gray-200 px-3 py-2 text-right">1.4</td><td class="border border-gray-200 px-3 py-2 text-right">1.9</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">1.5</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE · Serve senior citizens</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">200</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">96</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE · Health literacy uplift</td><td class="border border-gray-200 px-3 py-2 text-right">2.0</td><td class="border border-gray-200 px-3 py-2 text-right">2.6</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">2.1</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE · Participation rate ≥70%</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">70%</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">64%</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">BATANG MATINIK · Reach 140 youth</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">140</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">0</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Not started</span></td></tr>
+        </tbody>
+      </table>
+      <p class="mt-2 text-[10.5px] text-gray-400 italic">Objective status derivation: achieved (actual ≥ target) · not_met (target date passed, actual &lt; target) · on_track (progressing, target date ahead) · not_started. KABUHIAN's enterprise-association objective is qualitative (manual tracking with evidence).</p>
+    </section>
+
+    <!-- Section VI: Program Executive Narrative -->
+    <section class="mb-10">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section VI · Program Executive Narratives</h3>
+      <p class="text-[11px] text-gray-400 italic mb-4">AI-generated, Director-only decision support (ProgramNarrative 6.16). Latest version per program.</p>
+      <div class="grid grid-cols-3 gap-5">
+        <div class="rounded-xl border border-gray-200 p-4">
+          <p class="text-[11.5px] font-bold leading-snug">LITRAWIYA <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 ml-1">On track</span></p>
+          <p class="text-[11.5px] text-gray-600 leading-snug mt-1.5">186 of 250 pupils enrolled (74%); reading proficiency rising 2.1 → 2.8 of 5. Two more batches before October.</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4">
+          <p class="text-[11.5px] font-bold leading-snug">HANDA <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 ml-1">On track</span></p>
+          <p class="text-[11.5px] text-gray-600 leading-snug mt-1.5">171 of 180 households trained (95%); budget 94% utilized — within tolerance. Final water-rescue refresher pending.</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4">
+          <p class="text-[11.5px] font-bold leading-snug">e-LITERACY <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 ml-1">Needs attention</span></p>
+          <p class="text-[11.5px] text-gray-600 leading-snug mt-1.5">74 of 150 reached (49%); skill uplift minimal. Weekend cohorts and a satellite site recommended.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section VII: Faculty Rendered Hours -->
+    <section class="mb-10">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Section VII · Faculty Rendered Hours</h3>
+      <p class="text-[11px] text-gray-400 italic mb-4">Approved service hours per faculty, per semester (SUM per 8.6). Approved entries are locked and audit-logged.</p>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Faculty</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">College</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Approved Hours</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Pending</th>
+            <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">% of 40-hr Target</th>
+          </tr>
+        </thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">Prof. John Ryl E. Bautista</td><td class="border border-gray-200 px-3 py-2 text-center">College of Education</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">4.0</td><td class="border border-gray-200 px-3 py-2 text-right">3.0</td><td class="border border-gray-200 px-3 py-2 text-right">10%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Prof. Ricmar P. Aquino</td><td class="border border-gray-200 px-3 py-2 text-center">College of Arts and Sciences</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">5.0</td><td class="border border-gray-200 px-3 py-2 text-right">7.0</td><td class="border border-gray-200 px-3 py-2 text-right">13%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Prof. Adrian T. Lumbre</td><td class="border border-gray-200 px-3 py-2 text-center">College of Arts and Sciences</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">0</td><td class="border border-gray-200 px-3 py-2 text-right">4.0</td><td class="border border-gray-200 px-3 py-2 text-right">0%</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Prof. Lovelyn F. Maglasang</td><td class="border border-gray-200 px-3 py-2 text-center">College of Education</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">4.0</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">10%</td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2">TOTAL (approved)</td><td class="border border-gray-300 px-3 py-2 text-center"></td><td class="border border-gray-300 px-3 py-2 text-right">13.0</td><td class="border border-gray-300 px-3 py-2 text-right">14.0</td><td class="border border-gray-300 px-3 py-2 text-right"></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Signatures (shared across all four report views) -->
+    <section>
+      <div class="grid grid-cols-3 gap-8 mt-14">
+        <div class="text-center">
+          <div class="h-12"></div>
+          <p class="border-t border-gray-800 pt-1.5 mx-4 text-[12px] font-bold text-charcoal">Prof. Angela D. Salazar</p>
+          <p class="text-[11px] text-gray-500 mt-0.5">Prepared by · CESO Secretary</p>
+        </div>
+        <div class="text-center">
+          <div class="h-12"></div>
+          <p class="border-t border-gray-800 pt-1.5 mx-4 text-[12px] font-bold text-charcoal">Dr. Ma. Cristina A. Peñaranda</p>
+          <p class="text-[11px] text-gray-500 mt-0.5">Noted by · Director, CESO</p>
+        </div>
+        <div class="text-center">
+          <div class="h-12"></div>
+          <p class="border-t border-gray-800 pt-1.5 mx-4 text-[12px] font-bold text-charcoal">&nbsp;</p>
+          <p class="text-[11px] text-gray-500 mt-0.5">Recommending Approval · VP for Research &amp; Extension</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-10 text-center text-[10px] text-gray-400">
+      System-generated from SmartCEMES — figures per the KPI metric dictionary (Section 8.6).
+    </footer>
+  </div><!-- /view: annual -->
+
+  <!-- ============ VIEW 2 · PROGRAM RESULTS FRAMEWORK (per program, with evidence) ============ -->
+  <div data-report-view="framework" style="display:none">
+    <div class="text-center mt-7 mb-8">
+      <h1 class="text-[16px] font-black tracking-wide text-charcoal uppercase">Program Results Framework</h1>
+      <p class="text-[12.5px] text-gray-500 font-semibold mt-1">Per Program · Objective Statement, Baseline, Target, Actual, Status, Evidence</p>
+      <p class="text-[11px] text-gray-400 mt-0.5">Generated Aug 24, 2026 · SmartCEMES v4.1</p>
+    </div>
+
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">EXT-2026-001 · LITRAWIYA: Barangay Reading Proficiency Program</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Objective</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">KPI Metric</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Baseline</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Target</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Actual</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Evidence</th>
+        </tr></thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">Enroll Grades 2–4 pupils in structured remedial reading sessions</td><td class="border border-gray-200 px-3 py-2 text-center">Community Reach</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">250 pupils</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">186</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Attendance rosters; mid-year evaluation.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Raise reading proficiency from baseline to target</td><td class="border border-gray-200 px-3 py-2 text-center">Knowledge Gain</td><td class="border border-gray-200 px-3 py-2 text-right">2.1</td><td class="border border-gray-200 px-3 py-2 text-right">3.2 /5</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">2.8</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Pre/post reading tests.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Sustain ≥80% session attendance consistency</td><td class="border border-gray-200 px-3 py-2 text-center">Attendance Consistency</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">80%</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">76%</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Session attendance sheets.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">EXT-2026-002 · HANDA: Disaster Preparedness Training</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Objective</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">KPI Metric</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Baseline</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Target</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Actual</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Evidence</th>
+        </tr></thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">Train coastal households in evacuation &amp; first response</td><td class="border border-gray-200 px-3 py-2 text-center">Community Reach</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">180 hh</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">171</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Drill participation logs.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Achieve ≥90% budget utilization without overrun</td><td class="border border-gray-200 px-3 py-2 text-center">Budget Utilization</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">90%</td><td class="border border-gray-200 px-3 py-2 text-right font-bold text-red-700">94% ⚠</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Achieved</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Finance ledger Q3 — overrun flagged (D7).</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">EXT-2026-003 · KABUHIAN: Livelihood Skills Training</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Objective</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">KPI Metric</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Baseline</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Target</th>
+          <th class="border border-gray-200 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Actual</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Evidence</th>
+        </tr></thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">Deliver livelihood skills to unemployed mothers &amp; OSY</td><td class="border border-gray-200 px-3 py-2 text-center">Community Reach</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">120</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">126</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Achieved</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Registration + showcase attendance.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Improve livelihood confidence from baseline</td><td class="border border-gray-200 px-3 py-2 text-center">Knowledge Gain</td><td class="border border-gray-200 px-3 py-2 text-right">1.8</td><td class="border border-gray-200 px-3 py-2 text-right">2.6 /5</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">2.7</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Achieved</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Pre/post self-assessment.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Form a graduate enterprise association within the program period</td><td class="border border-gray-200 px-3 py-2 text-center">Qualitative · manual</td><td class="border border-gray-200 px-3 py-2 text-right">—</td><td class="border border-gray-200 px-3 py-2 text-right">1</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">0</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Not met</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Association organizing deferred — graduates requested a Q4 schedule.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">EXT-2026-004 · e-LITERACY &amp; EXT-2026-005 · SENIOR CARE</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Objective</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">KPI Metric</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Baseline</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Target</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Actual</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Evidence</th>
+        </tr></thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">e-LIT · Bridge the digital divide for parents &amp; seniors</td><td class="border border-gray-200 px-3 py-2 text-center">Community Reach</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">150</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">74</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Hub sign-in sheets.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">e-LIT · Achieve ≥20% skill uplift in digital literacy</td><td class="border border-gray-200 px-3 py-2 text-center">Knowledge Gain</td><td class="border border-gray-200 px-3 py-2 text-right">1.4</td><td class="border border-gray-200 px-3 py-2 text-right">1.9 /5</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">1.5</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Pre/post module quizzes.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE · Serve senior citizens through wellness sessions</td><td class="border border-gray-200 px-3 py-2 text-center">Community Reach</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">200</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">96</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Health station logs.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE · Improve health literacy self-assessment</td><td class="border border-gray-200 px-3 py-2 text-center">Knowledge Gain</td><td class="border border-gray-200 px-3 py-2 text-right">2.0</td><td class="border border-gray-200 px-3 py-2 text-right">2.6 /5</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">2.1</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Pre/post wellness talk forms.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">SENIOR CARE · Achieve ≥70% participation among enrolled seniors</td><td class="border border-gray-200 px-3 py-2 text-center">Participation Rate</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">70%</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">64%</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">On track</span></td><td class="border border-gray-200 px-3 py-2 text-gray-500">Attendance vs enrollment roll.</td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">BATANG MATINIK · Channel youth energy into sports &amp; values</td><td class="border border-gray-200 px-3 py-2 text-center">Community Reach</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-right">140 youth</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">0</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Not started</span></td><td class="border border-gray-200 px-3 py-2 text-gray-400 italic">Program in draft — no activities yet.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div><!-- /view: framework -->
+
+  <!-- ============ VIEW 3 · FACULTY RENDERED HOURS (per semester, by activity and program) ============ -->
+  <div data-report-view="hours" style="display:none">
+    <div class="text-center mt-7 mb-8">
+      <h1 class="text-[16px] font-black tracking-wide text-charcoal uppercase">Faculty Rendered Hours Report</h1>
+      <p class="text-[12.5px] text-gray-500 font-semibold mt-1">Semester 1 · Academic Year 2026–2027 · By Activity and Program</p>
+      <p class="text-[11px] text-gray-400 mt-0.5">Generated Aug 24, 2026 · SmartCEMES v4.1 · SUM(approved hours) per 8.6 · approved entries are locked and audit-logged</p>
+    </div>
+
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Prof. John Ryl E. Bautista · LNU-2026-0001 · College of Education</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Program</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Activity</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Date</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Hours</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Source</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+        </tr></thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">LITRAWIYA (EXT-2026-001)</td><td class="border border-gray-200 px-3 py-2">Pre-Assessment &amp; Reading Camp Kick-off</td><td class="border border-gray-200 px-3 py-2 text-center">Feb 03, 2026</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">4.0</td><td class="border border-gray-200 px-3 py-2 text-center">auto</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Approved 🔒</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">LITRAWIYA (EXT-2026-001)</td><td class="border border-gray-200 px-3 py-2">Remedial Reading Session Batch 3</td><td class="border border-gray-200 px-3 py-2 text-center">Jul 18, 2026</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">3.0</td><td class="border border-gray-200 px-3 py-2 text-center">auto</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pending</span></td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2" colspan="3">Subtotal — approved this semester</td><td class="border border-gray-300 px-3 py-2 text-right">4.0</td><td class="border border-gray-300 px-3 py-2 text-center" colspan="2">of 40-hr target · 10%</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Prof. Ricmar P. Aquino · LNU-2026-0003 · College of Arts and Sciences</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Program</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Activity</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Date</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Hours</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Source</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+        </tr></thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">HANDA (EXT-2026-002)</td><td class="border border-gray-200 px-3 py-2">Typhoon Drill &amp; Evacuation Simulation</td><td class="border border-gray-200 px-3 py-2 text-center">Jun 21, 2026</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">5.0</td><td class="border border-gray-200 px-3 py-2 text-center">auto</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Approved 🔒</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">HANDA (EXT-2026-002)</td><td class="border border-gray-200 px-3 py-2">First-Aid &amp; Water Rescue Training</td><td class="border border-gray-200 px-3 py-2 text-center">Aug 09, 2026</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">7.0</td><td class="border border-gray-200 px-3 py-2 text-center">auto</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pending</span></td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2" colspan="3">Subtotal — approved this semester</td><td class="border border-gray-300 px-3 py-2 text-right">5.0</td><td class="border border-gray-300 px-3 py-2 text-center" colspan="2">of 40-hr target · 13%</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="mb-8">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Other Faculty</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Faculty</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Program · Activity</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Date</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Hours</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Source</th>
+          <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+        </tr></thead>
+        <tbody class="text-charcoal">
+          <tr><td class="border border-gray-200 px-3 py-2">Prof. Lovelyn F. Maglasang · LNU-2026-0002</td><td class="border border-gray-200 px-3 py-2">KABUHIAN · Post-Training Product Showcase</td><td class="border border-gray-200 px-3 py-2 text-center">Jun 26, 2026</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">4.0</td><td class="border border-gray-200 px-3 py-2 text-center">auto</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Approved 🔒</span></td></tr>
+          <tr><td class="border border-gray-200 px-3 py-2">Prof. Adrian T. Lumbre · LNU-2026-0007</td><td class="border border-gray-200 px-3 py-2">e-LITERACY · Basic Computer Hands-on Workshop 2</td><td class="border border-gray-200 px-3 py-2 text-center">Aug 16, 2026</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">4.0</td><td class="border border-gray-200 px-3 py-2 text-center">auto</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pending</span></td></tr>
+          <tr class="font-bold bg-gray-50"><td class="border border-gray-300 px-3 py-2" colspan="3">TOTAL — approved hours, semester to date</td><td class="border border-gray-300 px-3 py-2 text-right">13.0</td><td class="border border-gray-300 px-3 py-2 text-center" colspan="2">3 entries pending approval</td></tr>
+        </tbody>
+      </table>
+      <p class="mt-2 text-[10.5px] text-gray-400 italic">Only approved hours count toward the semester total (8.6). Approved entries are locked and immutable — audit-logged via Spatie Activity Log. Auto-drafts are created on activity completion (hours = activity duration); faculty may adjust down with a note.</p>
+    </section>
+  </div><!-- /view: hours -->
+
+  <!-- ============ VIEW 4 · COMMUNITY PARTNER IMPACT SUMMARY ============ -->
+  <div data-report-view="impact" style="display:none">
+    <div class="text-center mt-7 mb-8">
+      <h1 class="text-[16px] font-black tracking-wide text-charcoal uppercase">Community Partner Impact Summary</h1>
+      <p class="text-[12.5px] text-gray-500 font-semibold mt-1">Per Partner Community · Programs, Reach, Assessments, and Priorities</p>
+      <p class="text-[11px] text-gray-400 mt-0.5">Generated Aug 24, 2026 · SmartCEMES v4.1</p>
+    </div>
+
+    <table class="w-full text-[12.5px] border-collapse mb-6">
+      <thead><tr>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Community</th>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Municipality</th>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Linked Programs</th>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-right text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Distinct Served</th>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Assessments</th>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-center text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Avg Satisfaction</th>
+        <th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left text-[10.5px] font-bold uppercase tracking-wider text-gray-500">Top Community Need</th>
+      </tr></thead>
+      <tbody class="text-charcoal">
+        <tr><td class="border border-gray-200 px-3 py-2 font-semibold">Brgy. San Jose</td><td class="border border-gray-200 px-3 py-2">Tacloban City</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span></td><td class="border border-gray-200 px-3 py-2 text-center">LITRAWIYA · BATANG MATINIK</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">186</td><td class="border border-gray-200 px-3 py-2 text-center">Q2 2026 · n=86</td><td class="border border-gray-200 px-3 py-2 text-center">3.4 / 5</td><td class="border border-gray-200 px-3 py-2 text-gray-600">Low income (61%) · livelihood training interest</td></tr>
+        <tr><td class="border border-gray-200 px-3 py-2 font-semibold">Brgy. Sagkahan</td><td class="border border-gray-200 px-3 py-2 text-left">Tacloban City</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span></td><td class="border border-gray-200 px-3 py-2 text-center">e-LITERACY</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">74</td><td class="border border-gray-200 px-3 py-2 text-center">Q2 · import pending validation</td><td class="border border-gray-200 px-3 py-2 text-gray-600">—</td></tr>
+        <tr><td class="border border-gray-200 px-3 py-2 font-semibold">Brgy. El Reposo</td><td class="border border-gray-200 px-3 py-2 text-left">Palo</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span></td><td class="border border-gray-200 px-3 py-2 text-center">HANDA</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">171</td><td class="border border-gray-200 px-3 py-2 text-center">Q1 2026 · n=64 validated</td><td class="border border-gray-200 px-3 py-2 text-center">3.8 / 5</td></tr>
+        <tr><td class="border border-gray-200 px-3 py-2 font-semibold">Brgy. Salvacion</td><td class="border border-gray-200 px-3 py-2 text-left">Tanauan</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span></td><td class="border border-gray-200 px-3 py-2 text-center">KABUHIAN · SENIOR CARE</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">126</td><td class="border border-gray-200 px-3 py-2 text-center">Q2 2026 · n=57 validated</td><td class="border border-gray-200 px-3 py-2 text-center">3.6 / 5</td></tr>
+        <tr><td class="border border-gray-200 px-3 py-2 font-semibold">Brgy. San Rafael</td><td class="border border-gray-200 px-3 py-2 text-left">Dulag</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span></td><td class="border border-gray-200 px-3 py-2 text-center">SENIOR CARE</td><td class="border border-gray-200 px-3 py-2 text-right font-bold">96</td><td class="border border-gray-200 px-3 py-2 text-center">Q2 2026 · returned for revision</td><td class="border border-gray-200 px-3 py-2 text-gray-600">—</td></tr>
+        <tr><td class="border border-gray-200 px-3 py-2 font-semibold">Brgy. Apitong</td><td class="border border-gray-200 px-3 py-2 text-left">Tacloban City</td><td class="border border-gray-200 px-3 py-2 text-center"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Prospecting</span></td><td class="border border-gray-200 px-3 py-2 text-center text-gray-400 italic">None yet</td><td class="border border-gray-200 px-3 py-2 text-right">0</td><td class="border border-gray-200 px-3 py-2 text-center text-gray-400 italic">—</td><td class="border border-gray-200 px-3 py-2 text-gray-400 italic">—</td></tr>
+      </tbody>
+    </table>
+
+    <section class="mb-6">
+      <h3 class="text-[12px] font-black tracking-[.14em] uppercase text-lnu-800 border-b border-gray-200 pb-1.5 mb-3">Partner Highlights</h3>
+      <ul class="space-y-2.5 text-[12.5px] leading-relaxed text-charcoal list-disc pl-5 marker:text-gold-600">
+        <li><strong>Brgy. San Jose</strong> hosts the portfolio's flagship literacy program and posted the highest response volume (n=86, Q2 2026); top training interests — food processing (38%) and dressmaking (26%) — align with the proposed KABUHIAN expansion.</li>
+        <li><strong>Brgy. El Reposo</strong> achieved the highest satisfaction (3.8/5) through HANDA's disaster-preparedness drills; potable water access (44%) remains the priority concern.</li>
+        <li><strong>Brgy. Salvacion</strong> completed its first livelihood program with 126 persons trained against a 120 target; organizational membership is low (29%), recommending association-building support.</li>
+        <li><strong>Brgy. Apitong</strong> remains in the prospecting pipeline — a needs assessment is scheduled to qualify it for next semester's program mix.</li>
+      </ul>
+    </section>
+  </div><!-- /view: impact -->
+</div><!-- /print-area -->
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+function switchReport(btn) {
+  document.querySelectorAll('[data-report]').forEach(b => { if (b.tagName === 'BUTTON') b.classList.toggle('on', b === btn); });
+  document.querySelectorAll('[data-report-view]').forEach(v => {
+    v.style.display = v.dataset.reportView === btn.dataset.report ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

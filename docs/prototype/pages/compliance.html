@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compliance Tracker · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="secretary" data-page="compliance">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER + LEGEND ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+      <div>
+        <h2 class="text-[22px] font-extrabold tracking-tight text-charcoal leading-tight">Program Compliance Matrix</h2>
+        <p class="text-[13px] text-gray-400 font-medium mt-1">Document requirements across all extension programs · Semester 1, AY 2026–2027</p>
+      </div>
+      <div class="flex items-center gap-5 pb-1">
+        <span class="flex items-center gap-1.5 text-[11.5px] text-gray-500 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Complete</span>
+        <span class="flex items-center gap-1.5 text-[11.5px] text-gray-500 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>In progress</span>
+        <span class="flex items-center gap-1.5 text-[11.5px] text-gray-500 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>Missing</span>
+        <span class="flex items-center gap-1.5 text-[11.5px] text-gray-400 font-medium"><span class="w-2.5 h-2.5 rounded-full bg-gray-200"></span>Not yet due</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GAUGE + MATRIX ===================== -->
+  <section class="mt-4 flex items-start gap-4">
+
+    <!-- Readiness gauge -->
+    <div class="reveal-item sc-card sc-card-hover w-72 shrink-0 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-[14px]">Overall Readiness</h3>
+        <span class="badge badge-gold">Sem 1</span>
+      </div>
+
+      <div class="relative w-44 h-44 mx-auto">
+        <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#003599"/>
+              <stop offset="1" stop-color="#F6B800"/>
+            </linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#eef0f4" stroke-width="10"/>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="url(#gaugeGrad)" stroke-width="10"
+                  stroke-linecap="round" stroke-dasharray="254.9 326.7"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <p class="text-[36px] font-extrabold tracking-tight leading-none">78%</p>
+          <p class="text-[10px] text-gray-400 font-bold uppercase tracking-[.12em] mt-1.5">Semester<br>Readiness</p>
+        </div>
+      </div>
+
+      <p class="text-center text-[11.5px] text-gray-400 font-medium mt-4 leading-relaxed">
+        Budget-weighted across all 6 programs — requirements verified by the CESO Secretariat.
+      </p>
+
+      <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-gray-50 text-center">
+        <div>
+          <p class="text-[17px] font-extrabold text-emerald-600 leading-none">19</p>
+          <p class="text-[10px] text-gray-400 font-semibold mt-1">Complete</p>
+        </div>
+        <div>
+          <p class="text-[17px] font-extrabold text-amber-500 leading-none">5</p>
+          <p class="text-[10px] text-gray-400 font-semibold mt-1">In progress</p>
+        </div>
+        <div>
+          <p class="text-[17px] font-extrabold text-red-500 leading-none">1</p>
+          <p class="text-[10px] text-gray-400 font-semibold mt-1">Missing</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="flex-1 min-w-0 space-y-4">
+
+      <!-- Compliance matrix -->
+      <div class="reveal-item sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 class="font-bold text-[14px] flex items-center gap-2">[[shield]] Requirement Matrix</h3>
+          <button onclick="SC.toast('Compliance matrix exported for CESO records','info')" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Export summary</button>
+        </div>
+        <table class="sc-table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th class="!text-center">Proposal</th>
+              <th class="!text-center">MOA</th>
+              <th class="!text-center">Baseline</th>
+              <th class="!text-center">Mid-Report</th>
+              <th class="!text-center">Final Report</th>
+              <th class="!text-center">Liquidation</th>
+              <th>Completeness %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <p class="font-bold text-[13px] text-charcoal">LITRAWIYA</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">EXT-2026-001 · Reading Proficiency</p>
+              </td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" title="In progress"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td>
+                <div class="flex items-center gap-2.5">
+                  <div class="progress w-24 shrink-0"><span style="width:92%" class="bg-lnu-800"></span></div>
+                  <span class="badge badge-green">92%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p class="font-bold text-[13px] text-charcoal">HANDA</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">EXT-2026-002 · Disaster Preparedness</p>
+              </td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" title="In progress"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" title="In progress"></span></td>
+              <td>
+                <div class="flex items-center gap-2.5">
+                  <div class="progress w-24 shrink-0"><span style="width:83%" class="bg-lnu-800"></span></div>
+                  <span class="badge badge-blue">83%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p class="font-bold text-[13px] text-charcoal">KABUHIAN</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">EXT-2026-003 · Livelihood Skills Training</p>
+              </td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td>
+                <div class="flex items-center gap-2.5">
+                  <div class="progress w-24 shrink-0"><span style="width:100%" class="bg-lnu-800"></span></div>
+                  <span class="badge badge-green">100%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p class="font-bold text-[13px] text-charcoal">e-LITERACY</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">EXT-2026-004 · Digital Literacy</p>
+              </td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" title="In progress"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td>
+                <div class="flex items-center gap-2.5">
+                  <div class="progress w-24 shrink-0"><span style="width:83%" class="bg-lnu-800"></span></div>
+                  <span class="badge badge-blue">83%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p class="font-bold text-[13px] text-charcoal">SENIOR CARE</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">EXT-2026-005 · Health &amp; Wellness</p>
+              </td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Complete"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" title="In progress"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td>
+                <div class="flex items-center gap-2.5">
+                  <div class="progress w-24 shrink-0"><span style="width:83%" class="bg-lnu-800"></span></div>
+                  <span class="badge badge-blue">83%</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p class="font-bold text-[13px] text-charcoal">BATANG MATINIK</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">EXT-2026-006 · Sports &amp; Values Formation</p>
+              </td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-red-400" title="Missing"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td class="text-center"><span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200" title="Not yet due"></span></td>
+              <td>
+                <div class="flex items-center gap-2.5">
+                  <div class="progress w-24 shrink-0"><span style="width:0%" class="bg-red-400"></span></div>
+                  <span class="badge badge-red">0%</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Outstanding items -->
+      <div class="reveal-item sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px] flex items-center gap-2">
+            Outstanding Items
+            <span class="badge badge-red">4 gaps</span>
+          </h3>
+          <button onclick="SC.toast('Reminder notifications sent to 4 program leads','success')" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Remind all</button>
+        </div>
+
+        <ul class="divide-y divide-gray-50">
+          <li class="flex items-center gap-3 py-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[13px] truncate"><span class="font-bold">HANDA</span> <span class="text-gray-500">— Final report due Sep 15</span></p>
+              <p class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1.5"><span class="avatar w-5 h-5 text-[8px]">RA</span> Prof. Ricmar P. Aquino</p>
+            </div>
+            <span class="badge badge-yellow shrink-0">Due Sep 15</span>
+            <button onclick="SC.toast('Reminder notification sent','success')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px] shrink-0">Remind</button>
+            <button onclick="SC.toast('Deadline extended to Sep 29 · update logged','success')" class="btn btn-outline !px-2.5 !py-1.5 text-[11px] shrink-0">Extend…</button>
+          </li>
+          <li class="flex items-center gap-3 py-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0"></span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[13px] truncate"><span class="font-bold">e-LITERACY</span> <span class="text-gray-500">— MOA unsigned scan missing</span></p>
+              <p class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1.5"><span class="avatar w-5 h-5 text-[8px]">AL</span> Prof. Adrian T. Lumbre</p>
+            </div>
+            <span class="badge badge-red shrink-0">Due Aug 29</span>
+            <button onclick="SC.toast('Reminder notification sent','success')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px] shrink-0">Remind</button>
+          </li>
+          <li class="flex items-center gap-3 py-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[13px] truncate"><span class="font-bold">SENIOR CARE</span> <span class="text-gray-500">— baseline encoding 60% complete</span></p>
+              <p class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1.5"><span class="avatar gold w-5 h-5 text-[8px]">NG</span> Dr. Norilyn B. Gabo</p>
+            </div>
+            <span class="badge badge-yellow shrink-0">Due Sep 05</span>
+            <button onclick="SC.toast('Reminder notification sent','success')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px] shrink-0">Remind</button>
+            <button onclick="SC.toast('Deadline extended to Sep 19 · update logged','success')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px] shrink-0">Extend…</button>
+          </li>
+          <li class="flex items-center gap-3 py-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0"></span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[13px] truncate"><span class="font-bold">BATANG MATINIK</span> <span class="text-gray-500">— awaiting proposal submission</span></p>
+              <p class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1.5"><span class="avatar w-5 h-5 text-[8px]">LM</span> Prof. Lovelyn F. Maglasang</p>
+            </div>
+            <span class="badge badge-red shrink-0">Due Aug 31</span>
+            <button onclick="SC.toast('Reminder notification sent','success')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px] shrink-0">Remind</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+</body>
+</html>

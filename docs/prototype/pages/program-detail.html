@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program Hub · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+<style>
+  body[data-variant="faculty"] .admin-only { display:none !important; }
+  .faculty-only { display:none; }
+  body[data-variant="faculty"] .faculty-only { display:block; }
+</style>
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="programs">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <section class="pt-6 reveal-item">
+    <a href="programs.html" class="text-[12px] font-bold text-gray-400 hover:text-lnu-700 transition">← Extension Programs</a>
+  </section>
+
+  <!-- READ-ONLY BANNER (faculty) -->
+  <section class="faculty-only mt-2">
+    <div class="sc-card p-3.5 !border-lnu-100 !bg-lnu-50/60 flex items-center gap-3">
+      <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0">[[shield]]</span>
+      <p class="text-[12.5px] text-lnu-800 font-semibold">Read-only view — you can browse the program's overview, activities, beneficiaries, and budget. Editing is done by the Director's office.</p>
+    </div>
+  </section>
+
+  <!-- HERO CARD -->
+  <section class="mt-2 reveal-item">
+    <div class="sc-card overflow-hidden" id="hubHero"></div>
+  </section>
+
+  <!-- D7 OVER-ALLOCATION BANNER -->
+  <section id="hubOverBanner" class="mt-4 hidden reveal-item"></section>
+
+  <!-- STAT TILES -->
+  <section id="hubTiles" class="mt-4 grid grid-cols-4 gap-4 reveal-item"></section>
+
+  <!-- KPI SCORECARD VS TARGETS + ATTENDANCE & SATISFACTION -->
+  <section class="mt-4 grid grid-cols-3 gap-4 reveal-item">
+    <div class="sc-card p-6 col-span-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <h3 class="font-bold text-[14px] flex items-center gap-2"><span class="js-icon" data-icon="chart" data-cls="!w-[18px] !h-[18px] text-lnu-700"></span> KPI Scorecard vs Targets</h3>
+        <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-400 font-medium">
+          <span class="flex items-center gap-1.5"><span class="legend-dot bg-emerald-500"></span>meets target</span>
+          <span class="flex items-center gap-1.5"><span class="legend-dot bg-red-500"></span>below / over</span>
+          <span class="flex items-center gap-1.5"><span class="legend-dot bg-lnu-800"></span>no target</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-0 border-t-2 border-dashed border-gold-500"></span>target</span>
+        </div>
+      </div>
+      <p class="text-[11.5px] text-gray-400 font-medium mb-4">Actuals auto-computed live from program data (8.6) · targets from the program's results framework</p>
+      <div id="hubScorecardRows" class="space-y-4"></div>
+      <div id="hubScorecardTiles" class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-3 gap-3"></div>
+    </div>
+
+    <div class="sc-card p-6">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-[14px]">Attendance &amp; Satisfaction</h3>
+        <span class="badge badge-blue">per activity</span>
+      </div>
+      <p class="text-[11.5px] text-gray-400 font-medium mb-3">Completed activities · attendees recorded</p>
+      <div class="relative h-56" id="hubAttChartWrap"><canvas id="chAttendance"></canvas></div>
+      <div id="hubAttRatings" class="mt-3 space-y-1.5"></div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <section class="reveal-item mt-5" x-data="{t:'overview'}">
+    <div class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
+      <button :class="t==='overview' ? 'tab on' : 'tab'" @click="t='overview'; window.renderHub('overview')">Overview</button>
+      <button :class="t==='activities' ? 'tab on' : 'tab'" @click="t='activities'; window.renderHub('activities')">Activities</button>
+      <button :class="t==='beneficiaries' ? 'tab on' : 'tab'" @click="t='beneficiaries'; window.renderHub('beneficiaries')">Beneficiaries</button>
+      <button :class="t==='budget' ? 'tab on' : 'tab'" @click="t='budget'; window.renderHub('budget')">Budget</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div x-show="t==='overview'" class="mt-4 grid grid-cols-3 gap-4">
+      <div class="sc-card p-6 col-span-2">
+        <h3 class="font-bold text-[14px] mb-2 flex items-center gap-2"><span class="js-icon" data-icon="folder" data-cls="!w-[18px] !h-[18px] text-lnu-700"></span> Program Goal</h3>
+        <p id="hubGoal" class="text-[13.5px] text-gray-600 leading-relaxed"></p>
+        <div class="mt-5 pt-4 border-t border-gray-100">
+          <p class="label">Linked Community & Partners</p>
+          <div class="flex flex-wrap gap-2" id="hubPartners"></div>
+        </div>
+        <div class="mt-5 pt-4 border-t border-gray-100">
+          <p class="label">Beneficiary Categories</p>
+          <div class="flex flex-wrap gap-2" id="hubCategories"></div>
+        </div>
+      </div>
+
+      <!-- RESULTS FRAMEWORK -->
+      <div class="sc-card p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Results Framework</h3>
+          <button onclick="window.openObjManager()" class="btn btn-outline !px-2.5 !py-1.5 !text-[11px] admin-only">Manage</button>
+        </div>
+        <div id="hubObjectives" class="space-y-3"></div>
+      </div>
+
+      <!-- EXECUTIVE NARRATIVE (Director-only) -->
+      <div class="sc-card p-6 col-span-3 admin-only">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-[14px] flex items-center gap-2"><span class="js-icon" data-icon="sparkles" data-cls="!w-[18px] !h-[18px] text-gold-500"></span> Executive Narrative <span class="badge badge-gold">Director-only</span></h3>
+          <div class="flex gap-2">
+            <a href="program-narratives.html?role=admin" class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">History →</a>
+            <button onclick="SC.toast('Program narrative generation queued — Director-only','info')" class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">Generate program narrative</button>
+          </div>
+        </div>
+        <div id="hubNarrative" class="mt-3"></div>
+      </div>
+    </div>
+
+    <!-- ACTIVITIES TAB -->
+    <div x-show="t==='activities'" x-cloak class="mt-4">
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h3 class="font-bold text-[14px]">Program Activities</h3>
+            <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Planned dates must fall within <span id="hubRangeNote" class="font-semibold"></span></p>
+          </div>
+          <button class="btn btn-primary admin-only" onclick="event.preventDefault();window.openActivityModal()">[[calendar]] Add Activity</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table">
+            <thead><tr><th>Activity</th><th>Date</th><th>Time</th><th>Venue</th><th>Status</th><th class="!text-right">Attendees</th><th></th></tr></thead>
+            <tbody id="hubActivityRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BENEFICIARIES TAB -->
+    <div x-show="t==='beneficiaries'" x-cloak class="mt-4 space-y-4">
+      <section class="grid grid-cols-4 gap-4">
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Enrolled</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none"><span id="hubEnrolledCount">0</span><span class="text-[14px] text-gray-400 font-bold"> / <span id="hubTargetCount">0</span></span></p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">enrolled of program target</p>
+        </div>
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Reached</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-lnu-800" id="hubReachedCount">0</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">distinct beneficiaries served</p>
+        </div>
+        <div class="sc-card p-5 col-span-2 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Enrollment is program-scoped</p>
+          <p class="text-[12.5px] text-gray-600 mt-2 leading-relaxed">Enroll from the global registry, register new beneficiaries directly into this program, or unenroll. A beneficiary may belong to multiple programs; duplicates are warned before save (never silently merged).</p>
+          <div class="flex gap-2 mt-3 admin-only">
+            <button class="btn btn-outline !py-1.5 !text-[11.5px]" onclick="event.preventDefault();window.openEnrollExisting()">Enroll existing</button>
+            <button class="btn btn-primary !py-1.5 !text-[11.5px]" onclick="event.preventDefault();window.openRegisterNew()">[[people]] Register new</button>
+            <button class="btn btn-outline !py-1.5 !text-[11.5px]" onclick="event.preventDefault();window.openImportXlsx()">[[upload]] Import XLSX</button>
+          </div>
+        </div>
+      </section>
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="font-bold text-[14px]">Enrolled Beneficiaries</h3>
+          <span class="badge badge-gray" id="hubEnrolledBadge">0 enrolled</span>
+        </div>
+        <table class="sc-table">
+          <thead><tr><th>Beneficiary</th><th>Barangay</th><th>Category</th><th>Age / Sex</th><th>Contact</th><th class="admin-only !text-right">Enrollment</th></tr></thead>
+          <tbody id="hubBeneficiaryRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BUDGET TAB -->
+    <div x-show="t==='budget'" x-cloak class="mt-4 space-y-4">
+      <section class="grid grid-cols-4 gap-4">
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Allocated</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none" id="hubBudgetAllocated">₱0</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">FY 2026 allocation</p>
+        </div>
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Utilized</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none" id="hubBudgetUtilized">₱0</p>
+          <div class="progress mt-3"><span id="hubBudgetBar" style="width:0%" class="bg-lnu"></span></div>
+          <p class="text-[11px] text-gray-500 font-semibold mt-2" id="hubBudgetPct">0%</p>
+        </div>
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Remaining</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none" id="hubBudgetRemaining">₱0</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">unspent balance</p>
+        </div>
+        <div class="sc-card p-5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Cost per Beneficiary</p>
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none" id="hubBudgetCost">₱0</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1">utilized ÷ distinct enrolled served</p>
+        </div>
+      </section>
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h3 class="font-bold text-[14px]">Utilization Entries</h3>
+            <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Each entry attaches to the program (required) and optionally to an activity</p>
+          </div>
+          <button class="btn btn-primary admin-only" onclick="event.preventDefault();window.openBudgetModal()">[[wallet]] Record utilization</button>
+        </div>
+        <table class="sc-table">
+          <thead><tr><th>Item</th><th>Charged to</th><th class="!text-right">Amount</th><th>Date used</th><th>Receipt</th></tr></thead>
+          <tbody id="hubBudgetRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Objective manager -->
+<div id="mObjList" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mObjList')"></div>
+  <div class="sc-modal relative max-w-2xl mx-auto mt-20 sc-card p-6 shadow-pop">
+    <div class="flex items-center justify-between mb-1">
+      <h3 class="font-bold text-[15px]">Objective Manager</h3>
+      <button class="btn btn-ghost !px-2 !py-1 !text-[11px]" onclick="closeModal('mObjList')">✕</button>
+    </div>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">Measurable objectives with locked KPI metrics, or qualitative objectives tracked manually.</p>
+    <div id="objManagerList" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+    <button class="btn btn-primary w-full mt-4" onclick="window.openObjForm()">+ Add objective</button>
+  </div>
+</div>
+
+<!-- Objective form -->
+<div id="mObjForm" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mObjForm')"></div>
+  <div class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px] mb-1" id="objFormTitle">Add objective</h3>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">KPI metric is validated against the locked KPI dictionary.</p>
+    <div class="space-y-3">
+      <div><label class="label">Objective statement *</label><textarea id="ofObjective" rows="2" class="input" placeholder="e.g. Raise reading proficiency from baseline to target"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">KPI metric</label>
+          <select id="ofKpi" class="input" onchange="window.objKpiChanged()">
+            <option value="">Qualitative (manual tracking)</option>
+            <option value="participation_rate">Participation Rate (%)</option>
+            <option value="activity_completion_rate">Activity Completion Rate (%)</option>
+            <option value="attendance_consistency">Attendance Consistency (%)</option>
+            <option value="budget_utilization">Budget Utilization (%)</option>
+            <option value="knowledge_gain">Knowledge Gain (points)</option>
+            <option value="cost_per_beneficiary">Cost per Beneficiary (₱)</option>
+            <option value="community_reach">Community Reach (count)</option>
+          </select>
+        </div>
+        <div><label class="label">Unit</label><input id="ofUnit" class="input" placeholder="%, persons, /5 score…"></div>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="label">Baseline</label><input id="ofBaseline" type="number" step="0.1" class="input"></div>
+        <div><label class="label">Target *</label><input id="ofTarget" type="number" step="0.1" class="input"></div>
+        <div><label class="label">Target date</label><input id="ofDate" type="date" class="input"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 items-end">
+        <div id="ofActualWrap" class="hidden"><label class="label">Manual actual (qualitative)</label><input id="ofActual" type="number" step="0.1" class="input"></div>
+        <div id="ofComputedWrap" class="hidden rounded-xl border border-lnu-100 bg-lnu-50/60 px-3.5 py-2.5">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-lnu-700">Currently computed · live</p>
+          <p class="text-[14px] font-extrabold text-lnu-900 mt-0.5 leading-none" id="ofComputedValue">No data yet</p>
+          <p class="text-[10.5px] text-lnu-700/70 mt-1">The actual auto-computes from program data — set the target against this value.</p>
+        </div>
+        <div><label class="label">Evidence notes</label><input id="ofEvidence" class="input" placeholder="Where is the evidence?"></div>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="btn btn-ghost" onclick="closeModal('mObjForm')">Cancel</button>
+      <button class="btn btn-primary" onclick="window.saveObjective()">Save objective</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activity create/edit -->
+<div id="mActivity" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mActivity')"></div>
+  <div class="sc-modal relative max-w-xl mx-auto mt-16 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px] mb-1" id="actFormTitle">Add activity</h3>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">Program is locked to this hub. Dates are constrained to the program range; faculty assignment is hard-blocked on schedule conflicts.</p>
+<div class="space-y-3">
+      <div><label class="label">Program</label><input class="input !bg-gray-50" id="afProgram" disabled></div>
+      <div><label class="label">Title *</label><input id="afTitle" class="input" placeholder="Activity title"></div>
+      <div><label class="label">Venue</label><input id="afVenue" class="input" placeholder="Venue / site"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Planned start *</label><input id="afStart" type="date" class="input"></div>
+        <div><label class="label">Planned end *</label><input id="afEnd" type="date" class="input"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Start time</label><select id="afStartTime" class="input"></select></div>
+        <div><label class="label">End time</label><select id="afEndTime" class="input"></select></div>
+      </div>
+      <div><label class="label">Assign faculty</label><div id="afFaculty" class="chip-group"></div></div>
+      <p id="afConflictNote" class="hidden text-[12px] text-red-600 font-semibold"></p>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="btn btn-ghost" onclick="closeModal('mActivity')">Cancel</button>
+      <button class="btn btn-primary" onclick="window.saveActivity()">Save activity</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activity records: attendance + evaluation XLSX imports (v4.13) -->
+<div id="mRecords" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mRecords')"></div>
+  <div class="sc-modal relative max-w-3xl mx-auto mt-16 sc-card p-6 shadow-pop">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="min-w-0">
+        <h3 class="font-bold text-[15px] leading-snug" id="recTitle">Records</h3>
+        <p class="text-[12px] text-gray-400 font-medium mt-0.5" id="recSubtitle">Loading…</p>
+      </div>
+      <button class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition shrink-0" onclick="closeModal('mRecords')">✕</button>
+    </div>
+
+    <div class="flex gap-1 bg-gray-50 rounded-xl border border-gray-100 p-1 w-max mb-4">
+      <button id="recTabAttendance" class="tab on" onclick="window.setRecordsTab('attendance')">Attendance</button>
+      <button id="recTabEvaluation" class="tab" onclick="window.setRecordsTab('evaluation')">Evaluation</button>
+    </div>
+
+    <!-- ==================== ATTENDANCE ==================== -->
+    <div id="recPanelAttendance">
+      <div class="admin-only">
+        <div id="recAttUpload">
+          <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3 mb-4">
+            [[clipboard]]
+            <p class="text-[12px] text-gray-500 leading-snug">Download the official template — the enrolled roster is pre-filled. Fill the <b>Status</b> column (<b>Present · Absent · Excused · Late</b>) for this activity's date; a blank cell leaves that beneficiary unrecorded. Rows are matched by Beneficiary ID + name — unknown, duplicate or invalid rows are skipped and listed on screen, never a whole-file reject.</p>
+          </div>
+          <div>
+            <label class="label">Official attendance template (.xlsx) *</label>
+            <input id="recAttFile" type="file" accept=".xlsx" class="input !py-2.5 bg-gray-50">
+            <p class="text-[11px] text-gray-400 mt-1">Max 10 MB · up to 500 rows per file · .xlsx only</p>
+          </div>
+          <div class="flex items-center justify-between pt-4">
+            <a href="#" class="btn btn-ghost !px-3 text-[12px]" onclick="event.preventDefault();SC.toast('Official attendance template downloaded — roster pre-filled, generated by the live app','success')">[[download]] Download official template</a>
+            <button class="btn btn-primary" onclick="window.demoParseRecords('attendance')">Parse file →</button>
+          </div>
+        </div>
+
+        <div id="recAttPreview" class="hidden">
+          <div class="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-3 mb-4">
+            [[clipboard]]
+            <p class="text-[12px] text-gray-500 leading-snug">Parsed <b id="recAttFileName">activity-attendance.xlsx</b> — review the rows, then confirm.
+              <span class="badge badge-gray !text-[10px]">3 rows</span>
+              <span class="badge badge-green !text-[10px]">2 to apply</span>
+              <span class="badge badge-yellow !text-[10px]">1 blank</span>
+              <span class="badge badge-red !text-[10px]">0 errors</span>
+            </p>
+          </div>
+          <div class="rounded-xl border border-gray-100 max-h-72 overflow-y-auto">
+            <table class="sc-table !text-[12px]">
+              <thead><tr><th>#</th><th>Beneficiary</th><th>Beneficiary ID</th><th>Status</th><th>State</th></tr></thead>
+              <tbody>
+                <tr><td class="text-gray-400">6</td><td class="font-semibold">Aguilar, Juan</td><td class="text-gray-500">1041</td><td><span class="badge badge-green">Present</span></td><td><span class="badge badge-green">Apply</span></td></tr>
+                <tr><td class="text-gray-400">7</td><td class="font-semibold">Bautista, Maria</td><td class="text-gray-500">1042</td><td><span class="badge badge-gold">Late</span></td><td><span class="badge badge-green">Apply</span></td></tr>
+                <tr><td class="text-gray-400">8</td><td class="font-semibold">Cruz, Pedro</td><td class="text-gray-500">1043</td><td class="text-gray-300">—</td><td><span class="badge badge-gray">Blank</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between pt-4">
+            <button class="btn btn-ghost" onclick="$('recAttPreview').classList.add('hidden');$('recAttUpload').classList.remove('hidden')">← Back</button>
+            <button class="btn btn-primary" onclick="window.demoConfirmRecords('attendance')">Confirm &amp; import attendance</button>
+          </div>
+        </div>
+
+        <div id="recAttLast" class="hidden mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-gray-500">
+          <span class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Last import</span>
+          <span class="font-semibold text-charcoal" id="recAttLastName">activity-attendance.xlsx</span>
+          <span>Sep 16, 2026 9:42 AM</span>
+          <span>2 applied · 1 skipped</span>
+          <span>by Prof. Angela D. Salazar</span>
+        </div>
+      </div>
+
+      <div class="faculty-only">
+        <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3 mb-4">
+          [[eye]]
+          <p class="text-[12px] text-gray-500 leading-snug">Read-only — attendance is recorded by the Director's office or the Secretary by importing the official template. <b id="recAttCount">0 attendance records</b> on file for this activity.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== EVALUATION ==================== -->
+    <div id="recPanelEvaluation" class="hidden">
+      <div class="admin-only">
+        <div id="recEvalUpload">
+          <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3 mb-4">
+            [[clipboard]]
+            <p class="text-[12px] text-gray-500 leading-snug">Download the official template — the enrolled roster is pre-filled. Enter each beneficiary's <b>Pre-Test (0–100)</b>, <b>Post-Test (0–100)</b> and <b>Satisfaction (1–5)</b>; blank cells are ignored. On confirm the values are averaged into this activity's aggregate scores (D13 — no per-beneficiary scores are stored).</p>
+          </div>
+          <div class="grid grid-cols-3 gap-3 mb-4" id="recEvalCurrent"></div>
+          <div>
+            <label class="label">Official evaluation template (.xlsx) *</label>
+            <input id="recEvalFile" type="file" accept=".xlsx" class="input !py-2.5 bg-gray-50">
+            <p class="text-[11px] text-gray-400 mt-1">Max 10 MB · up to 500 rows per file · .xlsx only</p>
+          </div>
+          <div class="flex items-center justify-between pt-4">
+            <a href="#" class="btn btn-ghost !px-3 text-[12px]" onclick="event.preventDefault();SC.toast('Official evaluation template downloaded — roster pre-filled, generated by the live app','success')">[[download]] Download official template</a>
+            <button class="btn btn-primary" onclick="window.demoParseRecords('evaluation')">Parse file →</button>
+          </div>
+        </div>
+
+        <div id="recEvalPreview" class="hidden">
+          <div class="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-3 mb-4">
+            [[clipboard]]
+            <p class="text-[12px] text-gray-500 leading-snug">Parsed <b id="recEvalFileName">activity-evaluation.xlsx</b> — review the rows, then confirm. The per-row values are averaged into the activity's aggregate scores (D13).
+              <span class="badge badge-gray !text-[10px]">2 rows</span>
+              <span class="badge badge-green !text-[10px]">2 to apply</span>
+              <span class="badge badge-yellow !text-[10px]">0 blank</span>
+              <span class="badge badge-red !text-[10px]">0 errors</span>
+            </p>
+          </div>
+          <div class="grid grid-cols-3 gap-3 mb-4" id="recEvalProjected"></div>
+          <div class="rounded-xl border border-gray-100 max-h-72 overflow-y-auto">
+            <table class="sc-table !text-[12px]">
+              <thead><tr><th>#</th><th>Beneficiary</th><th>Pre-Test</th><th>Post-Test</th><th>Satisfaction</th><th>State</th></tr></thead>
+              <tbody>
+                <tr><td class="text-gray-400">6</td><td class="font-semibold">Aguilar, Juan</td><td class="text-gray-500">40</td><td class="text-gray-500">60</td><td class="text-gray-500">4</td><td><span class="badge badge-green">Apply</span></td></tr>
+                <tr><td class="text-gray-400">7</td><td class="font-semibold">Bautista, Maria</td><td class="text-gray-500">50</td><td class="text-gray-500">70</td><td class="text-gray-500">5</td><td><span class="badge badge-green">Apply</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between pt-4">
+            <button class="btn btn-ghost" onclick="$('recEvalPreview').classList.add('hidden');$('recEvalUpload').classList.remove('hidden')">← Back</button>
+            <button class="btn btn-primary" onclick="window.demoConfirmRecords('evaluation')">Confirm &amp; apply means</button>
+          </div>
+        </div>
+
+        <div id="recEvalLast" class="hidden mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-gray-500">
+          <span class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Last import</span>
+          <span class="font-semibold text-charcoal" id="recEvalLastName">activity-evaluation.xlsx</span>
+          <span>Sep 16, 2026 9:45 AM</span>
+          <span>2 scored · 0 blank</span>
+          <span>by Prof. Angela D. Salazar</span>
+        </div>
+      </div>
+
+      <div class="faculty-only">
+        <div class="grid grid-cols-3 gap-3 mb-4" id="recEvalFacultyCurrent"></div>
+        <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3 mb-4">
+          [[eye]]
+          <p class="text-[12px] text-gray-500 leading-snug">Read-only — evaluation scores are imported by the Director's office or the Secretary; the values above are this activity's aggregate pre/post/satisfaction means (D13).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mark completed confirm -->
+<div id="mComplete" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mComplete')"></div>
+  <div class="sc-modal relative max-w-md mx-auto mt-24 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px]">Mark activity as completed?</h3>
+    <p class="text-[12.5px] text-gray-500 mt-2 leading-relaxed">Rendered-hours auto-drafts will be created for each assigned faculty member (hours = activity duration, source: auto). This action writes an activity log entry.</p>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="btn btn-ghost" onclick="closeModal('mComplete')">Cancel</button>
+      <button class="btn btn-primary" onclick="window.confirmComplete()">Yes, mark completed</button>
+    </div>
+  </div>
+</div>
+
+<!-- Enroll existing -->
+<div id="mEnroll" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mEnroll')"></div>
+  <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px] mb-1">Enroll existing beneficiary</h3>
+    <p class="text-[12px] text-gray-400 font-medium mb-3">Search the global registry — including beneficiaries not yet linked to any program.</p>
+    <input id="enrollSearch" class="input mb-3" placeholder="Search registry by name or barangay…" oninput="window.renderEnrollList()">
+    <div id="enrollRows" class="space-y-1.5 max-h-72 overflow-y-auto pr-1"></div>
+  </div>
+</div>
+
+<!-- Register new (with dedup confirm) -->
+<div id="mRegister" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mRegister')"></div>
+  <div class="sc-modal relative max-w-xl mx-auto mt-16 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px] mb-1">Register new beneficiary</h3>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">Creates the profile and auto-enrolls it into this program.</p>
+    <div class="grid grid-cols-3 gap-3">
+      <div><label class="label">First name *</label><input id="rnFirst" class="input"></div>
+      <div><label class="label">Middle name</label><input id="rnMiddle" class="input"></div>
+      <div><label class="label">Last name *</label><input id="rnLast" class="input"></div>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mt-3">
+      <div><label class="label">Age</label><input id="rnAge" type="number" class="input"></div>
+      <div><label class="label">Sex</label><select id="rnSex" class="input"><option>Female</option><option>Male</option><option>Prefer not to say</option></select></div>
+      <div><label class="label">Category</label><input id="rnCat" class="input" placeholder="e.g. Parent, Farmer"></div>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mt-3">
+      <div><label class="label">Contact number</label><input id="rnContact" class="input" placeholder="09123456789"></div>
+      <div><label class="label">Barangay *</label><input id="rnBarangay" class="input"></div>
+      <div><label class="label">Municipality</label><input id="rnMuni" class="input" value="Tacloban City"></div>
+    </div>
+    <div id="rnDedup" class="hidden mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+      <p class="text-[12.5px] font-bold text-red-700">Possible duplicate found</p>
+      <p class="text-[12px] text-red-600 mt-1" id="rnDedupMsg"></p>
+      <p class="text-[11.5px] text-red-500 mt-2">Saving is not blocked — but you must confirm this is a different person. Records are never silently merged.</p>
+      <div class="flex gap-2 mt-3">
+        <button class="btn btn-outline !py-1.5 !text-[11.5px]" onclick="document.getElementById('rnDedup').classList.add('hidden')">Go back and edit</button>
+        <button class="btn btn-danger-soft !py-1.5 !text-[11.5px]" onclick="window.doRegister(true)">This is a different person — save anyway</button>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="btn btn-ghost" onclick="closeModal('mRegister')">Cancel</button>
+      <button class="btn btn-primary" onclick="window.doRegister(false)">Register & enroll</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import beneficiaries XLSX (upload -> preview -> confirm) -->
+<div id="mImport" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mImport')"></div>
+  <div class="sc-modal relative max-w-3xl mx-auto mt-16 sc-card p-6 shadow-pop">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <h3 class="font-bold text-[15px]">Import beneficiaries from XLSX</h3>
+        <p class="text-[12px] text-gray-400 font-medium mt-0.5">Official template · one row = one beneficiary · imported rows are auto-enrolled into this program.</p>
+      </div>
+      <button class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition" onclick="closeModal('mImport')">✕</button>
+    </div>
+
+    <div id="impUpload">
+      <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3 mb-4">
+        [[clipboard]]
+        <p class="text-[12px] text-gray-500 leading-snug">Use the official template with fixed column headers. Required: First Name, Last Name, Barangay, Beneficiary Category. Blank contact numbers default to <b>09123456789</b>; unknown categories auto-map to <b>Other</b>. Rows with errors or duplicates (first + last name + barangay) are skipped — never a whole-file reject.</p>
+      </div>
+      <div>
+        <label class="label">Official template (.xlsx) *</label>
+        <input id="impFile" type="file" accept=".xlsx" class="input !py-2.5 bg-gray-50">
+        <p class="text-[11px] text-gray-400 mt-1">Max 10 MB · up to 500 rows per file · .xlsx only</p>
+      </div>
+      <div class="flex items-center justify-between pt-4">
+        <a href="#" class="btn btn-ghost !px-3 text-[12px]" onclick="event.preventDefault();SC.toast('Official template downloaded (served by the live app, Admin/Secretary)','success')">[[download]] Download official template</a>
+        <button class="btn btn-primary" onclick="window.demoParseImport()">Parse file →</button>
+      </div>
+    </div>
+
+    <div id="impPreview" class="hidden">
+      <div class="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-3 mb-4">
+        [[clipboard]]
+        <p class="text-[12px] text-gray-500 leading-snug">Parsed <b>beneficiaries.xlsx</b> — review the rows below, then confirm. Rows marked <span class="badge badge-red !text-[10px]">Skip</span> (errors) or <span class="badge badge-yellow !text-[10px]">Duplicate</span> will not be imported.</p>
+      </div>
+      <div class="rounded-xl border border-gray-100 max-h-72 overflow-y-auto">
+        <table class="sc-table !text-[12px]">
+          <thead><tr><th>#</th><th>Name</th><th>Barangay</th><th>Category</th><th>Contact</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="text-gray-400">1</td><td class="font-semibold">Juan Reyes Dela Cruz</td><td class="text-gray-500">San Jose</td><td class="text-gray-500">Farmer</td><td class="text-gray-500">0917 123 4567</td><td><span class="badge badge-green">Import</span></td></tr>
+            <tr><td class="text-gray-400">2</td><td class="font-semibold">Maria Santos</td><td class="text-gray-500">Sagkahan</td><td class="text-gray-500">Housewife</td><td class="text-gray-500">09123456789</td><td><span class="badge badge-green">Import</span></td></tr>
+            <tr><td class="text-gray-400">3</td><td class="font-semibold">Pedro Cruz <span class="text-[10px] text-gold-700">· "Farmr" kept as Other</span></td><td class="text-gray-500">San Jose</td><td class="text-gray-500">Other</td><td class="text-gray-500">09123456789</td><td><span class="badge badge-yellow">Duplicate</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between pt-4">
+        <button class="btn btn-ghost" onclick="$('impPreview').classList.add('hidden');$('impUpload').classList.remove('hidden')">← Back</button>
+        <button class="btn btn-primary" onclick="window.demoConfirmImport()">Confirm & import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Budget entry -->
+<div id="mBudget" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mBudget')"></div>
+  <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px] mb-1">Record utilization</h3>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">Charged against this program (locked) — optionally attributed to an activity.</p>
+    <div class="space-y-3">
+      <div><label class="label">Item name *</label><input id="buItem" class="input" placeholder="e.g. Training materials"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Amount (₱) *</label><input id="buAmount" type="number" class="input"></div>
+        <div><label class="label">Date used *</label><input id="buDate" type="date" class="input"></div>
+      </div>
+      <div><label class="label">Charge against activity</label>
+        <select id="buActivity" class="input"><option value="">Program-level (no specific activity)</option></select>
+      </div>
+      <p class="text-[11.5px] text-gray-400">Receipt reference is generated automatically. Exceeding the allocation still saves — a persistent warning badge appears and the entry is written to the activity log (D7).</p>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="btn btn-ghost" onclick="closeModal('mBudget')">Cancel</button>
+      <button class="btn btn-primary" onclick="window.saveBudgetEntry()">Save entry</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+(function () {
+  const D = window.DATA;
+
+  const KPI_LABEL = {
+    participation_rate:'Participation Rate', activity_completion_rate:'Activity Completion',
+    attendance_consistency:'Attendance Consistency', budget_utilization:'Budget Utilization',
+    knowledge_gain:'Knowledge Gain', cost_per_beneficiary:'Cost per Beneficiary', community_reach:'Community Reach'
+  };
+  const OBJ_STATUS = { achieved:['badge-green','Achieved'], on_track:['badge-blue','On track'], not_met:['badge-yellow','Not met'], not_started:['badge-gray','Not started'] };
+  const ACT_BADGE  = { Completed:'badge-green', Ongoing:'badge-blue', Upcoming:'badge-blue', Draft:'badge-yellow', Cancelled:'badge-red' };
+  const KNOWLEDGE  = { 'EXT-2026-001':{pre:58.2,post:70.6}, 'EXT-2026-002':{pre:61.0,post:72.8}, 'EXT-2026-003':{pre:64.0,post:75.2} };
+  const ASSIGN     = { 1:[1,2], 2:[1], 4:[3], 5:[3], 6:[7], 8:[2] };
+
+  const qp = new URLSearchParams(location.search);
+  const code = qp.get('program') || 'EXT-2026-001';
+  let PROG = D.programs.find(p => p.code === code) || D.programs[0];
+  const VARIANT = (qp.get('role') === 'faculty') ? 'faculty' : (document.body.dataset.role === 'faculty' ? 'faculty' : 'admin');
+  document.body.dataset.variant = VARIANT;
+  let editActId = null, editObjIdx = null;
+
+  /* ---------- helpers ---------- */
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const money = n => '₱' + Number(n||0).toLocaleString('en-PH');
+  const fmtDate = s => { const d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('en-PH',{month:'short',day:'2-digit',year:'numeric'}).replace(/(\d\d)\s(\d{4})/, '$1, $2'); };
+  const toISO = s => { const d = new Date(s); return isNaN(d) ? '' : d.toISOString().slice(0,10); };
+  const t2m = t => { const m = String(t||'').match(/(\d+):(\d+)\s*(AM|PM)/i); if (!m) return 0; let h = +m[1] % 12; if (m[3]==='PM') h += 12; return h*60 + +m[2]; };
+  const enrolledIdx = () => (D.programEnrollments[PROG.code] || []).filter(i => D.beneficiaries[i]);
+  const enrolledBeneficiaries = () => enrolledIdx().map(i => D.beneficiaries[i]);
+  const budgetFor = () => D.budgetEntries.filter(e => e.program === PROG.code);
+  const utilized = () => budgetFor().reduce((s,e)=>s+e.amount,0);
+  const fmtHuman = iso => { if (!iso) return ''; const d = new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'2-digit',year:'numeric'}); };
+  function openModal(id){ $(id).classList.remove('hidden'); }
+  function closeModal(id){ $(id).classList.add('hidden'); }
+  window.closeModal = closeModal;
+
+  /* ---------- hero + tiles ---------- */
+  function renderHero() {
+    const acts = D.activities.filter(a => a.program === PROG);
+    const over = utilized() > PROG.budget;
+    const narrative = D.programNarratives.find(n => n.program === PROG);
+    $('hubHero').innerHTML = `
+      <div class="relative h-24 bg-gradient-to-r from-lnu-800 to-lnu-600"
+           style="background-image:radial-gradient(circle at 88% -30%, rgba(246,184,0,.4), transparent 46%), radial-gradient(rgba(255,255,255,.13) 1px, transparent 1.4px); background-size:auto, 16px 16px;"></div>
+      <div class="px-6 pb-5 -mt-8 relative">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div class="flex items-end gap-4 min-w-0">
+            <span class="avatar w-16 h-16 text-lg !ring-4 !ring-white shadow-pop">${PROG.lead.name.split(' ').map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('')}</span>
+            <div class="min-w-0 pb-0.5">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                <span class="badge badge-gold font-bold tracking-wide">${PROG.code}</span>
+                <span class="badge ${PROG.status==='Ongoing'?'badge-blue':PROG.status==='Completed'?'badge-green':'badge-yellow'}">${PROG.status}</span>
+                <span class="badge badge-gray">${(D.communities.find(c=>c.name===PROG.community.name)||{}).status === 'Prospecting' ? 'Prospecting community' : 'Literacy · Education sector'}</span>
+                ${over ? '<span class="badge badge-red">⚠ Budget over-allocated</span>' : ''}
+              </div>
+              <h1 class="font-extrabold text-[19px] tracking-tight leading-tight">${esc(PROG.title)}</h1>
+            </div>
+          </div>
+          <div class="flex gap-2 pb-1 admin-only">
+            <button onclick="SC.toast('Program report exported (print view)','success')" class="btn btn-outline !py-2">Export</button>
+            <button onclick="window.openActivityModal()" class="btn btn-primary !py-2">[[calendar]] Add Activity</button>
+          </div>
+        </div>
+        <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-x-7 gap-y-2.5 text-[12.5px] text-gray-600">
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="people" data-cls="!w-4 !h-4 text-lnu-600"></span><span class="font-semibold">${esc(PROG.lead.name)}</span><span class="text-gray-400">· Lead</span></span>
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="pin" data-cls="!w-4 !h-4 text-red-400"></span>${esc(PROG.community.name)}, ${esc(PROG.community.municipality)}, ${esc(PROG.community.province)}</span>
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="calendar" data-cls="!w-4 !h-4 text-emerald-500"></span>${esc(PROG.start)} – ${esc(PROG.end)}</span>
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="clipboard" data-cls="!w-4 !h-4 text-gold-600"></span>${acts.length} activities scheduled</span>
+        </div>
+      </div>`;
+
+    $('hubRangeNote').textContent = PROG.start + ' – ' + PROG.end;
+
+    const ut = utilized(), pct = PROG.budget ? Math.min(Math.round(ut/PROG.budget*100),130) : 0;
+    const enrolled = enrolledBeneficiaries().length;
+    const kg = KNOWLEDGE[PROG.code];
+    const completed = acts.filter(a=>a.status==='Completed').length;
+    const upcoming = acts.filter(a=>a.status==='Upcoming').length;
+    $('hubTiles').innerHTML = `
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Budget</p><span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center">[[wallet]]</span></div>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${money(PROG.budget)}</p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">allocated · FY 2026</p>
+        <div class="progress"><span style="width:${Math.min(pct,100)}%" class="${over?'bg-red-500':'bg-lnu'}"></span></div>
+        <p class="text-[11px] text-gray-500 font-semibold mt-2">${money(ut)} utilized · ${pct}%</p>
+      </div>
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Beneficiaries</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">[[people]]</span></div>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${PROG.reached}<span class="text-[14px] text-gray-400 font-bold"> / ${PROG.target}</span></p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">reached of target · ${enrolled} enrolled in hub</p>
+        <div class="progress"><span style="width:${Math.min(Math.round(PROG.reached/PROG.target*100),100)}%" class="bg-emerald-500"></span></div>
+        <p class="text-[11px] text-gray-500 font-semibold mt-2">${Math.round(PROG.reached/PROG.target*100)}% of target reached</p>
+      </div>
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Activities</p><span class="w-8 h-8 rounded-lg bg-gold-50 text-gold-700 flex items-center justify-center">[[clipboard]]</span></div>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none flex items-center gap-2">${acts.length}${upcoming ? `<span class="badge badge-blue">${upcoming} upcoming</span>` : ''}</p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">this program</p>
+        <div class="progress"><span style="width:${acts.length ? Math.round(completed/acts.length*100) : 0}%" class="bg-gold"></span></div>
+        <p class="text-[11px] text-gray-500 font-semibold mt-2">${completed} completed</p>
+      </div>
+      <div class="sc-card sc-card-hover p-5 ${kg ? '!border-emerald-100 !bg-gradient-to-br !from-white !to-emerald-50/60' : ''}">
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Knowledge Gain</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">[[chart]]</span></div>
+        ${kg ? `
+          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600 flex items-center gap-1.5">+${(kg.post-kg.pre).toFixed(1)} pts</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">average score uplift</p>
+          <p class="text-[11px] text-gray-500 font-semibold mt-auto">Baseline ${kg.pre} → Post-test ${kg.post}</p>` : `
+          <p class="mt-3 text-[15px] font-bold text-gray-400 leading-snug">No scored activities yet</p>
+          <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">pre/post scores pending</p>`}
+      </div>`;
+
+    const banner = $('hubOverBanner');
+    if (over) {
+      banner.classList.remove('hidden');
+      banner.innerHTML = `<div class="sc-card p-4 !border-amber-200 !bg-amber-50/70 flex items-start gap-3">
+        <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">[[wallet]]</span>
+        <div><p class="text-[13px] font-bold text-amber-800">This program exceeded its ${money(PROG.budget)} allocation by ${money(ut - PROG.budget)} (${Math.round(ut/PROG.budget*100)}%)</p>
+        <p class="text-[12px] text-amber-700 mt-0.5">Entries are still saved; a persistent warning badge shows on the program and overruns are written to the activity log (D7). Review is advisory, not blocking.</p></div></div>`;
+    } else { banner.classList.add('hidden'); banner.innerHTML = ''; }
+
+    renderScorecard();
+  }
+
+  /* ---------- KPI scorecard vs targets + attendance & satisfaction ---------- */
+  const SATISFACTION = { 1:4.6, 2:4.7, 4:4.6, 5:4.5, 6:4.4, 8:4.8 };
+
+  function renderScorecard() {
+    const acts = D.activities.filter(a => a.program === PROG);
+    const completedActs = acts.filter(a => a.status === 'Completed' && a.attendees != null);
+    const scheduled = acts.filter(a => a.status !== 'Cancelled').length;
+    const enrolled = enrolledBeneficiaries().length;
+    const ut = utilized(), over = ut > PROG.budget;
+    const objs = D.programObjectives[PROG.code] || [];
+    const targetFor = m => { const o = objs.find(x => x.kpi === m && x.target != null); return o ? +o.target : null; };
+    const actualFor = m => { const o = objs.find(x => x.kpi === m && x.actual != null); return o ? +o.actual : null; };
+
+    const reach = PROG.reached;
+    const reachTarget = targetFor('community_reach');
+    const participation = enrolled ? Math.round(reach / enrolled * 100) : null;
+    const participationTarget = targetFor('participation_rate');
+    const consistency = actualFor('attendance_consistency');
+    const consistencyTarget = targetFor('attendance_consistency');
+    const budgetPct = PROG.budget ? Math.round(ut / PROG.budget * 100) : null;
+    const budgetTarget = targetFor('budget_utilization');
+    const completion = scheduled ? Math.round(completedActs.length / scheduled * 100) : null;
+    const completionTarget = targetFor('activity_completion_rate');
+    const kg = KNOWLEDGE[PROG.code];
+    const gain = kg ? +(kg.post - kg.pre).toFixed(1) : null;
+    const rated = completedActs.filter(a => SATISFACTION[a.id] != null);
+    const avgSat = rated.length ? rated.reduce((s,a) => s + SATISFACTION[a.id], 0) / rated.length : null;
+    const cost = reach ? ut / reach : null;
+
+    const colorFor = (value, target, isOver) => isOver ? 'bg-red-500'
+      : value == null ? 'bg-gray-300'
+      : target != null ? (value >= target ? 'bg-emerald-500' : 'bg-red-500') : 'bg-lnu';
+
+    const rows = [
+      { label:'Community Reach', display:`${reach}${reachTarget != null ? ' / ' + reachTarget : ''}`,
+        sub: reachTarget ? Math.round(reach / reachTarget * 100) + '%' : null,
+        bar: reachTarget ? Math.min(Math.round(reach / reachTarget * 100), 100) : 100,
+        marker: reachTarget ? Math.min(Math.round(reachTarget / Math.max(reach, reachTarget) * 100), 100) : null,
+        color: colorFor(reach, reachTarget, false),
+        caption:'Distinct beneficiaries with present/late attendance in non-cancelled activities (8.6)' },
+      { label:'Participation Rate', display: participation == null ? '—' : participation + '%',
+        sub: participation == null ? null : `${reach} of ${enrolled} enrolled`,
+        bar: participation == null ? 0 : Math.min(participation, 100),
+        marker: participationTarget != null ? Math.min(participationTarget, 100) : null,
+        color: colorFor(participation, participationTarget, false),
+        caption:'Beneficiaries with at least one present/late attendance ÷ linked beneficiaries (8.6)' },
+      { label:'Attendance Consistency', display: consistency == null ? '—' : consistency + '%',
+        sub: consistencyTarget != null ? 'target ≥' + consistencyTarget + '%' : null,
+        bar: consistency == null ? 0 : Math.min(consistency, 100),
+        marker: consistencyTarget != null ? Math.min(consistencyTarget, 100) : null,
+        color: colorFor(consistency, consistencyTarget, false),
+        caption:'Mean share of eligible activities attended per beneficiary (8.6)' },
+      { label:'Budget Utilization', display: budgetPct == null ? '—' : budgetPct + '%',
+        sub: budgetTarget != null ? 'target ≥' + budgetTarget + '%' : null,
+        bar: budgetPct == null ? 0 : Math.min(budgetPct, 100),
+        marker: budgetTarget != null ? Math.min(budgetTarget, 100) : null,
+        color: colorFor(budgetPct, budgetTarget, over),
+        caption: over ? `Over-allocated by ${money(ut - PROG.budget)} — advisory warning (D7), not a hard block` : 'Utilized of allocated budget (8.6)',
+        danger: over },
+      { label:'Activity Completion Rate', display: completion == null ? '—' : completion + '%',
+        sub: completionTarget != null ? 'target ≥' + completionTarget + '%' : null,
+        bar: completion == null ? 0 : Math.min(completion, 100),
+        marker: completionTarget != null ? Math.min(completionTarget, 100) : null,
+        color: colorFor(completion, completionTarget, false),
+        caption:'Completed ÷ (total − cancelled) activities (8.6)' },
+    ];
+
+    $('hubScorecardRows').innerHTML = rows.map(r => `
+      <div>
+        <div class="flex items-center justify-between text-[12.5px]">
+          <span class="font-semibold">${r.label}</span>
+          <span class="font-bold">${r.display}${r.sub ? ` <span class="text-gray-400 font-semibold">· ${r.sub}</span>` : ''}</span>
+        </div>
+        <div class="relative mt-1.5">
+          <div class="progress !h-2"><span style="width:${r.bar}%" class="${r.color}"></span></div>
+          ${r.marker != null ? `<span class="marker" style="left:${r.marker}%"></span>` : ''}
+        </div>
+        <p class="text-[10.5px] ${r.danger ? 'text-red-500 font-semibold' : 'text-gray-400'} mt-1">${r.caption}</p>
+      </div>`).join('');
+
+    $('hubScorecardTiles').innerHTML = `
+      <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Cost per Beneficiary</p>
+        <p class="text-[15px] font-extrabold mt-1">${cost == null ? '—' : money(Math.round(cost * 100) / 100)}</p>
+        <p class="text-[10.5px] text-gray-400">${cost == null ? 'no beneficiaries served yet' : money(ut) + ' ÷ ' + reach + ' served'}</p>
+      </div>
+      <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Knowledge Gain</p>
+        <p class="text-[15px] font-extrabold mt-1 ${gain == null ? 'text-gray-300' : gain >= 0 ? 'text-emerald-600' : 'text-red-600'}">${gain == null ? 'No scores' : (gain >= 0 ? '+' : '') + gain.toFixed(1) + ' pts'}</p>
+        <p class="text-[10.5px] text-gray-400">${gain == null ? 'pre/post scores pending' : '1 scored activity'}</p>
+      </div>
+      <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
+        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Avg Satisfaction</p>
+        <p class="text-[15px] font-extrabold mt-1">${avgSat == null ? '—' : avgSat.toFixed(2) + ' / 5'}</p>
+        <p class="text-[10.5px] text-gray-400">${rated.length === 0 ? 'no evaluation ratings yet' : rated.length + ' evaluated activit' + (rated.length === 1 ? 'y' : 'ies')}</p>
+      </div>`;
+
+    $('hubAttRatings').innerHTML = rated.length ? rated.map(a => `
+      <p class="text-[11px] text-gray-500 flex items-center justify-between">
+        <span class="truncate">${esc(a.title)} · ${esc(a.date)}</span>
+        <span class="badge ${SATISFACTION[a.id] >= 4 ? 'badge-green' : SATISFACTION[a.id] >= 3 ? 'badge-yellow' : 'badge-red'}">${SATISFACTION[a.id].toFixed(1)}/5</span>
+      </p>`).join('') : '<p class="text-[11px] text-gray-400 italic">No satisfaction ratings imported yet.</p>';
+
+    const wrap = $('hubAttChartWrap');
+    if (!completedActs.length) {
+      wrap.innerHTML = '<div class="h-full flex items-center justify-center rounded-xl border border-dashed border-gray-200"><p class="text-[12px] text-gray-400 italic px-4 text-center">No completed activities with attendance yet.</p></div>';
+    } else {
+      if (!document.getElementById('chAttendance')) wrap.innerHTML = '<canvas id="chAttendance"></canvas>';
+      const el = document.getElementById('chAttendance');
+      if (Chart.getChart(el)) Chart.getChart(el).destroy();
+      new Chart(el, {
+        type:'bar',
+        data:{
+          labels: completedActs.map(a => `${a.title} · ${a.date}`),
+          datasets:[{ label:'Attendees', data: completedActs.map(a => a.attendees),
+            backgroundColor: completedActs.map((_,i) => i % 2 === 0 ? '#003599' : '#2547eb'),
+            borderRadius:7, maxBarThickness:24 }]
+        },
+        options:{ indexAxis:'y', maintainAspectRatio:false,
+          scales:{ x:{ beginAtZero:true, grid:{ drawTicks:false } }, y:{ grid:{ display:false }, ticks:{ font:{ size:11, weight:'600' } } } },
+          plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.parsed.x} attendees recorded` } } } }
+      });
+    }
+  }
+
+  /* ---------- overview: partners, categories, objectives, narrative ---------- */
+  function renderOverview() {
+    $('hubGoal').textContent = PROG.goal;
+    $('hubPartners').innerHTML = `<span class="chip on !py-1.5 !text-[12px]">[[pin]] ${esc(PROG.community.name)} · Primary community</span>`;
+    $('hubCategories').innerHTML = ['Pupils','Parents','Community volunteers'].map(c => `<span class="chip !py-1.5 !text-[12px]">${c}</span>`).join('');
+
+    const objs = D.programObjectives[PROG.code] || [];
+    $('hubObjectives').innerHTML = objs.length ? objs.map((o,i) => {
+        const [cls, label] = OBJ_STATUS[o.status] || OBJ_STATUS.not_started;
+        const base = o.baseline ?? 0, tgt = o.target ?? 0, act = o.actual ?? 0;
+        const pv = tgt ? Math.min(Math.round(act/tgt*100),100) : 0;
+        const bar = o.status === 'not_met' ? 'bg-gold' : (o.status === 'achieved' ? 'bg-emerald-500' : 'bg-lnu');
+        return `<div class="mt-3 pt-3 border-t border-gray-100 first:border-0 first:pt-0 first:mt-0">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-[12.5px] font-semibold leading-snug">${esc(o.objective)}</p>
+            <span class="badge ${cls} shrink-0">${label}</span>
+          </div>
+          <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">${o.kpi ? KPI_LABEL[o.kpi] : 'Qualitative · manual'}${o.unit ? ' · ' + o.unit : ''}${o.target_date ? ' · due ' + esc(o.target_date) : ''}</p>
+          <div class="progress mt-2"><span style="width:${pv}%" class="${bar}"></span></div>
+          <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline ${o.baseline ?? '—'} → Target ${o.target ?? '—'} → Actual <span class="text-charcoal">${o.actual ?? '—'}</span> <span class="text-gray-400 font-medium">· ${o.kpi ? 'auto (live)' : 'manual'}</span></p>
+          ${o.evidence ? `<p class="text-[11px] text-gray-400 mt-1"><span class="font-semibold text-gray-500">Evidence:</span> ${esc(o.evidence)}</p>` : ''}
+        </div>`;
+      }).join('') : '<p class="text-[12.5px] text-gray-400 mt-2">No objectives defined yet. Use Manage to add measurable objectives with locked KPI metrics, or qualitative ones tracked manually.</p>';
+
+    const n = D.programNarratives.find(x => x.program === PROG);
+    const nHost = $('hubNarrative');
+    if (nHost) {
+      nHost.innerHTML = n ? `
+        <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="narrative-health ${n.health_label}">${{ 'on-track':'On track','at-risk':'At risk','needs-attention':'Needs attention' }[n.health_label]}</span>
+            <span class="text-[11px] text-gray-400 font-medium">Generated ${esc(n.generatedAt)} · ${esc(n.generatedBy || 'Director, CESO')} · ${esc(n.model)}</span>
+          </div>
+          <p class="text-[13px] text-gray-600 leading-relaxed">${esc(n.summary)}</p>
+        </div>` : `
+        <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center">
+          <p class="text-[12.5px] text-gray-500 font-semibold">No narrative generated yet for this program.</p>
+          <p class="text-[11.5px] text-gray-400 mt-1">The Director can generate an executive summary from program aggregates (no PII leaves the system).</p>
+        </div>`;
+    }
+  }
+
+  /* ---------- activities tab ---------- */
+  function renderActivities() {
+    const rows = D.activities.filter(a => a.program === PROG);
+    $('hubActivityRows').innerHTML = rows.length ? rows.map(a => {
+      const conflict = window._conflictFor && window._conflictFor(a);
+      return `<tr>
+        <td><p class="font-semibold text-charcoal">${esc(a.title)}</p><p class="text-[11px] text-gray-400">${a.attendees != null ? a.attendees + ' recorded attendees' : 'No attendance yet'}</p></td>
+        <td>${esc(a.date)}</td>
+        <td class="whitespace-nowrap">${esc(a.start)} – ${esc(a.end)}</td>
+        <td class="text-gray-500">${esc(a.venue)}</td>
+        <td><span class="badge ${ACT_BADGE[a.status] || 'badge-gray'}">${a.status}</span>${conflict ? ' <span class="conflict-marker">⚠ conflict</span>' : ''}</td>
+        <td class="!text-right row-actions whitespace-nowrap">
+          <button class="btn btn-ghost !px-2 !py-1 !text-[11px]" onclick="window.openRecords(${a.id})">Records</button>
+          <button class="btn btn-outline !px-2 !py-1 !text-[11px] admin-only" onclick="window.openActivityModal(${a.id})">Edit</button>
+          ${a.status !== 'Completed' && a.status !== 'Cancelled' ? `<button class="btn btn-success-soft !px-2 !py-1 !text-[11px] admin-only" onclick="window.askComplete(${a.id})">Complete</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="6" class="text-center text-gray-400 py-8">No activities yet for this program.</td></tr>`;
+  }
+
+  /* ---------- beneficiaries tab ---------- */
+  function renderBeneficiaries() {
+    const enrolled = enrolledBeneficiaries();
+    $('hubEnrolledCount').textContent = enrolled.length;
+    $('hubTargetCount').textContent = PROG.target;
+    $('hubEnrolledBadge').textContent = enrolled.length + ' enrolled';
+    $('hubBeneficiaryRows').innerHTML = enrolled.length ? enrolled.map(b => `
+      <tr>
+        <td><div class="flex items-center gap-2.5"><span class="avatar w-7 h-7 text-[10px]">${esc(b.name.split(' ').map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join(''))}</span><span class="font-semibold">${esc(b.name)}</span></div></td>
+        <td class="text-gray-500">${esc(b.barangay)}</td>
+        <td><span class="badge badge-gray">${esc(b.category)}</span></td>
+        <td class="text-gray-500">${b.age} · ${esc(b.sex)}</td>
+        <td class="text-gray-500">${esc(b.contact || '09123456789')}</td>
+        <td class="!text-right row-actions admin-only"><button class="btn btn-danger-soft !px-2 !py-1 !text-[11px]" onclick="window.askUnenroll('${esc(b.name)}')">Unenroll</button></td>
+      </tr>`).join('') : `<tr><td colspan="6" class="text-center text-gray-400 py-8">No beneficiaries enrolled yet — enroll existing or register new.</td></tr>`;
+  }
+
+  /* ---------- budget tab ---------- */
+  function renderBudget() {
+    const entries = budgetFor(), ut = utilized();
+    const alloc = PROG.budget, pct = alloc ? Math.round(ut/alloc*100) : 0, rem = alloc - ut;
+    const served = Math.max(enrolledBeneficiaries().length, 1);
+    $('hubBudgetAllocated').textContent = money(alloc);
+    $('hubBudgetUtilized').textContent = money(ut);
+    $('hubBudgetUtilized').className = 'mt-3 text-[22px] font-extrabold tracking-tight leading-none ' + (ut > alloc ? 'text-red-600' : '');
+    $('hubBudgetRemaining').textContent = money(Math.max(rem,0) === rem ? rem : rem);
+    $('hubBudgetRemaining').textContent = money(rem);
+    if (rem < 0) $('hubBudgetRemaining').classList.add('text-red-600');
+    $('hubBudgetPct').textContent = ut > alloc ? pct + '% · over allocation' : pct + '% utilized';
+    $('hubBudgetCost').textContent = money(Math.round(ut / served));
+    $('hubBudgetRows').innerHTML = entries.length ? entries.map(e => {
+      const act = e.activityIndex != null ? D.activities[e.activityIndex] : null;
+      return `<tr>
+        <td class="font-semibold">${esc(e.item)}</td>
+        <td class="text-gray-500">${act ? esc(act.title) : '<span class="badge badge-gray">Program-level</span>'}</td>
+        <td class="!text-right font-bold">${money(e.amount)}</td>
+        <td class="text-gray-500">${esc(e.date)}</td>
+        <td class="text-gray-400 font-mono text-[11.5px]">${esc(e.ref)}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="5" class="text-center text-gray-400 py-8">No utilization entries recorded yet.</td></tr>`;
+  }
+
+  /* ---------- boot render ---------- */
+  window.renderHub = function (tab) {
+    if (tab === 'overview' || !tab) renderOverview();
+    if (tab === 'activities') renderActivities();
+    if (tab === 'beneficiaries') renderBeneficiaries();
+    if (tab === 'budget') renderBudget();
+  };
+  window.refreshHub = function(){ renderHero(); renderOverview(); renderActivities(); renderBeneficiaries(); renderBudget(); };
+
+  /* ---------- objective manager ---------- */
+  window.openObjManager = function(){ renderObjManager(); openModal('mObjList'); };
+  function renderObjManager() {
+    const objs = D.programObjectives[PROG.code] || [];
+    $('objManagerList').innerHTML = objs.length ? objs.map((o,i) => {
+        const [cls, label] = OBJ_STATUS[o.status] || OBJ_STATUS.not_started;
+        const pv = o.target ? Math.min(Math.round((o.actual ?? 0)/o.target*100),100) : 0;
+        const bar = o.status === 'not_met' ? 'bg-gold' : (o.status === 'achieved' ? 'bg-emerald-500' : 'bg-lnu');
+        const src = o.kpi ? 'auto (live)' : 'manual';
+        return `<div class="p-3 rounded-xl border border-gray-100 bg-gray-50/50">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-[12.5px] font-semibold leading-snug min-w-0">${esc(o.objective)}</p>
+            <span class="badge ${cls} shrink-0">${label}</span>
+          </div>
+          <p class="text-[10.5px] text-gray-400 mt-0.5">${o.kpi ? KPI_LABEL[o.kpi] : 'Qualitative · manual'}${o.unit ? ' · ' + esc(o.unit) : ''}${o.target_date ? ' · due ' + esc(o.target_date) : ''} · ${src}</p>
+          <div class="progress mt-2"><span style="width:${pv}%" class="${bar}"></span></div>
+          <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline ${o.baseline ?? '—'} → Target ${o.target ?? '—'} → Actual <span class="text-charcoal">${o.actual ?? '—'}</span></p>
+          <div class="flex justify-end gap-1 mt-2">
+            <button class="btn btn-outline !px-2 !py-1 !text-[11px]" onclick="window.editObjective(${i})">Edit</button>
+            <button class="btn btn-danger-soft !px-2 !py-1 !text-[11px]" onclick="window.deleteObjective(${i})">Delete</button>
+          </div>
+        </div>`;
+      }).join('') : '<p class="text-[12.5px] text-gray-400 py-4 text-center">No objectives yet — add the first one.</p>';
+  }
+  window.editObjective = function(i){ editObjIdx = i; window.openObjForm(true); };
+  window.deleteObjective = function(i){
+    const objs = D.programObjectives[PROG.code] || [];
+    objs.splice(i,1); renderObjManager(); renderHero(); window.renderHub('overview');
+    SC.toast('Objective deleted · change logged','warn');
+  };
+  /* Demo live-value preview (mirrors the Laravel 8.6 live computation;
+     derivable from in-page demo data where possible, else "No data yet"). */
+  function computedForKpi(k){
+    const acts = D.activities.filter(a => a.program === PROG);
+    if (k === 'community_reach') return PROG.reached;
+    if (k === 'budget_utilization' && PROG.budget) return Math.round(utilized()/PROG.budget*100);
+    if (k === 'knowledge_gain' && KNOWLEDGE[PROG.code]) return +(KNOWLEDGE[PROG.code].post - KNOWLEDGE[PROG.code].pre).toFixed(1);
+    if (k === 'activity_completion_rate' && acts.length) return Math.round(acts.filter(a=>a.status==='Completed').length/acts.length*100);
+    return null;
+  }
+  window.openObjForm = function(edit){
+    editObjIdx = edit ? editObjIdx : null;
+    $('objFormTitle').textContent = editObjIdx != null ? 'Edit objective' : 'Add objective';
+    const o = editObjIdx != null ? (D.programObjectives[PROG.code] || [])[editObjIdx] : null;
+    $('ofObjective').value = o ? o.objective : '';
+    $('ofKpi').value = o ? (o.kpi || '') : '';
+    $('ofUnit').value = o ? (o.unit || '') : '';
+    $('ofBaseline').value = o ? (o.baseline ?? '') : '';
+    $('ofTarget').value = o ? (o.target ?? '') : '';
+    $('ofActual').value = o && !o.kpi ? (o.actual ?? '') : '';
+    $('ofEvidence').value = o ? (o.evidence || '') : '';
+    if (o && o.target_date) { const d = new Date(o.target_date); $('ofDate').value = isNaN(d) ? '' : d.toISOString().slice(0,10); }
+    else { $('ofDate').value = ''; }
+    window.objKpiChanged();
+    openModal('mObjForm');
+  };
+  window.objKpiChanged = function(){
+    const kpi = $('ofKpi').value;
+    $('ofActualWrap').classList.toggle('hidden', !!kpi);
+    $('ofComputedWrap').classList.toggle('hidden', !kpi);
+    if (kpi) {
+      $('ofActual').value = ''; // a manual actual is never stored for numeric objectives
+      const v = computedForKpi(kpi);
+      $('ofComputedValue').textContent = v === null ? 'No data yet' : v + ($('ofUnit').value ? ' ' + $('ofUnit').value : '');
+    }
+  };
+  window.saveObjective = function(){
+    const statement = $('ofObjective').value.trim();
+    const target = $('ofTarget').value;
+    if (!statement || target === '') { SC.toast('Objective statement and target are required','error'); return; }
+    const o = {
+      objective: statement,
+      kpi: $('ofKpi').value || null,
+      baseline: $('ofBaseline').value === '' ? null : +$('ofBaseline').value,
+      target: +target,
+      actual: !$('ofKpi').value && $('ofActual').value !== '' ? +$('ofActual').value : null,
+      unit: $('ofUnit').value || null,
+      status: 'not_started',
+      target_date: $('ofDate').value ? fmtHuman($('ofDate').value) : null,
+      evidence: $('ofEvidence').value || ''
+    };
+    if (o.kpi) { o.status = 'on_track'; }
+    else if (o.actual != null) { o.status = o.actual >= o.target ? 'achieved' : 'on_track'; }
+    const objs = D.programObjectives[PROG.code] = (D.programObjectives[PROG.code] || []);
+    if (editObjIdx != null) objs[editObjIdx] = o; else objs.push(o);
+    editObjIdx = null; closeModal('mObjForm'); closeModal('mObjList');
+    renderObjManager(); renderHero(); window.renderHub('overview');
+    SC.toast('Objective saved to the results framework','success');
+  };
+
+  /* ---------- activities: create/edit + conflict hard-block ---------- */
+  const TIMES = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+  window.openActivityModal = function(actId){
+    editActId = actId ?? null;
+    $('afProgram').value = PROG.title;
+    $('afStartTime').innerHTML = TIMES.map(t=>`<option>${t}</option>`).join('');
+    $('afEndTime').innerHTML = TIMES.map(t=>`<option>${t}</option>`).join('');
+    $('afStart').min = toISO(PROG.start); $('afStart').max = toISO(PROG.end);
+    $('afEnd').min = toISO(PROG.start);   $('afEnd').max = toISO(PROG.end);
+    $('afFaculty').innerHTML = D.faculty.map(f => `<span class="chip" data-fid="${f.id}" onclick="this.classList.toggle('on')">${esc(f.name.split(' ').slice(-1)[0])} · ${esc(f.name.split(' ').slice(0,2).join(' '))}</span>`).join('');
+    $('afConflictNote').classList.add('hidden');
+    if (actId != null) {
+      const a = D.activities.find(x=>x.id===actId);
+      $('afTitle').value = a.title;
+      $('afVenue').value = a.venue;
+      $('afStart').value = toISO(a.date); $('afEnd').value = toISO(a.date);
+      $('afStartTime').value = a.start; $('afEndTime').value = a.end;
+      (window._assignFor(a.id) || []).forEach(fid => { const chip = document.querySelector(`#afFaculty [data-fid="${fid}"]`); if (chip) chip.classList.add('on'); });
+      $('actFormTitle').textContent = 'Edit activity';
+    } else {
+      $('afTitle').value = '';
+      $('afVenue').value = '';
+      $('actFormTitle').textContent = 'Add activity';
+    }
+    openModal('mActivity');
+  };
+  window._assignFor = function(actId){ return ({1:[1,2],2:[1],4:[3],5:[3],6:[7],8:[2]})[actId] || []; };
+  window._conflictFor = function(a){
+    const facs = window._assignFor(a.id);
+    if (!facs.length) return false;
+    return D.activities.some(b => b.id !== a.id && b.date === a.date && facs.some(fid => (window._assignFor(b.id)||[]).includes(fid)) && t2m(a.start) < t2m(b.end) && t2m(b.start) < t2m(a.end));
+  };
+  window.saveActivity = function(){
+    const title = ($('afTitle') ? $('afTitle').value : '') || 'New Program Activity';
+    const venue = $('afVenue').value || 'Barangay Hall';
+    const sd = $('afStart').value, ed = $('afEnd').value, st = $('afStartTime').value, et = $('afEndTime').value;
+    if (!sd || !ed) { SC.toast('Planned start and end dates are required','error'); return; }
+    const facs = [...document.querySelectorAll('#afFaculty .chip.on')].map(c=>+c.dataset.fid);
+    const date = fmtHuman(sd);
+    // HARD-BLOCK: faculty assignment overlap (8.8)
+    const conflicts = [];
+    facs.forEach(fid => {
+      const f = D.faculty.find(x=>x.id===fid);
+      D.activities.forEach(b => {
+        if (b.date === date && (window._assignFor(b.id)||[]).includes(fid) && t2m(st) < t2m(b.end) && t2m(b.start) < t2m(et))
+          conflicts.push(`${f.name} — already assigned to “${b.title}” (${b.start}–${b.end})`);
+      });
+    });
+    if (conflicts.length) {
+      $('afConflictNote').textContent = 'Blocked: ' + conflicts[0] + (conflicts.length>1 ? ` and ${conflicts.length-1} more overlap(s)` : '') + '.';
+      $('afConflictNote').classList.remove('hidden');
+      SC.toast('Assignment refused — schedule overlaps an existing assignment','error');
+      return;
+    }
+    if (editActId != null) {
+      const a = D.activities.find(x=>x.id===editActId);
+      a.title = title; a.venue = venue; a.date = date; a.start = st; a.end = et;
+      SC.toast('Activity rescheduled · change written to the activity log','success');
+    } else {
+      D.activities.push({ id: Date.now()%100000, program: PROG, title, date, start:st, end:et, venue, status:'Draft', attendees:null });
+      SC.toast('Activity created (draft) within the program range','success');
+    }
+    closeModal('mActivity'); renderHero(); window.renderHub('activities');
+  };
+  window.askComplete = function(actId){ window._completeId = actId; openModal('mComplete'); };
+  window.confirmComplete = function(){
+    const a = D.activities.find(x=>x.id===window._completeId);
+    if (a) {
+      a.status = 'Completed';
+      const facs = window._assignFor(a.id).length;
+      SC.toast(facs ? `Marked completed — ${facs} rendered-hours auto-draft(s) created (source: auto)` : 'Marked completed — no assigned faculty to draft hours for', 'success');
+    }
+    closeModal('mComplete'); renderHero(); window.renderHub('activities');
+  };
+
+  /* ---------- activity records: attendance + evaluation XLSX imports (v4.13) ---------- */
+  window.openRecords = function(actId){
+    window._recAct = actId;
+    const a = D.activities.find(x=>x.id===actId);
+    const recorded = a.attendees != null ? a.attendees : 0;
+    $('recTitle').textContent = 'Records · ' + a.title;
+    $('recSubtitle').textContent = `${a.date} · ${a.venue || 'No venue recorded'} · attendance and evaluation are recorded by importing the official XLSX templates.`;
+    $('recAttCount').textContent = recorded + ' attendance record' + (recorded === 1 ? '' : 's');
+    renderRecEvalMeans();
+    $('recAttFile').value = ''; $('recEvalFile').value = '';
+    ['recAttUpload','recEvalUpload'].forEach(id => $(id).classList.remove('hidden'));
+    ['recAttPreview','recEvalPreview'].forEach(id => $(id).classList.add('hidden'));
+    window.setRecordsTab('attendance');
+    openModal('mRecords');
+  };
+  window.setRecordsTab = function(tab){
+    const att = tab === 'attendance';
+    $('recTabAttendance').classList.toggle('on', att);
+    $('recTabEvaluation').classList.toggle('on', !att);
+    $('recPanelAttendance').classList.toggle('hidden', !att);
+    $('recPanelEvaluation').classList.toggle('hidden', att);
+  };
+  window.demoParseRecords = function(kind){
+    const input = kind === 'attendance' ? $('recAttFile') : $('recEvalFile');
+    if (!input.files.length) { SC.toast('Select the official .xlsx template first','error'); return; }
+    $(kind === 'attendance' ? 'recAttUpload' : 'recEvalUpload').classList.add('hidden');
+    $(kind === 'attendance' ? 'recAttPreview' : 'recEvalPreview').classList.remove('hidden');
+  };
+  window.demoConfirmRecords = function(kind){
+    const a = D.activities.find(x=>x.id===window._recAct);
+    if (kind === 'attendance') {
+      a.attendees = 2; // demo: 2 applied, 1 blank skipped (D10 confirm step)
+      $('recAttLast').classList.remove('hidden');
+      closeModal('mRecords'); renderHero(); window.renderHub('activities');
+      SC.toast('Attendance imported — 2 applied, 1 blank skipped · source file archived (6.19)','success');
+    } else {
+      KNOWLEDGE[PROG.code] = { pre:45.0, post:65.0 }; // demo: per-metric means (D13)
+      SATISFACTION[a.id] = 4.5;
+      $('recEvalLast').classList.remove('hidden');
+      closeModal('mRecords'); renderHero(); window.renderHub('activities');
+      SC.toast('Evaluation scores applied — the activity aggregates now feed knowledge gain and reports','success');
+    }
+  };
+  function recMeanTile(label, value, suffix, note) {
+    const shown = value == null ? null : (+value).toFixed(2) + suffix;
+    return `<div class="rounded-xl border border-gray-100 bg-gray-50/60 px-3.5 py-2.5">
+      <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">${label}</p>
+      <p class="text-[15px] font-extrabold tracking-tight mt-0.5 leading-none ${shown === null ? 'text-gray-300' : 'text-charcoal'}">${shown === null ? 'No scores yet' : shown}</p>
+      ${note ? `<p class="text-[10px] text-gray-400 mt-0.5">${note}</p>` : ''}
+    </div>`;
+  }
+  function renderRecEvalMeans() {
+    const kg = KNOWLEDGE[PROG.code] || { pre:null, post:null };
+    const a = D.activities.find(x=>x.id===window._recAct);
+    const sat = a ? SATISFACTION[a.id] : null;
+    const current = [
+      recMeanTile('Pre-test mean', kg.pre, ''),
+      recMeanTile('Post-test mean', kg.post, ''),
+      recMeanTile('Satisfaction mean', sat, '/5'),
+    ].join('');
+    const was = (before, suffix) => before == null ? 'no previous score' : 'was ' + (+before).toFixed(2) + suffix;
+    $('recEvalCurrent').innerHTML = current;
+    $('recEvalFacultyCurrent').innerHTML = current;
+    $('recEvalProjected').innerHTML = [
+      recMeanTile('Pre-test mean', 45.0, '', was(kg.pre, '')),
+      recMeanTile('Post-test mean', 65.0, '', was(kg.post, '')),
+      recMeanTile('Satisfaction mean', 4.5, '/5', was(sat, '/5')),
+    ].join('');
+  }
+
+  /* ---------- beneficiaries: enroll existing / register new / unenroll ---------- */
+  window.openEnrollExisting = function(){ $('enrollSearch').value = ''; renderEnrollList(); openModal('mEnroll'); };
+  window.renderEnrollList = function(){
+    const q = ($('enrollSearch').value || '').toLowerCase();
+    const enrolledIdxs = enrolledIdx();
+    const pool = D.beneficiaries.map((b,i)=>({b,i})).filter(({b,i}) => !enrolledIdxs.includes(i));
+    const rows = pool.filter(({b}) => !q || b.name.toLowerCase().includes(q) || b.barangay.toLowerCase().includes(q));
+    $('enrollRows').innerHTML = rows.length ? rows.map(({b,i}) => `
+      <div class="flex items-center justify-between gap-2 rounded-xl border border-gray-100 px-3 py-2 hover:border-lnu-200 transition">
+        <div class="min-w-0"><p class="text-[12.5px] font-semibold truncate">${esc(b.name)} ${b.program==='—' ? '<span class="badge badge-blue !text-[10px] ml-1">not yet linked</span>' : `<span class="text-[10.5px] text-gray-400 ml-1">in ${esc(b.program)}</span>`}</p>
+        <p class="text-[10.5px] text-gray-400">${esc(b.category)} · ${esc(b.barangay)}</p></div>
+        <button class="btn btn-primary !py-1 !px-2.5 !text-[11px] shrink-0" onclick="window.enrollIdx(${i})">Enroll</button>
+      </div>`).join('') : '<p class="text-[12.5px] text-gray-400 py-4 text-center">No registry matches.</p>';
+  };
+  window.enrollIdx = function(i){
+    D.programEnrollments[PROG.code].push(i);
+    closeModal('mEnroll'); renderHero(); window.renderHub('beneficiaries');
+    SC.toast(D.beneficiaries[i].name + ' enrolled into the program','success');
+  };
+  window.openRegisterNew = window.openRegister = function(){ $('rnDedup').classList.add('hidden'); openModal('mRegister'); };
+  window.doRegister = function(confirmed){
+    const first = $('rnFirst').value.trim(), last = $('rnLast').value.trim(), brgy = $('rnBarangay').value.trim();
+    if (!first || !last || !brgy) { SC.toast('First name, last name, and barangay are required','error'); return; }
+    const dup = D.beneficiaries.find(b => {
+      const parts = b.name.split(' ').filter(Boolean);
+      const bFirst = parts[0].toLowerCase(), bLast = parts[parts.length-1].replace(/Jr\.?|Sr\.?|III/i,'').trim().toLowerCase();
+      return bFirst === first.toLowerCase() && bLast === last.toLowerCase() && b.barangay.toLowerCase() === brgy.toLowerCase();
+    });
+    if (dup && !confirmed) {
+      $('rnDedupMsg').textContent = `Possible duplicate: ${dup.name} (${dup.barangay}) is already in the registry.`;
+      $('rnDedup').classList.remove('hidden');
+      SC.toast('Duplicate check triggered — confirm before saving','warn');
+      return;
+    }
+    D.beneficiaries.push({ name: [first, $('rnMiddle').value.trim(), last].filter(Boolean).join(' '), barangay: brgy, sex: $('rnSex').value, age: +$('rnAge').value || 30, category: $('rnCat').value.trim() || 'Community Member', contact: $('rnContact').value.trim() || '09123456789', program: PROG.title.split(':')[0] });
+    const idx = D.beneficiaries.length - 1;
+    D.programEnrollments[PROG.code].push(idx);
+    closeModal('mRegister'); renderHero(); window.renderHub('beneficiaries');
+    SC.toast('Beneficiary registered and auto-enrolled','success');
+  };
+  window.askUnenroll = function(name){
+    const b = D.beneficiaries.find(x => x.name === name);
+    const idx = D.beneficiaries.indexOf(b);
+    const pivot = D.programEnrollments[PROG.code] = (D.programEnrollments[PROG.code] || []).filter(i => i !== idx);
+    window.refreshHub();
+    SC.toast(`Unenrolled ${name} from this program (registry profile kept)`,'warn');
+  };
+
+  /* ---------- beneficiaries: XLSX import (demo) ---------- */
+  window.openImportXlsx = function(){
+    $('impFile').value = '';
+    $('impPreview').classList.add('hidden');
+    $('impUpload').classList.remove('hidden');
+    openModal('mImport');
+  };
+  window.demoParseImport = function(){
+    if (!$('impFile').files.length) { SC.toast('Select the official .xlsx template first','error'); return; }
+    $('impUpload').classList.add('hidden');
+    $('impPreview').classList.remove('hidden');
+  };
+  window.demoConfirmImport = function(){
+    const demoRows = [
+      { name:'Juan Reyes Dela Cruz', barangay:'San Jose', sex:'Male', age:42, category:'Farmer', contact:'0917 123 4567', program:PROG.title.split(':')[0] },
+      { name:'Maria Santos', barangay:'Sagkahan', sex:'Female', age:35, category:'Housewife', contact:'09123456789', program:PROG.title.split(':')[0] }
+    ];
+    demoRows.forEach(r => { D.beneficiaries.push(r); D.programEnrollments[PROG.code].push(D.beneficiaries.length - 1); });
+    closeModal('mImport'); renderHero(); window.renderHub('beneficiaries');
+    SC.toast('2 beneficiaries imported from XLSX and enrolled · 1 duplicate skipped (demo)','success');
+  };
+
+  /* ---------- budget entry ---------- */
+  window.openBudgetModal = function(){
+    const acts = D.activities.filter(a=>a.program===PROG);
+    $('buActivity').innerHTML = '<option value="">Program-level (no specific activity)</option>' + acts.map((a,i)=>`<option value="${D.activities.indexOf(a)}">${esc(a.title)}</option>`).join('');
+    openModal('mBudget');
+  };
+  window.saveBudgetEntry = function(){
+    const item = $('buItem').value.trim(), amt = +$('buAmount').value, dt = $('buDate').value;
+    if (!item || !amt || !dt) { SC.toast('Item, amount, and date are required','error'); return; }
+    const ai = $('buActivity').value === '' ? null : +$('buActivity').value;
+    D.budgetEntries.push({ id: Date.now()%100000, program: PROG.code, activityIndex: ai, item, amount: amt, date: fmtHuman(dt), ref: 'REC-2026-' + String(Math.floor(1000+Math.random()*9000)) });
+    closeModal('mBudget');
+    renderHero(); window.renderHub('budget');
+    if (utilized() > PROG.budget) SC.toast('Entry saved · allocation exceeded — warning badge persists, log entry written (D7)','warn');
+    else SC.toast('Utilization entry saved','success');
+  };
+
+  /* ---------- boot ---------- */
+  document.addEventListener('DOMContentLoaded', () => {
+    renderHero(); window.renderHub('overview');
+  });
+})();
+</script>
+</body>
+</html>

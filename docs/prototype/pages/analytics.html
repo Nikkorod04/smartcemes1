@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analytics · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="analytics">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- PAGE HEADER -->
+  <section class="pt-6 reveal-item">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="font-extrabold text-[19px] tracking-tight">Analytics</h2>
+        <p class="text-[12.5px] text-gray-400 font-medium mt-0.5">Six monitoring views over the extension portfolio · figures derive from the KPI dictionary</p>
+      </div>
+      <span class="badge badge-gold">Semester 1 · AY 2026–2027</span>
+    </div>
+    <div class="mt-4 flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max" x-data="{t:'overview'}">
+      <button :class="t==='overview' ? 'tab on' : 'tab'" @click="t='overview'; window.initAX('overview')">Overview</button>
+      <button :class="t==='performance' ? 'tab on' : 'tab'" @click="t='performance'; window.initAX('performance')">Program Performance</button>
+      <button :class="t==='budget' ? 'tab on' : 'tab'" @click="t='budget'; window.initAX('budget')">Budget Utilization</button>
+      <button :class="t==='reach' ? 'tab on' : 'tab'" @click="t='reach'; window.initAX('reach')">Community Reach</button>
+      <button :class="t==='faculty' ? 'tab on' : 'tab'" @click="t='faculty'; window.initAX('faculty')">Faculty Contribution</button>
+      <button :class="t==='pending' ? 'tab on' : 'tab'" @click="t='pending'; window.initAX('pending')">Pending Actions</button>
+    </div>
+  </section>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <div x-show="t==='overview'" x-data="{t:'overview'}" class="mt-4 space-y-4">
+    <section class="grid grid-cols-5 gap-4 reveal-item">
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[folder]]</span>
+          <span class="badge badge-blue">portfolio</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="6">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Extension Programs</p>
+      </div>
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[people]]</span>
+          <span class="badge badge-blue">distinct</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-lnu-800"><span data-count="653">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Beneficiaries Reached</p>
+      </div>
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[pin]]</span>
+          <span class="badge badge-gray">Leyte</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="5">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Communities Served</p>
+      </div>
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[wallet]]</span>
+          <span class="badge badge-yellow">61.4% utilized</span>
+        </div>
+        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">₱<span data-count="164950">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">of ₱268,500 allocated</p>
+      </div>
+      <div class="sc-card p-5 !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-100 text-gold-700 flex items-center justify-center">[[clock]]</span>
+          <span class="badge badge-red">action needed</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-gold-700"><span data-count="9">0</span></p>
+        <p class="text-[12.5px] text-gray-600 font-medium mt-1.5">Pending Approvals</p>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-3 gap-4 reveal-item">
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-bold text-[14px]">Program Portfolio</h3>
+          <span class="text-[11.5px] text-gray-400 font-medium">by status</span>
+        </div>
+        <div class="relative h-56"><canvas id="axStatus"></canvas></div>
+      </div>
+      <div class="sc-card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-[14px]">Budget Utilization</h3>
+          <div class="flex items-center gap-4 text-[11.5px] text-gray-400 font-medium">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu"></span>Planned</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold"></span>Actual</span>
+          </div>
+        </div>
+        <div class="relative h-56"><canvas id="axBudget"></canvas></div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-3 gap-4 reveal-item">
+      <div class="sc-card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Community Reach</h3>
+          <span class="badge badge-blue">distinct beneficiaries served</span>
+        </div>
+        <div class="relative h-60"><canvas id="axReach"></canvas></div>
+      </div>
+      <div class="sc-card p-5">
+        <h3 class="font-bold text-[14px] mb-3">Recent Activity</h3>
+        <ol class="relative border-l border-gray-100 ml-2 space-y-4">
+          <li class="ml-4"><span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-lnu ring-4 ring-lnu-50"></span><p class="text-[13px] font-semibold leading-snug">New proposal: “SIKAD BUHAY”</p><p class="text-[11.5px] text-gray-400">Prof. Alcoy · 12 minutes ago</p></li>
+          <li class="ml-4"><span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-gold ring-4 ring-gold-50"></span><p class="text-[13px] font-semibold leading-snug">Rendered hours submitted — Prof. Lumbre</p><p class="text-[11.5px] text-gray-400">4.0 hrs · awaiting approval</p></li>
+          <li class="ml-4"><span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span><p class="text-[13px] font-semibold leading-snug">Assessment validated — Brgy. Salvacion Q2</p><p class="text-[11.5px] text-gray-400">CESO Secretary · Yesterday</p></li>
+          <li class="ml-4"><span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-red-400 ring-4 ring-red-50"></span><p class="text-[13px] font-semibold leading-snug">HANDA budget exceeded allocation</p><p class="text-[11.5px] text-gray-400">Overrun entry REC-2026-0203 · logged</p></li>
+        </ol>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== PROGRAM PERFORMANCE ===================== -->
+  <div x-show="t==='performance'" x-cloak class="mt-4 space-y-4">
+    <section class="reveal-item flex flex-wrap items-center gap-2">
+      <span class="badge badge-green">3 achieved</span>
+      <span class="badge badge-blue">9 on track</span>
+      <span class="badge badge-yellow">1 needs attention (not met)</span>
+      <span class="badge badge-gray">1 not started</span>
+      <span class="text-[12px] text-gray-400 font-medium ml-1">Objective status across 6 programs · baseline → target → actual</span>
+    </section>
+    <section id="axPerfCards" class="grid grid-cols-2 gap-4 reveal-item"></section>
+  </div>
+
+  <!-- ===================== BUDGET UTILIZATION ===================== -->
+  <div x-show="t==='budget'" x-cloak class="mt-4 space-y-4">
+    <section class="grid grid-cols-4 gap-4 reveal-item">
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Allocated</p>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱<span data-count="268500">0</span></p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1.5">across 6 programs · FY 2026</p>
+      </div>
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Utilized</p>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱<span data-count="164950">0</span></p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1.5">61.4% of allocation</p>
+      </div>
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Remaining</p>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱<span data-count="103550">0</span></p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1.5">unspent balance</p>
+      </div>
+      <div class="sc-card p-5 !border-red-100 !bg-gradient-to-br !from-white !to-red-50/60">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Over-allocated</p>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-red-600"><span data-count="1">0</span></p>
+        <p class="text-[11px] text-gray-500 font-medium mt-1.5">program flagged (D7 advisory)</p>
+      </div>
+    </section>
+
+    <section class="reveal-item sc-card p-5 !border-amber-200 !bg-amber-50/70">
+      <div class="flex items-start gap-3">
+        <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">[[wallet]]</span>
+        <div>
+          <p class="text-[13.5px] font-bold text-amber-800">HANDA exceeded its ₱62,500 allocation by ₱2,000 (103.2%)</p>
+          <p class="text-[12px] text-amber-700 mt-0.5">Entries are still saved — a persistent warning badge shows on the program and the overrun was written to the activity log (D7). Director review is advisory, not blocking.</p>
+        </div>
+        <a href="program-detail.html?role=admin&program=EXT-2026-002" class="ml-auto btn btn-outline !py-1.5 !px-3 !text-[11.5px] shrink-0">Open program hub →</a>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-5 gap-4 reveal-item">
+      <div class="sc-card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-[14px]">Planned vs Actual</h3>
+          <div class="flex items-center gap-4 text-[11.5px] text-gray-400 font-medium">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu"></span>Planned</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold"></span>Actual</span>
+          </div>
+        </div>
+        <div class="relative h-64"><canvas id="axBudget2"></canvas></div>
+      </div>
+      <div class="sc-card p-0 overflow-hidden col-span-3">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="font-bold text-[14px]">Utilization by Program</h3>
+          <span class="badge badge-gray">per 8.6 formula</span>
+        </div>
+        <table class="sc-table">
+          <thead><tr><th>Program</th><th class="!text-right">Allocated</th><th class="!text-right">Utilized</th><th class="!text-right">Utilization</th><th>Status</th></tr></thead>
+          <tbody id="axBudgetRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== COMMUNITY REACH ===================== -->
+  <div x-show="t==='reach'" x-cloak class="mt-4 space-y-4">
+    <section class="grid grid-cols-5 gap-4 reveal-item">
+      <div class="sc-card p-5 col-span-3">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Distinct Beneficiaries Served</h3>
+          <span class="badge badge-blue">per barangay</span>
+        </div>
+        <div class="relative h-72"><canvas id="axReach2"></canvas></div>
+      </div>
+      <div class="sc-card p-0 overflow-hidden col-span-2">
+        <div class="px-5 py-4 border-b border-gray-100"><h3 class="font-bold text-[14px]">Reach by Municipality</h3></div>
+        <table class="sc-table">
+          <thead><tr><th>Municipality</th><th class="!text-right">Barangays</th><th class="!text-right">Served</th></tr></thead>
+          <tbody>
+            <tr><td class="font-semibold">Tacloban City</td><td class="!text-right">2</td><td class="!text-right font-bold text-lnu-800">260</td></tr>
+            <tr><td class="font-semibold">Palo</td><td class="!text-right">1</td><td class="!text-right font-bold text-lnu-800">171</td></tr>
+            <tr><td class="font-semibold">Tanauan</td><td class="!text-right">1</td><td class="!text-right font-bold text-lnu-800">126</td></tr>
+            <tr><td class="font-semibold">Dulag</td><td class="!text-right">1</td><td class="!text-right font-bold text-lnu-800">96</td></tr>
+            <tr class="bg-gray-50/60"><td class="font-bold">Total</td><td class="!text-right font-bold">5</td><td class="!text-right font-extrabold text-lnu-800">653</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section id="axCommunityCards" class="grid grid-cols-3 gap-4 reveal-item"></section>
+  </div>
+
+  <!-- ===================== FACULTY CONTRIBUTION ===================== -->
+  <div x-show="t==='faculty'" x-cloak class="mt-4 space-y-4">
+    <section class="grid grid-cols-5 gap-4 reveal-item">
+      <div class="sc-card p-5 col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Rendered Hours per Faculty</h3>
+          <span class="badge badge-green">approved only</span>
+        </div>
+        <div class="relative h-64"><canvas id="axFaculty"></canvas></div>
+      </div>
+      <div class="sc-card p-0 overflow-hidden col-span-3">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="font-bold text-[14px]">Faculty Contribution Matrix</h3>
+          <span class="badge badge-gray">Semester 1 · AY 2026–2027</span>
+        </div>
+        <table class="sc-table">
+          <thead><tr><th>Faculty</th><th class="!text-right">Programs</th><th class="!text-right">Activities</th><th class="!text-right">Approved Hrs</th><th class="!text-right">Pending Hrs</th><th>Status</th></tr></thead>
+          <tbody id="axFacultyRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== PENDING ACTIONS ===================== -->
+  <div x-show="t==='pending'" x-cloak class="mt-4 space-y-4">
+    <section class="grid grid-cols-3 gap-4 reveal-item">
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Proposals awaiting approval</h3>
+          <span class="badge badge-yellow">3</span>
+        </div>
+        <ul class="space-y-2.5 text-[13px]">
+          <li class="flex items-center justify-between gap-2"><span class="truncate">SOLID Start: Solid Waste Segregation IEC</span><a href="proposals.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Review</a></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate">GULAYAN SA PAARALAN</span><a href="proposals.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Review</a></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate text-red-600 font-semibold">SIKAD BUHAY · outside program range</span><a href="proposals.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Review</a></li>
+        </ul>
+      </div>
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Availability awaiting faculty response</h3>
+          <span class="badge badge-yellow">3</span>
+        </div>
+        <ul class="space-y-2.5 text-[13px]">
+          <li class="flex items-center justify-between gap-2"><span class="truncate">Prof. Gabo — BP Screening · Aug 30 AM</span><a href="availability.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">View</a></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate">Prof. Gabo — Demo booth · Aug 30 PM</span><a href="availability.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">View</a></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate">Prof. Bautista — Registration desk · Aug 30 PM</span><a href="availability.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">View</a></li>
+        </ul>
+      </div>
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Rendered hours awaiting approval</h3>
+          <span class="badge badge-yellow">3</span>
+        </div>
+        <ul class="space-y-2.5 text-[13px]">
+          <li class="flex items-center justify-between gap-2"><span class="truncate">Prof. Bautista — 3.0 hrs · Reading Batch 3</span><a href="rendered-hours.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Approve</a></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate">Prof. Aquino — 7.0 hrs · First-Aid Training</span><a href="rendered-hours.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Approve</a></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate">Prof. Lumbre — 4.0 hrs · Computer Workshop</span><a href="rendered-hours.html?role=admin" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Approve</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-3 gap-4 reveal-item">
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Programs nearing deadline</h3>
+          <span class="badge badge-blue">≤ 14 days</span>
+        </div>
+        <ul class="space-y-2.5 text-[13px]">
+          <li class="flex items-center justify-between gap-2"><span class="truncate">HANDA — ends Sep 15, 2026</span><span class="badge badge-red">9 days</span></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate">LITRAWIYA — ends Oct 30, 2026</span><span class="badge badge-yellow">55 days</span></li>
+          <li class="flex items-center justify-between gap-2"><span class="truncate">Objective target: e-LITERACY uplift · Nov 28</span><span class="badge badge-blue">84 days</span></li>
+        </ul>
+        <p class="text-[11px] text-gray-400 mt-3">Daily scheduler notifies Admin 14 days ahead · 7-day de-duplication.</p>
+      </div>
+      <div class="sc-card p-5 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/50">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">[[sparkles]] AI analyses awaiting approval</h3>
+          <span class="badge badge-gold">1</span>
+        </div>
+        <div class="flex items-center justify-between gap-2 text-[13px]">
+          <div><p class="font-semibold">Brgy. San Jose · Q2 2026 insights</p><p class="text-[11.5px] text-gray-400">Draft · gpt-4o-mini · aggregated inputs only</p></div>
+          <a href="ai-analysis.html?role=admin" class="btn btn-primary !py-1.5 !px-3 !text-[11.5px] shrink-0">Review</a>
+        </div>
+      </div>
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-[14px]">Objectives at risk</h3>
+          <span class="badge badge-red">2</span>
+        </div>
+        <ul class="space-y-2.5 text-[13px]">
+          <li class="flex items-start justify-between gap-2">
+            <div class="min-w-0"><p class="truncate font-semibold">Graduate enterprise association</p><p class="text-[11.5px] text-gray-400">KABUHIAN · not met · target passed Jun 27</p></div>
+            <a href="program-detail.html?role=admin&program=EXT-2026-003" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Open</a>
+          </li>
+          <li class="flex items-start justify-between gap-2">
+            <div class="min-w-0"><p class="truncate font-semibold">≥20% skill uplift in digital literacy</p><p class="text-[11.5px] text-gray-400">e-LITERACY · on track, approaching Nov 28 target</p></div>
+            <a href="program-detail.html?role=admin&program=EXT-2026-004" class="btn btn-outline !py-1 !px-2.5 !text-[11px] shrink-0">Open</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+(function () {
+  const D = window.DATA;
+  const inited = {};
+
+  const KPI_LABEL = {
+    participation_rate:'Participation Rate', activity_completion_rate:'Activity Completion',
+    attendance_consistency:'Attendance Consistency', budget_utilization:'Budget Utilization',
+    knowledge_gain:'Knowledge Gain', cost_per_beneficiary:'Cost per Beneficiary', community_reach:'Community Reach'
+  };
+
+  window.initAX = function (tab) {
+    if (tab === 'overview' && !inited.overview) { inited.overview = 1; chartStatus('axStatus'); chartBudget('axBudget'); chartReach('axReach'); }
+    if (tab === 'performance' && !inited.performance) { inited.performance = 1; renderPerf(); }
+    if (tab === 'budget' && !inited.budget) { inited.budget = 1; chartBudget('axBudget2'); renderBudgetRows(); SC.runCounters(); }
+    if (tab === 'reach' && !inited.reach) { inited.reach = 1; chartReach('axReach2'); renderCommunityCards(); }
+    if (tab === 'faculty' && !inited.faculty) { inited.faculty = 1; renderFaculty(); }
+  };
+
+  function chartStatus(id) {
+    const el = document.getElementById(id); if (!el) return;
+    new Chart(el, { type:'doughnut',
+      data:{ labels:['Ongoing','Completed','Draft'], datasets:[{ data:[4,1,1], backgroundColor:['#003599','#F6B800','#93b4fd'], borderWidth:0, borderRadius:6 }] },
+      options:{ maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ position:'bottom' } } } });
+  }
+
+  function chartBudget(id) {
+    const el = document.getElementById(id); if (!el) return;
+    const labels = D.programs.map(p => p.code.replace('EXT-2026-','EXT-'));
+    new Chart(el, { type:'bar',
+      data:{ labels, datasets:[
+        { label:'Planned', data:D.programs.map(p=>p.budget), backgroundColor:'#003599', borderRadius:7 },
+        { label:'Actual',  data:D.programs.map(p=>p.utilized), backgroundColor:'#F6B800', borderRadius:7 } ] },
+      options:{ maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+        scales:{ y:{ ticks:{ callback:v=>'₱'+(v/1000)+'k' } } } } });
+  }
+
+  function chartReach(id) {
+    const el = document.getElementById(id); if (!el) return;
+    new Chart(el, { type:'bar',
+      data:{ labels:['San Jose','Sagkahan','El Reposo','Salvacion','San Rafael','Apitong'],
+        datasets:[{ data:[186,74,171,126,96,0], backgroundColor:['#003599','#2547eb','#93b4fd','#F6B800','#fdd24a','#e5e7eb'], borderRadius:7 }] },
+      options:{ indexAxis:'y', maintainAspectRatio:false, plugins:{ legend:{ display:false } } } });
+  }
+
+  function renderPerf() {
+    const host = document.getElementById('axPerfCards'); if (!host) return;
+    host.innerHTML = D.programs.map(p => {
+      const objs = D.programObjectives[p.code] || [];
+      if (!objs.length) {
+        return `<div class="sc-card p-5">
+          <div class="flex items-center justify-between"><h4 class="font-bold text-[13.5px]">${p.title.split(':')[0]}</h4><span class="badge badge-gray">${p.code}</span></div>
+          <p class="text-[12px] text-gray-400 mt-3">No objectives defined yet — the results framework is empty.</p></div>`;
+      }
+      const rows = objs.map(o => {
+        const base = o.baseline ?? 0, tgt = o.target ?? 0, act = o.actual ?? 0;
+        const pctVal = tgt ? Math.min(Math.round(act/tgt*100),100) : 0;
+        const st = { achieved:'badge-green', on_track:'badge-blue', not_met:'badge-yellow', not_started:'badge-gray' }[o.status] || 'badge-gray';
+        const stLabel = { achieved:'Achieved', on_track:'On track', not_met:'Not met', not_started:'Not started' }[o.status];
+        const bar = o.status === 'not_met' ? 'bg-gold' : (o.status === 'achieved' ? 'bg-emerald-500' : 'bg-lnu');
+        return `<div class="mt-3 pt-3 border-t border-gray-100 first:border-0 first:pt-0 first:mt-0">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-[12.5px] font-semibold leading-snug truncate">${o.objective}</p>
+            <span class="badge ${st} shrink-0">${stLabel}</span>
+          </div>
+          <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">${o.kpi ? KPI_LABEL[o.kpi] : 'Qualitative · manual'}${o.unit ? ' · ' + o.unit : ''}</p>
+          <div class="progress mt-2"><span style="width:${pctVal}%" class="${bar}"></span></div>
+          <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline ${o.baseline ?? '—'} → Target ${o.target ?? '—'} → Actual <span class="text-charcoal">${o.actual ?? '—'}</span></p>
+        </div>`;
+      }).join('');
+      return `<div class="sc-card p-5">
+        <div class="flex items-center justify-between"><h4 class="font-bold text-[13.5px]">${p.title.split(':')[0]}</h4><span class="badge badge-gray">${p.code}</span></div>
+        ${rows}</div>`;
+    }).join('');
+  }
+
+  function renderBudgetRows() {
+    const host = document.getElementById('axBudgetRows'); if (!host) return;
+    host.innerHTML = D.programs.map(p => {
+      const pct = p.budget ? Math.round(p.utilized/p.budget*100) : 0;
+      const over = p.utilized > p.budget;
+      return `<tr>
+        <td><a href="program-detail.html?role=admin&program=${p.code}" class="font-semibold text-lnu-800 hover:underline">${p.title.split(':')[0]}</a></td>
+        <td class="!text-right">₱${p.budget.toLocaleString('en-PH')}</td>
+        <td class="!text-right ${over ? 'text-red-600 font-bold' : ''}">₱${p.utilized.toLocaleString('en-PH')}</td>
+        <td class="!text-right font-semibold">${pct}%</td>
+        <td>${over ? '<span class="badge badge-red">Over-allocated</span>' : (p.utilized === 0 ? '<span class="badge badge-gray">No spend yet</span>' : '<span class="badge badge-green">Within allocation</span>')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderCommunityCards() {
+    const host = document.getElementById('axCommunityCards'); if (!host) return;
+    host.innerHTML = D.communities.map(c => {
+      const served = { 'Brgy. San Jose':186, 'Brgy. Sagkahan':74, 'Brgy. El Reposo':171, 'Brgy. Salvacion':126, 'Brgy. San Rafael':96, 'Brgy. Apitong':0 }[c.name] ?? 0;
+      return `<div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-[13.5px]">${c.name}</p>
+          <span class="badge ${c.status==='Active' ? 'badge-green' : 'badge-gray'}">${c.status}</span>
+        </div>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">${c.municipality}, ${c.province}</p>
+        <div class="mt-3 flex items-end justify-between">
+          <p class="text-[22px] font-extrabold tracking-tight leading-none text-lnu-800">${served}</p>
+          <p class="text-[11px] text-gray-400 font-medium">distinct served · ${c.programs} program(s)</p>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderFaculty() {
+    const host = document.getElementById('axFacultyRows'); if (!host) return;
+    const acts = {};
+    D.activities.forEach(a => { (a._fac || []).forEach(id => acts[id] = (acts[id]||0)+1); });
+    host.innerHTML = D.faculty.map(f => {
+      const approved = D.renderedHours.filter(r => r.faculty.id === f.id && r.status === 'approved').reduce((s,r)=>s+r.hours,0);
+      const pending  = D.renderedHours.filter(r => r.faculty.id === f.id && r.status === 'pending').reduce((s,r)=>s+r.hours,0);
+      return `<tr>
+        <td><div class="flex items-center gap-2.5"><span class="avatar w-7 h-7 text-[10px]">${f.name.split(' ').map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('')}</span><span class="font-semibold">${f.name}</span></div></td>
+        <td class="!text-right">${f.programs}</td>
+        <td class="!text-right">${acts[f.id] || 0}</td>
+        <td class="!text-right font-bold text-emerald-600">${approved.toFixed(1)}</td>
+        <td class="!text-right ${pending ? 'text-amber-600 font-semibold' : 'text-gray-300'}">${pending ? pending.toFixed(1) : '—'}</td>
+        <td>${f.status === 'Active' ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-gray">On Leave</span>'}</td>
+      </tr>`;
+    }).join('');
+
+    const el = document.getElementById('axFaculty');
+    const act = D.faculty.map(f => D.renderedHours.filter(r => r.faculty.id === f.id && r.status === 'approved').reduce((s,r)=>s+r.hours,0));
+    const pend = D.faculty.map(f => D.renderedHours.filter(r => r.faculty.id === f.id && r.status === 'pending').reduce((s,r)=>s+r.hours,0));
+    new Chart(el, { type:'bar',
+      data:{ labels:D.faculty.map(f=>f.name.split(' ').slice(-1)[0]), datasets:[
+        { label:'Approved', data:act, backgroundColor:'#003599', borderRadius:7, stack:'s' },
+        { label:'Pending', data:pend, backgroundColor:'#F6B800', borderRadius:7, stack:'s' } ] },
+      options:{ maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } },
+        scales:{ x:{ stacked:true }, y:{ stacked:true } } } });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => window.initAX('overview'));
+})();
+</script>
+</body>
+</html>

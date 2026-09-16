@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extension Programs · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="programs">
+
+<script>const R=(new URLSearchParams(location.search).get('role'))||document.body.dataset.role||'admin';document.body.dataset.role=R;</script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== PAGE HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex items-end justify-between gap-4">
+      <div>
+        <h2 id="pageHeading" class="text-[20px] font-extrabold tracking-tight leading-tight">Extension Programs</h2>
+        <p id="pageSub" class="text-[12.5px] text-gray-400 font-medium mt-0.5">Portfolio of community extension programs across colleges</p>
+      </div>
+      <div id="headAction"></div>
+    </div>
+  </section>
+
+  <!-- ===================== TOOLBAR + VIEWS ===================== -->
+  <section class="mt-4 reveal-item" x-data="{v:'grid'}">
+
+    <div class="sc-card p-4 flex flex-wrap items-center gap-3">
+      <label class="relative flex-1 min-w-[230px]">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex">[[search]]</span>
+        <input id="q" class="input !pl-9" placeholder="Search program, code, lead, or community…">
+      </label>
+
+      <div id="statusChips" class="flex flex-wrap items-center gap-2">
+        <button class="chip on" data-status="All">All</button>
+        <button class="chip" data-status="Ongoing">Ongoing</button>
+        <button class="chip" data-status="Completed">Completed</button>
+        <button class="chip" data-status="Draft">Draft</button>
+        <button class="chip" data-status="Cancelled">Cancelled</button>
+      </div>
+
+      <div class="ml-auto flex items-center gap-3">
+        <div class="flex bg-gray-100 rounded-xl p-1">
+          <button @click="v='grid'" title="Grid view"
+            :class="v==='grid' ? 'bg-white shadow-sm text-lnu-800' : 'text-gray-400 hover:text-gray-600'"
+            class="w-9 h-8 rounded-lg flex items-center justify-center transition">[[grid]]</button>
+          <button @click="v='list'" title="List view"
+            :class="v==='list' ? 'bg-white shadow-sm text-lnu-800' : 'text-gray-400 hover:text-gray-600'"
+            class="w-9 h-8 rounded-lg flex items-center justify-center transition">
+            <span class="w-[18px] h-[18px] inline-flex"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></span>
+          </button>
+        </div>
+        <div id="toolAction"></div>
+      </div>
+    </div>
+
+    <p id="countLine" class="mt-3 text-[11.5px] text-gray-400 font-medium"></p>
+
+    <!-- GRID VIEW -->
+    <div id="gridView" x-show="v==='grid'" class="mt-3 grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+    <!-- LIST VIEW -->
+    <div x-cloak x-show="v==='list'" class="mt-3 sc-card p-0 overflow-hidden">
+      <table class="sc-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Program</th>
+            <th>Lead</th>
+            <th>Community</th>
+            <th>Budget Utilization</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="listView"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<!-- NEW PROGRAM MODAL (Admin) -->
+<div id="mNewProgram" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeNP()"></div>
+  <div class="sc-modal relative max-w-2xl mx-auto mt-16 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px] mb-1">New Extension Program</h3>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">Created by the Director's office. Programs start as <span class="font-semibold text-charcoal">draft</span>; faculty submit proposals into existing programs.</p>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="col-span-2"><label class="label">Title *</label><input id="npTitle" class="input" placeholder="e.g. KABUHIAN: Livelihood Skills Training"></div>
+      <div class="col-span-2"><label class="label">Description</label><textarea id="npDesc" rows="2" class="input" placeholder="Short description of the program"></textarea></div>
+      <div class="col-span-2"><label class="label">Goals (narrative)</label><textarea id="npGoals" rows="2" class="input" placeholder="High-level goals — measurable objectives are added in the program hub's results framework"></textarea></div>
+      <div><label class="label">Planned start *</label><input id="npStart" type="date" class="input"></div>
+      <div><label class="label">Planned end *</label><input id="npEnd" type="date" class="input"></div>
+      <div><label class="label">Target beneficiaries *</label><input id="npTarget" type="number" class="input" placeholder="e.g. 120"></div>
+      <div><label class="label">Allocated budget (₱)</label><input id="npBudget" type="number" class="input" placeholder="e.g. 45000"></div>
+      <div><label class="label">Program lead</label><select id="npLead" class="input"></select></div>
+      <div><label class="label">Primary community</label><select id="npCommunity" class="input"></select></div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="btn btn-ghost" onclick="closeNP()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewProgram()">Create draft program</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const ROLE = document.body.dataset.role || 'admin';
+  const P = window.DATA.programs;
+  const ico = (n,c) => `<span class="${c} inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${SC.icons[n]}</span>`;
+  const GRADS = [
+    'from-lnu-800 to-lnu-500',
+    'from-gold-400 to-gold-600',
+    'from-emerald-500 to-teal-600',
+    'from-blue-700 to-indigo-500',
+    'from-rose-500 to-orange-400',
+    'from-violet-600 to-fuchsia-500'
+  ];
+  const BADGE = { Ongoing:'badge-green', Completed:'badge-green', Draft:'badge-yellow', Cancelled:'badge-red' };
+
+  /* ---------- Role variants ---------- */
+  const IS_FAC = ROLE === 'faculty';
+  if (IS_FAC) { location.replace('my-programs.html?role=faculty'); return; }
+  const BASE = P.map(p => ({ p }));
+  headAction.innerHTML = `<button id="btnNew" class="btn btn-primary">${ico('folder','w-4 h-4')} New Program</button>`;
+  toolAction.innerHTML = '<button id="btnExport" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Export</button>';
+
+  /* ---------- State ---------- */
+  let status = 'All', query = '';
+
+  const hay = x => `${x.p.code} ${x.p.title} ${x.p.lead.name} ${x.p.community.name} ${x.p.community.municipality}`.toLowerCase();
+  const filtered = () => BASE.filter(x =>
+    (status === 'All' || x.p.status === status) &&
+    (!query || hay(x).includes(query))
+  );
+
+  /* ---------- Card template ---------- */
+  function cardHTML(x, i) {
+    const p = x.p, grad = GRADS[i % GRADS.length];
+    const acr = (p.title.split(':')[0] || '').toUpperCase();
+    const util = SC.pct(p.utilized, p.budget);
+    const bar = util >= 90 ? 'bg-emerald-500' : util === 0 ? 'bg-gray-300' : 'bg-lnu-600';
+    return `
+    <article class="sc-card sc-card-hover overflow-hidden flex flex-col">
+      <div class="relative h-20 bg-gradient-to-r ${grad} overflow-hidden shrink-0">
+        <span class="absolute right-16 -top-9 w-24 h-24 rounded-full bg-white/10"></span>
+        <span class="absolute -right-3 -bottom-7 text-[62px] font-black text-white/15 leading-none select-none">${acr}</span>
+      </div>
+      <div class="p-4 flex flex-col flex-1">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide">${p.code}</span>
+          <span class="badge ${BADGE[p.status]}">${p.status}</span>
+        </div>
+        <h3 class="mt-2.5 font-bold text-[14px] leading-snug line-clamp-2 min-h-[40px]">${p.title}</h3>
+        <div class="mt-2 flex items-center gap-2 min-w-0">
+          <span class="avatar w-6 h-6 text-[8.5px]">${p.lead.initials}</span>
+          <span class="text-[11.5px] text-gray-600 font-medium truncate">${p.lead.name}</span>
+          ${x.tag ? `<span class="ml-auto badge ${x.tag === 'Program Lead' ? 'badge-gold' : 'badge-gray'} !text-[9.5px] !px-2 !py-0.5">${x.tag}</span>` : ''}
+        </div>
+        <p class="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-400">${ico('pin','w-3.5 h-3.5')} ${p.community.name} · ${p.community.municipality}</p>
+        <div class="pt-3 border-t border-gray-50 mt-auto">
+          <div class="flex items-center justify-between text-[11px] mb-1.5">
+            <span class="text-gray-400 font-medium">Budget · ${SC.money(p.utilized)} of ${SC.money(p.budget)}</span>
+            <span class="font-bold text-charcoal">${util}%</span>
+          </div>
+          <div class="progress"><span style="width:${util}%" class="${bar}"></span></div>
+          <div class="flex items-center justify-between mt-2.5">
+            <p class="text-[10.5px] text-gray-400 font-medium">${ico('people','w-3 h-3')} ${p.reached}/${p.target} reached</p>
+            <a href="program-detail.html?role=${ROLE}&program=${p.code}" onclick="event.stopPropagation()"
+               class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Details</a>
+          </div>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  /* ---------- Row template ---------- */
+  function rowHTML(x) {
+    const p = x.p, util = SC.pct(p.utilized, p.budget);
+    return `
+    <tr class="cursor-pointer" title="Open program details" onclick="location.href='program-detail.html?role=${ROLE}&program=${p.code}'">
+      <td class="font-mono text-[12px] text-gray-500">${p.code}</td>
+      <td class="max-w-[260px]"><p class="font-semibold text-[13px] truncate">${p.title}</p></td>
+      <td><span class="inline-flex items-center gap-2"><span class="avatar w-6 h-6 text-[8.5px]">${p.lead.initials}</span><span class="text-[12.5px] whitespace-nowrap">${p.lead.name.replace('Prof. ','')}</span>${x.tag ? `<span class="badge ${x.tag === 'Program Lead' ? 'badge-gold' : 'badge-gray'} !text-[9.5px] !px-2 !py-0.5">${x.tag}</span>` : ''}</span></td>
+      <td class="text-[12.5px]">${p.community.name}<span class="block text-[10.5px] text-gray-400">${p.community.municipality}</span></td>
+      <td class="w-[150px]">
+        <div class="flex items-center gap-2">
+          <div class="progress flex-1"><span style="width:${util}%" class="${util >= 90 ? 'bg-emerald-500' : util === 0 ? 'bg-gray-300' : 'bg-lnu-600'}"></span></div>
+          <span class="text-[11.5px] font-bold w-8 text-right">${util}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${BADGE[p.status]}">${p.status}</span></td>
+      <td class="text-right"><a href="program-detail.html?role=${ROLE}&program=${p.code}" onclick="event.stopPropagation()" class="text-[12px] font-bold text-lnu-800 hover:text-lnu-600 transition">Details →</a></td>
+    </tr>`;
+  }
+
+  const EMPTY_GRID = `
+    <div class="col-span-full sc-card p-10 text-center">
+      <span class="mx-auto w-12 h-12 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center">${ico('folder','w-6 h-6')}</span>
+      <p class="mt-3 font-bold text-[13.5px]">No programs match your filters</p>
+      <p class="text-[12px] text-gray-400 mt-1">Try a different keyword or reset the status chips.</p>
+    </div>`;
+
+  function render() {
+    const list = filtered();
+    countLine.textContent = `Showing ${list.length} of ${BASE.length} ${IS_FAC ? 'assignments' : 'programs'}${query ? ` for “${query}”` : ''}${status !== 'All' ? ` · ${status}` : ''}`;
+    gridView.innerHTML = list.length ? list.map(cardHTML).join('') : EMPTY_GRID;
+    listView.innerHTML = list.length ? list.map(rowHTML).join('')
+      : '<tr><td colspan="7" class="text-center py-10 text-[12.5px] text-gray-400">Nothing to show — adjust your search or status filter.</td></tr>';
+  }
+
+  /* ---------- Wiring ---------- */
+  q.addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+  statusChips.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
+    statusChips.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    ch.classList.add('on');
+    status = ch.dataset.status;
+    render();
+  }));
+
+  const bn = document.getElementById('btnNew');
+  if (bn) bn.onclick = openNP;
+  const bx = document.getElementById('btnExport');
+  if (bx) bx.onclick = () => SC.toast('Program portfolio exported (demo)','success');
+
+  /* ---------- New Program modal ---------- */
+  function openNP() {
+    npLead.innerHTML = window.DATA.faculty.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+    npCommunity.innerHTML = window.DATA.communities.map(c => `<option value="${c.id}">${c.name} · ${c.municipality}</option>`).join('');
+    document.getElementById('mNewProgram').classList.remove('hidden');
+  }
+  function closeNP() { document.getElementById('mNewProgram').classList.add('hidden'); }
+  window.closeNP = closeNP;
+  function saveNewProgram() {
+    const title = npTitle.value.trim(), start = npStart.value, end = npEnd.value, target = npTarget.value;
+    if (!title || !start || !end || !target) { SC.toast('Title, planned dates, and target beneficiaries are required','error'); return; }
+    const F = window.DATA.faculty, C = window.DATA.communities;
+    const lead = F.find(f => f.id === +npLead.value) || F[0];
+    const community = C.find(c => c.id === +npCommunity.value) || C[0];
+    const nextNum = Math.max(...P.map(p => +p.code.split('-')[2])) + 1;
+    const code = 'EXT-2026-' + String(nextNum).padStart(3,'0');
+    const fd = iso => { const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'2-digit',year:'numeric'}); };
+    window.DATA.programEnrollments[code] = [];
+    P.push({
+      code, title, description: npDesc.value.trim(), goal: npGoals.value.trim(),
+      lead, community, status:'Draft',
+      budget: +npBudget.value || 0, utilized: 0, target: +target, reached: 0,
+      start: fd(start), end: fd(end), progress: 0, overAllocated: false
+    });
+    closeNP();
+    SC.toast(`Draft program created (${code}) — manage it in its hub`,'success');
+    render();
+  }
+
+  render();
+});
+</script>
+</body>
+</html>

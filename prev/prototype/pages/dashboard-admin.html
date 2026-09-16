@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="dashboard-admin">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== KPI ROW ===================== -->
+  <section class="pt-6">
+    <p class="text-[13px] text-gray-400 font-medium mb-3">Monday, August 24, 2026 · Semester 1, AY 2026–2027</p>
+    <div class="reveal-item grid grid-cols-5 gap-4">
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[folder]]</span>
+          <span class="badge badge-green">+1 this sem</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="6">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Extension Programs</p>
+      </div>
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[people]]</span>
+          <span class="badge badge-blue">distinct</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-lnu-800"><span data-count="653">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Beneficiaries Reached</p>
+      </div>
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[pin]]</span>
+          <span class="badge badge-gray">Leyte</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="5">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Communities Served</p>
+      </div>
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[wallet]]</span>
+          <span class="badge badge-yellow">51.9% utilized</span>
+        </div>
+        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">₱<span data-count="139350">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Total Budget Utilized</p>
+      </div>
+
+      <div class="sc-card p-5 !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-100 text-gold-700 flex items-center justify-center">[[clock]]</span>
+          <span class="badge badge-red">action needed</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-gold-700"><span data-count="5">0</span></p>
+        <p class="text-[12.5px] text-gray-600 font-medium mt-1.5">Pending Approvals</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CHARTS ROW 1 ===================== -->
+  <section class="mt-5 grid grid-cols-3 gap-4">
+    <div class="reveal-item sc-card p-5">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-bold text-[14px]">Program Portfolio</h3>
+        <span class="text-[11.5px] text-gray-400 font-medium">by status</span>
+      </div>
+      <div class="relative h-56"><canvas id="chStatus"></canvas></div>
+    </div>
+
+    <div class="reveal-item sc-card p-5 col-span-2">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-[14px]">Budget Utilization</h3>
+        <div class="flex items-center gap-4 text-[11.5px] text-gray-400 font-medium">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu"></span>Planned</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold"></span>Actual</span>
+        </div>
+      </div>
+      <div class="relative h-56"><canvas id="chBudget"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ===================== CHARTS ROW 2 ===================== -->
+  <section class="mt-4 grid grid-cols-3 gap-4">
+    <div class="reveal-item sc-card p-5 col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-bold text-[14px]">Community Reach</h3>
+        <span class="badge badge-blue">distinct beneficiaries served</span>
+      </div>
+      <div class="relative h-60"><canvas id="chReach"></canvas></div>
+    </div>
+
+    <div class="reveal-item sc-card p-5">
+      <h3 class="font-bold text-[14px] mb-3">Recent Activity</h3>
+      <ol class="relative border-l border-gray-100 ml-2 space-y-4">
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-lnu ring-4 ring-lnu-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">New proposal: “SOLID Start”</p>
+          <p class="text-[11.5px] text-gray-400">Prof. Aquino · 12 minutes ago</p>
+        </li>
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-gold ring-4 ring-gold-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">Special order attached to “PEACE corners”</p>
+          <p class="text-[11.5px] text-gray-400">CESO Office · 1 hour ago</p>
+        </li>
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">Assessment validated — Brgy. Salvacion Q2</p>
+          <p class="text-[11.5px] text-gray-400">Secretary Salazar · Yesterday</p>
+        </li>
+        <li class="ml-4">
+          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-blue-400 ring-4 ring-blue-50"></span>
+          <p class="text-[13px] font-semibold leading-snug">HANDA hit 95% beneficiary target</p>
+          <p class="text-[11.5px] text-gray-400">System · Yesterday</p>
+        </li>
+      </ol>
+      <button class="btn btn-ghost mt-3 w-full !justify-center text-[12.5px]">View all activity</button>
+    </div>
+  </section>
+
+  <!-- ===================== ACTION CENTER ===================== -->
+  <section class="mt-4">
+    <div class="reveal-item flex items-center justify-between mb-3">
+      <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">
+        Action Center
+        <span class="badge badge-gold">5 waiting on you</span>
+      </h3>
+      <a href="proposals.html" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">Go to approvals →</a>
+    </div>
+
+    <div class="reveal-item grid grid-cols-3 gap-4">
+
+      <!-- Proposals -->
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-bold text-[13.5px] flex items-center gap-2">[[doc]] Proposals</p>
+          <span class="badge badge-yellow">3 pending</span>
+        </div>
+        <ul class="space-y-2.5">
+          <li class="group flex items-start gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition cursor-pointer">
+            <div class="min-w-0 flex-1">
+              <p class="text-[12.5px] font-bold truncate group-hover:text-lnu-800 transition">SOLID Start: Solid Waste Segregation</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Prof. Aquino · ₱42,000 · Aug 14</p>
+            </div>
+            <button onclick="SC.toast('Proposal approved — activity created','success')" class="btn btn-success-soft !px-2.5 !py-1.5 text-[11px] shrink-0">Approve</button>
+            <button onclick="SC.toast('Rejection reason required','warn')" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[11px] shrink-0">Reject</button>
+          </li>
+          <li class="group flex items-start gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition cursor-pointer">
+            <div class="min-w-0 flex-1">
+              <p class="text-[12.5px] font-bold truncate group-hover:text-lnu-800 transition">GULAYAN SA PAARALAN</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Prof. Maglasang · ₱36,500 · Aug 19</p>
+            </div>
+            <button onclick="SC.toast('Proposal approved — activity created','success')" class="btn btn-success-soft !px-2.5 !py-1.5 text-[11px] shrink-0">Approve</button>
+            <button onclick="SC.toast('Rejection reason required','warn')" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[11px] shrink-0">Reject</button>
+          </li>
+          <li class="group flex items-start gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition cursor-pointer">
+            <div class="min-w-0 flex-1">
+              <p class="text-[12.5px] font-bold truncate group-hover:text-lnu-800 transition">SIKAD BUHAY: Bike Safety Clinic</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Prof. Alcoy · ₱24,500 · Aug 22</p>
+            </div>
+            <button onclick="SC.toast('Proposal approved — activity created','success')" class="btn btn-success-soft !px-2.5 !py-1.5 text-[11px] shrink-0">Approve</button>
+            <button onclick="SC.toast('Rejection reason required','warn')" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[11px] shrink-0">Reject</button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Availability -->
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-bold text-[13.5px] flex items-center gap-2">[[clock]] Availability</p>
+          <span class="badge badge-yellow">2 pending</span>
+        </div>
+        <ul class="space-y-2.5">
+          <li class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+            <span class="avatar w-9 h-9 text-[10px]">JB</span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[12.5px] font-bold truncate">Sep 02 · 8:00 AM – 12:00 PM</p>
+              <p class="text-[11px] text-gray-400">Prof. Bautista</p>
+            </div>
+            <button onclick="SC.toast('Availability approved','success')" class="btn btn-success-soft !px-2.5 !py-1.5 text-[11px]">✓</button>
+            <button onclick="SC.toast('Remarks required to reject','warn')" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[11px]">✕</button>
+          </li>
+          <li class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+            <span class="avatar w-9 h-9 text-[10px]">LM</span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[12.5px] font-bold truncate">Sep 04 · 1:00 PM – 5:00 PM</p>
+              <p class="text-[11px] text-gray-400">Prof. Maglasang</p>
+            </div>
+            <button onclick="SC.toast('Availability approved','success')" class="btn btn-success-soft !px-2.5 !py-1.5 text-[11px]">✓</button>
+            <button onclick="SC.toast('Remarks required to reject','warn')" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[11px]">✕</button>
+          </li>
+        </ul>
+        <a href="availability.html" class="btn btn-outline w-full mt-3 !py-2 !justify-center text-[12px]">Review all requests</a>
+      </div>
+
+      <!-- Deadlines -->
+      <div class="sc-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-bold text-[13.5px] flex items-center gap-2">[[calendar]] Upcoming Deadlines</p>
+        </div>
+        <ul class="space-y-2.5">
+          <li class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+            <div class="w-11 shrink-0 text-center rounded-lg bg-red-50 border border-red-100 py-1">
+              <p class="text-[9px] font-black uppercase text-red-500 tracking-wide">Aug</p>
+              <p class="text-[15px] font-extrabold text-red-600 leading-none">30</p>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[12.5px] font-bold truncate">BP Screening & Wellness Talk</p>
+              <p class="text-[11px] text-gray-400">SENIOR CARE · San Rafael</p>
+            </div>
+          </li>
+          <li class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+            <div class="w-11 shrink-0 text-center rounded-lg bg-amber-50 border border-amber-100 py-1">
+              <p class="text-[9px] font-black uppercase text-amber-500 tracking-wide">Sep</p>
+              <p class="text-[15px] font-extrabold text-amber-600 leading-none">02</p>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[12.5px] font-bold truncate">Reading Camp Batch 4</p>
+              <p class="text-[11px] text-gray-400">LITRAWIYA · San Jose</p>
+            </div>
+          </li>
+          <li class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+            <div class="w-11 shrink-0 text-center rounded-lg bg-blue-50 border border-blue-100 py-1">
+              <p class="text-[9px] font-black uppercase text-blue-500 tracking-wide">Sep</p>
+              <p class="text-[15px] font-extrabold text-lnu-700 leading-none">15</p>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[12.5px] font-bold truncate">Q3 Assessment Encoding Cutoff</p>
+              <p class="text-[11px] text-gray-400">All active communities</p>
+            </div>
+          </li>
+        </ul>
+        <a href="calendar.html" class="btn btn-outline w-full mt-3 !py-2 !justify-center text-[12px]">Open calendar</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const GOLD='#F6B800', BLUE='#003599', SKY='#93b4fd', SLATE='#e5e7eb';
+
+  new Chart(chStatus, {
+    type:'doughnut',
+    data:{
+      labels:['Ongoing','Completed','Draft'],
+      datasets:[{ data:[4,1,1], backgroundColor:[BLUE,GOLD,SLATE], borderWidth:3, borderColor:'#fff', hoverOffset:8 }]
+    },
+    options:{ maintainAspectRatio:false, cutout:'68%',
+      plugins:{ legend:{ position:'bottom' } } }
+  });
+
+  new Chart(chBudget, {
+    type:'bar',
+    data:{
+      labels:['LITRAWIYA','HANDA','KABUHIAN','e-LIT','SENIOR CARE'],
+      datasets:[
+        { label:'Planned',  data:[48000,62500,35000,40000,55000], backgroundColor:'#dbe6fe', borderRadius:6, maxBarThickness:20 },
+        { label:'Actual',   data:[31500,58900,33750,14200,21000], backgroundColor:GOLD, borderRadius:6, maxBarThickness:20 }
+      ]
+    },
+    options:{ maintainAspectRatio:false,
+      scales:{ y:{ ticks:{ callback:v=>'₱'+(v/1000)+'k' }, grid:{ drawTicks:false } }, x:{ grid:{ display:false } } },
+      plugins:{ legend:{ display:false } } }
+  });
+
+  new Chart(chReach, {
+    type:'bar',
+    data:{
+      labels:['Brgy. San Jose','Brgy. El Reposo','Brgy. Salvacion','Brgy. Dulag','Brgy. Sagkahan'],
+      datasets:[{ label:'Beneficiaries served', data:[214,171,126,96,74],
+        backgroundColor:(ctx)=>{ const g=ctx.chart.ctx.createLinearGradient(0,0,320,0); g.addColorStop(0,BLUE); g.addColorStop(1,'#2547eb'); return g; },
+        borderRadius:7, maxBarThickness:22 }]
+    },
+    options:{ indexAxis:'y', maintainAspectRatio:false,
+      scales:{ x:{ grid:{ drawTicks:false } }, y:{ grid:{ display:false } } },
+      plugins:{ legend:{ display:false } } }
+  });
+});
+</script>
+</body>
+</html>

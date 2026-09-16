@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Activities · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="activities">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== TOOLBAR ===================== -->
+  <section class="pt-6">
+    <p class="text-[13px] text-gray-400 font-medium mb-3">Semester 1, AY 2026–2027 · 8 recorded activities · 2 upcoming</p>
+    <div class="reveal-item flex flex-wrap items-center gap-3">
+      <div id="actTabs" class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1">
+        <button class="tab on" data-status="All" onclick="setActTab(this,'All')">All <span id="cntAll" class="ml-0.5 text-[11px] opacity-50 font-bold">8</span></button>
+        <button class="tab" data-status="Completed" onclick="setActTab(this,'Completed')">Completed <span id="cntDone" class="ml-0.5 text-[11px] opacity-50 font-bold">6</span></button>
+        <button class="tab" data-status="Upcoming" onclick="setActTab(this,'Upcoming')">Upcoming <span id="cntUp" class="ml-0.5 text-[11px] opacity-50 font-bold">2</span></button>
+      </div>
+
+      <label class="relative ml-auto w-64">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 [&>span]:w-4 [&>span]:h-4">[[search]]</span>
+        <input id="actSearch" oninput="renderActs()" class="input !pl-9 bg-white" placeholder="Search activity, venue, program…">
+      </label>
+
+      <button onclick="SC.toast('Export queued — activities-q3.csv will download shortly','info')" class="btn btn-outline">
+        <span class="[&>span]:w-4 [&>span]:h-4">[[doc]]</span>Export
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================== ACTIVITIES TABLE ===================== -->
+  <section class="reveal-item mt-4">
+    <div class="sc-card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 class="font-bold text-[14px]">Activity Log</h3>
+        <span id="actCount" class="badge badge-gray">Showing 8 of 8</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="sc-table">
+          <thead>
+            <tr><th>Activity</th><th>Program</th><th>Date</th><th>Venue</th><th>Attendees</th><th>Status</th></tr>
+          </thead>
+          <tbody id="actBody"></tbody>
+        </table>
+      </div>
+      <div id="actEmpty" class="hidden px-5 py-12 text-center">
+        <p class="text-[13.5px] font-semibold text-gray-500">No activities match your filters</p>
+        <p class="text-[12px] text-gray-400 mt-1">Try a different keyword or status tab.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</main>
+
+<!-- ===================== ACTIVITY DETAIL MODAL ===================== -->
+<div x-data="{open:false}" @open-activity.window="open=true" @close-activity.window="open=false">
+  <div x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+    <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="window.dispatchEvent(new CustomEvent('close-activity'))"></div>
+    <div class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
+      <div id="actBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+const D = window.DATA;
+const REG = { 1:128, 2:112, 3:118, 4:168, 5:160, 6:60, 7:96, 8:132 };
+const CAP = { 3:140, 7:120 };
+const TEAMS = {
+  'EXT-2026-001': [D.faculty[0], D.faculty[1]],
+  'EXT-2026-002': [D.faculty[2], D.faculty[6]],
+  'EXT-2026-003': [D.faculty[3]],
+  'EXT-2026-004': [D.faculty[6], D.faculty[1]],
+  'EXT-2026-005': [D.faculty[5]]
+};
+
+function initialsOf(n){
+  const p = n.replace(/^(Prof\.|Dr\.)\s*/,'').replace(/\s+(Jr\.|Sr\.)$/,'').trim().split(/\s+/);
+  return ((p[0][0]||'') + (p[p.length-1][0]||'')).toUpperCase();
+}
+function trunc(s,n){ return s.length>n ? s.slice(0,n-1)+'…' : s; }
+
+let ACTS = D.activities.map(a => ({
+  ...a,
+  reg: REG[a.id],
+  cap: CAP[a.id] || null,
+  team: TEAMS[a.program.code] || [a.program.lead]
+}));
+
+/* ---------- Tabs + filters ---------- */
+let actStatus = 'All';
+function setActTab(btn, v){
+  [...btn.parentNode.children].forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  actStatus = v;
+  renderActs();
+}
+
+function renderActs(){
+  const q = document.getElementById('actSearch').value.trim().toLowerCase();
+  const rows = ACTS.filter(a =>
+    (actStatus==='All' || a.status===actStatus) &&
+    (a.title+' '+a.venue+' '+a.program.title+' '+a.program.code).toLowerCase().includes(q)
+  );
+
+  document.getElementById('actBody').innerHTML = rows.map(a => `
+    <tr class="cursor-pointer" onclick="openAct(${a.id})">
+      <td><p class="font-semibold text-[13px] text-charcoal">${trunc(a.title,46)}</p></td>
+      <td>
+        <div class="flex flex-col items-start gap-1">
+          <span class="badge badge-gray">${a.program.code}</span>
+          <p class="text-[11.5px] text-gray-500 truncate max-w-[220px]">${trunc(a.program.title,40)}</p>
+        </div>
+      </td>
+      <td class="whitespace-nowrap text-[12.5px]">${a.date}</td>
+      <td>
+        <div class="flex items-center gap-1.5 text-[12.5px] text-gray-600 min-w-0">
+          ${SC.svg('pin','w-4 h-4 text-gray-400 shrink-0')}
+          <span class="truncate max-w-[170px]">${a.venue}</span>
+        </div>
+      </td>
+      <td>${a.attendees!=null
+            ? `<span class="font-extrabold text-[13px]">${a.attendees}</span>`
+            : `<span class="text-gray-300 font-semibold">—</span>`}</td>
+      <td><span class="badge ${a.status==='Completed'?'badge-green':'badge-blue'}">${a.status}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('actCount').textContent = `Showing ${rows.length} of ${ACTS.length}`;
+  document.getElementById('cntAll').textContent = ACTS.length;
+  document.getElementById('cntDone').textContent = ACTS.filter(x=>x.status==='Completed').length;
+  document.getElementById('cntUp').textContent = ACTS.filter(x=>x.status==='Upcoming').length;
+  document.getElementById('actEmpty').classList.toggle('hidden', rows.length>0);
+}
+renderActs();
+
+/* ---------- Detail modal ---------- */
+function openAct(id){
+  const a = ACTS.find(x => x.id===id);
+  const upcoming = a.status==='Upcoming';
+  const rate = SC.pct(a.attendees||0, a.reg);
+
+  document.getElementById('actBody').innerHTML = `
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="min-w-0">
+        <h3 class="font-extrabold text-[16px] tracking-tight leading-snug">${a.title}</h3>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[12px] text-gray-500">
+          <span class="inline-flex items-center gap-1.5">${SC.svg('folder','w-4 h-4 text-gray-400')}<span class="badge badge-gray">${a.program.code}</span></span>
+          <span class="inline-flex items-center gap-1.5 min-w-0">${SC.svg('pin','w-4 h-4 text-gray-400')}<span class="truncate max-w-[180px]">${a.venue}</span></span>
+          <span class="inline-flex items-center gap-1.5">${SC.svg('calendar','w-4 h-4 text-gray-400')}${a.date}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span class="badge ${upcoming?'badge-blue':'badge-green'}">${a.status}</span>
+        <button onclick="closeAct()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition">✕</button>
+      </div>
+    </div>
+
+    <div class="p-4 rounded-xl bg-gray-50/70 border border-gray-100 mb-4">
+      ${upcoming ? `
+        <div class="flex items-center justify-between mb-1.5">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Registration Progress</p>
+          <p class="text-[18px] font-extrabold leading-none">${a.reg}<span class="text-[12px] text-gray-400 font-semibold"> / ${a.cap} slots</span></p>
+        </div>
+        <div class="progress"><span class="bg-gold" style="width:${Math.round(a.reg/a.cap*100)}%"></span></div>
+        <p class="text-[11px] text-gray-400 mt-2">Session opens on ${a.date} · attendance sheet to be recorded on-site.</p>
+      ` : `
+        <div class="flex items-center justify-between mb-1.5">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Participation Rate</p>
+          <p class="text-[18px] font-extrabold leading-none">${rate}%</p>
+        </div>
+        <div class="progress"><span class="${rate>=75?'bg-lnu':'bg-gold'}" style="width:${rate}%"></span></div>
+        <p class="text-[11px] text-gray-400 mt-2"><span class="font-bold text-charcoal">${a.attendees}</span> attended · ${a.reg} registered</p>
+      `}
+    </div>
+
+    <div class="mb-4">
+      <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Faculty Assigned</p>
+      <div class="flex items-center gap-3">
+        <div class="flex -space-x-2">
+          ${a.team.map(m => `<span class="avatar w-8 h-8 text-[10px] ring-2 ring-white" title="${m.name}">${initialsOf(m.name)}</span>`).join('')}
+        </div>
+        <p class="text-[12px] text-gray-500 truncate">${a.team.map(m => m.name.replace(/^(Prof\.|Dr\.)\s*/,'')).join(', ')}</p>
+      </div>
+    </div>
+
+    <div>
+      <label class="label">Notes</label>
+      <textarea class="input h-20 resize-none" placeholder="Add post-activity notes, incidents, or follow-ups…"></textarea>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-gray-100">
+      <button onclick="closeAct()" class="btn btn-ghost">Close</button>
+      ${upcoming ? `<button onclick="markCompleted(${a.id})" class="btn btn-success-soft">Mark Completed</button>` : ''}
+      <button onclick="SC.toast('Attendance sheet opened — ${a.reg} registrants loaded','info')" class="btn btn-primary">Record Attendance</button>
+    </div>`;
+
+  window.dispatchEvent(new CustomEvent('open-activity'));
+}
+function closeAct(){ window.dispatchEvent(new CustomEvent('close-activity')); }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeAct(); });
+
+function markCompleted(id){
+  const a = ACTS.find(x => x.id===id);
+  a.status = 'Completed';
+  renderActs();
+  closeAct();
+  SC.toast(`“${a.title}” marked completed — encode assessment within 5 days`,'success');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,548 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proposals Â· SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="proposals">
+
+<script> const R = (new URLSearchParams(location.search).get('role')) || document.body.dataset.role || 'admin'; document.body.dataset.role = R; </script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== ADMIN VARIANT ===================== -->
+  <div data-variant="admin">
+
+    <section class="pt-6 reveal-item">
+      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 Â· Approval queue Â· synced 5 min ago</p>
+    </section>
+
+    <!-- KPI ROW -->
+    <section class="mt-3 grid grid-cols-4 gap-4">
+      <div class="reveal-item sc-card sc-card-hover p-5 !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-gold-100 text-gold-700 flex items-center justify-center">[[clock]]</span>
+          <span class="badge badge-red flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500 pulse-dot"></span>action needed</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-gold-700 flex items-center gap-2"><span data-count="3">0</span><span class="w-2.5 h-2.5 rounded-full bg-gold-500 pulse-dot inline-block"></span></p>
+        <p class="text-[12.5px] text-gray-600 font-medium mt-1.5">Pending Review</p>
+      </div>
+
+      <div class="reveal-item sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[check]]</span>
+          <span class="badge badge-green">this cycle</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="1">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Approved</p>
+      </div>
+
+      <div class="reveal-item sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center">[[doc]]</span>
+          <span class="badge badge-gray">with remarks</span>
+        </div>
+        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="1">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Rejected</p>
+      </div>
+
+      <div class="reveal-item sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[wallet]]</span>
+          <span class="badge badge-blue">5 proposals</span>
+        </div>
+        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">â‚±<span data-count="232000">0</span></p>
+        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Total Requested</p>
+      </div>
+    </section>
+
+    <!-- TOOLBAR: filter tabs + search -->
+    <section class="reveal-item mt-5 flex flex-wrap items-center justify-between gap-3">
+      <div id="propTabs" class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
+        <button class="tab on" data-f="all">All <span class="text-gray-400 font-medium">(5)</span></button>
+        <button class="tab" data-f="pending">Pending <span class="text-gray-400 font-medium">(3)</span></button>
+        <button class="tab" data-f="approved">Approved <span class="text-gray-400 font-medium">(1)</span></button>
+        <button class="tab" data-f="rejected">Rejected <span class="text-gray-400 font-medium">(1)</span></button>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="relative">
+          <span class="js-icon absolute left-3 top-1/2 -translate-y-1/2" data-icon="search" data-cls="!w-4 !h-4 text-gray-400"></span>
+          <input id="propQ" class="input !w-64 !pl-9 !py-2 bg-white" placeholder="Search title, proposer, communityâ€¦">
+        </label>
+        <button onclick="SC.toast('proposals-aug-2026.csv exported','success')" class="btn btn-outline !py-2">Export CSV</button>
+      </div>
+    </section>
+
+    <!-- TABLE -->
+    <section class="reveal-item mt-4">
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 class="font-bold text-[14px]">Proposal Queue</h3>
+          <span id="propCount" class="badge badge-gray">5 shown</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="sc-table">
+            <thead>
+              <tr>
+                <th>Proposal</th>
+                <th>Proposer</th>
+                <th>Program Â· Community</th>
+                <th>Proposed Dates</th>
+                <th class="!text-right">Amount</th>
+                <th>Submitted</th>
+                <th>Special Order</th>
+                <th>Status</th>
+                <th class="!text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="propTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPROVE MODAL -->
+    <div x-data="{open:false, so:false}" @open-approve.window="open=true; so=false; window.__soAttached=false"
+         x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+      <div class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="font-extrabold text-[16px] tracking-tight">Approve Proposal</h3>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+        </div>
+
+        <div id="apSum" class="rounded-xl border border-gray-100 bg-gray-50 p-4"></div>
+
+        <div id="apRange" class="mt-3"></div>
+
+        <div class="mt-3 flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50 p-3.5">
+          <span class="js-icon shrink-0 mt-0.5" data-icon="clipboard" data-cls="!w-[18px] !h-[18px] text-blue-600"></span>
+          <p class="text-[12.5px] text-blue-800 leading-snug font-medium">On approval, an Activity draft is auto-created under the target program (copies title &amp; proposed dates) and the proposal enters the assessment stage.</p>
+        </div>
+
+        <p class="label mt-4">Special Order Document <span class="text-gray-400 font-normal">(if issued by the University President)</span></p>
+        <div @click="so=true; window.__soAttached=true; SC.toast('Special order document attached','success')"
+             :class="so ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-lnu-300 hover:bg-lnu-50/40'"
+             class="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition select-none">
+          <div x-show="!so" class="flex flex-col items-center gap-1.5">
+            <span class="js-icon" data-icon="doc" data-cls="!w-7 !h-7 text-gray-300"></span>
+            <p class="text-[13px] font-semibold text-gray-500">Click to attach Special Order</p>
+            <p class="text-[11px] text-gray-400">PDF or scanned copy Â· max 10 MB</p>
+          </div>
+          <div x-show="so" x-cloak class="flex items-center justify-center gap-2.5">
+            <span class="js-icon shrink-0" data-icon="check" data-cls="!w-5 !h-5 text-emerald-600"></span>
+            <div class="text-left">
+              <p class="text-[13px] font-bold text-emerald-700">special-order-2026-091.pdf</p>
+              <p class="text-[11px] text-emerald-600/80">Attached Â· click to replace</p>
+            </div>
+          </div>
+        </div>
+        <p class="mt-2 text-[11.5px] text-gray-400 flex items-center gap-1.5" x-show="!so">
+          <span class="js-icon" data-icon="doc" data-cls="!w-3.5 !h-3.5"></span>
+          No Special Order attached â€” approval can proceed without it; its absence is shown on the review screen.
+        </p>
+
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button @click="open=false" class="btn btn-outline">Cancel</button>
+          <button @click="open=false; window.confirmApprove()" class="btn btn-primary">Confirm Approval</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REJECT MODAL -->
+    <div x-data="{open:false, r:''}" @open-reject.window="open=true; r=''"
+         x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+      <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
+            <span class="js-icon" data-icon="doc" data-cls="!w-5 !h-5 text-red-500"></span> Reject Proposal
+          </h3>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+        </div>
+        <p id="rjTitle" class="text-[13px] text-gray-500 -mt-2 mb-4"></p>
+
+        <label class="label">Remarks to Proponent <span class="text-red-500">*</span></label>
+        <textarea x-model="r" rows="4" class="input resize-none" placeholder="State the reason clearly â€” e.g., budget ceiling exceeded, incomplete attachments, misaligned objectivesâ€¦"></textarea>
+        <p class="mt-1.5 text-[11.5px] font-medium" :class="r.trim().length >= 10 ? 'text-emerald-600' : 'text-gray-400'">
+          <span x-text="r.trim().length"></span> / 10 characters minimum
+        </p>
+
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button @click="open=false" class="btn btn-outline">Cancel</button>
+          <button :disabled="r.trim().length < 10" @click="open=false; window.confirmReject(r)"
+                  :class="r.trim().length < 10 ? 'btn btn-danger-soft opacity-50 cursor-not-allowed' : 'btn btn-danger-soft'">Reject Proposal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETAIL MODAL -->
+    <div x-data="{open:false}" @open-detail.window="open=true"
+         x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+      <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
+      <div class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Extension Proposal</p>
+            <h3 id="dtTitle" class="font-extrabold text-[15.5px] tracking-tight leading-snug"></h3>
+          </div>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none shrink-0">Ã—</button>
+        </div>
+        <div id="dtMeta" class="grid grid-cols-2 gap-y-2.5 gap-x-6 rounded-xl border border-gray-100 bg-gray-50 p-4 text-[12.5px]"></div>
+        <div id="dtExtra" class="mt-3"></div>
+      </div>
+    </div>
+
+  </div><!-- /admin variant -->
+
+  <!-- ===================== FACULTY VARIANT ===================== -->
+  <div data-variant="faculty" style="display:none">
+
+    <section class="pt-6 reveal-item flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 Â· Semester 1, AY 2026â€“2027</p>
+        <p class="text-[14px] text-gray-500 mt-1">Track the decision status of your extension proposals.</p>
+      </div>
+      <a href="proposal-new.html?role=faculty" class="btn btn-primary">[[doc]] New Proposal</a>
+    </section>
+
+    <section class="mt-5 grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+      <!-- Approved card: PEACE corners (seed proposal 3, SO attached, activity auto-created) -->
+      <div class="reveal-item sc-card sc-card-hover p-5 flex flex-col">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-bold text-[14px] leading-snug">PEACE corners: Youth Conflict Resolution Workshops</p>
+            <p class="text-[11.5px] text-gray-400 mt-0.5">Brgy. Salvacion Â· SENIOR CARE Â· Submitted Aug 05, 2026</p>
+          </div>
+          <span class="badge badge-green shrink-0">Approved</span>
+        </div>
+        <p class="mt-2 text-[17px] font-extrabold tracking-tight text-lnu-800">â‚±51,000</p>
+        <p class="mt-1.5 text-[11px] font-semibold text-gray-400">Proposed Sep 01 â†’ Oct 30, 2026 Â· within program range âœ“</p>
+
+        <div class="mt-4 pt-4 border-t border-gray-100 flex-1 space-y-2.5">
+          <div class="flex items-center gap-3">
+            <span class="step-dot done !w-7 !h-7 !text-[10px]">âœ“</span>
+            <div><p class="text-[12.5px] font-bold leading-none">Submitted</p><p class="text-[11px] text-gray-400 mt-0.5">Aug 05, 2026 Â· CESO frontdesk</p></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="step-dot done !w-7 !h-7 !text-[10px]">âœ“</span>
+            <div><p class="text-[12.5px] font-bold leading-none">Approved + Special Order</p><p class="text-[11px] text-gray-400 mt-0.5">Aug 08, 2026 Â· Dr. PeÃ±aranda Â· SO attached</p></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="step-dot done !w-7 !h-7 !text-[10px] !bg-emerald-500 !text-white">âœ“</span>
+            <div><p class="text-[12.5px] font-bold leading-none text-emerald-700">Activity auto-created</p><p class="text-[11px] text-gray-400 mt-0.5">Workshop 1 Â· Sep 12 Â· draft under SENIOR CARE</p></div>
+          </div>
+        </div>
+        <a href="program-detail.html?role=faculty&program=EXT-2026-004" class="btn btn-outline w-full mt-3 !py-2 !justify-center text-[12px]">Open the program hub</a>
+      </div>
+
+      <!-- Pending card: GULAYAN (seed proposal 2) -->
+      <div class="reveal-item sc-card sc-card-hover p-5 flex flex-col !border-gold-200">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-bold text-[14px] leading-snug">GULAYAN SA PAARALAN: School Vegetable Gardening</p>
+            <p class="text-[11.5px] text-gray-400 mt-0.5">Brgy. San Jose Â· LITRAWIYA Â· Submitted Aug 19, 2026</p>
+          </div>
+          <span class="badge badge-yellow shrink-0 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-gold-500 pulse-dot"></span>Pending</span>
+        </div>
+        <p class="mt-2 text-[17px] font-extrabold tracking-tight text-lnu-800">â‚±36,500</p>
+        <p class="mt-1.5 text-[11px] font-semibold text-gray-400">Proposed Sep 10 â†’ Oct 15, 2026 Â· within program range âœ“</p>
+
+        <div class="mt-4 pt-4 border-t border-gray-100 flex-1">
+          <div class="flex items-center gap-3">
+            <span class="step-dot done !w-7 !h-7 !text-[10px]">âœ“</span>
+            <div><p class="text-[12.5px] font-bold leading-none">Submitted</p><p class="text-[11px] text-gray-400 mt-0.5">Aug 19, 2026 Â· CESO frontdesk</p></div>
+          </div>
+          <div class="ml-[13px] h-5 w-[2px] bg-gold-300 my-0.5"></div>
+          <div class="flex items-center gap-3">
+            <span class="step-dot on !w-7 !h-7 !text-[10px]">2</span>
+            <div><p class="text-[12.5px] font-bold leading-none">Under Review</p><p class="text-[11px] text-gray-400 mt-0.5">Since Aug 22 Â· Director's Office</p></div>
+          </div>
+          <div class="ml-[13px] h-5 w-[2px] bg-gray-200 my-0.5"></div>
+          <div class="flex items-center gap-3 opacity-50">
+            <span class="step-dot !w-7 !h-7 !text-[10px]">3</span>
+            <div><p class="text-[12.5px] font-bold leading-none">Decision</p><p class="text-[11px] text-gray-400 mt-0.5">Awaiting review</p></div>
+          </div>
+        </div>
+        <p class="mt-3 text-[11px] text-gray-400 flex items-center gap-1.5"><span class="js-icon" data-icon="clock" data-cls="!w-3.5 !h-3.5"></span> Typical decision time: 5â€“7 working days</p>
+      </div>
+
+      <!-- Rejected card: TESDA-Ready (seed proposal 4) -->
+      <div class="reveal-item sc-card sc-card-hover p-5 flex flex-col">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-bold text-[14px] leading-snug">TESDA-Ready: Bread &amp; Pastry NC II Pre-Training</p>
+            <p class="text-[11.5px] text-gray-400 mt-0.5">Brgy. Sagkahan Â· e-LITERACY Â· Submitted Jul 28, 2026</p>
+          </div>
+          <span class="badge badge-red shrink-0">Rejected</span>
+        </div>
+        <p class="mt-2 text-[17px] font-extrabold tracking-tight text-lnu-800">â‚±78,000</p>
+        <p class="mt-1.5 text-[11px] font-semibold text-gray-400">Proposed Oct 05 â†’ Nov 20, 2026</p>
+
+        <div class="mt-4 pt-4 border-t border-gray-100 flex-1">
+          <div class="flex items-center gap-3">
+            <span class="step-dot done !w-7 !h-7 !text-[10px]">âœ“</span>
+            <div><p class="text-[12.5px] font-bold leading-none">Submitted</p><p class="text-[11px] text-gray-400 mt-0.5">Jul 28, 2026 Â· CESO frontdesk</p></div>
+          </div>
+          <div class="ml-[13px] h-5 w-[2px] bg-gold-300 my-0.5"></div>
+          <div class="flex items-center gap-3">
+            <span class="step-dot done !w-7 !h-7 !text-[10px]">âœ“</span>
+            <div><p class="text-[12.5px] font-bold leading-none">Under Review</p><p class="text-[11px] text-gray-400 mt-0.5">Jul 30, 2026 Â· Director's Office</p></div>
+          </div>
+          <div class="ml-[13px] h-5 w-[2px] bg-red-200 my-0.5"></div>
+          <div class="flex items-center gap-3">
+            <span class="step-dot !w-7 !h-7 !text-[10px] !bg-red-500 !text-white">âœ•</span>
+            <div><p class="text-[12.5px] font-bold leading-none text-red-600">Decision</p><p class="text-[11px] text-gray-400 mt-0.5">Aug 02, 2026 Â· Returned with remarks</p></div>
+          </div>
+        </div>
+
+        <div class="mt-3 rounded-xl border border-red-100 bg-red-50 p-3.5">
+          <p class="text-[11px] font-bold uppercase tracking-wide text-red-500 mb-1">Director's remarks</p>
+          <p class="text-[12.5px] text-red-700 italic leading-snug">â€œBudget exceeds FY allocation ceiling; revise costing or split into two phases.â€</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /faculty variant -->
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype Â· Community Extension Services Office Â· Leyte Normal University</footer>
+</main>
+
+<script>
+(() => {
+  const role = document.body.dataset.role || 'admin';
+  const vrole = ['admin','faculty'].includes(role) ? role : 'admin';
+  document.querySelectorAll('[data-variant]').forEach(el => {
+    el.style.display = el.dataset.variant === vrole ? '' : 'none';
+  });
+})();
+</script>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+let ACTIVE = null;
+let PFILTER = 'all';
+let PQ = '';
+
+const statusBadge = s => s === 'Approved' ? 'badge-green' : s === 'Pending' ? 'badge-yellow' : 'badge-red';
+
+/* ---------- Program-range validation (8.8: hard constraint) ---------- */
+const dparse = s => { const d = new Date(String(s || '').replace(/(\d\d), (\d{4})/, '$1, $2')); return isNaN(d) ? null : d; };
+window.proposalsOutsideRange = p => {
+  if (!p.program || !p.proposedStart || !p.proposedEnd) return false;
+  const s = dparse(p.proposedStart), e = dparse(p.proposedEnd), ps = dparse(p.program.start), pe = dparse(p.program.end);
+  if (!s || !e || !ps || !pe) return false;
+  return s < ps || e > pe;
+};
+
+function transitionLog(p) {
+  const steps = [
+    { ok: true,  label: 'Submitted',           meta: p.submitted + ' Â· CESO frontdesk' },
+    { ok: true,  label: 'Under Review',        meta: 'Director\u2019s Office Â· pending decision' }
+  ];
+  if (p.status === 'Approved') {
+    steps.push({ ok: true, good: true, label: 'Decision â€” Approved', meta: (p.approvedAt || 'â€”') + ' by ' + (p.approvedBy || 'Director, CESO') });
+    steps.push({ ok: true, good: true, label: 'Activity auto-created', meta: 'Draft activity "' + (p.program ? p.program.title.split(':')[0] : '') + '" Â· copies title & proposed dates' });
+    steps.push({ ok: true, label: 'Assessment stage', meta: 'Assessment submissions route to the Secretary for validation' });
+  } else if (p.status === 'Rejected') {
+    steps.push({ ok: false, bad: true, label: 'Decision â€” Rejected', meta: (p.rejectedAt || 'â€”') + ' by ' + (p.rejectedBy || 'Director, CESO') });
+  } else {
+    steps.push({ pending: true, label: 'Decision', meta: 'Awaiting review' });
+  }
+  const dot = (s, i) => s.bad ? '<span class="step-dot !w-7 !h-7 !text-[10px] !bg-red-500 !text-white">âœ•</span>'
+    : s.good ? '<span class="step-dot done !w-7 !h-7 !text-[10px] !bg-emerald-500 !text-white">âœ“</span>'
+    : s.pending ? `<span class="step-dot !w-7 !h-7 !text-[10px]">${steps.length}</span>`
+    : '<span class="step-dot done !w-7 !h-7 !text-[10px]">âœ“</span>';
+  return steps.map((s, i) => `
+    <div class="flex items-center gap-3">
+      ${dot(s, i)}
+      <div><p class="text-[12.5px] font-bold leading-none ${s.bad ? 'text-red-600' : s.good ? 'text-emerald-700' : ''}">${s.label}</p>
+      <p class="text-[11px] text-gray-400 mt-0.5">${s.meta}</p></div>
+    </div>`).join('<div class="ml-[13px] h-5 w-[2px] bg-gold-300 my-0.5"></div>');
+}
+
+function filteredProposals() {
+  const q = PQ.trim().toLowerCase();
+  return DATA.proposals.filter(p =>
+    (PFILTER === 'all' || p.status.toLowerCase() === PFILTER) &&
+    (!q || (p.title + ' ' + p.faculty.name + ' ' + p.community.name).toLowerCase().includes(q))
+  );
+}
+
+function renderProposals() {
+  const list = filteredProposals();
+  const tb = document.getElementById('propTbody');
+  document.getElementById('propCount').textContent = list.length + ' shown';
+  if (!list.length) {
+    tb.innerHTML = '<tr><td colspan="8" class="!py-12 text-center text-gray-400 text-[13px]">No proposals match your filters.</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map(p => {
+    const outside = p.rangeViolation || window.proposalsOutsideRange(p);
+    return `
+    <tr class="cursor-pointer" onclick="openDetail(${p.id})">
+      <td class="max-w-[280px]">
+        <p class="font-bold text-[13px] leading-snug">${p.title}</p>
+        <span class="mt-1 inline-flex items-center gap-1 text-gray-400">${SC.svg('doc','!w-3.5 !h-3.5')}<span class="text-[11.5px] font-semibold">${p.attachments.length} attachment${p.attachments.length > 1 ? 's' : ''}</span></span>
+      </td>
+      <td class="whitespace-nowrap text-[12.5px]">${p.faculty.name}</td>
+      <td class="text-[12.5px]">
+        <span class="font-semibold">${p.program ? p.program.title.split(':')[0] : 'â€”'}</span>
+        <span class="block text-[11px] text-gray-400">${p.community.name}</span>
+      </td>
+      <td class="whitespace-nowrap text-[12.5px]">${p.proposedStart || 'â€”'}<span class="block text-[11px] text-gray-400">â†’ ${p.proposedEnd || 'â€”'}</span></td>
+      <td class="whitespace-nowrap !text-right font-bold text-[13px]">${SC.money(p.amount)}</td>
+      <td class="whitespace-nowrap text-[12.5px] text-gray-500">${p.submitted}</td>
+      <td>${p.specialOrder ? '<span class="badge badge-gold font-extrabold">SO</span>' : '<span class="text-gray-300">â€”</span>'}</td>
+      <td><span class="badge ${statusBadge(p.status)}">${p.status}</span>${p.status === 'Pending' && (p.rangeViolation || window.proposalsOutsideRange(p)) ? '<span class="conflict-marker ml-1">âš  outside range</span>' : ''}</td>
+      <td class="!text-right">
+        ${p.status === 'Pending'
+          ? `<div class="flex justify-end gap-1.5">
+               <button onclick="event.stopPropagation();openApprove(${p.id})" class="btn btn-success-soft !px-2.5 !py-1.5 text-[11px]">Approve</button>
+               <button onclick="event.stopPropagation();openReject(${p.id})" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[11px]">Reject</button>
+             </div>`
+          : `<div class="row-actions flex justify-end">
+               <button onclick="event.stopPropagation();openDetail(${p.id})" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px]">View</button>
+             </div>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openDetail(id) {
+  const p = DATA.proposals.find(x => x.id === id); if (!p) return;
+  ACTIVE = p;
+  document.getElementById('dtTitle').textContent = p.title;
+  document.getElementById('dtMeta').innerHTML = `
+    <span class="text-gray-400">Proposer</span><span class="font-semibold text-right">${p.faculty.name} Â· ${p.faculty.dept}</span>
+    <span class="text-gray-400">Target program</span><span class="font-semibold text-right">${p.program ? p.program.title : 'â€”'}</span>
+    <span class="text-gray-400">Community</span><span class="font-semibold text-right">${p.community.name}, ${p.community.municipality}</span>
+    <span class="text-gray-400">Proposed dates</span><span class="font-semibold text-right">${p.proposedStart || 'â€”'} â†’ ${p.proposedEnd || 'â€”'}</span>
+    <span class="text-gray-400">Program range</span><span class="font-semibold text-right">${p.program ? p.program.start + ' â†’ ' + p.program.end : 'â€”'}</span>
+    <span class="text-gray-400">Requested budget</span><span class="font-extrabold text-lnu-800 text-right">${SC.money(p.amount)}</span>
+    <span class="text-gray-400">Submitted</span><span class="font-semibold text-right">${p.submitted}</span>
+    <span class="text-gray-400">Status</span><span class="text-right"><span class="badge ${statusBadge(p.status)}">${p.status}</span></span>
+    <span class="text-gray-400">Special order</span><span class="font-semibold text-right">${p.specialOrder ? 'Issued' : 'â€”'}</span>
+    ${p.createdActivityId ? `<span class="text-gray-400">Created activity</span><span class="font-semibold text-right">Activity #${p.createdActivityId} (auto, draft)</span>` : ''}`;
+  let extra = `
+    <p class="label mt-4">Transition Log</p>
+    <div class="rounded-xl border border-gray-100 bg-gray-50 p-4">${transitionLog(p)}</div>
+    <p class="label mt-4">Attachments</p>
+    <ul class="space-y-1.5">${p.attachments.map(a => `
+      <li class="flex items-center gap-2 rounded-lg border border-gray-100 px-3 py-2 text-[12.5px] font-medium text-gray-600">
+        ${SC.svg('doc','!w-4 !h-4 text-lnu-600')} ${a}
+      </li>`).join('')}</ul>`;
+  if (p.status === 'Pending' && window.proposalsOutsideRange(p)) {
+    extra += `<div class="mt-3 rounded-xl border border-red-200 bg-red-50 p-3.5">
+      <p class="text-[11px] font-bold uppercase tracking-wide text-red-500 mb-1">Range violation (hard constraint 8.8)</p>
+      <p class="text-[12.5px] text-red-700 leading-snug">Proposed dates fall outside the target program's planned range (${p.program.start} â€“ ${p.program.end}). <b>Approval is blocked</b> until the proponent revises the dates.</p></div>`;
+  }
+  if (p.status === 'Rejected' && p.rejectionReason) {
+    extra += `<div class="mt-3 rounded-xl border border-red-100 bg-red-50 p-3.5">
+      <p class="text-[11px] font-bold uppercase tracking-wide text-red-500 mb-1">Rejection remarks</p>
+      <p class="text-[12.5px] text-red-700 italic leading-snug">â€œ${p.rejectionReason}â€</p></div>`;
+  }
+  document.getElementById('dtExtra').innerHTML = extra;
+  window.dispatchEvent(new CustomEvent('open-detail'));
+}
+
+function openApprove(id) {
+  const p = DATA.proposals.find(x => x.id === id); if (!p) return;
+  ACTIVE = p;
+  const outside = window.proposalsOutsideRange(p);
+  window.__rangeBlocked = outside;
+  const rangeRow = p.program ? `
+      <span class="text-gray-400">Target program</span><span class="font-semibold text-right">${p.program.title.split(':')[0]} <span class="block text-[11px] text-gray-400 font-normal">${p.program.start} â†’ ${p.program.end}</span></span>
+      <span class="text-gray-400">Proposed dates</span><span class="font-semibold text-right">${p.proposedStart} â†’ ${p.proposedEnd}</span>` : '';
+  document.getElementById('apSum').innerHTML = `
+    <p class="font-bold text-[13.5px] leading-snug">${p.title}</p>
+    <div class="mt-2.5 grid grid-cols-2 gap-y-1.5 gap-x-6 text-[12.5px]">
+      <span class="text-gray-400">Proposer</span><span class="font-semibold text-right">${p.faculty.name}</span>
+      ${rangeRow}
+      <span class="text-gray-400">Requested budget</span><span class="font-extrabold text-lnu-800 text-right">${SC.money(p.amount)}</span>
+    </div>`;
+  // Range validation notice â€” approval is BLOCKED when outside the program range
+  const apRange = document.getElementById('apRange');
+  if (outside) {
+    apRange.innerHTML = `<div class="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5">
+      <span class="js-icon shrink-0 mt-0.5" data-icon="doc" data-cls="!w-[18px] !h-[18px] text-red-500"></span>
+      <p class="text-[12.5px] text-red-700 leading-snug font-medium"><b>Approval blocked (8.8):</b> proposed dates fall outside the target program's planned range (${p.program.start} â€“ ${p.program.end}). Return the proposal to the proponent for date revision before approving.</p></div>`;
+  } else {
+    apRange.innerHTML = `<div class="flex items-start gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50 p-3.5">
+      <span class="js-icon shrink-0 mt-0.5" data-icon="check" data-cls="!w-[18px] !h-[18px] text-emerald-600"></span>
+      <p class="text-[12.5px] text-emerald-700 leading-snug font-medium">Proposed dates are within the target program's range â€” validation passed.</p></div>`;
+  }
+  window.dispatchEvent(new CustomEvent('open-approve'));
+}
+
+function openReject(id) {
+  const p = DATA.proposals.find(x => x.id === id); if (!p) return;
+  ACTIVE = p;
+  document.getElementById('rjTitle').textContent = p.title;
+  window.dispatchEvent(new CustomEvent('open-reject'));
+}
+
+window.confirmApprove = () => {
+  if (!ACTIVE) return;
+  // HARD CONSTRAINT (8.8): approval is blocked when proposed dates fall outside the program range
+  if (window.__rangeBlocked) {
+    SC.toast('Approval blocked â€” proposed dates fall outside the target program\u2019s range', 'error');
+    return;
+  }
+  ACTIVE.status = 'Approved';
+  ACTIVE.approvedBy = DATA.users.admin.name;
+  ACTIVE.approvedAt = 'Aug 24, 2026';
+  if (window.__soAttached) ACTIVE.specialOrder = true;
+  // AUTO-CREATE the linked Activity (5.12): draft status, copies title & proposed dates
+  if (ACTIVE.program) {
+    const act = {
+      id: Date.now() % 100000,
+      program: ACTIVE.program,
+      title: ACTIVE.title,
+      date: ACTIVE.proposedStart,
+      start: '9:00 AM', end: '4:00 PM',
+      venue: ACTIVE.community.name + ' venue (TBA)',
+      status: 'Draft', attendees: null
+    };
+    DATA.activities.push(act);
+    ACTIVE.createdActivityId = act.id;
+  }
+  SC.toast('Proposal approved â€” Activity draft auto-created under ' + (ACTIVE.program ? ACTIVE.program.title.split(':')[0] : 'the program'), 'success');
+  renderProposals();
+};
+
+window.confirmReject = (remarks) => {
+  if (!ACTIVE || (remarks || '').trim().length < 10) return;
+  ACTIVE.status = 'Rejected';
+  ACTIVE.rejectionReason = remarks.trim();
+  SC.toast('Proposal rejected with remarks', 'warn');
+  renderProposals();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-icon').forEach(el => { el.innerHTML = SC.svg(el.dataset.icon, el.dataset.cls || ''); });
+
+  document.querySelectorAll('#propTabs .tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      PFILTER = btn.dataset.f;
+      document.querySelectorAll('#propTabs .tab').forEach(b => b.classList.toggle('on', b === btn));
+      renderProposals();
+    });
+  });
+  document.getElementById('propQ').addEventListener('input', e => { PQ = e.target.value; renderProposals(); });
+
+  renderProposals();
+});
+</script>
+</body>
+</html>

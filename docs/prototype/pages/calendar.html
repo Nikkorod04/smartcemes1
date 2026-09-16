@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="calendar">
+
+<script>const R=(new URLSearchParams(location.search).get('role'))||document.body.dataset.role||'admin';document.body.dataset.role=R;</script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 id="calTitle" class="text-[20px] font-extrabold tracking-tight leading-tight">August 2026</h2>
+        <p id="calCaption" class="text-[12.5px] text-gray-400 font-medium mt-0.5"></p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center gap-4 text-[11.5px] text-gray-500 font-medium">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu-600"></span>Activity</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold-500"></span>Accepted availability</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full border-2 border-red-500 bg-white"></span>Deadline</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>Conflict</span>
+        </div>
+        <div id="viewToggle" class="flex bg-gray-100 rounded-xl p-1">
+          <button data-view="month" class="w-max px-3 h-8 rounded-lg flex items-center justify-center text-[11.5px] font-bold bg-white shadow-sm text-lnu-800 transition">Month</button>
+          <button data-view="list" class="w-max px-3 h-8 rounded-lg flex items-center justify-center text-[11.5px] font-bold text-gray-400 hover:text-gray-600 transition">Next 60 days</button>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="btnPrev" title="Previous month" class="btn btn-ghost !p-2 rounded-xl"></button>
+          <button id="btnNext" title="Next month" class="btn btn-ghost !p-2 rounded-xl"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GRID + DAY PANEL / 60-DAY LIST ===================== -->
+  <section id="monthView" class="mt-4 grid lg:grid-cols-[1fr_20rem] gap-4 items-start">
+
+    <div class="reveal-item min-w-0">
+      <div class="grid grid-cols-7 gap-2 mb-2">
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Sun</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Mon</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Tue</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Wed</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Thu</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Fri</p>
+        <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">Sat</p>
+      </div>
+      <div id="calGrid" class="grid grid-cols-7 gap-2"></div>
+    </div>
+
+    <aside class="reveal-item w-full lg:w-80 lg:sticky lg:top-24">
+      <div id="dayPanel" class="sc-card p-5"></div>
+    </aside>
+  </section>
+
+  <!-- ===================== 60-DAY LIST VIEW ===================== -->
+  <section id="listView60" class="mt-4 hidden">
+    <div id="listHost" class="space-y-3"></div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+(() => {
+  const ROLE = document.body.dataset.role || 'admin';
+  const D = window.DATA;
+  const ico = (n,c) => `<span class="${c} inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${SC.icons[n]}</span}`;
+
+  /* Demo faculty-assignment map (activityId -> faculty ids), mirroring the hub */
+  const ASSIGN = { 1:[1,2], 2:[1], 4:[3], 5:[3], 6:[7], 8:[2], 9:[4] };
+  const t2m = t => { const m = String(t||'').match(/(\d+):(\d+)\s*(AM|PM)/i); if (!m) return 0; let h = +m[1] % 12; if (m[3]==='PM') h += 12; return h*60 + +m[2]; };
+  const pad = n => String(n).padStart(2,'0');
+  const isoOf = s => { const d = new Date(s); return isNaN(d) ? null : `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+
+  /* ---------- Events derived from seed data ---------- */
+  const EVENTS = [];
+
+  // Feed 1: activities (all non-cancelled)
+  D.activities.forEach(a => {
+    if (a.status === 'Cancelled') return;
+    EVENTS.push({
+      d: isoOf(a.date), kind: 'activity', time: `${a.start} – ${a.end}`,
+      title: a.title, org: `${a.program.title.split(':')[0]} · ${a.venue}`,
+      link: 'program-detail.html', program: a.program.code, actId: a.id,
+      mine: (ASSIGN[a.id] || []).includes(1), startT: t2m(a.start), endT: t2m(a.end)
+    });
+  });
+
+  // Feed 2: ACCEPTED availability requests only (pending requests never appear)
+  D.availabilityRequests.filter(r => r.status === 'accepted').forEach(r => {
+    EVENTS.push({
+      d: isoOf(r.date), kind: 'availability', time: `${r.start} – ${r.end}`,
+      title: `${r.faculty.name.split(' ').slice(-1)[0]} — ${r.activity.title.split(':')[0]}`,
+      org: 'Accepted availability · requested by Director\u2019s Office',
+      link: 'availability.html', mine: r.faculty.id === 1
+    });
+  });
+
+  // Feed 3: objective deadlines (program/objective target dates)
+  const DEADLINES = {};
+  Object.entries(D.programObjectives).forEach(([code, objs]) => {
+    objs.forEach(o => {
+      if (!o.target_date) return;
+      const prog = D.programs.find(p => p.code === code);
+      const k = isoOf(o.target_date); if (!k) return;
+      DEADLINES[code] = DEADLINES[code] || {};
+      DEADLINES[code][k] = DEADLINES[code][k] || { count: 0 };
+      DEADLINES[code][k].count++;
+      DEADLINES[code][k].title = `${prog.title.split(':')[0]} objective${DEADLINES[code][k].count > 1 ? 's' : ''} due`;
+      DEADLINES[code][k].prog = prog;
+    });
+  });
+  Object.entries(DEADLINES).forEach(([code, map]) => {
+    Object.entries(map).forEach(([k, v]) => {
+      EVENTS.push({
+        d: k, kind: 'deadline', time: 'Target date', title: v.title,
+        org: `${v.prog.title.split(':')[0]} · objective target date`,
+        link: 'program-detail.html', progCode: code
+      });
+    });
+  });
+
+  /* ---------- Conflict computation (8.8 overlap rule) ---------- */
+  const byDay = {};
+  EVENTS.forEach(e => (byDay[e.d] = byDay[e.d] || []).push(e));
+  Object.values(byDay).forEach(dayEvents => {
+    const acts = dayEvents.filter(e => e.kind === 'activity');
+    for (let i = 0; i < acts.length; i++) for (let j = i + 1; j < acts.length; j++) {
+      const a = acts[i], b = acts[j];
+      const shared = (ASSIGN[a.actId] || []).some(f => (ASSIGN[b.actId] || []).includes(f));
+      const overlap = a.startT < b.endT && b.startT < a.endT;
+      if (shared && overlap) { a.conflict = b.conflict = true; }
+    }
+  });
+
+  /* ---------- Faculty scoping: only their own activities + their programs' deadlines ---------- */
+  const myPrograms = ROLE === 'faculty'
+    ? new Set(D.activities.filter(a => (ASSIGN[a.id] || []).includes(1)).map(a => a.program.code))
+    : null;
+  const visible = e => {
+    if (ROLE !== 'faculty') return true;
+    if (e.kind === 'activity') return e.mine;
+    if (e.kind === 'availability') return e.mine;
+    return e.kind === 'deadline' && myPrograms.has(e.progCode);
+  };
+  const VIS = EVENTS.filter(visible);
+  const BY_DAY = {};
+  VIS.forEach(e => (BY_DAY[e.d] = BY_DAY[e.d] || []).push(e));
+
+  const KIND = {
+    activity:     { label:'Activity',     pill:'bg-lnu-50 text-lnu-700',                       dot:'bg-lnu-600' },
+    availability: { label:'Availability', pill:'bg-gold-50 text-gold-800',                     dot:'bg-gold-500' },
+    deadline:     { label:'Deadline',     pill:'bg-red-50 border border-red-200 text-red-600', dot:'bg-red-500' }
+  };
+
+  /* ---------- Calendar state ---------- */
+  const TODAY = { y:2026, m:7, d:24 };               // Aug 24, 2026
+  let vy = 2026, vm = 7;                             // viewing August 2026
+  let sel = null;                                    // selected date key
+  let view = 'month';
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS_L = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const keyOf = dt => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+
+  calCaption.textContent = ROLE === 'faculty'
+    ? 'Your extension schedule — items marked (You) involve you directly'
+    : 'Office-wide schedule of activities, accepted availability, deadlines, and conflict alerts';
+
+  /* ---------- Month grid ---------- */
+  function renderGrid() {
+    calTitle.textContent = `${MONTHS[vm]} ${vy}`;
+    const first = new Date(vy, vm, 1);
+    const lead = first.getDay();
+    const count = new Date(vy, vm + 1, 0).getDate();
+    const cells = Math.ceil((lead + count) / 7) * 7;
+
+    let html = '';
+    for (let i = 0; i < cells; i++) {
+      const dt = new Date(vy, vm, i - lead + 1);
+      const k = keyOf(dt);
+      const inMonth = dt.getMonth() === vm;
+      const isToday = dt.getFullYear() === TODAY.y && dt.getMonth() === TODAY.m && dt.getDate() === TODAY.d;
+      const isSel = k === sel;
+      const evs = BY_DAY[k] || [];
+
+      let dayNum = `<span class="${isToday
+        ? 'w-6 h-6 rounded-full bg-gold-500 text-charcoal flex items-center justify-center font-bold'
+        : ''} text-[12px] ${inMonth ? 'font-semibold text-charcoal' : 'text-gray-300'}">${dt.getDate()}</span>`;
+
+      let pills = '';
+      if (inMonth && evs.length) {
+        pills = evs.slice(0, 2).map(e => {
+          const kd = KIND[e.kind];
+          const t = e.title + (ROLE === 'faculty' && e.mine ? ' (You)' : '');
+          return `<span class="block truncate text-[10px] font-semibold px-1.5 py-[3px] rounded-md mb-1 ${kd.pill}${e.conflict ? ' !border !border-red-300 !text-red-600' : ''}" title="${t}${e.conflict ? ' — CONFLICT' : ''}">${t}${e.conflict ? ' ⚠' : ''}</span>`;
+        }).join('');
+        if (evs.length > 2) pills += `<span class="block text-[10px] font-semibold text-gray-400 pl-1">+${evs.length - 2} more</span>`;
+      }
+
+      html += `
+      <button data-key="${k}" title="${DAYS_L[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()} — click to view"
+        class="text-left min-h-[96px] rounded-lg border p-2 transition cursor-pointer overflow-hidden
+        ${isToday ? 'ring-2 ring-gold-500 border-gold-200 bg-white hover:bg-lnu-50' : 'border-gray-200'}
+        ${isSel ? '!bg-lnu-50 !border-lnu-300' : ''}
+        ${inMonth ? 'bg-white hover:bg-lnu-50' : 'bg-gray-50/60 hover:bg-gray-100'}">${dayNum}${pills}</button>`;
+    }
+    calGrid.innerHTML = html;
+  }
+
+  /* ---------- Day panel ---------- */
+  function renderPanel(k) {
+    if (!k) {
+      dayPanel.innerHTML = `
+        <div class="text-center py-8">
+          <span class="mx-auto w-12 h-12 rounded-2xl bg-lnu-50 text-lnu-700 flex items-center justify-center">${ico('calendar','w-6 h-6')}</span>
+          <p class="mt-3 font-bold text-[13.5px]">Select a day</p>
+          <p class="text-[12px] text-gray-400 mt-1 leading-relaxed">Click any date on the grid to see its activities, availability slots, and deadlines.</p>
+        </div>`;
+      return;
+    }
+    const [y, m, d] = k.split('-').map(Number);
+    const dow = new Date(y, m - 1, d).getDay();
+    const evs = BY_DAY[k] || [];
+
+    const items = evs.map(e => {
+      const kd = KIND[e.kind];
+      const t = e.title + (ROLE === 'faculty' && e.mine ? ' <span class="badge badge-gold !text-[9.5px] !px-2 !py-0.5">(You)</span>' : '');
+      const link = e.kind === 'deadline' ? `program-detail.html?role=${ROLE}&program=${e.progCode}` : `${e.link}?role=${ROLE}`;
+      return `
+      <li class="flex gap-3 p-3 rounded-xl border ${e.conflict ? 'border-red-200 bg-red-50/40' : 'border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition'}">
+        <span class="mt-1 w-2.5 h-2.5 rounded-full shrink-0 ${e.conflict ? 'bg-red-500' : kd.dot}"></span>
+        <div class="min-w-0 flex-1">
+          <p class="text-[12.5px] font-bold leading-snug">${t}${e.conflict ? ' <span class="conflict-marker">conflict</span>' : ''}</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">${e.org}</p>
+          <div class="mt-1.5 flex items-center gap-2.5">
+            <span class="inline-flex items-center gap-1 text-[10.5px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">${ico('clock','w-3 h-3')} ${e.time}</span>
+            <a href="${link}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open ${kd.label.toLowerCase()} →</a>
+          </div>
+        </div>
+      </li>`;
+    }).join('');
+
+    dayPanel.innerHTML = `
+      <div class="flex items-center justify-between gap-2 pb-3 border-b border-gray-100">
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">${DAYS_L[dow]}</p>
+          <h3 class="font-extrabold text-[15px] tracking-tight">${MONTHS[m-1]} ${d}, ${y}</h3>
+        </div>
+        <span class="badge ${evs.length ? 'badge-blue' : 'badge-gray'}">${evs.length || 'No'} event${evs.length === 1 ? '' : 's'}</span>
+      </div>
+      ${evs.length ? `<ul class="mt-3 space-y-2.5">${items}</ul>`
+        : `<div class="text-center py-7">
+             <span class="mx-auto w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">${ico('check','w-5 h-5')}</span>
+             <p class="mt-3 font-bold text-[13px]">Nothing scheduled</p>
+             <p class="text-[11.5px] text-gray-400 mt-1">Enjoy the breather — no activities or deadlines on this day.</p>
+           </div>`}`;
+  }
+
+  /* ---------- 60-day list view ---------- */
+  const DAYS_L2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  function renderList() {
+    listHost.innerHTML = '';
+    const start = new Date(TODAY.y, TODAY.m, TODAY.d);
+    const end = new Date(TODAY.y, TODAY.m, TODAY.d + 60);
+    const rows = VIS.filter(e => { const d = new Date(e.d + 'T00:00:00'); return d >= start && d <= end; })
+      .sort((a, b) => (a.d < b.d ? -1 : 1));
+    if (!rows.length) {
+      listHost.innerHTML = `<div class="sc-card p-10 text-center"><p class="font-bold text-[13.5px]">Nothing scheduled in the next 60 days</p><p class="text-[12px] text-gray-400 mt-1">Accept an availability request or check the month grid.</p></div>`;
+      return;
+    }
+    const groups = {};
+    rows.forEach(e => (groups[e.d] = groups[e.d] || []).push(e));
+    Object.keys(groups).sort().forEach(k => {
+      const [y, m, d] = k.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      const isToday = k === keyOf(new Date(TODAY.y, TODAY.m, TODAY.d));
+      const items = groups[k].map(e => {
+        const kd = KIND[e.kind];
+        const t = e.title + (ROLE === 'faculty' && e.mine ? ' (You)' : '');
+        const link = e.kind === 'deadline' ? `program-detail.html?role=${ROLE}&program=${e.progCode}` : `${e.link}?role=${ROLE}`;
+        return `
+        <li class="flex items-center gap-3 py-2.5">
+          <span class="w-2 h-2 rounded-full shrink-0 ${e.conflict ? 'bg-red-500' : kd.dot}"></span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[12.5px] font-bold truncate">${t}${e.conflict ? ' <span class="conflict-marker">conflict</span>' : ''}</p>
+            <p class="text-[11px] text-gray-400">${e.org} · ${e.time}</p>
+          </div>
+          <a href="${link}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 shrink-0">Open →</a>
+        </li>`;
+      }).join('');
+      listHost.innerHTML += `
+      <div class="sc-card p-0 overflow-hidden">
+        <div class="flex items-center gap-2.5 px-4 py-2.5 ${isToday ? 'bg-gold-50/70' : 'bg-gray-50/60'}">
+          <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">${DAYS_L2[dt.getDay()]}</p>
+          <p class="text-[13px] font-extrabold tracking-tight">${MONTHS[m-1]} ${d}, ${y}</p>
+          ${isToday ? '<span class="badge badge-gold !text-[10px]">today</span>' : ''}
+        </div>
+        <ul class="px-4 divide-y divide-gray-50">${items}</ul>
+      </div>`;
+    });
+  }
+
+  /* ---------- View toggle ---------- */
+  viewToggle.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    view = b.dataset.view;
+    viewToggle.querySelectorAll('button').forEach(x => {
+      const on = x === b;
+      x.classList.toggle('bg-white', on); x.classList.toggle('shadow-sm', on);
+      x.classList.toggle('text-lnu-800', on); x.classList.toggle('text-gray-400', !on);
+    });
+    calTitle.textContent = view === 'month' ? `${MONTHS[vm]} ${vy}` : 'Next 60 Days';
+    document.getElementById('monthView').classList.toggle('hidden', view === 'list');
+    document.getElementById('listView60').classList.toggle('hidden', view !== 'list');
+    if (view === 'list') renderList();
+  }));
+
+  /* ---------- Wiring ---------- */
+  btnPrev.innerHTML = `<span class="w-5 h-5 inline-flex"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg></span>`;
+  btnNext.innerHTML = `<span class="w-5 h-5 inline-flex"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg></span>`;
+  btnPrev.onclick = () => { vm--; if (vm < 0) { vm = 11; vy--; } sel = null; renderGrid(); renderPanel(null); };
+  btnNext.onclick = () => { vm++; if (vm > 11) { vm = 0; vy++; } sel = null; renderGrid(); renderPanel(null); };
+  calGrid.addEventListener('click', e => {
+    const cell = e.target.closest('[data-key]');
+    if (!cell) return;
+    sel = cell.dataset.key;
+    renderGrid(); renderPanel(sel);
+  });
+
+  renderGrid();
+  renderPanel(keyOf(new Date(TODAY.y, TODAY.m, TODAY.d)));
+})();
+</script>
+</body>
+</html>

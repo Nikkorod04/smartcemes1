@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Budget Monitoring · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="budget">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <section class="pt-6 reveal-item flex flex-wrap items-end justify-between gap-3">
+    <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 · Semester 1, AY 2026–2027 · All extension funds</p>
+    <div class="flex gap-2">
+      <button onclick="SC.toast('budget-summary-aug-2026.pdf exported','success')" class="btn btn-outline !py-2">Export Report</button>
+      <button onclick="window.dispatchEvent(new CustomEvent('open-record'))" class="btn btn-primary">[[wallet]] Record Expense</button>
+    </div>
+  </section>
+
+  <!-- KPI ROW -->
+  <section class="mt-3 grid grid-cols-4 gap-4">
+    <div class="reveal-item sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between">
+        <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[wallet]]</span>
+        <span class="badge badge-gray">6 programs</span>
+      </div>
+      <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">₱<span data-count="268500">0</span></p>
+      <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Total Allocated</p>
+    </div>
+
+    <div class="reveal-item sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between">
+        <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[chart]]</span>
+        <span class="badge badge-yellow">semester to date</span>
+      </div>
+      <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">₱<span data-count="139350">0</span></p>
+      <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Total Utilized</p>
+    </div>
+
+    <div class="reveal-item sc-card sc-card-hover p-5">
+      <div class="flex items-center justify-between">
+        <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[check]]</span>
+        <span class="badge badge-green">on pace</span>
+      </div>
+      <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="51.9" data-decimals="1" data-suffix="%">0</span></p>
+      <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Overall Utilization</p>
+      <div class="progress mt-3"><span style="width:51.9%" class="bg-lnu"></span></div>
+    </div>
+
+    <div class="reveal-item sc-card p-5 !border-red-100 !bg-gradient-to-br !from-white !to-red-50/60">
+      <div class="flex items-center justify-between">
+        <span class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center">[[shield]]</span>
+        <span class="badge badge-red flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500 pulse-dot"></span>needs review</span>
+      </div>
+      <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-red-600"><span data-count="1">0</span></p>
+      <p class="text-[12.5px] text-gray-600 font-medium mt-1.5">Programs Flagged</p>
+    </div>
+  </section>
+
+  <!-- CHART + UTILIZATION LIST -->
+  <section class="mt-4 grid grid-cols-3 gap-4">
+    <div class="reveal-item sc-card p-5 col-span-2">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-bold text-[14px]">Utilization by Program</h3>
+        <span class="text-[11.5px] text-gray-400 font-medium">% of allocated budget spent</span>
+      </div>
+      <div class="relative h-56"><canvas id="chUtil"></canvas></div>
+      <div class="mt-2 flex items-center gap-4 text-[11px] text-gray-400 font-medium">
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#F6B800"></span>≤ 90% utilized</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-red-500"></span>&gt; 90% — near exhaustion</span>
+      </div>
+    </div>
+
+    <div class="reveal-item sc-card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-[14px]">Per-Program Utilization</h3>
+        <span class="js-icon" data-icon="folder" data-cls="!w-[18px] !h-[18px] text-gray-300"></span>
+      </div>
+      <ul id="utilList" class="space-y-4"></ul>
+    </div>
+  </section>
+
+  <!-- OVER-ALLOCATION WARNING (D7: warn, don't block) -->
+  <section class="reveal-item mt-4">
+    <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5 flex items-start gap-3">
+      <span class="js-icon shrink-0 mt-0.5" data-icon="shield" data-cls="!w-5 !h-5 text-amber-500"></span>
+      <div class="min-w-0 flex-1">
+        <p class="text-[13px] font-semibold text-amber-800 leading-snug">LITRAWIYA exceeded allocation by ₱960 after entry dated Aug 21 — flagged for Director review</p>
+        <p class="text-[11.5px] text-amber-700/80 mt-0.5">Auto-flagged by the budget monitor · entry REC-2026-0802 · posting is allowed; review is advisory.</p>
+      </div>
+      <span class="badge badge-yellow shrink-0 mt-0.5">Over-allocation warning</span>
+    </div>
+  </section>
+
+  <!-- EXPENSE LEDGER -->
+  <section class="reveal-item mt-4">
+    <div class="sc-card p-0 overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-2">
+          <h3 class="font-bold text-[14px]">Expense Ledger</h3>
+          <span id="ledCount" class="badge badge-gray"></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="relative">
+            <span class="js-icon absolute left-3 top-1/2 -translate-y-1/2" data-icon="search" data-cls="!w-4 !h-4 text-gray-400"></span>
+            <input id="ledQ" class="input !w-56 !pl-9 !py-2 bg-white" placeholder="Search expenses…">
+          </label>
+          <select id="ledProg" class="input !w-44 !py-2 bg-white">
+            <option value="all">All programs</option>
+            <option value="LITRAWIYA">LITRAWIYA</option>
+            <option value="HANDA">HANDA</option>
+            <option value="KABUHIAN">KABUHIAN</option>
+            <option value="e-LITERACY">e-LITERACY</option>
+            <option value="SENIOR CARE">SENIOR CARE</option>
+          </select>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="sc-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Program</th>
+              <th>Activity</th>
+              <th class="!text-right">Amount</th>
+              <th>Date Used</th>
+              <th>Receipt Ref.</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECORD EXPENSE MODAL -->
+  <div x-data="{open:false}" @open-record.window="open=true" @close-record.window="open=false"
+       x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
+    <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="window.dispatchEvent(new CustomEvent('close-record'))"></div>
+    <div class="sc-modal relative max-w-lg mx-auto mt-20 sc-card p-6 shadow-pop">
+      <div class="flex items-start justify-between mb-4">
+        <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
+          <span class="js-icon" data-icon="wallet" data-cls="!w-5 !h-5 text-lnu-700"></span> Record Expense
+        </h3>
+        <button @click="window.dispatchEvent(new CustomEvent('close-record'))" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">×</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="label">Item / Expense Name <span class="text-red-500">*</span></label>
+          <input id="reItem" class="input" placeholder="e.g., Printing of IEC materials">
+        </div>
+        <div>
+          <label class="label">Description <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input id="reDesc" class="input" placeholder="Short detail for audit trail…">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label">Amount <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[13px]">₱</span>
+              <input id="reAmt" type="number" min="0" step="0.01" class="input !pl-7" placeholder="0.00">
+            </div>
+          </div>
+          <div>
+            <label class="label">Date Used <span class="text-red-500">*</span></label>
+            <input id="reDate" type="date" class="input">
+          </div>
+        </div>
+        <div>
+          <label class="label">Charge Against Program <span class="text-red-500">*</span></label>
+          <select id="reProg" class="input">
+            <option value="">Select program…</option>
+            <option value="LITRAWIYA">EXT-2026-001 · LITRAWIYA</option>
+            <option value="HANDA">EXT-2026-002 · HANDA</option>
+            <option value="KABUHIAN">EXT-2026-003 · KABUHIAN</option>
+            <option value="e-LITERACY">EXT-2026-004 · e-LITERACY</option>
+            <option value="SENIOR CARE">EXT-2026-005 · SENIOR CARE</option>
+            <option value="BATANG MATINIK">EXT-2026-006 · BATANG MATINIK</option>
+          </select>
+        </div>
+        <div class="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3">
+          <span class="js-icon shrink-0 mt-0.5" data-icon="doc" data-cls="!w-4 !h-4 text-blue-600"></span>
+          <p class="text-[11.5px] text-blue-800 leading-snug">A receipt reference number is generated automatically upon saving.</p>
+        </div>
+      </div>
+
+      <div class="mt-5 flex items-center justify-end gap-2">
+        <button @click="window.dispatchEvent(new CustomEvent('close-record'))" class="btn btn-outline">Cancel</button>
+        <button @click="window.submitExpense()" class="btn btn-primary">Save Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v3 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+const GOLD = '#F6B800', BLUE = '#003599';
+
+const LEDGER = [
+  { item:'A4 Bond Paper & Supplies',           desc:'Bond paper, markers, folders for session kits',   prog:'LITRAWIYA',   act:'Reading Camp Kick-off',        amt:2340,  date:'Feb 02, 2026', rec:'REC-2026-0114' },
+  { item:'Snacks — Reading Camp Volunteers',   desc:'28 volunteers × 2 snacks',                        prog:'LITRAWIYA',   act:'Reading Camp Kick-off',        amt:1750,  date:'Feb 03, 2026', rec:'REC-2026-0121' },
+  { item:'Printing of Decodable Readers',      desc:'200 booklets, saddle-stitched, 24 pp',            prog:'LITRAWIYA',   act:'Remedial Sessions Batches 1–3',amt:6850,  date:'Mar 12, 2026', rec:'REC-2026-0382' },
+  { item:'Reading Corner Shelf & Story Bags',  desc:'2 steel shelves, 40 take-home story bags',        prog:'LITRAWIYA',   act:'Community Reading Corner',     amt:20560, date:'May 08, 2026', rec:'REC-2026-0533' },
+  { item:'Tarpaulins & Drill Signages',        desc:'3 pcs 3×5 ft with grommets',                      prog:'HANDA',       act:'Typhoon Drill & Simulation',   amt:1200,  date:'Jun 19, 2026', rec:'REC-2026-0612' },
+  { item:'Soap & Detergent Raw Materials',     desc:'Caustic soda, fragrance, oils — 60 batches',      prog:'KABUHIAN',    act:'Product Showcase',             amt:11200, date:'Jun 24, 2026', rec:'REC-2026-0648' },
+  { item:'Catering — Training Day',            desc:'AM/PM snacks & lunch, 130 pax',                   prog:'KABUHIAN',    act:'Product Showcase',             amt:4150,  date:'Jun 26, 2026', rec:'REC-2026-0660' },
+  { item:'Certificates & Photo Printing',      desc:'126 completion certificates, documentation tarp', prog:'KABUHIAN',    act:'Completion Day',               amt:1860,  date:'Jun 27, 2026', rec:'REC-2026-0667' },
+  { item:'First-Aid Kits (25 units)',          desc:'For household demonstration stations',            prog:'HANDA',       act:'First-Aid & Water Rescue',     amt:9375,  date:'Aug 07, 2026', rec:'REC-2026-0741' },
+  { item:'Transport & Fuel Allowance',         desc:'2 vans · Palo round-trip × 4 trips',              prog:'HANDA',       act:'First-Aid & Water Rescue',     amt:3400,  date:'Aug 09, 2026', rec:'REC-2026-0755' },
+  { item:'Mobile Loads & Router Rental',       desc:'30 GB promo loads, 2 pocket Wi-Fi units',         prog:'e-LITERACY',  act:'Computer Hands-on Workshop 2', amt:2800,  date:'Aug 15, 2026', rec:'REC-2026-0770' },
+  { item:'BP Monitors Calibration Kit',        desc:'2 aneroid units, calibration service',            prog:'SENIOR CARE', act:'BP Screening & Wellness Talk', amt:2300,  date:'Aug 20, 2026', rec:'REC-2026-0798' },
+  { item:'Evaluation Toolkits & Snacks',       desc:'Mid-year proficiency evaluation prep',            prog:'LITRAWIYA',   act:'Mid-Year Evaluation',          amt:960,   date:'Aug 21, 2026', rec:'REC-2026-0802', flagged:true }
+];
+
+let LED_Q = '', LED_PROG = 'all';
+
+function renderLedger() {
+  const q = LED_Q.trim().toLowerCase();
+  const list = LEDGER.filter(e =>
+    (LED_PROG === 'all' || e.prog === LED_PROG) &&
+    (!q || (e.item + ' ' + e.desc + ' ' + e.prog + ' ' + e.act + ' ' + e.rec).toLowerCase().includes(q))
+  );
+  document.getElementById('ledCount').textContent = list.length + ' entries';
+  document.getElementById('ledgerBody').innerHTML = list.length ? list.map((e, i) => `
+    <tr class="${e.flagged ? '!bg-amber-50/70' : ''}">
+      <td class="max-w-[300px]">
+        <p class="font-bold text-[13px] leading-snug flex items-center gap-1.5">${e.item}${e.flagged ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 pulse-dot inline-block shrink-0"></span>' : ''}</p>
+        <p class="text-[11.5px] text-gray-400 mt-0.5 leading-snug">${e.desc}</p>
+      </td>
+      <td><span class="inline-flex items-center rounded-md bg-lnu-50 text-lnu-700 px-2 py-1 text-[11px] font-bold tracking-wide">${e.prog}</span></td>
+      <td>${e.act ? `<span class="inline-flex items-center rounded-md bg-gray-100 text-gray-600 px-2 py-1 text-[11px] font-semibold">${e.act}</span>` : '<span class="text-gray-300">—</span>'}</td>
+      <td class="whitespace-nowrap !text-right font-bold text-[13px]" data-led-amt="${i}">${SC.money(e.amt)}</td>
+      <td class="whitespace-nowrap text-[12.5px] text-gray-500">${e.date}</td>
+      <td class="whitespace-nowrap font-mono text-[12px] text-gray-500">${e.rec}</td>
+    </tr>`).join('')
+    : '<tr><td colspan="6" class="!py-12 text-center text-gray-400 text-[13px]">No expenses match your filters.</td></tr>';
+}
+
+function renderUtilList() {
+  const rows = DATA.programs.map(p => ({
+    code: p.code, name: p.title.split(':')[0], pct: p.budget ? Math.round(p.utilized / p.budget * 100) : 0
+  }));
+  document.getElementById('utilList').innerHTML = rows.map(r => {
+    const badge = r.pct > 90 ? 'badge-red' : r.pct >= 75 ? 'badge-yellow' : r.pct === 0 ? 'badge-gray' : 'badge-green';
+    const bar   = r.pct > 90 ? 'bg-red-500'   : r.pct >= 75 ? 'bg-gold'      : 'bg-lnu';
+    return `
+      <li>
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="shrink-0 rounded-md bg-lnu-50 text-lnu-700 px-1.5 py-0.5 text-[10px] font-bold tracking-wide">${r.code.slice(-3)}</span>
+            <p class="text-[12.5px] font-bold truncate">${r.name}</p>
+          </div>
+          <span class="badge ${badge} shrink-0">${r.pct}%</span>
+        </div>
+        <div class="progress"><span style="width:${r.pct}%" class="${bar}"></span></div>
+      </li>`;
+  }).join('');
+}
+
+window.submitExpense = () => {
+  const item = document.getElementById('reItem').value.trim();
+  const amt = parseFloat(document.getElementById('reAmt').value);
+  const prog = document.getElementById('reProg').value;
+  const dv = document.getElementById('reDate').value;
+  if (!item || !prog || isNaN(amt) || amt <= 0 || !dv) { SC.toast('Please complete the required fields', 'warn'); return; }
+  const dt = new Date(dv + 'T00:00:00');
+  LEDGER.unshift({
+    item, desc: document.getElementById('reDesc').value.trim(), prog,
+    act: '', amt,
+    date: dt.toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' }),
+    rec: 'REC-2026-' + String(900 + LEDGER.length).padStart(4, '0'), isNew: true
+  });
+  ['reItem','reDesc','reAmt','reDate'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('reProg').value = '';
+  window.dispatchEvent(new CustomEvent('close-record'));
+  SC.toast('Expense recorded', 'success');
+  renderLedger();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-icon').forEach(el => { el.innerHTML = SC.svg(el.dataset.icon, el.dataset.cls || ''); });
+
+  renderLedger();
+  renderUtilList();
+
+  document.getElementById('ledQ').addEventListener('input', e => { LED_Q = e.target.value; renderLedger(); });
+  document.getElementById('ledProg').addEventListener('change', e => { LED_PROG = e.target.value; renderLedger(); });
+
+  if (window.Chart) {
+    new Chart(chUtil, {
+      type:'bar',
+      data:{
+        labels: names,
+        datasets:[{
+          data: [36, 38, 66, 94, 96],
+          backgroundColor: [36,38,66,94,96].map(v => v > 90 ? '#dc2626' : GOLD),
+          borderRadius:7, maxBarThickness:22
+        }]
+      },
+      options:{
+        indexAxis:'y', maintainAspectRatio:false,
+        scales:{
+          x:{ max:100, ticks:{ callback:v => v + '%' }, grid:{ drawTicks:false } },
+          y:{ grid:{ display:false } }
+        },
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:c => c.parsed.x + '% of allocation utilized' } } }
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>

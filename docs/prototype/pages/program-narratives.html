@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program Narratives · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="program-narratives">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <section class="pt-6 reveal-item">
+    <div class="ai-panel p-6 flex items-start justify-between gap-6">
+      <div class="min-w-0">
+        <span class="ai-chip">[[sparkles]] Executive Program Narratives</span>
+        <h1 class="mt-3 text-white font-extrabold text-xl tracking-tight leading-snug">Program Status at a Glance</h1>
+        <p class="mt-2 text-[12.5px] text-blue-100/75 leading-relaxed">AI-generated executive summaries of each extension program — objectives, KPIs, budget, risks, and recommended next actions. Director-only; full provenance is recorded for audit.</p>
+      </div>
+      <div class="text-right shrink-0">
+        <span class="badge badge-blue !bg-white/10 !text-blue-100 !border-white/20">Aggregated data only · no PII</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="mt-4">
+    <div class="reveal-item flex items-center justify-between mb-3">
+      <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">Latest Narratives
+        <span class="badge badge-gray" id="narrCount"></span>
+      </h3>
+      <span class="text-[12px] text-gray-400">One row per program — including programs with no narrative yet (first-class "unavailable" state).</span>
+    </div>
+    <div id="narrGrid" class="grid gap-4"></div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+const healthCls = h => h === 'at-risk' ? 'at-risk' : (h === 'needs-attention' ? 'needs-attention' : 'on-track');
+const healthLabel = h => h === 'at-risk' ? 'At risk' : (h === 'needs-attention' ? 'Needs attention' : 'On track');
+
+/* Demo version history per program (latest narrative lives in seed data) */
+const HISTORY = {
+  'EXT-2026-001': [ { at:'Aug 10, 2026 · 8:15 AM', health:'on-track', label:'On track' },
+                    { at:'Jul 27, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
+  'EXT-2026-002': [ { at:'Aug 10, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
+  'EXT-2026-003': [ { at:'Jun 28, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
+  'EXT-2026-004': [ { at:'Aug 18, 2026 · 8:15 AM', health:'needs-attention', label:'Needs attention' },
+                    { at:'Jul 21, 2026 · 8:15 AM', health:'needs-attention', label:'Needs attention' },
+                    { at:'Jun 30, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
+  'EXT-2026-005': [ { at:'Aug 20, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
+  'EXT-2026-006': [ { at:'Aug 24, 2026 · 8:15 AM', health:'failed', label:'Generation failed — API timeout · 3 retries exhausted · narrative unavailable' } ]
+};
+
+function objectivesMet(code) {
+  const objs = (window.DATA.programObjectives[code] || []);
+  const achieved = objs.filter(o => o.status === 'achieved').length;
+  return { achieved, total: objs.length };
+}
+
+function narrCard(prog) {
+  const n = (window.DATA.programNarratives || []).find(x => x.program && x.program.code === prog.code);
+  const om = objectivesMet(prog.code);
+  const hist = HISTORY[prog.code] || [];
+  const omChip = om.total
+    ? `<span class="badge ${om.achieved === om.total ? 'badge-green' : 'badge-blue'}">Objectives met: ${om.achieved} of ${om.total}</span>`
+    : '<span class="badge badge-gray">No objectives defined yet</span>';
+
+  if (!n) {
+    return `
+    <div class="sc-card p-5">
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-bold text-[14px] leading-snug">${prog.title}</p>
+          <p class="text-[11px] text-gray-400">${prog.code} · Lead: ${prog.lead.name} · ${prog.community.name}</p>
+        </div>
+        <span class="narrative-health needs-attention">Narrative unavailable</span>
+      </div>
+      <div class="mt-3 rounded-xl border border-dashed border-gray-300 bg-gray-50/60 p-4">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0">[[clock]]</span>
+          <div class="min-w-0">
+            <p class="text-[12.5px] font-bold text-gray-600">Narrative unavailable</p>
+            <p class="text-[12px] text-gray-500 mt-0.5 leading-relaxed">${(HISTORY[prog.code]||[]).slice(-1)[0] && HISTORY[prog.code].slice(-1)[0].health === 'failed'
+              ? 'The last generation failed (API timeout — 3 retries with backoff exhausted). Nothing was persisted; regenerate to try again.'
+              : 'No narrative has been generated for this program yet. Generation is Director-only and uses aggregate program data (no PII).'}</p>
+            <div class="flex items-center gap-2 mt-2.5">
+              ${omChip(om)}
+              <button onclick="regenerate('${prog.code}', this)" class="btn btn-primary !px-3 !py-1.5 text-[11.5px]">⟳ Generate narrative</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${hist.length ? histBlock(prog.code, hist) : ''}
+    </div>`;
+  }
+
+  return `
+  <div class="sc-card p-5" id="nc-${prog.code}">
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="font-bold text-[14px] leading-snug">${prog.title}</p>
+        <p class="text-[11px] text-gray-400">${prog.code} · Lead: ${prog.lead.name} · ${prog.community.name}</p>
+      </div>
+      <span class="narrative-health ${healthCls(n.health_label)}">${healthLabel(n.health_label)}</span>
+    </div>
+    <div class="mt-3 grid grid-cols-2 gap-3">
+      <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+        <div class="flex items-center justify-between">
+          <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Executive Summary</p>
+          ${omChip(om)}
+        </div>
+        <p class="text-[12.5px] text-gray-600 leading-snug mt-1">${n.summary}</p>
+      </div>
+      <div class="space-y-2">
+        <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+          <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Top Risks</p>
+          <ul class="mt-1 space-y-1 text-[12.5px] text-gray-600">${(n.risks && n.risks.length ? n.risks.map(r => `<li class="flex items-start gap-1.5"><span class="text-red-500 mt-0.5 text-[10px]">●</span><span>${r}</span></li>`) : ['<li class="text-gray-400 italic">No material risks identified.</li>']).join('')}</ul>
+        </div>
+        <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+          <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Recommended Next Actions</p>
+          <ul class="mt-1 space-y-1.5 text-[12.5px] text-gray-600">${(n.recommendations && n.recommendations.length ? n.recommendations.map(r => `
+            <li class="flex items-start gap-1.5"><span class="text-lnu-700 mt-0.5 text-[10px]">▸</span>
+              <span><b>${r.priority}</b> — ${r.action}${r.rationale ? `<span class="block text-[11px] text-gray-400 mt-0.5 leading-snug">${r.rationale}</span>` : ''}</span></li>`) : ['<li class="text-gray-400 italic">None pending.</li>']).join('')}</ul>
+        </div>
+      </div>
+    </div>
+    <div class="mt-3 flex items-center justify-between gap-3">
+      <p class="text-[10.5px] text-gray-400">Generated ${n.generatedAt} · ${n.generatedBy || 'Director, CESO'} · ${n.model}</p>
+      <div class="flex gap-2">
+        <button onclick="SC.toast('Provenance: model, prompt version, generated_at/by recorded for audit','info')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px]">Provenance</button>
+        <button onclick="regenerate('${prog.code}', this)" class="btn btn-outline !px-3 !py-1.5 text-[12px]">⟳ Generate</button>
+      </div>
+    </div>
+    ${histBlock(prog.code, hist)}
+  </div>`;
+}
+
+function omChip(om) {
+  return om.total
+    ? `<span class="badge ${om.achieved === om.total ? 'badge-green' : 'badge-blue'} !text-[10.5px]">Objectives met: ${om.achieved}/${om.total}</span>`
+    : '<span class="badge badge-gray !text-[10.5px]">No objectives yet</span>';
+}
+
+function histBlock(code, hist) {
+  return `
+  <details class="sc-acc mt-3">
+    <summary>Version history <span class="acc-num">${hist.length}</span><svg class="acc-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg></summary>
+    <div class="px-4 pb-3 pt-1 border-t border-gray-50">
+      <ol class="relative border-l border-gray-100 ml-2 mt-3 space-y-3">
+        ${hist.map(h => `
+        <li class="ml-4">
+          <span class="absolute -left-[7px] top-1 w-3 h-3 rounded-full ${h.health === 'failed' ? 'bg-red-400 ring-4 ring-red-50' : 'bg-lnu ring-4 ring-lnu-50'}"></span>
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-[12px] font-semibold leading-snug">${h.health === 'failed' ? 'Generation attempt' : h.label + ' — narrative v' + (hist.indexOf(h) + 2)}</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">${h.health === 'failed' ? h.label : 'Generated ' + h.at + ' · Director, CESO · gpt-4o-mini'}</p>
+            </div>
+            <span class="shrink-0 text-[10.5px] font-bold px-2 py-1 rounded-lg ${h.health === 'failed' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}">${h.at.split(' · ')[0]}</span>
+          </div>
+        </li>`).join('')}
+      </ol>
+      <p class="text-[11px] text-gray-400 mt-2 ml-1">Every generation creates a new row — the Director can browse past versions per program. Provenance (model, prompt version, generated_at/by) is recorded.</p>
+    </div>
+  </details>`;
+}
+
+function renderNarratives() {
+  const progs = window.DATA.programs;
+  const withN = progs.filter(p => (window.DATA.programNarratives || []).find(x => x.program && x.program.code === p.code)).length;
+  document.getElementById('narrCount').textContent = `${withN} of ${progs.length} programs generated`;
+  document.getElementById('narrGrid').innerHTML = progs.map(narrCard).join('');
+}
+
+window.regenerate = (code, btn) => {
+  if (btn) { btn.disabled = true; btn.classList.add('opacity-50'); btn.textContent = '⟳ generating…'; }
+  SC.toast('Narrative generation queued (Director-only, live API) — aggregates only', 'info');
+  const card = document.getElementById('nc-' + code);
+  setTimeout(() => {
+    if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); }
+    SC.toast('Narrative generated — new version stored with provenance', 'success');
+    if (card) { card.classList.add('!border-emerald-100'); }
+  }, 1400);
+};
+
+document.addEventListener('DOMContentLoaded', renderNarratives);
+</script>
+</body>
+</html>
