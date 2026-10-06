@@ -130,6 +130,13 @@ class Index extends Component
         $this->dispatch('sc-toast', message: 'Community archived', type: 'warn');
     }
 
+    public function restore(int $id): void
+    {
+        $community = Community::withTrashed()->findOrFail($id);
+        $community->restore();
+        $this->dispatch('sc-toast', message: $community->isSchool() ? 'Partner school restored' : 'Community restored', type: 'success');
+    }
+
     public function viewDetail(int $id): void
     {
         $this->detailId = $id;
@@ -143,6 +150,7 @@ class Index extends Component
     public function render()
     {
         $communities = Community::query()
+            ->when($this->status === 'archived', fn ($q) => $q->onlyTrashed())
             ->withCount([
                 'beneficiaries' => fn ($q) => $q->whereNull('beneficiaries.deleted_at'),
                 'extensionPrograms',
@@ -152,12 +160,14 @@ class Index extends Component
                 ->orWhere('municipality', 'like', "%{$this->search}%")
                 ->orWhere('contact_person', 'like', "%{$this->search}%")))
             ->when($this->province !== '', fn ($q) => $q->where('province', $this->province))
-            ->when($this->status !== '', fn ($q) => $q->where('status', $this->status))
+            ->when($this->status !== '' && $this->status !== 'archived', fn ($q) => $q->where('status', $this->status))
             ->when($this->type !== '', fn ($q) => $q->where('type', $this->type))
             ->orderBy('name')
             ->get();
 
-        $provinces = Community::query()->select('province')->distinct()->orderBy('province')->pluck('province');
+        $provinces = Community::query()
+            ->when($this->status === 'archived', fn ($q) => $q->onlyTrashed())
+            ->select('province')->distinct()->orderBy('province')->pluck('province');
 
         $detail = $this->detailId ? Community::withTrashed()->findOrFail($this->detailId) : null;
 

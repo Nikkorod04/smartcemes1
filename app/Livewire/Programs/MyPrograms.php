@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Programs;
 
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -16,10 +16,10 @@ class MyPrograms extends Component
 
         $programs = collect();
         if ($faculty) {
-            $ledIds = ExtensionProgram::where('program_lead_id', $faculty->id)->pluck('id');
-            $assignedIds = $faculty->activities()->pluck('extension_program_id')->unique();
+            $ledIds = ExtensionProject::where('program_lead_id', $faculty->id)->pluck('id');
+            $assignedIds = $faculty->activities()->pluck('extension_project_id')->unique();
 
-            $programs = ExtensionProgram::query()
+            $programs = ExtensionProject::query()
                 ->with(['programLead.user'])
                 ->whereIn('id', $ledIds->merge($assignedIds))
                 ->orderBy('planned_start_date')

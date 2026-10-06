@@ -2,15 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Colleges\Index as CollegesIndex;
 use App\Livewire\Programs\Hub;
-use App\Livewire\Programs\Index as ProgramsIndex;
 use App\Models\Activity;
 use App\Models\Beneficiary;
+use App\Models\College;
 use App\Models\Community;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
+use App\Models\Program;
 use App\Models\User;
 use App\Services\EmployeeIdService;
+use Database\Seeders\CollegeSeeder;
+use Database\Seeders\ProgramSeeder;
+use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -38,13 +43,16 @@ class ProgramHubTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
-        $this->actingAs($admin)->get('/programs')->assertOk();
+        /* Phase R1 moved the legacy list from /programs to /projects; /programs
+           is now the broad Program level. Use the named route so R2's rename
+           does not break this again. */
+        $this->actingAs($admin)->get(route('projects.index'))->assertOk();
     }
 
     public function test_hub_renders_for_admin(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-001',
             'title' => 'Test Program',
             'planned_start_date' => '2026-01-01',
@@ -53,13 +61,13 @@ class ProgramHubTest extends TestCase
             'allocated_budget' => 10000,
         ]);
 
-        $this->actingAs($admin)->get('/programs/'.$program->id)->assertOk();
+        $this->actingAs($admin)->get(route('projects.show', $program))->assertOk();
     }
 
     public function test_unassigned_faculty_cannot_view_hub(): void
     {
         $faculty = User::factory()->create(['role' => 'faculty']);
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-001',
             'title' => 'Test Program',
             'planned_start_date' => '2026-01-01',
@@ -68,7 +76,7 @@ class ProgramHubTest extends TestCase
             'allocated_budget' => 0,
         ]);
 
-        $this->actingAs($faculty)->get('/programs/'.$program->id)->assertForbidden();
+        $this->actingAs($faculty)->get(route('projects.show', $program))->assertForbidden();
     }
 
     public function test_assigned_faculty_can_view_hub(): void
@@ -78,7 +86,7 @@ class ProgramHubTest extends TestCase
             'user_id' => $user->id,
             'employee_id' => 'LNU-2026-0009',
         ]);
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-002',
             'title' => 'Test Program 2',
             'planned_start_date' => '2026-01-01',
@@ -88,7 +96,7 @@ class ProgramHubTest extends TestCase
             'program_lead_id' => $faculty->id,
         ]);
 
-        $this->actingAs($user)->get('/programs/'.$program->id)->assertOk();
+        $this->actingAs($user)->get(route('projects.show', $program))->assertOk();
     }
 
     public function test_wizard_page_renders_for_faculty(): void
@@ -154,7 +162,7 @@ class ProgramHubTest extends TestCase
             'name' => 'Brgy. Test', 'municipality' => 'Tacloban City', 'province' => 'Leyte',
             'status' => 'active',
         ]);
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-001',
             'title' => 'Test Program',
             'planned_start_date' => '2026-01-01',
@@ -171,7 +179,7 @@ class ProgramHubTest extends TestCase
         $data = $this->editBase();
 
         Livewire::actingAs($data['admin'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openProgramEdit')
             ->assertSet('showProgramEdit', true)
             ->set('editForm.title', 'Renamed Program')
@@ -188,11 +196,62 @@ class ProgramHubTest extends TestCase
         $this->assertSame([$data['community']->id], $data['program']->communities()->pluck('communities.id')->all());
     }
 
+    /**
+     * The hub's Edit modal must be able to SET the annual hours target — and clear it.
+     *
+     * It could not until 2026-09-28. The column, the New-project modal and the
+     * hub's own rendering of `actual / target` all existed, but the Edit modal had
+     * no input for it — so a project created before the column did (six of the
+     * eight seeded ones) could never acquire a target from the UI.
+     *
+     * Clearing must persist NULL, never 0: NULL is what drives the "no target set"
+     * state. A 0 would render as a 0%-of-target bar that reads like a broken
+     * figure rather than an unset one.
+     */
+    public function test_edit_modal_sets_and_clears_the_annual_hours_target(): void
+    {
+        $data = $this->editBase();
+        $this->assertNull($data['program']->annual_target_hours, 'starts unset');
+
+        Livewire::actingAs($data['admin'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openProgramEdit')
+            ->assertSet('showProgramEdit', true)
+            ->assertSet('editForm.annual_target_hours', '')
+            ->set('editForm.annual_target_hours', '175')
+            ->call('saveProgramEdit')
+            ->assertSet('showProgramEdit', false)
+            ->assertHasNoErrors();
+
+        $this->assertSame(175.0, (float) $data['program']->fresh()->annual_target_hours);
+
+        Livewire::actingAs($data['admin'])
+            ->test(Hub::class, ['project' => $data['program']->fresh()])
+            ->call('openProgramEdit')
+            ->set('editForm.annual_target_hours', '')
+            ->call('saveProgramEdit')
+            ->assertHasNoErrors();
+
+        $this->assertNull($data['program']->fresh()->annual_target_hours, 'cleared means NULL, not 0');
+    }
+
+    public function test_edit_modal_rejects_a_negative_hours_target(): void
+    {
+        $data = $this->editBase();
+
+        Livewire::actingAs($data['admin'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openProgramEdit')
+            ->set('editForm.annual_target_hours', '-5')
+            ->call('saveProgramEdit')
+            ->assertHasErrors(['editForm.annual_target_hours']);
+    }
+
     public function test_program_edit_blocks_range_that_excludes_activities(): void
     {
         $data = $this->editBase();
         Activity::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'title' => 'June Activity',
             'planned_start_date' => '2026-06-01',
             'planned_end_date' => '2026-06-01',
@@ -202,7 +261,7 @@ class ProgramHubTest extends TestCase
         ]);
 
         Livewire::actingAs($data['admin'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openProgramEdit')
             ->set('editForm.planned_end_date', '2026-05-01')
             ->call('saveProgramEdit')
@@ -216,7 +275,7 @@ class ProgramHubTest extends TestCase
         $data = $this->editBase();
 
         Livewire::actingAs($data['admin'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openProgramEdit')
             ->set('editForm.status', 'ongoing')
             ->call('saveProgramEdit');
@@ -225,7 +284,7 @@ class ProgramHubTest extends TestCase
             1,
             DB::table('activity_log')
                 ->where('event', 'status_transition')
-                ->where('subject_type', ExtensionProgram::class)
+                ->where('subject_type', ExtensionProject::class)
                 ->where('subject_id', $data['program']->id)
                 ->count()
         );
@@ -235,7 +294,7 @@ class ProgramHubTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'faculty']);
         $faculty = Faculty::create(['user_id' => $user->id, 'employee_id' => 'LNU-2026-0009']);
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-002',
             'title' => 'Faculty-led Program',
             'planned_start_date' => '2026-01-01',
@@ -246,111 +305,193 @@ class ProgramHubTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openProgramEdit')
             ->assertForbidden();
     }
 
-    /* ==================== PROGRAM CREATION (New Program modal) ==================== */
+    /* ==================== PROJECT CREATION (New Project modal) ==================== */
 
-    public function test_next_code_generates_ext_year_sequence_and_increments(): void
+    /**
+     * R-Q4: NEW projects get COLLEGE-PREFIXED codes. Each college numbers
+     * independently, because the prefix is part of the identity.
+     */
+    public function test_next_code_generates_college_prefixed_sequence_and_increments(): void
     {
-        // 5.1 race-safe sequence pattern: EXT-{year}-{seq}, one reservation per call.
-        $first = ExtensionProgram::nextCode(2026);
-        $second = ExtensionProgram::nextCode(2026);
-        $otherYear = ExtensionProgram::nextCode(2027);
+        $first = ExtensionProject::nextCode('CAS', 2026);
+        $second = ExtensionProject::nextCode('CAS', 2026);
+        $otherCollege = ExtensionProject::nextCode('COE', 2026);
+        $otherYear = ExtensionProject::nextCode('CAS', 2027);
 
-        $this->assertSame('EXT-2026-001', $first);
-        $this->assertSame('EXT-2026-002', $second);
-        $this->assertSame('EXT-2027-001', $otherYear);
+        $this->assertSame('CAS-2026-001', $first);
+        $this->assertSame('CAS-2026-002', $second);
+        $this->assertSame('COE-2026-001', $otherCollege, 'each college numbers independently');
+        $this->assertSame('CAS-2027-001', $otherYear, 'the sequence is year-scoped');
 
-        $this->assertSame(2, (int) DB::table('sequences')->where('key', 'extension_program_2026')->value('last_value'));
+        $this->assertSame(2, (int) DB::table('sequences')->where('key', 'project_CAS_2026')->value('last_value'));
+        $this->assertSame(1, (int) DB::table('sequences')->where('key', 'project_COE_2026')->value('last_value'));
     }
 
-    public function test_admin_creates_program_via_form_with_auto_code(): void
+    public function test_next_code_is_case_insensitive_on_the_college_code(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $this->assertSame('CAS-2026-001', ExtensionProject::nextCode('cas', 2026));
+        $this->assertSame('CAS-2026-002', ExtensionProject::nextCode('CAS', 2026));
+    }
+
+    public function test_admin_creates_project_via_form_with_auto_code(): void
+    {
+        $this->seed(UserSeeder::class);
+        $this->seed(CollegeSeeder::class);
+        $this->seed(ProgramSeeder::class);
+
+        $admin = User::where('email', 'admin@lnu.com')->first();
         $community = Community::create([
             'name' => 'Brgy. Sagkahan', 'municipality' => 'Tacloban City',
             'province' => 'Leyte', 'status' => 'active',
         ]);
 
-        Livewire::actingAs($admin)
-            ->test(ProgramsIndex::class)
-            ->call('create')
-            ->assertSet('showForm', true)
-            ->set('form.title', 'SIKAD-DIGITAL: Digital Literacy for Parents & OSY')
-            ->set('form.description', 'Basic computer, e-gov, and online-safety training.')
-            ->set('form.planned_start_date', '2026-09-01')
-            ->set('form.planned_end_date', '2026-12-31')
-            ->set('form.target_beneficiaries', '20')
-            ->set('form.allocated_budget', '20000')
-            ->set('form.status', 'ongoing')
-            ->call('toggleFormArray', 'community_ids', $community->id)
-            ->call('toggleFormArray', 'beneficiary_categories', 'Parent')
-            ->call('save')
-            ->assertSet('showForm', false);
+        $college = College::where('code', 'CAS')->first();
+        $broadProgram = Program::where('title', 'Information, Communication & Education')->first();
 
-        $program = ExtensionProgram::query()->where('title', 'like', 'SIKAD-DIGITAL%')->first();
-        $this->assertNotNull($program, 'program was persisted by the form save');
-        $this->assertMatchesRegularExpression('/^EXT-2026-\d{3}$/', $program->code);
-        $this->assertSame(20000.0, (float) $program->allocated_budget);
-        $this->assertSame([$community->id], $program->communities()->pluck('communities.id')->all());
-        $this->assertSame(['Parent'], $program->beneficiary_categories);
-        $this->assertSame($admin->id, $program->created_by);
+        Livewire::actingAs($admin)
+            ->test(CollegesIndex::class)
+            ->call('openProjectCreate')
+            ->assertSet('showProjectForm', true)
+            ->set('projectForm.college_id', (string) $college->id)
+            ->set('projectForm.program_id', (string) $broadProgram->id)
+            ->set('projectForm.title', 'SIKAD-DIGITAL: Digital Literacy for Parents & OSY')
+            ->set('projectForm.description', 'Basic computer, e-gov, and online-safety training.')
+            ->set('projectForm.planned_start_date', '2026-09-01')
+            ->set('projectForm.planned_end_date', '2026-12-31')
+            ->set('projectForm.target_beneficiaries', '20')
+            ->set('projectForm.allocated_budget', '20000')
+            ->set('projectForm.annual_target_hours', '80')
+            ->set('projectForm.status', 'ongoing')
+            ->call('toggleProjectFormArray', 'community_ids', $community->id)
+            ->call('toggleProjectFormArray', 'beneficiary_categories', 'Parent')
+            ->call('saveProject')
+            ->assertSet('showProjectForm', false);
+
+        $project = ExtensionProject::query()->where('title', 'like', 'SIKAD-DIGITAL%')->first();
+        $this->assertNotNull($project, 'project was persisted by the form save');
+
+        /* R-Q4: the code carries the selected college's prefix. */
+        $this->assertMatchesRegularExpression('/^CAS-2026-\d{3}$/', $project->code);
+        $this->assertSame($college->id, $project->college_id);
+        $this->assertSame($broadProgram->id, $project->program_id);
+        $this->assertSame(20000.0, (float) $project->allocated_budget);
+        $this->assertSame(80.0, (float) $project->annual_target_hours);
+        // Budget has no annual target (owner decision 2026-09-26) — the project
+        // form no longer collects one, so the legacy column stays NULL.
+        $this->assertNull($project->annual_target_budget);
+        $this->assertSame([$community->id], $project->communities()->pluck('communities.id')->all());
+        $this->assertSame(['Parent'], $project->beneficiary_categories);
+        $this->assertSame($admin->id, $project->created_by);
     }
 
-    public function test_next_code_skips_codes_already_used_by_seeded_programs(): void
+    public function test_project_form_requires_a_college_and_a_program(): void
     {
-        // Owner-reported scenario: seeder hardcodes EXT-2026-001..006 without
-        // reserving sequence slots (and failed inserts leave the row further
-        // behind) — nextCode must self-heal past every stored code.
+        $this->seed(UserSeeder::class);
+        $admin = User::where('email', 'admin@lnu.com')->first();
+
+        Livewire::actingAs($admin)
+            ->test(CollegesIndex::class)
+            ->call('openProjectCreate')
+            ->set('projectForm.title', 'No parent link')
+            ->set('projectForm.planned_start_date', '2026-09-01')
+            ->set('projectForm.planned_end_date', '2026-12-31')
+            ->set('projectForm.status', 'ongoing')
+            ->call('saveProject')
+            ->assertHasErrors(['projectForm.college_id', 'projectForm.program_id']);
+
+        $this->assertNull(ExtensionProject::where('title', 'No parent link')->first());
+    }
+
+    /**
+     * §3.1 drift scenario: rows hardcode codes without reserving sequence slots,
+     * so nextCode must self-heal past every stored code FOR THAT COLLEGE.
+     */
+    public function test_next_code_skips_codes_already_used_by_seeded_projects(): void
+    {
         foreach (range(1, 6) as $i) {
-            ExtensionProgram::create([
-                'code' => sprintf('EXT-2026-%03d', $i),
-                'title' => "Seeded Program {$i}",
+            ExtensionProject::create([
+                'code' => sprintf('CAS-2026-%03d', $i),
+                'title' => "Seeded Project {$i}",
                 'planned_start_date' => '2026-01-01',
                 'planned_end_date' => '2026-12-31',
                 'status' => 'ongoing',
                 'allocated_budget' => 0,
             ]);
         }
-        DB::table('sequences')->insert(['key' => 'extension_program_2026', 'last_value' => 1]);
+        DB::table('sequences')->insert(['key' => 'project_CAS_2026', 'last_value' => 1]);
 
-        $this->assertSame('EXT-2026-007', ExtensionProgram::nextCode(2026));
-        $this->assertSame('EXT-2026-008', ExtensionProgram::nextCode(2026));
+        $this->assertSame('CAS-2026-007', ExtensionProject::nextCode('CAS', 2026));
+        $this->assertSame('CAS-2026-008', ExtensionProject::nextCode('CAS', 2026));
     }
 
-    public function test_next_code_never_reuses_a_soft_deleted_program_code(): void
+    public function test_next_code_never_reuses_a_soft_deleted_project_code(): void
     {
-        // The unique index applies to soft-deleted rows too.
-        $program = ExtensionProgram::create([
-            'code' => 'EXT-2026-001',
-            'title' => 'Deleted Program',
+        $project = ExtensionProject::create([
+            'code' => 'CAS-2026-001',
+            'title' => 'Deleted Project',
             'planned_start_date' => '2026-01-01',
             'planned_end_date' => '2026-12-31',
             'status' => 'completed',
             'allocated_budget' => 0,
         ]);
-        $program->delete();
+        $project->delete();
 
-        $this->assertSame('EXT-2026-002', ExtensionProgram::nextCode(2026));
+        $this->assertSame('CAS-2026-002', ExtensionProject::nextCode('CAS', 2026));
     }
 
     public function test_next_code_honors_sequence_ahead_of_existing_codes(): void
     {
         // Gaps are acceptable: a healthy sequence row past the data still wins.
-        ExtensionProgram::create([
-            'code' => 'EXT-2026-001',
-            'title' => 'Only Program',
+        ExtensionProject::create([
+            'code' => 'CAS-2026-001',
+            'title' => 'Only Project',
             'planned_start_date' => '2026-01-01',
             'planned_end_date' => '2026-12-31',
             'status' => 'ongoing',
             'allocated_budget' => 0,
         ]);
-        DB::table('sequences')->insert(['key' => 'extension_program_2026', 'last_value' => 9]);
+        DB::table('sequences')->insert(['key' => 'project_CAS_2026', 'last_value' => 9]);
 
-        $this->assertSame('EXT-2026-010', ExtensionProgram::nextCode(2026));
+        $this->assertSame('CAS-2026-010', ExtensionProject::nextCode('CAS', 2026));
+    }
+
+    /**
+     * DUPLICATE PROTECTION PER COLLEGE (§9.2 risk item). A code issued for one
+     * college must never be issued for another, and one college's counters must
+     * not be advanced by activity in a different college.
+     */
+    public function test_next_code_never_collides_across_colleges(): void
+    {
+        $cas1 = ExtensionProject::nextCode('CAS', 2026);
+        $coe1 = ExtensionProject::nextCode('COE', 2026);
+        $cme1 = ExtensionProject::nextCode('CME', 2026);
+
+        $this->assertSame('CAS-2026-001', $cas1);
+        $this->assertSame('COE-2026-001', $coe1);
+        $this->assertSame('CME-2026-001', $cme1);
+        $this->assertSame(3, count(array_unique([$cas1, $coe1, $cme1])), 'no two colleges share a code');
+
+        /* Persist them and prove the database agrees. */
+        foreach ([$cas1, $coe1, $cme1] as $code) {
+            ExtensionProject::create([
+                'code' => $code,
+                'title' => "Project {$code}",
+                'planned_start_date' => '2026-01-01',
+                'planned_end_date' => '2026-12-31',
+                'status' => 'ongoing',
+                'allocated_budget' => 0,
+            ]);
+        }
+        /* All three are now persisted, so the self-healing floor sees each
+           college's existing maximum. Each must still advance its OWN counter. */
+        $this->assertSame('CAS-2026-002', ExtensionProject::nextCode('CAS', 2026), 'CAS advanced independently');
+        $this->assertSame('COE-2026-002', ExtensionProject::nextCode('COE', 2026), 'COE advanced independently');
+        $this->assertSame('CME-2026-002', ExtensionProject::nextCode('CME', 2026), 'CME advanced independently');
     }
 
     public function test_employee_id_service_skips_existing_ids(): void

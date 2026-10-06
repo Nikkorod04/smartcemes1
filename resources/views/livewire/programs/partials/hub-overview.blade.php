@@ -27,58 +27,88 @@
         </div>
     </div>
 
-    {{-- RESULTS FRAMEWORK --}}
+    {{-- TARGETS & ALLOCATION (R4, §4.7) — replaces the 8.6 Results Framework
+         card. D-R7 removed the KPI dictionary from project level; the Director
+         now reads four quantities per project. Training hours are measured
+         against the project's annual HOURS target; budget has NO annual target
+         (owner decision 2026-09-26), so it is measured against the project's
+         allocation. Broad programs carry no target (D-R5) — targets exist at
+         University and Project level only, which is stated explicitly below. --}}
     <div class="sc-card p-6">
         <div class="flex items-center justify-between mb-3">
-            <h3 class="font-bold text-[14px]">Results Framework</h3>
+            <h3 class="font-bold text-[14px] flex items-center gap-2">
+                <x-sc.icon name="chart" class="!w-[18px] !h-[18px] text-lnu-700" /> Targets &amp; Allocation
+                <span class="badge badge-gray !text-[10px]">target vs actual</span>
+            </h3>
+            {{-- Admin-only. `targets.index` is admin-only and this card carries no
+                 other role guard, so faculty and secretary were shown a link that 403'd. --}}
             @if ($canManage)
-                <button wire:click="openObjManager" class="btn btn-outline !px-2.5 !py-1.5 !text-[11px]">Manage</button>
+                <a href="{{ route('targets.index') }}" class="text-[11.5px] font-bold text-lnu-700 hover:text-lnu-900 transition">University pool →</a>
             @endif
         </div>
-        @if ($program->programObjectives->isEmpty())
-            <p class="text-[12.5px] text-gray-400 mt-2">No objectives defined yet.{{ $canManage ? ' Use Manage to add measurable objectives with locked KPI metrics, or qualitative ones tracked manually.' : '' }}</p>
-        @else
-            <div class="space-y-3">
-                @foreach ($program->programObjectives as $obj)
-                    @php
-                        $meta = $objectiveMeta[$obj->id];
-                        $status = $meta['status'];
-                        $actual = $meta['actual'];
-                        $pct = $meta['pct'];
-                        $statusMeta = [$meta['badge'], $meta['label']];
-                        $barClass = $meta['bar'];
-                    @endphp
-                    <div class="mt-3 pt-3 border-t border-gray-100 first:border-0 first:pt-0 first:mt-0" wire:key="obj-{{ $obj->id }}">
-                        <div class="flex items-start justify-between gap-2">
-                            <p class="text-[12.5px] font-semibold leading-snug">{{ $obj->objective }}</p>
-                            <span class="badge {{ $statusMeta[0] }} shrink-0">{{ $statusMeta[1] }}</span>
-                        </div>
-                        <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">
-                            {{ $obj->kpi_metric ? (config('smartcemes.kpi_metrics')[$obj->kpi_metric] ?? $obj->kpi_metric) : 'Qualitative · manual' }}{{ $obj->unit ? ' · '.$obj->unit : '' }}{{ $obj->target_date ? ' · due '.$obj->target_date->format('M j, Y') : '' }}
-                        </p>
-                        <div class="progress mt-2"><span style="width:{{ $pct }}%" class="{{ $barClass }}"></span></div>
-                        <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline {{ $obj->baseline_value ?? '—' }} → Target {{ $obj->target_value ?? '—' }} → Actual <span class="text-charcoal">{{ $actual === null ? '—' : number_format($actual, 1) }}</span>@if ($meta['source']) <span class="text-gray-400 font-medium">· {{ ['live' => 'auto (live)', 'stored' => 'stored', 'manual' => 'manual'][$meta['source']] }}</span>@endif</p>
-                        @if ($obj->evidence_notes)
-                            <p class="text-[11px] text-gray-400 mt-1"><span class="font-semibold text-gray-500">Evidence:</span> {{ $obj->evidence_notes }}</p>
-                        @endif
-                    </div>
-                @endforeach
+
+        <div class="space-y-3">
+            <div>
+                <div class="flex items-baseline justify-between gap-2">
+                    <p class="text-[12.5px] font-semibold">Training hours rendered</p>
+                    <p class="text-[12px] font-bold shrink-0">{{ number_format($performance['actual_hours']) }} <span class="text-gray-400 font-medium">/ {{ $performance['target_hours'] === null ? 'no target' : number_format($performance['target_hours']).' hrs' }}</span></p>
+                </div>
+                <div class="progress mt-1.5"><span style="width:{{ (int) min($performance['hours_pct'] ?? 0, 100) }}%" class="{{ $attainBg($performance['hours_pct']) }}"></span></div>
+                <p class="text-[10.5px] text-gray-400 mt-1">{{ $performance['hours_pct'] === null ? 'No annual target set for this project yet.' : $performance['hours_pct'].'% of the annual target' }} · <span class="font-mono">trainors × trainees × days</span></p>
             </div>
-        @endif
+
+            <div>
+                <div class="flex items-baseline justify-between gap-2">
+                    <p class="text-[12.5px] font-semibold">Budget utilized</p>
+                    <p class="text-[12px] font-bold shrink-0 {{ $over ? 'text-red-600' : '' }}">₱{{ number_format($utilized) }} <span class="text-gray-400 font-medium">/ ₱{{ number_format($budgetVsAllocation['allocated']) }} allocated</span></p>
+                </div>
+                <div class="progress mt-1.5"><span style="width:{{ (int) min($budgetVsAllocation['pct'] ?? 0, 100) }}%" class="{{ $budgetVsAllocation['over'] ? 'bg-red-500' : 'bg-lnu-600' }}"></span></div>
+                <p class="text-[10.5px] text-gray-400 mt-1">
+                    {{ $budgetVsAllocation['pct'] === null ? 'No allocation set.' : $budgetVsAllocation['pct'].'% · ₱'.number_format($budgetVsAllocation['remaining']).' remaining' }}
+                </p>
+            </div>
+
+            <div class="pt-3 border-t border-gray-100 grid grid-cols-2 gap-3">
+                <div>
+                    <p class="label">Trainors assigned</p>
+                    <p class="text-[15px] font-extrabold tracking-tight">{{ $performance['trainors'] }} <span class="text-[11px] text-gray-400 font-semibold">faculty</span></p>
+                </div>
+                <div>
+                    <p class="label">Trainees reached</p>
+                    <p class="text-[15px] font-extrabold tracking-tight">{{ number_format($performance['trainees']) }} <span class="text-[11px] text-gray-400 font-semibold">/ {{ $program->target_beneficiaries ? number_format((int) $program->target_beneficiaries) : '—' }}</span></p>
+                </div>
+            </div>
+
+            <p class="text-[11px] text-gray-400 leading-relaxed pt-1">
+                Broad programs carry <b>no</b> target — targets exist at University and Project level only (D-R5). The 8.6 KPI dictionary is no longer shown at project level (D-R7).
+            </p>
+        </div>
     </div>
 
 {{-- EXECUTIVE NARRATIVE (Director-only, 5.15 — no approval gate) --}}
     @if ($canManage)
+        @php($narrative = $latestNarrative)
+
         <div class="sc-card p-6 col-span-3">
-            <div class="flex items-center justify-between">
-                <h3 class="font-bold text-[14px] flex items-center gap-2"><x-sc.icon name="sparkles" class="!w-[18px] !h-[18px] text-gold-500" /> Executive Narrative</h3>
-                <div class="flex gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="font-bold text-[14px] flex items-center gap-2">
+                    <x-sc.icon name="sparkles" class="!w-[18px] !h-[18px] text-gold-500" /> Executive Narrative
+                    <span class="badge badge-gray !text-[10px]">Director-only · aggregates only</span>
+                </h3>
+                <div class="flex flex-wrap gap-2">
                     <a href="{{ route('program-narratives.index') }}" class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">History →</a>
-                    <button wire:click="generateNarrative" class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">Generate program narrative</button>
+                    @if ($fullNarrative)
+                        <button wire:click="openNarrativeModal" wire:loading.attr="disabled" wire:target="generateNarrative" class="btn btn-outline !px-2.5 !py-1.5 !text-[11px]">
+                            <x-sc.icon name="doc" class="w-3.5 h-3.5" />View full narrative
+                        </button>
+                    @endif
+                    <button wire:click="generateNarrative" wire:loading.attr="disabled" wire:target="generateNarrative" class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">
+                        <span wire:loading.remove wire:target="generateNarrative" class="inline-flex items-center gap-1.5"><x-sc.icon name="sparkles" class="w-3.5 h-3.5" />Generate program narrative</span>
+                        <span wire:loading wire:target="generateNarrative" class="inline-flex items-center gap-1.5"><x-sc.icon name="loader" class="w-3.5 h-3.5 animate-spin" />Generating…</span>
+                    </button>
                 </div>
             </div>
             <div class="mt-3">
-                @php($narrative = $this->program->programNarratives()->latest('id')->first())
                 @if ($narrative === null)
                     <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center">
                         <p class="text-[12.5px] text-gray-500 font-semibold">No narrative generated yet for this program.</p>
@@ -100,9 +130,14 @@
                             <span class="text-[11px] text-gray-400 font-medium">Generated {{ $narrative->generated_at?->format('M j, Y g:i A') }} · {{ $narrative->generator?->name }} · {{ $narrative->metadata['model'] ?? 'gemini' }} · prompt v{{ $narrative->metadata['prompt_version'] ?? '—' }}</span>
                         </div>
                         <p class="text-[13px] text-gray-600 leading-relaxed">{{ $narrative->summary }}</p>
+                        <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-[11px] text-gray-400 font-medium">{{ count($narrative->risks ?? []) }} risk{{ count($narrative->risks ?? []) === 1 ? '' : 's' }} flagged · {{ count($narrative->recommendations ?? []) }} recommended action{{ count($narrative->recommendations ?? []) === 1 ? '' : 's' }}</p>
+                            <button wire:click="openNarrativeModal" class="text-[11.5px] font-bold text-lnu-700 hover:text-lnu-900 transition">Read the full narrative →</button>
+                        </div>
                     </div>
                 @endif
             </div>
         </div>
+
     @endif
 </div>

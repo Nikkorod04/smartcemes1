@@ -15,7 +15,7 @@ Log in as **admin@lnu.com** → **Communities & Partner Schools**.
   columns.
 - Filter chips at the top: **All / Communities / Partner Schools** — school
   rows carry a gold document icon + level label (elementary / secondary /
-  higher ed); community rows show beneficiary/program counts.
+  higher ed); community rows show beneficiary/project counts.
 
 ## 2. Create a community
 
@@ -32,13 +32,13 @@ Click the add button and fill:
 | Contact number | `09185551234` |
 | Email | `brgy96.calanipaway@tacloban.gov.ph` |
 | Address | `Brgy. 96 Calanipawan, Tacloban City, Leyte` |
-| Description / notes | `Coastal barangay near the city proper; initial scoping for a coastal livelihood program.` |
+| Description / notes | `Coastal barangay near the city proper; initial scoping for a coastal livelihood project.` |
 
 Save.
 
 **Expected:** toast; the row appears in the list with a **Prospecting**
 (gray) status chip. Clicking the row opens the detail modal showing
-contact details plus beneficiaries/programs/needs-history sections.
+contact details plus beneficiaries/projects/needs-history sections.
 
 ## 3. Create a partner school
 
@@ -64,7 +64,7 @@ Save.
 - The school's status is **Active** — schools are always active partners
   (no prospecting state), saved automatically as active.
 - The detail modal shows **Level / Principal** fields instead of the
-  beneficiaries/programs/needs-history sections communities have.
+  beneficiaries/projects/needs-history sections communities have.
 
 ## 4. Edit + filter
 
@@ -84,14 +84,14 @@ in the list.
 **Expected:** the list narrows to the Sagkahan community (and any matching
 records).
 
-## 5. Link a community to a program (where this matters)
+## 5. Link a community to a project (where this matters)
 
-1. Open **Extension Programs** → any program's hub → **Edit Program**.
+1. Open the project hub: **Manage Extension Programs** → a college card → open one of its projects → **Edit**.
 2. In **Linked communities**, search your new barangay
    (`Calanipawan`) → select it → save.
 
-**Expected:** the community now appears on the program's header/overview,
-and the community detail modal's programs list includes this program. (The
+**Expected:** the community now appears on the project's header/overview,
+and the community detail modal's project list includes this project. (The
 multi-select also shows partner schools with a `· School` marker — schools
 can be linked as partners/venues too.)
 
@@ -104,4 +104,4 @@ can be linked as partners/venues too.)
 | School created with gold icon + level label, forced Active | ☐ |
 | School detail shows Level/Principal (not beneficiary sections) | ☐ |
 | Edit modal updates the row | ☐ |
-| Community linkable to a program via Edit Program | ☐ |
+| Community linkable to a project via Edit | ☐ |

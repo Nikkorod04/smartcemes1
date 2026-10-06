@@ -1,21 +1,12 @@
 @php
 $role = auth()->user()->role;
-$navGroups = collect(config('smartcemes.nav.'.$role))
-    ->map(fn ($g) => [
-        'section' => $g['section'],
-        'items' => collect($g['items'])->filter(fn ($i) => Route::has($i['route']))->values()->all(),
-    ])
-    ->filter(fn ($g) => count($g['items']) > 0)
-    ->values()
-    ->all();
+$navGroups = \App\Support\Navigation::groups($role);
+$families = \App\Support\Navigation::families($navGroups);
 $initials = collect(explode(' ', auth()->user()->name))
     ->filter(fn ($p) => $p && str_starts_with($p, strtoupper(substr($p, 0, 1))))
     ->map(fn ($p) => mb_substr(preg_replace('/^(Dr\.|Prof\.|Mr\.|Ms\.)\s*/u', '', $p), 0, 1))
     ->take(2)
     ->implode('');
-$families = collect($navGroups)->pluck('items')->flatten(1)
-    ->map(fn ($i) => str($i['route'])->before('.')->toString())
-    ->countBy();
 @endphp
 
 <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col no-print">
@@ -33,18 +24,16 @@ $families = collect($navGroups)->pluck('items')->flatten(1)
                 <p class="px-3 mb-2 text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">{{ $group['section'] }}</p>
                 <nav class="space-y-1">
                     @foreach ($group['items'] as $item)
-                        @php
-                            $family = str($item['route'])->before('.')->toString();
-                            $active = request()->routeIs($item['route'])
-                                || url()->current() === route($item['route'])
-                                || ($families->get($family) === 1 && request()->routeIs($family.'.*'));
-                        @endphp
                         <a href="{{ route($item['route']) }}"
-                           @class(['sc-nav-link', 'active' => $active])>
+                           @class(['sc-nav-link', 'active' => \App\Support\Navigation::isActive($item, $families)])>
                             <x-sc.icon :name="$item['icon']" class="w-5 h-5" />
                             <span>{{ $item['label'] }}</span>
                             @if (isset($item['badge']) && $item['badge'])
                                 <span class="sc-nav-badge">{{ $item['badge'] }}</span>
+                            @endif
+                            @if (! empty($item['subs']))
+                                {{-- drill-down signal: this entry opens a whole chain --}}
+                                <x-sc.icon name="chevron-right" class="w-3.5 h-3.5 nav-chevron" />
                             @endif
                         </a>
                     @endforeach

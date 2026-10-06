@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interagency Catalogue · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="interagency">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="text-[20px] font-extrabold tracking-tight leading-tight">Interagency Catalogue</h2>
+        <p class="text-[12.5px] text-gray-400 font-medium mt-0.5">
+          The government agencies CESO refers out-of-scope needs to, and the intervention categories each one owns
+        </p>
+      </div>
+      <button onclick="openForm()" class="btn btn-primary">+ Add agency</button>
+    </div>
+  </section>
+
+  <!-- ===================== WHY THIS EXISTS ===================== -->
+  <section class="mt-4 reveal-item">
+    <div class="sc-card p-5 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
+      <div class="flex items-start gap-3">
+        <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0">[[shield]]</span>
+        <div class="min-w-0">
+          <h3 class="font-extrabold text-[14px] tracking-tight">How the AI uses this catalogue</h3>
+          <p class="text-[11.5px] text-gray-500 mt-0.5 leading-relaxed max-w-4xl">When a community need falls outside CESO's delivery remit, the AI still surfaces it — but labelled as an <b>interagency intervention</b> and pointed at the responsible agency from this list. Needs that cannot be attributed to any agency are suppressed entirely rather than presented as a CESO recommendation.</p>
+          <div class="flex flex-wrap items-center gap-2 mt-3">
+            <span class="tier-badge tier-1">Tier 1 · CESO delivers</span>
+            <span class="tier-badge tier-2">Tier 2 · Referred to an agency below</span>
+            <span class="tier-badge tier-3">Tier 3 · Suppressed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SUMMARY TILES ===================== -->
+  <section id="tiles" class="mt-5 grid lg:grid-cols-4 md:grid-cols-2 gap-4"></section>
+
+  <!-- ===================== FILTERS ===================== -->
+  <section class="mt-5 flex flex-wrap items-center gap-2">
+    <div class="relative">
+      <input id="q" class="input !py-2 !text-[12.5px] w-64 pl-9" placeholder="Search agency, scope or contact…">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">[[search]]</span>
+    </div>
+    <select id="catPick" class="input !py-2 !text-[12.5px] w-auto"></select>
+    <select id="pillarPick" class="input !py-2 !text-[12.5px] w-auto">
+      <option value="">All pillars</option>
+      <option>Social</option><option>Economic</option><option>Environmental</option>
+    </select>
+    <select id="moaPick" class="input !py-2 !text-[12.5px] w-auto">
+      <option value="">Any MOA status</option>
+      <option value="None">No MOA yet</option>
+      <option value="Active MOA">Active MOA</option>
+    </select>
+    <span id="count" class="ml-auto text-[12px] text-gray-400 font-medium"></span>
+  </section>
+
+  <!-- ===================== TABLE ===================== -->
+  <section class="mt-3">
+    <div class="reveal-item sc-card p-0 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="sc-table">
+          <thead>
+            <tr>
+              <th>Agency</th>
+              <th>Intervention category</th>
+              <th class="min-w-[240px]">Scope owned by the agency</th>
+              <th>Pillar</th>
+              <th>Contact</th>
+              <th class="!text-right">MOA</th>
+              <th class="!text-right">Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="emptyState" class="hidden mt-3"></div>
+  </section>
+
+  <!-- ===================== AI REFERRALS IN FLIGHT ===================== -->
+  <section class="mt-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h3 class="text-[14px] font-extrabold tracking-tight">Referrals raised by the AI</h3>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Tier-2 items the model flagged from validated assessment summaries</p>
+      </div>
+      <a href="ai-analysis.html?role=admin" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open AI workspace →</a>
+    </div>
+    <div id="referrals" class="mt-3 grid lg:grid-cols-2 gap-3"></div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<!-- ===================== ADD / EDIT MODAL ===================== -->
+<div id="mForm" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mForm')"></div>
+  <div class="sc-modal relative max-w-xl mx-auto mt-16 sc-card p-6 shadow-pop">
+    <h3 class="font-bold text-[15px] mb-1" id="formTitle">Add agency</h3>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">Agencies added here become valid targets for the AI's interagency referrals.</p>
+    <div class="space-y-3">
+      <div><label class="label">Agency name *</label><input id="fAgency" class="input" placeholder="e.g. DOH — Department of Health"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Abbreviation</label><input id="fAbbr" class="input" placeholder="DOH"></div>
+        <div><label class="label">Pillar</label>
+          <select id="fPillar" class="input"><option>Social</option><option>Economic</option><option>Environmental</option></select>
+        </div>
+      </div>
+      <div><label class="label">Intervention category *</label>
+        <input id="fCategory" class="input" list="catList" placeholder="e.g. Clean &amp; Green / Coastal Clean-up">
+        <datalist id="catList"></datalist>
+      </div>
+      <div><label class="label">Scope owned by the agency *</label>
+        <textarea id="fScope" rows="2" class="input" placeholder="What this agency is responsible for delivering"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Contact</label><input id="fContact" class="input" placeholder="Regional Office VIII, Palo, Leyte"></div>
+        <div><label class="label">MOA status</label>
+          <select id="fMoa" class="input"><option>None</option><option>Active MOA</option><option>Expired</option><option>In progress</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="btn btn-ghost" onclick="closeModal('mForm')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAgency()">Save agency</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+const D = window.DATA;
+let editId = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------- Summary tiles ---------------- */
+function renderTiles() {
+  const list = D.interagencyAgencies;
+  const cats = new Set(list.map(a => a.category));
+  const withMoa = list.filter(a => a.moa && a.moa !== 'None').length;
+  const referrals = countReferrals();
+  $('tiles').innerHTML = [
+    ['Agencies in the catalogue', list.length, '[[shield]]', 'bg-lnu-50 text-lnu-800', ''],
+    ['Intervention categories', cats.size, '[[folder]]', 'bg-gold-50 text-gold-700', 'Distinct referral types'],
+    ['Active MOAs', withMoa, '[[doc]]', 'bg-emerald-50 text-emerald-600', 'Formalised partnerships'],
+    ['AI referrals raised', referrals.total, '[[sparkles]]', 'bg-lnu-50 text-lnu-800', referrals.total ? 'From validated summaries' : 'None flagged yet']
+  ].map(([label, val, ic, tone, note]) => `
+    <div class="sc-card sc-card-hover p-5 reveal-item">
+      <span class="w-10 h-10 rounded-xl ${tone} flex items-center justify-center">${ic}</span>
+      <p class="mt-3 text-[24px] font-extrabold tracking-tight leading-none">${val}</p>
+      <p class="text-[12px] text-gray-500 font-medium mt-1.5">${label}</p>
+      ${note ? `<p class="text-[10.5px] text-gray-400 font-medium mt-0.5">${note}</p>` : ''}
+    </div>`).join('');
+}
+
+/* ---------------- Referral extraction from narratives ---------------- */
+function countReferrals() {
+  const out = [];
+  (D.programNarratives || []).forEach(n => (n.recommendations || []).forEach(r => {
+    if (r.tier === 2) out.push({ ...r, narrative: n });
+  }));
+  return { total: out.length, items: out };
+}
+
+/* ---------------- Filters ---------------- */
+function fillFilters() {
+  const cats = [...new Set(D.interagencyAgencies.map(a => a.category))].sort();
+  $('catPick').innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option>${esc(c)}</option>`).join('');
+  $('catList').innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
+}
+
+function filtered() {
+  const q = ($('q').value || '').toLowerCase().trim();
+  const cat = $('catPick').value, pillar = $('pillarPick').value, moa = $('moaPick').value;
+  return D.interagencyAgencies.filter(a => {
+    if (cat && a.category !== cat) return false;
+    if (pillar && a.pillar !== pillar) return false;
+    if (moa === 'None' && a.moa && a.moa !== 'None') return false;
+    if (moa === 'Active MOA' && a.moa !== 'Active MOA') return false;
+    if (!q) return true;
+    return [a.agency, a.abbr, a.category, a.scope, a.contact].join(' ').toLowerCase().includes(q);
+  });
+}
+
+const MOA_BADGE = m => m === 'Active MOA' ? 'badge-green'
+  : m === 'In progress' ? 'badge-blue'
+  : m === 'Expired' ? 'badge-red' : 'badge-gray';
+
+function renderRows() {
+  const list = filtered();
+  $('count').textContent = list.length + ' of ' + D.interagencyAgencies.length + ' agencies';
+  $('rows').innerHTML = list.length ? list.map(a => `
+    <tr>
+      <td>
+        <p class="font-semibold text-charcoal">${esc(a.agency.split('—')[0].trim())}</p>
+        <p class="text-[11px] text-gray-400">${esc(a.abbr || '')}</p>
+      </td>
+      <td><span class="badge badge-gray">${esc(a.category)}</span></td>
+      <td class="text-gray-500 text-[12px] leading-snug">${esc(a.scope)}</td>
+      <td>${SC.pillarChip(a.pillar)}</td>
+      <td class="text-gray-500 text-[12px]">${esc(a.contact || '—')}</td>
+      <td class="!text-right"><span class="badge ${MOA_BADGE(a.moa)}">${esc(a.moa || 'None')}</span></td>
+      <td class="!text-right"><span class="badge ${a.status === 'Active' ? 'badge-green' : 'badge-gray'}">${esc(a.status || 'Active')}</span></td>
+      <td class="!text-right row-actions whitespace-nowrap">
+        <button class="btn btn-outline !px-2 !py-1 !text-[11px]" onclick="openForm(${a.id})">Edit</button>
+        <button class="btn btn-danger-soft !px-2 !py-1 !text-[11px]" onclick="removeAgency(${a.id})">Remove</button>
+      </td>
+    </tr>`).join('') : '';
+
+  const empty = $('emptyState');
+  if (list.length) { empty.classList.add('hidden'); }
+  else {
+    empty.classList.remove('hidden');
+    empty.innerHTML = `<div class="sc-card p-8 text-center">
+      <p class="text-[13px] font-bold text-gray-500">No agencies match the current filters.</p>
+      <p class="text-[11.5px] text-gray-400 mt-1">Clear the search or add a new agency to the catalogue.</p>
+    </div>`;
+  }
+}
+
+/* ---------------- Referrals panel ---------------- */
+function renderReferrals() {
+  const { items, total } = countReferrals();
+  if (!total) {
+    $('referrals').innerHTML = `<div class="sc-card p-6 text-center lg:col-span-2">
+      <p class="text-[13px] font-semibold text-gray-500">No interagency referrals have been raised yet.</p>
+      <p class="text-[11.5px] text-gray-400 mt-1">Referrals appear here when the AI flags a need outside CESO's delivery remit.</p>
+    </div>`;
+    return;
+  }
+  $('referrals').innerHTML = items.map((r, i) => {
+    const proj = r.narrative && r.narrative.program ? r.narrative.program : null;
+    return `
+    <div class="sc-card p-4 tier-card tier-2 reveal-item">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-1.5 mb-1">
+            ${SC.pillarChip(r.pillar)}
+            <span class="badge ${r.priority === 'High' ? 'badge-red' : r.priority === 'Medium' ? 'badge-gold' : 'badge-gray'}">${esc(r.priority)}</span>
+            ${proj ? `<a href="program-detail.html?role=admin&program=${proj.code}" class="text-[11px] font-bold text-lnu-800 hover:underline font-mono">${proj.code}</a>` : ''}
+          </div>
+          <p class="text-[13px] font-bold leading-snug">${esc(r.action)}</p>
+          <p class="text-[11.5px] text-gray-500 mt-1 leading-relaxed">${esc(r.rationale || '')}</p>
+        </div>
+      </div>
+      <div class="mt-3 pt-3 border-t border-gray-100">
+        <span class="interagency-note">[[shield]] Refer to <b>${esc(r.agency || 'Unassigned — add an agency')}</b></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- Add / edit ---------------- */
+function openForm(id) {
+  editId = id ?? null;
+  const a = editId != null ? D.interagencyAgencies.find(x => x.id === editId) : null;
+  $('formTitle').textContent = a ? 'Edit agency' : 'Add agency';
+  $('fAgency').value = a ? a.agency : '';
+  $('fAbbr').value = a ? (a.abbr || '') : '';
+  $('fPillar').value = a ? a.pillar : 'Social';
+  $('fCategory').value = a ? a.category : '';
+  $('fScope').value = a ? a.scope : '';
+  $('fContact').value = a ? (a.contact || '') : '';
+  $('fMoa').value = a ? (a.moa || 'None') : 'None';
+  openModal('mForm');
+}
+window.openForm = openForm;
+
+function saveAgency() {
+  const agency = $('fAgency').value.trim();
+  const category = $('fCategory').value.trim();
+  const scope = $('fScope').value.trim();
+  if (!agency || !category || !scope) { SC.toast('Agency, category and scope are required', 'error'); return; }
+  const payload = {
+    agency, abbr: $('fAbbr').value.trim(), pillar: $('fPillar').value,
+    category, scope, contact: $('fContact').value.trim(),
+    moa: $('fMoa').value, status: 'Active'
+  };
+  if (editId != null) {
+    Object.assign(D.interagencyAgencies.find(x => x.id === editId), payload);
+    SC.toast('Agency updated · change logged', 'success');
+  } else {
+    D.interagencyAgencies.push({ id: Date.now() % 100000, ...payload });
+    SC.toast('Agency added to the catalogue — available for AI referrals', 'success');
+  }
+  editId = null; closeModal('mForm');
+  fillFilters(); renderTiles(); renderRows();
+}
+window.saveAgency = saveAgency;
+
+function removeAgency(id) {
+  const a = D.interagencyAgencies.find(x => x.id === id);
+  const used = countReferrals().items.filter(r => r.agency && a && r.agency.includes(a.abbr)).length;
+  if (used) { SC.toast('Cannot remove — the AI has already referred ' + used + ' item(s) to this agency', 'error'); return; }
+  const i = D.interagencyAgencies.findIndex(x => x.id === id);
+  if (i > -1) D.interagencyAgencies.splice(i, 1);
+  fillFilters(); renderTiles(); renderRows();
+  SC.toast('Agency removed from the catalogue · change logged', 'warn');
+}
+window.removeAgency = removeAgency;
+
+function openModal(id){ $(id).classList.remove('hidden'); }
+function closeModal(id){ $(id).classList.add('hidden'); }
+window.closeModal = closeModal;
+
+document.addEventListener('DOMContentLoaded', () => {
+  fillFilters(); renderTiles(); renderRows(); renderReferrals();
+  $('q').addEventListener('input', renderRows);
+  $('catPick').addEventListener('change', renderRows);
+  $('pillarPick').addEventListener('change', renderRows);
+  $('moaPick').addEventListener('change', renderRows);
+});
+</script>
+</body>
+</html>

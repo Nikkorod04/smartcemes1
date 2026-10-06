@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>University Targets · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="targets">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="text-[20px] font-extrabold tracking-tight leading-tight">University Targets</h2>
+        <p class="text-[12.5px] text-gray-400 font-medium mt-0.5">
+          The institutional commitments CESO reports against — training hours, budget, beneficiaries and activities for <span id="fyLabel">AY 2026–2027</span>
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <select id="fyPick" class="input !py-2 !text-[12.5px] w-auto"></select>
+        <button onclick="SC.toast('Target form opened — all edits are logged with your name and timestamp','info')" class="btn btn-primary admin-only">Edit targets</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MODEL-PENDING BANNER (§2.2C) ===================== -->
+  <section class="mt-4 reveal-item">
+    <div class="sc-card p-4 flex items-start gap-3 !border-amber-200 !bg-amber-50/50">
+      <span class="w-9 h-9 rounded-xl bg-white text-amber-600 flex items-center justify-center shrink-0">[[clock]]</span>
+      <div class="min-w-0">
+        <p class="text-[12.5px] font-bold leading-snug">This page does not yet reflect the final target model.</p>
+        <p class="text-[11.5px] text-gray-500 mt-0.5 leading-relaxed">It still presents the annual target as a set of parallel commitments (hours, budget, beneficiaries, activities) rather than as a <b>single annual training-hours pool drawn down by project actuals</b>. The rewrite is tracked as an open item in <span class="font-mono">revisions.md</span> §2.2C and will land before implementation.</p>
+      </div>
+      <span class="badge badge-yellow shrink-0 ml-auto">Pending</span>
+    </div>
+  </section>
+
+  <!-- ===================== UNIVERSITY TARGET VS ACTUAL ===================== -->
+  <section class="mt-5">
+    <h3 class="text-[14px] font-extrabold tracking-tight">University targets vs actuals</h3>
+    <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Attainment is measured across the whole fiscal year</p>
+    <div id="targetTiles" class="mt-3 grid lg:grid-cols-4 md:grid-cols-2 gap-4"></div>
+  </section>
+
+  <!-- ===================== PROJECT TARGETS TABLE ===================== -->
+  <section class="mt-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h3 class="text-[14px] font-extrabold tracking-tight">Project targets</h3>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Every project's annual target and what has actually been rendered</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <select id="colPick" class="input !py-2 !text-[12px] w-auto">
+          <option value="">All colleges</option>
+        </select>
+        <select id="sortPick" class="input !py-2 !text-[12px] w-auto">
+          <option value="hours">Sort · hours attainment ↑</option>
+          <option value="budget">Sort · budget utilization ↓</option>
+          <option value="code">Sort · code</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="reveal-item mt-3 sc-card p-0 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="sc-table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>College</th>
+              <th class="!text-right">Trainors</th>
+              <th class="!text-right">Trainees</th>
+              <th class="!text-right">Activities</th>
+              <th class="!text-right">Training hrs</th>
+              <th class="min-w-[168px]">Hours attainment</th>
+              <th class="!text-right">Budget</th>
+              <th class="!text-right">Budget utilization</th>
+              <th class="!text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody id="projRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="text-[11.5px] text-gray-400 mt-2">Actual figures roll up from the activities recorded inside each project. Budget utilisation derives from the approved utilisation entries.</p>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const D = window.DATA;
+
+  const TARGETS = D.universityTargets || [];
+  const pick = document.getElementById('fyPick');
+  /* Labels are our own seed literals (e.g. "AY 2026–2027"), not user input. */
+  pick.innerHTML = TARGETS.map(t => `<option value="${t.year}">${t.label || ('AY ' + t.year)}</option>`).join('');
+
+  /* University-level actuals are derived from the project roll-up so the
+     page can never contradict the project tables. */
+  function actuals() {
+    const projects = D.projects;
+    const trainingHours = projects.reduce((s,p) => s + p.renderedTrainingHours, 0);
+    const budget = D.budgetEntries.reduce((s,e) => s + e.amount, 0);
+    const beneficiaries = projects.reduce((s,p) => s + p.reached, 0);
+    const activities = projects.reduce((s,p) => s + p.activityCount, 0);
+    /* distinct faculty actually engaged across every project */
+    const faculty = new Set();
+    projects.forEach(p => (p.assignedFaculty || []).forEach(f => faculty.add(typeof f === 'object' ? f.id : f)));
+    return { trainingHours, budget, beneficiaries, activities, faculty: faculty.size, projects: projects.length, programs: D.programs.length };
+  }
+
+  function tile(label, actual, target, unit, tone, note) {
+    const pct = target ? Math.round(actual / target * 100) : 0;
+    const barTone = SC.attainTone(pct);
+    return `
+    <div class="sc-card sc-card-hover p-5 reveal-item">
+      <div class="flex items-start justify-between gap-2">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">${label}</p>
+        ${SC.attainBadge(pct)}
+      </div>
+      <p class="mt-3 text-[24px] font-extrabold tracking-tight leading-none ${tone || ''}">${unit === '₱' ? '₱' : ''}${SC.num(actual)}${unit && unit !== '₱' ? ' ' + unit : ''}</p>
+      <p class="text-[11.5px] text-gray-400 font-medium mt-1">of ${unit === '₱' ? '₱' : ''}${SC.num(target)}${unit && unit !== '₱' ? ' ' + unit : ''} target</p>
+      <div class="progress mt-3"><span style="width:${Math.min(pct,100)}%" class="${barTone}"></span></div>
+      ${note ? `<p class="text-[10.5px] text-gray-400 font-medium mt-2">${note}</p>` : ''}
+    </div>`;
+  }
+
+  function renderTiles() {
+    const a = actuals();
+    const t = TARGETS.find(x => +x.year === +pick.value) || TARGETS[0];
+    document.getElementById('fyLabel').textContent = t.label || ('AY ' + t.year + '–' + (t.year + 1));
+    /* The training-hours tile states the POOL, not a ratio: the annual target is
+       drawn down by project actuals (§2.2B). The other three are informational
+       rollups — they are not drawn down and carry no target semantics here. */
+    const drawn = Math.min(a.trainingHours, t.targetTrainingHours);
+    const left  = Math.max(t.targetTrainingHours - a.trainingHours, 0);
+    document.getElementById('targetTiles').innerHTML = [
+      tile('Training hours rendered', a.trainingHours, t.targetTrainingHours, 'hrs', 'text-lnu-800',
+        `${SC.num(left)} hrs of the annual pool still available · ${SC.num(drawn)} drawn down by ${a.projects} projects`),
+      tile('Budget utilized', a.budget, t.targetBudget, '₱', '', `${D.budgetEntries.length} utilization entries recorded`),
+      tile('Trainees / beneficiaries', a.beneficiaries, t.targetBeneficiaries, '', 'text-emerald-600',
+        `Across ${a.projects} projects — informational, no drawdown`),
+      tile('Activities delivered', a.activities, t.targetActivities, '', '',
+        `Rolled up from ${a.projects} projects · no program-level target exists`)
+    ].join('');
+  }
+
+  /* ---------------- Project table ---------------- */
+  document.getElementById('colPick').innerHTML =
+    '<option value="">All colleges</option>' + D.colleges.map(c => `<option value="${c.code}">${c.short || c.code}</option>`).join('');
+
+  function rows() {
+    const col = document.getElementById('colPick').value;
+    const sort = document.getElementById('sortPick').value;
+    let list = D.projects.slice();
+    if (col) list = list.filter(p => p.college === col);
+    if (sort === 'hours') list.sort((x,y) => x.hoursPct - y.hoursPct);
+    else if (sort === 'budget') list.sort((x,y) => y.budgetPct - x.budgetPct);
+    else list.sort((x,y) => String(x.code).localeCompare(String(y.code)));
+    return list;
+  }
+
+  function renderRows() {
+    const list = rows();
+    document.getElementById('projRows').innerHTML = list.length ? list.map(p => `
+      <tr>
+        <td>
+          <a href="program-detail.html?role=admin&program=${p.code}" class="font-semibold text-charcoal hover:text-lnu-700">${p.title.split(':')[0]}</a>
+          <p class="text-[11px] text-gray-400 font-mono">${p.code}</p>
+        </td>
+        <td>${SC.collegePill(p.college)}</td>
+        <td class="!text-right font-semibold">${p.trainors}</td>
+        <td class="!text-right font-semibold">${p.reached}</td>
+        <td class="!text-right text-gray-500">${p.activityCount}</td>
+        <td class="!text-right font-bold text-lnu-700">${SC.num(p.renderedTrainingHours)}<span class="text-gray-300 font-medium"> / ${SC.num(p.trainingHoursTarget)}</span></td>
+        <td>
+          <div class="flex items-center gap-2">
+            <div class="progress flex-1"><span style="width:${Math.min(p.hoursPct,100)}%" class="${SC.attainTone(p.hoursPct)}"></span></div>
+            <span class="text-[11.5px] font-bold text-gray-500 w-9 text-right">${p.hoursPct}%</span>
+          </div>
+        </td>
+        <td class="!text-right font-semibold">${SC.money(p.utilized)}<span class="text-gray-300 font-medium"> / ${SC.money(p.budgetAllocated)}</span></td>
+        <td class="!text-right text-[12px] font-bold ${p.budgetPct > 100 ? 'text-red-600' : 'text-gray-500'}">${p.budgetPct}%</td>
+        <td class="!text-right"><span class="badge ${p.status === 'Completed' ? 'badge-green' : p.status === 'Ongoing' ? 'badge-blue' : 'badge-yellow'}">${p.status}</span></td>
+      </tr>`).join('') : `<tr><td colspan="10" class="text-center text-gray-400 py-8">No projects match the current filters.</td></tr>`;
+  }
+
+  pick.addEventListener('change', () => { renderTiles(); });
+  document.getElementById('colPick').addEventListener('change', renderRows);
+  document.getElementById('sortPick').addEventListener('change', renderRows);
+
+  renderTiles(); renderRows();
+});
+</script>
+</body>
+</html>

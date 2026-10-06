@@ -229,7 +229,7 @@
   </div>
 
   <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
-    SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University
+    SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University
   </footer>
 </main>
 
@@ -298,7 +298,7 @@ window.PF = (() => {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    fillSelect($('pfProgram'), window.DATA.programs.map(p => p.title), 'LITRAWIYA: Barangay Reading Proficiency Program');
+    fillSelect($('pfProgram'), window.DATA.projects.map(p => p.title), 'LITRAWIYA: Barangay Reading Proficiency Project');
     fillSelect($('pfCommunity'), window.DATA.communities.map(c => c.name), 'Brgy. Apitong');
     $('pfDropzone').addEventListener('click', addFileChip);
     $('pfObjectives').addEventListener('click', e => {

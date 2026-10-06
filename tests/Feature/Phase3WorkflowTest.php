@@ -12,7 +12,7 @@ use App\Models\ActivityProposal;
 use App\Models\AssessmentSummary;
 use App\Models\AvailabilityRequest;
 use App\Models\Community;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\NeedsAssessment;
 use App\Models\RenderedHours;
@@ -34,7 +34,7 @@ class Phase3WorkflowTest extends TestCase
         $faculty = Faculty::create(['user_id' => $facultyUser->id, 'employee_id' => 'LNU-2026-0009']);
 
         $community = Community::factory()->create();
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-010',
             'title' => 'Workflow Test Program',
             'planned_start_date' => '2026-01-01',
@@ -79,7 +79,7 @@ class Phase3WorkflowTest extends TestCase
         $activity = Activity::find($proposal->created_activity_id);
         $this->assertSame('draft', $activity->status);
         $this->assertSame($proposal->title, $activity->title);
-        $this->assertSame($proposal->extension_program_id, $activity->extension_program_id);
+        $this->assertSame($proposal->extension_project_id, $activity->extension_project_id);
     }
 
     public function test_approval_blocked_when_proposed_dates_outside_program_range(): void
@@ -190,7 +190,7 @@ class Phase3WorkflowTest extends TestCase
 
         // Existing assigned activity overlapping the requested slot.
         $conflicting = Activity::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'title' => 'Existing Assignment',
             'planned_start_date' => '2026-08-22',
             'planned_end_date' => '2026-08-22',
@@ -231,7 +231,7 @@ class Phase3WorkflowTest extends TestCase
         $data = $this->seedBase();
 
         $normal = Activity::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'title' => 'Normal Schedule',
             'planned_start_date' => '2026-06-01',
             'planned_end_date' => '2026-06-01',
@@ -240,7 +240,7 @@ class Phase3WorkflowTest extends TestCase
             'status' => 'ongoing',
         ]);
         $overnight = Activity::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'title' => 'Overnight Guard',
             'planned_start_date' => '2026-06-02',
             'planned_end_date' => '2026-06-02',
@@ -252,7 +252,7 @@ class Phase3WorkflowTest extends TestCase
         $overnight->faculty()->syncWithoutDetaching([$data['faculty']->id]);
 
         Livewire::actingAs($data['admin'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('completeActivity', $normal->id)
             ->call('completeActivity', $overnight->id);
 
@@ -269,7 +269,7 @@ class Phase3WorkflowTest extends TestCase
         $entry = RenderedHours::create([
             'faculty_id' => $data['faculty']->id,
             'activity_id' => Activity::create([
-                'extension_program_id' => $data['program']->id,
+                'extension_project_id' => $data['program']->id,
                 'title' => 'Activity A',
                 'planned_start_date' => '2026-07-01',
                 'planned_end_date' => '2026-07-01',
@@ -377,7 +377,7 @@ class Phase3WorkflowTest extends TestCase
         return ActivityProposal::create([
             ...$overrides,
             'faculty_id' => $data['faculty']->id,
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'community_id' => $data['community']->id,
             'title' => 'Test Proposal',
             'proposed_start_date' => $overrides['proposed_start_date'] ?? '2026-06-01',
@@ -390,7 +390,7 @@ class Phase3WorkflowTest extends TestCase
     protected function makeAvailability(array $data, array $overrides = []): AvailabilityRequest
     {
         $activity = Activity::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'title' => 'Requested Activity',
             'planned_start_date' => '2026-08-22',
             'planned_end_date' => '2026-08-22',

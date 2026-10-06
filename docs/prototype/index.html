@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartCEMES Prototype · Preview</title>
+<script src="assets/vendor/tailwind.js"></script>
+<script src="assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="assets/css/smartcemes.css">
+<style>
+  .pick { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .pick:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -18px rgba(0,53,153,.35); border-color: #93b4fd; }
+  .linkrow { transition: background .14s ease, color .14s ease; }
+  .linkrow:hover { background: #f5f8ff; color: #003599; }
+</style>
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased">
+
+<div class="max-w-6xl mx-auto px-6 py-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="reveal-item">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-lnu-900 flex items-center justify-center shadow-pop">
+        <span class="font-black text-white text-lg tracking-tight">SC</span>
+      </div>
+      <div class="leading-tight">
+        <p class="text-[21px] font-extrabold tracking-tight">Smart<span class="text-lnu-700">CEMES</span></p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1">Community Extension Management &amp; Evaluation System · Leyte Normal University</p>
+      </div>
+      <span class="badge badge-gold ml-auto">v4.2 Prototype · revised model</span>
+    </div>
+
+    <div class="mt-8 sc-card p-6 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
+      <h1 class="text-[26px] font-extrabold tracking-tight leading-tight">Adviser revision preview</h1>
+      <p class="mt-2 text-[13.5px] text-gray-500 leading-relaxed max-w-3xl">
+        This prototype reflects the revised extension model. The hierarchy is now
+        <b>College → Program → Project → Activity</b>, monitoring is built around training hours against annual targets,
+        and the AI's recommendations are constrained to CESO's delivery remit with out-of-scope needs routed to the
+        responsible government agency.
+      </p>
+      <div class="flex flex-wrap items-center gap-2 mt-4">
+        <span class="pillar pillar-Social">Social</span>
+        <span class="pillar pillar-Economic">Economic</span>
+        <span class="pillar pillar-Environmental">Environmental</span>
+        <span class="text-[11.5px] text-gray-400 font-medium ml-1">the three pillars every program maps to</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== ROLE PICKER ===================== -->
+  <section class="mt-8">
+    <h2 class="text-[15px] font-extrabold tracking-tight">Choose a role to explore</h2>
+    <p class="text-[12px] text-gray-400 font-medium mt-0.5">Each role sees a different sidebar and a different set of permitted actions.</p>
+
+    <div class="mt-4 grid md:grid-cols-3 gap-4">
+      <a href="pages/dashboard-admin.html?role=admin" class="pick sc-card p-6 block border border-gray-100">
+        <span class="w-11 h-11 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[shield]]</span>
+        <p class="mt-3 font-extrabold text-[15px] tracking-tight">Director / Admin</p>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-1">Dr. Lowell A. Quisumbing · CESO Director</p>
+        <p class="text-[12.5px] text-gray-500 mt-3 leading-relaxed">University targets, faculty performance, project monitoring, AI analysis review, interagency referrals and reports.</p>
+        <span class="badge badge-blue mt-4">full access</span>
+      </a>
+
+      <a href="pages/dashboard-secretary.html?role=secretary" class="pick sc-card p-6 block border border-gray-100">
+        <span class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[doc]]</span>
+        <p class="mt-3 font-extrabold text-[15px] tracking-tight">Secretary</p>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-1">CESO Office · records &amp; validation</p>
+        <p class="text-[12.5px] text-gray-500 mt-3 leading-relaxed">Assessment validation, beneficiary records, compliance tracking and the extension calendar. No AI surfaces.</p>
+        <span class="badge badge-gray mt-4">records access</span>
+      </a>
+
+      <a href="pages/dashboard-faculty.html?role=faculty" class="pick sc-card p-6 block border border-gray-100">
+        <span class="w-11 h-11 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[people]]</span>
+        <p class="mt-3 font-extrabold text-[15px] tracking-tight">Faculty</p>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-1">Extension implementer · trainor</p>
+        <p class="text-[12.5px] text-gray-500 mt-3 leading-relaxed">My projects, proposals, availability, rendered hours and activity records. Read-only view of project hubs.</p>
+        <span class="badge badge-yellow mt-4">own work only</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===================== WHAT CHANGED ===================== -->
+  <section class="mt-9">
+    <h2 class="text-[15px] font-extrabold tracking-tight">What changed in this revision</h2>
+    <div class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <div class="sc-card p-5 reveal-item">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-[13.5px]">Hierarchy &amp; colleges</p>
+          <span class="badge badge-blue">D-R1 · D-R2</span>
+        </div>
+        <p class="text-[12px] text-gray-500 mt-2 leading-relaxed">Programs are broad and distributed across CAS, COE and CME. Each program contains extension <b>projects</b>, and each project contains <b>activities</b>. All four levels live under a single sidebar entry: <b>Manage Extension Programs</b>.</p>
+        <a href="pages/colleges.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 mt-2 inline-block">Manage Extension Programs (College) →</a><br>
+        <a href="pages/programs.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 inline-block">└ Programs →</a><br>
+        <a href="pages/projects.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 inline-block">└ Projects →</a><br>
+        <a href="pages/program-detail.html?role=admin&program=CAS-2026-001" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 inline-block">└ Activities →</a>
+      </div>
+
+      <div class="sc-card p-5 reveal-item">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-[13.5px]">Training hours &amp; targets</p>
+          <span class="badge badge-blue">D-R3 · D-R5 · D-R6</span>
+        </div>
+        <p class="text-[12px] text-gray-500 mt-2 leading-relaxed">Hours are computed as <span class="font-mono text-[11.5px]">trainors × trainees × days × 8</span>, with a half day counting as 4 hours. Targets exist at University and Project level only.</p>
+        <a href="pages/targets.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 mt-2 inline-block">Open University Targets →</a>
+      </div>
+
+      <div class="sc-card p-5 reveal-item">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-[13.5px]">Faculty Management</p>
+          <span class="badge badge-blue">D-R9</span>
+        </div>
+        <p class="text-[12px] text-gray-500 mt-2 leading-relaxed">Faculty Management is the <b>engagement board</b> — hours rendered, projects involved and lead roles per professor. The roster itself lives in the <b>Faculty Directory</b>, where profiles, the ranked position ladder and expertise areas are managed, and where faculty maintain their own contact details.</p>
+        <a href="pages/faculty-management.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 mt-2 inline-block">Open Faculty Management →</a><br>
+        <a href="pages/faculty-directory.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 mt-2 inline-block">Open Faculty Directory →</a>
+      </div>
+
+      <div class="sc-card p-5 reveal-item">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-[13.5px]">Lean project view</p>
+          <span class="badge badge-blue">D-R7</span>
+        </div>
+        <p class="text-[12px] text-gray-500 mt-2 leading-relaxed">The old eight-KPI scorecard is gone. A project is now measured on what matters: trainors, trainees, training hours rendered, budget and activities.</p>
+        <a href="pages/program-detail.html?role=admin&program=CAS-2026-001" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 mt-2 inline-block">Open a project hub →</a>
+      </div>
+
+      <div class="sc-card p-5 reveal-item">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-[13.5px]">AI scope guardrails</p>
+          <span class="badge badge-blue">D-R8 · D-R10</span>
+        </div>
+        <p class="text-[12px] text-gray-500 mt-2 leading-relaxed">The AI recommends only CESO-deliverable interventions. Out-of-scope needs are flagged as <b>interagency interventions</b> naming the responsible agency; the rest are suppressed.</p>
+        <a href="pages/ai-analysis.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 mt-2 inline-block">Open AI Analysis →</a><br>
+        <a href="pages/interagency.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 inline-block">Open Interagency Catalogue →</a>
+      </div>
+
+      <div class="sc-card p-5 reveal-item">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-[13.5px]">Rankings &amp; filters</p>
+          <span class="badge badge-blue">D-R9</span>
+        </div>
+        <p class="text-[12px] text-gray-500 mt-2 leading-relaxed">Most active projects and most engaged faculty are ranked directly, so the Director can see where effort is concentrated at a glance. Faculty are ranked on <b>contribution</b> — hours rendered and project involvement — never against a personal target.</p>
+        <a href="pages/projects.html?role=admin&view=rank" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 mt-2 inline-block">Most Active Projects →</a><br>
+        <a href="pages/faculty-management.html?role=admin" class="linkrow -mx-2 px-2 py-1.5 rounded-lg text-[12px] font-bold text-lnu-800 inline-block">Faculty Engagement board →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FULL PAGE INDEX ===================== -->
+  <section class="mt-9">
+    <h2 class="text-[15px] font-extrabold tracking-tight">All prototype pages</h2>
+    <div class="mt-4 grid md:grid-cols-3 gap-4">
+
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-lnu-700">Director / Admin</p>
+        <ul id="adminList" class="mt-2 divide-y divide-gray-50"></ul>
+      </div>
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Secretary</p>
+        <ul id="secretaryList" class="mt-2 divide-y divide-gray-50"></ul>
+      </div>
+      <div class="sc-card p-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gold-700">Faculty</p>
+        <ul id="facultyList" class="mt-2 divide-y divide-gray-50"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SAMPLE DEEP LINKS ===================== -->
+  <section class="mt-9">
+    <h2 class="text-[15px] font-extrabold tracking-tight">Sample deep links</h2>
+    <p class="text-[12px] text-gray-400 font-medium mt-0.5">Every list page passes its code along, so any project hub can be opened directly.</p>
+    <div id="deepLinks" class="mt-3 flex flex-wrap gap-2"></div>
+  </section>
+
+  <footer class="mt-12 text-center text-[11px] text-gray-300 font-medium">
+    SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</div>
+
+<script src="assets/js/seed-data.js"></script>
+<script src="assets/js/layout.js"></script>
+<script>
+const D = window.DATA;
+
+const PAGES = {
+  admin: [
+    ['Dashboard', 'dashboard-admin.html'],
+    ['University Targets', 'targets.html'],
+    ['Calendar', 'calendar.html'],
+    ['Manage Extension Programs — Colleges', 'colleges.html'],
+    ['└ Programs', 'programs.html'],
+    ['└ Projects', 'projects.html'],
+    ['└ Project hub & Activities', 'program-detail.html?program=CAS-2026-001'],
+    ['Communities & Partner Schools', 'communities.html'],
+    ['Faculty Management — Engagement', 'faculty-management.html'],
+    ['Faculty Directory — Roster & Profiles', 'faculty-directory.html'],
+    ['Proposals', 'proposals.html'],
+    ['Availability', 'availability.html'],
+    ['Rendered Hours', 'rendered-hours.html'],
+    ['AI Analysis Review', 'ai-analysis.html'],
+    ['Project Narratives', 'program-narratives.html'],
+    ['Interagency Catalogue', 'interagency.html'],
+    ['Reports', 'reports.html'],
+    ['Compliance', 'compliance.html']
+  ],
+  secretary: [
+    ['Dashboard', 'dashboard-secretary.html'],
+    ['Assessment Review', 'assessment-review.html'],
+    ['Compliance', 'compliance.html'],
+    ['Calendar', 'calendar.html'],
+    ['Colleges', 'colleges.html'],
+    ['Extension Projects', 'projects.html'],
+    ['Manage Beneficiaries', 'communities.html'],
+    ['Proposals', 'proposals.html']
+  ],
+  faculty: [
+    ['Dashboard', 'dashboard-faculty.html'],
+    ['My Projects', 'my-programs.html'],
+    ['Proposals', 'proposals.html'],
+    ['New Proposal', 'proposal-new.html'],
+    ['Assessment Form', 'assessment-form.html'],
+    ['Availability', 'availability.html'],
+    ['Rendered Hours', 'rendered-hours.html'],
+    ['Calendar', 'calendar.html'],
+    ['My Faculty Profile', 'faculty-directory.html']
+  ]
+};
+
+function renderList(id, role) {
+  document.getElementById(id).innerHTML = PAGES[role].map(([label, href]) => `
+    <li><a href="pages/${href}?role=${role}" class="linkrow block -mx-2 px-2 py-2 rounded-lg text-[12.5px] font-semibold text-gray-600 flex items-center justify-between">
+      <span>${label}</span><span class="text-gray-300">→</span>
+    </a></li>`).join('');
+}
+
+renderList('adminList', 'admin');
+renderList('secretaryList', 'secretary');
+renderList('facultyList', 'faculty');
+
+document.getElementById('deepLinks').innerHTML = D.projects.map(p => `
+  <a href="pages/program-detail.html?role=admin&program=${p.code}" class="badge badge-blue hover:!bg-lnu-100 transition">
+    ${SC.collegePill(p.college)} ${p.code} · ${p.title.split(':')[0]}
+  </a>`).join('') + `
+  <a href="pages/colleges.html?role=admin&college=CME" class="badge badge-gray hover:!bg-gray-100 transition">Manage Extension Programs → focus CME →</a>
+  <a href="pages/programs.html?role=admin" class="badge badge-gray hover:!bg-gray-100 transition">Programs →</a>
+  <a href="pages/projects.html?role=admin&program=PROG-LIT" class="badge badge-gray hover:!bg-gray-100 transition">Projects filtered by a program →</a>`;
+</script>
+</body>
+</html>

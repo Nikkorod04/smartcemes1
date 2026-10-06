@@ -39,7 +39,12 @@
             @endif
             <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
                 <button type="button" class="step-dot" :class="s > {{ $n }} ? 'done' : (s === {{ $n }} ? 'on' : '')" @click="s = {{ $n }}">
-                    <span x-text="s > {{ $n }} ? '✓' : {{ $n }}">{{ $n }}</span>
+                    {{-- Two spans, not an Alpine `x-text` ternary: the completed-step
+                         mark used to be a text glyph inside a JS string, where a Blade
+                         component would render as literal escaped text. The step
+                         state `s` is client-side, so Blade cannot branch on it. --}}
+                    <span x-show="s > {{ $n }}" x-cloak><x-sc.icon name="check" class="w-3.5 h-3.5" /></span>
+                    <span x-show="!(s > {{ $n }})" x-cloak x-text="{{ $n }}"></span>
                 </button>
                 <span class="text-[10px] font-bold tracking-wide text-center leading-tight" :class="s === {{ $n }} ? 'text-lnu-800' : 'text-gray-400'">{{ $label }}</span>
             </div>

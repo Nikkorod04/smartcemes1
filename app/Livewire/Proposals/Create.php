@@ -4,7 +4,7 @@ namespace App\Livewire\Proposals;
 
 use App\Models\ActivityProposal;
 use App\Models\Community;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\User;
 use App\Notifications\SmartCemesNotification;
@@ -20,7 +20,7 @@ class Create extends Component
     public array $form = [
         'title' => '',
         'description' => '',
-        'extension_program_id' => '',
+        'extension_project_id' => '',
         'community_id' => '',
         'proposed_start_date' => '',
         'proposed_end_date' => '',
@@ -36,7 +36,7 @@ class Create extends Component
         $this->validate([
             'form.title' => 'required|string|max:255',
             'form.description' => 'nullable|string|max:4000',
-            'form.extension_program_id' => 'required|exists:extension_programs,id',
+            'form.extension_project_id' => 'required|exists:extension_projects,id',
             'form.community_id' => 'required|exists:communities,id',
             'form.proposed_start_date' => 'required|date',
             'form.proposed_end_date' => 'required|date|after_or_equal:form.proposed_start_date',
@@ -49,7 +49,7 @@ class Create extends Component
 
         $proposal = ActivityProposal::create([
             'faculty_id' => $faculty->id,
-            'extension_program_id' => $this->form['extension_program_id'],
+            'extension_project_id' => $this->form['extension_project_id'],
             'community_id' => $this->form['community_id'],
             'title' => $this->form['title'],
             'description' => $this->form['description'] ?: null,
@@ -88,7 +88,7 @@ class Create extends Component
 
         $this->reset(['form', 'attachments']);
         $this->form = [
-            'title' => '', 'description' => '', 'extension_program_id' => '',
+            'title' => '', 'description' => '', 'extension_project_id' => '',
             'community_id' => '', 'proposed_start_date' => '', 'proposed_end_date' => '', 'budget_estimate' => '',
         ];
     }
@@ -98,7 +98,7 @@ class Create extends Component
         $faculty = Faculty::where('user_id', auth()->id())->first();
 
         return view('livewire.proposals.create', [
-            'programs' => ExtensionProgram::orderBy('title')->get(),
+            'programs' => ExtensionProject::orderBy('title')->get(),
             'communities' => Community::orderBy('name')->get(),
             'myProposals' => $faculty
                 ? $faculty->activityProposals()->with(['program', 'community'])->orderByDesc('submitted_at')->take(5)->get()

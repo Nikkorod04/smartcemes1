@@ -113,8 +113,6 @@
         <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Approved Hours</p>
         <p class="mt-3 text-[24px] font-extrabold tracking-tight leading-none"><span id="rhApprovedTotal" class="text-[13px] font-bold text-gray-400">—</span></p>
         <p class="text-[11px] text-gray-400 mt-1 mb-2">this semester · locked after approval</p>
-        <div class="progress"><span id="rhApprovedBar" style="width:0%" class="bg-lnu"></span></div>
-        <p class="text-[11px] text-gray-500 font-semibold mt-2">Target 40 hrs / semester</p>
       </div>
       <div class="sc-card p-5">
         <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Pending</p>
@@ -191,7 +189,7 @@
 
   </div><!-- /faculty variant -->
 
-  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
 </main>
 
 <script>
@@ -304,7 +302,6 @@ function renderRhFaculty() {
   const drafts = mine.filter(r => r.status === 'pending' && r.source === 'auto').length;
 
   document.getElementById('rhApprovedTotal').textContent = approved + ' hrs';
-  document.getElementById('rhApprovedBar').style.width = Math.min(100, Math.round(approved / 40 * 100)) + '%';
   document.getElementById('rhPendTotal').textContent = pend;
   document.getElementById('rhDraftTotal').textContent = drafts;
   document.getElementById('rhRecTotal').textContent = (approved + mine.filter(r => r.status === 'pending').reduce((s, r) => s + r.hours, 0)) + ' hrs';

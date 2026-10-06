@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Beneficiaries;
 
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -15,7 +15,7 @@ class Index extends Component
     {
         $term = trim($this->search);
 
-        $programs = ExtensionProgram::query()
+        $programs = ExtensionProject::query()
             ->with(['programLead.user', 'communities'])
             ->withCount(['beneficiaries', 'activities'])
             ->when($term !== '', function ($query) use ($term) {

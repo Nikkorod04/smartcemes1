@@ -7,7 +7,7 @@
     <div class="sc-card p-5">
         <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Approved total</p>
         <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600">{{ number_format((float) $approvedTotal, 2) }} hrs</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1">count toward the 8.6 KPI</p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1">count toward your faculty contribution</p>
     </div>
     <div class="sc-card p-5">
         <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Pending</p>

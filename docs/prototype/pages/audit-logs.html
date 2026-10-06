@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Logs · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="audit-logs">
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p class="hub-eyebrow">Intelligence &amp; Reports</p>
+        <h3 class="text-[15px] font-extrabold tracking-tight mt-1">Audit Logs</h3>
+        <p class="text-[12.5px] text-gray-400 font-medium mt-1 max-w-3xl">
+          Every approval, rejection, deletion, status change and record import the system recorded,
+          newest first. <span class="text-gray-500 font-semibold" id="auditTotal">—</span> entries.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===================== THE LIST =====================
+         A PLAIN reverse-chronological list (owner decision 2026-09-25): no
+         filters, no search. Read-only — nothing here can edit or delete a row. -->
+    <div class="mt-4 sc-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="sc-table">
+          <thead>
+            <tr>
+              <th class="whitespace-nowrap">When</th>
+              <th>Event</th>
+              <th class="min-w-[280px]">What happened</th>
+              <th>Subject</th>
+              <th>Who</th>
+            </tr>
+          </thead>
+          <tbody id="auditRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== PAGER (static in the prototype) ===================== -->
+    <div class="mt-4 flex items-center justify-between gap-3 flex-wrap">
+      <p class="text-[11.5px] text-gray-400 font-medium">Showing 1–25 of 181</p>
+      <div class="flex items-center gap-1.5">
+        <span class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px] opacity-40 cursor-default">Prev</span>
+        <span class="btn btn-primary !px-2.5 !py-1.5 !text-[11px] cursor-default">1</span>
+        <span class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">2</span>
+        <span class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">3</span>
+        <span class="px-1 text-gray-300 text-[12px] select-none">…</span>
+        <span class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">8</span>
+        <span class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">Next</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  /* Demo log rows, newest first. Per-page demo data, as the other prototype pages
+     do — the seed has no activity-log dataset. */
+  const LOG = [
+    { at:'Sep 25, 2026 · 9:41 AM', event:'created',  what:'Interagency agency created',                    subject:'Interagency agency', who:'Dr. Lowell A. Quisumbing' },
+    { at:'Sep 25, 2026 · 8:12 AM', event:'updated',  what:'Project PANDAY allocated budget set to ₱42,000', subject:'Project',       who:'Dr. Lowell A. Quisumbing' },
+    { at:'Sep 24, 2026 · 4:58 PM', event:'status_transition', what:'Proposal “SOLID Start” approved',       subject:'Proposal',           who:'Dr. Lowell A. Quisumbing' },
+    { at:'Sep 24, 2026 · 2:30 PM', event:'created',  what:'Activity “Remedial Reading Session Batch 4” created', subject:'Activity',      who:'Bianca Oledan' },
+    { at:'Sep 24, 2026 · 11:05 AM', event:'updated', what:'Beneficiary contact number updated',            subject:'Beneficiary',        who:'Jhoanna Ayles' },
+    { at:'Sep 23, 2026 · 3:47 PM', event:'deleted',  what:'Budget entry “Venue rental” deleted',           subject:'Budget entry',       who:'Dr. Lowell A. Quisumbing' },
+    { at:'Sep 23, 2026 · 10:20 AM', event:'status_transition', what:'Assessment validated — Brgy. Salvacion Q2', subject:'Needs assessment', who:'Jhoanna Ayles' },
+    { at:'Sep 22, 2026 · 5:02 PM', event:'created',  what:'Rendered hours submitted for approval',         subject:'Rendered hours',     who:'Carlo Sumile' },
+  ];
+
+  const EVENT_TONE = {
+    created:'green', restored:'green', updated:'blue', status_transition:'yellow', deleted:'red'
+  };
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+  document.getElementById('auditTotal').textContent = '181';
+
+  document.getElementById('auditRows').innerHTML = LOG.map(r => {
+    const [date, time] = r.at.split(' · ');
+    return `
+      <tr>
+        <td class="whitespace-nowrap align-top">
+          <span class="block text-[12px] font-semibold text-charcoal">${esc(date)}</span>
+          <span class="block text-[11px] text-gray-400 font-medium">${esc(time)}</span>
+        </td>
+        <td class="align-top"><span class="badge badge-${EVENT_TONE[r.event] || 'gray'}">${esc(r.event)}</span></td>
+        <td class="align-top"><span class="block text-[12.5px] text-charcoal leading-snug">${esc(r.what)}</span></td>
+        <td class="align-top"><span class="block text-[12px] text-gray-500 font-medium">${esc(r.subject)}</span></td>
+        <td class="align-top"><span class="text-[12px] text-gray-500 font-medium">${esc(r.who)}</span></td>
+      </tr>`;
+  }).join('');
+</script>
+</body>
+</html>

@@ -6,10 +6,12 @@ use App\Models\Activity;
 use App\Models\Attendance;
 use App\Models\Beneficiary;
 use App\Models\BudgetUtilization;
+use App\Models\College;
 use App\Models\Community;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\NeedsAssessment;
+use App\Models\Program;
 use App\Models\ProgramObjective;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -123,6 +125,19 @@ class Phase2Seeder extends Seeder
         $this->communityIds = $ids;
     }
 
+    /**
+     * The six inherited projects, each tagged with its place in the revised
+     * hierarchy (revision §3.1 / Phase R2).
+     *
+     * The `hierarchy` key is [college code, broad program title]. It is the
+     * SAME mapping the R2b migration backfills, kept in sync deliberately: the
+     * migration repairs databases that already held rows, while this seeder
+     * creates them correctly on `migrate:fresh --seed` (where the migration
+     * runs against an empty table and therefore finds nothing to backfill).
+     *
+     * Codes stay `EXT-{year}-{seq}` — migrated rows keep their history (R-Q4).
+     * Only NEW projects created through the UI get college-prefixed codes.
+     */
     private function seedPrograms(): void
     {
         $communityIds = $this->communityIds;
@@ -130,6 +145,7 @@ class Phase2Seeder extends Seeder
 
         $rows = [
             ['code' => 'EXT-2026-001', 'title' => 'LITRAWIYA: Barangay Reading Proficiency Program',
+                'hierarchy' => ['COE', 'Literacy, Numeracy & Language'],
                 'description' => 'Structured remedial reading sessions for elementary pupils.',
                 'goals' => 'Raise reading proficiency of Grades 2–4 pupils in Brgy. San Jose through structured remedial reading sessions.',
                 'planned_start_date' => '2026-01-20', 'planned_end_date' => '2026-10-30',
@@ -138,6 +154,7 @@ class Phase2Seeder extends Seeder
                 'status' => 'ongoing', 'community' => 'Brgy. San Jose',
                 'partners' => ['San Jose Elementary School', 'Barangay Council of San Jose']],
             ['code' => 'EXT-2026-002', 'title' => 'HANDA: Disaster Preparedness Training for Coastal Households',
+                'hierarchy' => ['CAS', 'Environmental Conservation & Disaster Preparedness'],
                 'description' => 'Evacuation planning and first-response skills for coastal households.',
                 'planned_start_date' => '2026-02-10', 'planned_end_date' => '2026-09-15',
                 'target_beneficiaries' => 180, 'beneficiary_categories' => ['Fisherfolk', 'Vendor', 'Housewife'],
@@ -145,6 +162,7 @@ class Phase2Seeder extends Seeder
                 'status' => 'ongoing', 'community' => 'Brgy. El Reposo',
                 'partners' => ['Tacloban City DRRMO', 'Barangay Council of El Reposo']],
             ['code' => 'EXT-2026-003', 'title' => 'KABUHIAN: Livelihood Skills Training on Soap & Detergent Making',
+                'hierarchy' => ['CME', 'Livelihood, Technical & Business Management'],
                 'description' => 'Starter-livelihood skills for unemployed mothers and out-of-school youth.',
                 'planned_start_date' => '2026-03-03', 'planned_end_date' => '2026-06-27',
                 'target_beneficiaries' => 120, 'beneficiary_categories' => ['Housewife', 'Out-of-School Youth'],
@@ -152,6 +170,7 @@ class Phase2Seeder extends Seeder
                 'status' => 'completed', 'community' => 'Brgy. Salvacion',
                 'partners' => ['DTI Leyte', 'Tacloban City LGU']],
             ['code' => 'EXT-2026-004', 'title' => 'e-LITERACY: Digital Literacy for Parents & Senior Citizens',
+                'hierarchy' => ['CAS', 'Information, Communication & Education'],
                 'description' => 'Bridging the digital divide for parents and senior citizens in Sagkahan.',
                 'planned_start_date' => '2026-06-08', 'planned_end_date' => '2026-11-28',
                 'target_beneficiaries' => 150, 'beneficiary_categories' => ['Parent', 'Senior Citizen'],
@@ -159,6 +178,7 @@ class Phase2Seeder extends Seeder
                 'status' => 'ongoing', 'community' => 'Brgy. Sagkahan',
                 'partners' => ['Sagkahan Barangay Council']],
             ['code' => 'EXT-2026-005', 'title' => 'SENIOR CARE: Health & Wellness Program for Senior Citizens',
+                'hierarchy' => ['CAS', 'Information, Communication & Education'],
                 'description' => 'Health literacy and self-care practices among senior citizens in Dulag.',
                 'planned_start_date' => '2026-07-13', 'planned_end_date' => '2026-12-12',
                 'target_beneficiaries' => 200, 'beneficiary_categories' => ['Senior Citizen'],
@@ -166,6 +186,7 @@ class Phase2Seeder extends Seeder
                 'status' => 'ongoing', 'community' => 'Brgy. San Rafael',
                 'partners' => ['San Rafael Health Station', 'Dulag OSCA']],
             ['code' => 'EXT-2026-006', 'title' => 'BATANG MATINIK: Sports & Values Formation Clinic',
+                'hierarchy' => ['COE', 'Physical Fitness & Sports Development'],
                 'description' => 'Sports and discipline for out-of-school youth.',
                 'planned_start_date' => '2027-01-11', 'planned_end_date' => '2027-05-29',
                 'target_beneficiaries' => 140, 'beneficiary_categories' => ['Out-of-School Youth'],
@@ -175,13 +196,24 @@ class Phase2Seeder extends Seeder
         ];
 
         $admin = User::where('email', 'admin@lnu.com')->first();
+
+        /* Resolve the hierarchy once. CollegeSeeder and ProgramSeeder run before
+           this one (see DatabaseSeeder), so both lookups are populated. If a
+           seeder is run standalone and the tables are empty, the links stay
+           null — the R2b migration backfills them, so either order converges. */
+        $collegeIds = College::pluck('id', 'code');
+        $broadProgramIds = Program::pluck('id', 'title');
+
         $ids = [];
         foreach ($rows as $row) {
             $communityName = $row['community'];
-            unset($row['community']);
+            [$collegeCode, $broadTitle] = $row['hierarchy'];
+            unset($row['community'], $row['hierarchy']);
 
-            $program = ExtensionProgram::create([
+            $program = ExtensionProject::create([
                 ...$row,
+                'college_id' => $collegeIds[$collegeCode] ?? null,
+                'program_id' => $broadProgramIds[$broadTitle] ?? null,
                 'goals' => $row['description'],
                 'description' => $row['description'],
                 'created_by' => $admin->id,
@@ -234,8 +266,8 @@ class Phase2Seeder extends Seeder
             ]);
 
             if ($programCode) {
-                DB::table('extension_program_beneficiary')->insert([
-                    'extension_program_id' => $programIds[$programCode],
+                DB::table('extension_project_beneficiary')->insert([
+                    'extension_project_id' => $programIds[$programCode],
                     'beneficiary_id' => $beneficiary->id,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -302,7 +334,7 @@ class Phase2Seeder extends Seeder
         foreach ($rows as $row) {
             $programId = $programIds[$row['program']];
             $activity = Activity::create([
-                'extension_program_id' => $programId,
+                'extension_project_id' => $programId,
                 'title' => $row['title'],
                 'planned_start_date' => $row['start'],
                 'planned_end_date' => $row['end'],
@@ -363,7 +395,7 @@ class Phase2Seeder extends Seeder
         foreach ($rows as $code => $objectives) {
             foreach ($objectives as $o) {
                 ProgramObjective::create([
-                    'extension_program_id' => $this->programIds[$code],
+                    'extension_project_id' => $this->programIds[$code],
                     'objective' => $o['objective'],
                     'kpi_metric' => $o['kpi'] ?? null,
                     'baseline_value' => $o['baseline'] ?? null,
@@ -402,7 +434,7 @@ class Phase2Seeder extends Seeder
 
         foreach ($rows as $i => $row) {
             BudgetUtilization::create([
-                'extension_program_id' => $programIds[$row['program']],
+                'extension_project_id' => $programIds[$row['program']],
                 'activity_id' => $row['activity'] ? $activityKeys[$row['activity']] ?? null : null,
                 'item_name' => $row['item'],
                 'amount' => $row['amount'],

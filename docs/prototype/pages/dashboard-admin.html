@@ -15,269 +15,241 @@
 
 <main class="pl-72 pr-6 pb-12">
 
-  <!-- ===================== KPI ROW ===================== -->
+  <!-- ===================== PAGE HEAD ===================== -->
   <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 · Semester 1, AY 2026–2027</p>
-    <p class="text-[11.5px] text-gray-400 font-medium mt-1">All figures derive from the 8.6 KPI dictionary · aggregated from validated records</p>
-    <div class="reveal-item grid grid-cols-5 gap-4 mt-3">
-
-      <!-- Programs -->
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[folder]]</span>
-          <span class="badge badge-gray">AY 2026–2027</span>
-        </div>
-        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none"><span data-count="6">0</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Extension Programs</p>
-        <div class="mini-seg mt-3">
-          <span style="width:66.7%; background:#003599"></span>
-          <span style="width:16.7%; background:#10b981"></span>
-          <span style="width:16.6%; background:#F6B800"></span>
-        </div>
-        <p class="text-[11px] text-gray-400 font-medium mt-2">4 ongoing · 1 completed · 1 draft</p>
-      </div>
-
-      <!-- Beneficiaries vs combined program target -->
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[people]]</span>
-          <span class="badge badge-green">target 1,040</span>
-        </div>
-        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none text-emerald-600"><span data-count="653">0</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Distinct Beneficiaries Served</p>
-        <div class="relative mt-3">
-          <div class="progress"><span style="width:63%" class="bg-emerald-500"></span></div>
-          <span class="marker" style="left:100%"></span>
-        </div>
-        <p class="text-[11px] text-gray-400 font-medium mt-2">63% of the combined program target · dashed mark = target (8.6)</p>
-      </div>
-
-      <!-- Budget vs objective target -->
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[wallet]]</span>
-          <span class="badge badge-yellow">61% utilized</span>
-        </div>
-        <p class="mt-4 text-[24px] font-extrabold tracking-tight leading-none">₱<span data-count="164950">0</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Budget Utilized of ₱268,500</p>
-        <div class="relative mt-3">
-          <div class="progress"><span style="width:61%" class="bg-lnu-800"></span></div>
-          <span class="marker" style="left:90%"></span>
-        </div>
-        <p class="text-[11px] text-gray-400 font-medium mt-2"><span class="font-bold text-red-600">1 program over-allocated (D7)</span> · dashed mark = objective target</p>
-      </div>
-
-      <!-- Objectives achieved -->
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[chart]]</span>
-          <span class="badge badge-blue">14 total</span>
-        </div>
-        <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">3<span class="text-[15px] text-gray-400 font-bold"> / 14</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Objectives Achieved</p>
-        <div class="mini-seg mt-3">
-          <span style="width:21.4%; background:#10b981"></span>
-          <span style="width:64.3%; background:#003599"></span>
-          <span style="width:7.2%; background:#ef4444"></span>
-          <span style="width:7.1%; background:#cbd5e1"></span>
-        </div>
-        <p class="text-[11px] text-gray-400 font-medium mt-2">
-          <span class="legend-dot bg-emerald-500"></span> 3 achieved ·
-          <span class="legend-dot bg-lnu-800"></span> 9 on track ·
-          <span class="legend-dot bg-red-500"></span> 1 not met ·
-          <span class="legend-dot bg-gray-300"></span> 1 not started
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+      <div>
+        <p class="dash-sec-eyebrow">Dashboard</p>
+        <h2 class="text-[21px] font-extrabold tracking-tight leading-tight mt-1">Extension Overview</h2>
+        <p class="text-[12.5px] text-gray-400 font-medium mt-1.5">
+          Monday, August 24, 2026 · Semester 1, AY 2026–2027
         </p>
+      </div>
+      <p class="dash-note max-w-xs text-right">
+        Training hours derive from <span class="font-mono font-semibold text-gray-500">trainors × trainees × days</span> — no hourly factor
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== KPI ROW ===================== -->
+  <section class="dash-section">
+    <div class="reveal-item grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+      <!-- Extension Projects -->
+      <div class="dash-panel dash-kpi">
+        <div class="dash-kpi-top">
+          <span class="dash-kpi-icon bg-lnu-50 text-lnu-800">[[folder]]</span>
+          <span class="badge badge-gray">6 programs</span>
+        </div>
+        <p class="dash-kpi-value" style="color:#003599"><span data-count="7">0</span></p>
+        <p class="dash-kpi-label">Extension Projects</p>
+        <div class="dash-kpi-foot">
+          <div class="mini-seg">
+            <span style="width:71%; background:#003599"></span>
+            <span style="width:14.5%; background:#10b981"></span>
+            <span style="width:14.5%; background:#F6B800"></span>
+          </div>
+          <p class="dash-note mt-2.5">5 ongoing · 2 draft · 4 colleges · 6 broad programs</p>
+        </div>
+      </div>
+
+      <!-- Training hours rendered vs the annual SmartCEMES target -->
+      <div class="dash-panel dash-kpi">
+        <div class="dash-kpi-top">
+          <span class="dash-kpi-icon bg-lnu-50 text-lnu-800">[[chart]]</span>
+          <span class="badge badge-blue">target 2,500 hrs</span>
+        </div>
+        <p class="dash-kpi-value" style="color:#003599"><span data-count="968">0</span></p>
+        <p class="dash-kpi-label">Training Hours Rendered</p>
+        <div class="dash-kpi-foot">
+          <div class="relative">
+            <div class="progress"><span style="width:39%" class="bg-lnu-800"></span></div>
+            <span class="marker" style="left:100%"></span>
+          </div>
+          <p class="dash-note mt-2.5">39% of the annual SmartCEMES target · 1,532 hrs still to be rendered, drawn down by each project's actual hours.</p>
+        </div>
+      </div>
+
+      <!-- Budget vs allocation -->
+      <div class="dash-panel dash-kpi">
+        <div class="dash-kpi-top">
+          <span class="dash-kpi-icon bg-gold-50 text-gold-700">[[wallet]]</span>
+          <span class="badge badge-yellow">57% utilized</span>
+        </div>
+        <p class="dash-kpi-value is-money">₱<span data-count="164950">0</span></p>
+        <p class="dash-kpi-label">Budget Utilized of ₱290,500</p>
+        <div class="dash-kpi-foot">
+          <div class="relative">
+            <div class="progress"><span style="width:57%" class="bg-lnu-800"></span></div>
+            <span class="marker" style="left:100%"></span>
+          </div>
+          <p class="dash-note mt-2.5">57% of the allocated budget</p>
+        </div>
       </div>
 
       <!-- Pending approvals -->
-      <div class="sc-card p-5 !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-gold-100 text-gold-700 flex items-center justify-center">[[clock]]</span>
+      <div class="dash-panel dash-kpi !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
+        <div class="dash-kpi-top">
+          <span class="dash-kpi-icon bg-gold-100 text-gold-700">[[clock]]</span>
           <span class="badge badge-red">action needed</span>
         </div>
-        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-gold-700"><span data-count="9">0</span></p>
-        <p class="text-[12.5px] text-gray-600 font-medium mt-1.5">Pending Approvals</p>
-        <p class="text-[11px] text-gray-500 font-medium mt-2">3 proposals · 3 availability · 3 rendered hours</p>
-        <a href="ai-analysis.html?role=admin" class="text-[11px] font-bold text-gold-800 hover:text-gold-600 transition inline-block mt-1.5">1 AI analysis awaiting approval →</a>
+        <p class="dash-kpi-value" style="color:#b8860b"><span data-count="9">0</span></p>
+        <p class="dash-kpi-label">Pending Approvals</p>
+        <div class="dash-kpi-foot">
+          <p class="dash-note">3 proposals · 3 availability · 3 rendered hours</p>
+          <a href="ai-analysis.html?role=admin" class="dash-head-link inline-block mt-2">1 AI analysis awaiting approval →</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ===================== CHARTS ROW 1 ===================== -->
-  <section class="mt-5 grid grid-cols-3 gap-4">
-    <div class="reveal-item sc-card p-5">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="font-bold text-[14px]">Program Portfolio</h3>
-        <span class="text-[11.5px] text-gray-400 font-medium">by status</span>
+  <!-- ===================== TRENDS ===================== -->
+  <section class="dash-section">
+    <div class="dash-sec-head">
+      <div>
+        <p class="dash-sec-eyebrow">Trends</p>
+        <h3 class="dash-sec-title">Hours &amp; budget against target</h3>
       </div>
-      <div class="relative h-56"><canvas id="chStatus"></canvas></div>
+      <span class="dash-sec-note">Targets exist at university and project level only</span>
     </div>
 
-    <div class="reveal-item sc-card p-5 col-span-2">
-      <div class="flex items-center justify-between mb-1">
-        <h3 class="font-bold text-[14px]">Budget Utilization</h3>
-        <div class="flex items-center gap-4 text-[11.5px] text-gray-400 font-medium">
-          <span class="flex items-center gap-1.5"><span class="legend-dot" style="background:#dbe6fe"></span>Allocated</span>
-          <span class="flex items-center gap-1.5"><span class="legend-dot bg-gold-500"></span>Utilized</span>
-          <span class="flex items-center gap-1.5"><span class="legend-dot bg-red-500"></span>Over-allocated (D7)</span>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="reveal-item dash-panel">
+        <div class="dash-head">
+          <h4 class="dash-head-title">Training Hours vs Target</h4>
+          <span class="dash-note">by project</span>
         </div>
+        <div class="dash-chart h-56"><canvas id="chHours"></canvas></div>
+        <p class="dash-note mt-3">Rendered hours against each project's annual target — project level only, as no per-program target exists.</p>
       </div>
-      <p class="text-[11.5px] text-gray-400 font-medium mb-2">Hover a bar for the utilization rate against allocation</p>
-      <div class="relative h-56"><canvas id="chBudget"></canvas></div>
-    </div>
-  </section>
 
-  <!-- ===================== CHARTS ROW 2 ===================== -->
-  <section class="mt-4 grid grid-cols-3 gap-4">
-    <div class="reveal-item sc-card p-5 col-span-2">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold text-[14px]">Community Reach</h3>
-        <span class="badge badge-blue">top 10 · distinct beneficiaries served</span>
+      <div class="reveal-item dash-panel lg:col-span-2">
+        <div class="dash-head">
+          <h4 class="dash-head-title">Budget Utilized vs Allocated Budget</h4>
+          <div class="flex items-center gap-4 flex-wrap">
+            <span class="dash-note inline-flex items-center gap-1.5"><span class="legend-dot" style="background:#dbe6fe"></span>Allocated budget</span>
+            <span class="dash-note inline-flex items-center gap-1.5"><span class="legend-dot bg-gold-500"></span>Utilized</span>
+            <span class="dash-note inline-flex items-center gap-1.5"><span class="legend-dot bg-red-500"></span>Over allocation</span>
+          </div>
+        </div>
+        <!-- Compact bullet rows (owner request 2026-09-25): the grouped bar chart
+             could only label its axis with project CODES, and a vertical axis has
+             no room for a title. Built by the JS below. -->
+        <div id="budgetRows" class="space-y-2.5"></div>
+        <p class="dash-note mt-3">The bar is utilization against each project's allocated budget; the tick marks 100%.</p>
       </div>
-      <div class="relative h-64"><canvas id="chReach"></canvas></div>
-      <p class="text-[11px] text-gray-400 font-medium mt-2">Remaining barangays are grouped into “Others”. Grouped by municipality · barangay (8.6).</p>
-    </div>
 
-    <div class="reveal-item sc-card p-5">
-      <h3 class="font-bold text-[14px] mb-3">Recent Activity</h3>
-      <ol class="relative border-l border-gray-100 ml-2 space-y-4">
-        <li class="ml-4">
-          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-lnu-800 ring-4 ring-lnu-50"></span>
-          <p class="text-[13px] font-semibold leading-snug">New proposal: “SOLID Start”</p>
-          <p class="text-[11.5px] text-gray-400">Prof. Aquino · 12 minutes ago</p>
-        </li>
-        <li class="ml-4">
-          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-gold-500 ring-4 ring-gold-50"></span>
-          <p class="text-[13px] font-semibold leading-snug">Special order attached to “PEACE corners”</p>
-          <p class="text-[11.5px] text-gray-400">CESO Office · 1 hour ago</p>
-        </li>
-        <li class="ml-4">
-          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
-          <p class="text-[13px] font-semibold leading-snug">Assessment validated — Brgy. Salvacion Q2</p>
-          <p class="text-[11.5px] text-gray-400">Secretary Ayles · Yesterday</p>
-        </li>
-        <li class="ml-4">
-          <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-blue-400 ring-4 ring-blue-50"></span>
-          <p class="text-[13px] font-semibold leading-snug">HANDA hit 95% beneficiary target</p>
-          <p class="text-[11.5px] text-gray-400">System · Yesterday</p>
-        </li>
-      </ol>
+      <!-- The activity panel MOVED (owner request 2026-09-25): it is now the
+           AUDIT LOGS page (pages/audit-logs.html), under Intelligence & Reports
+           in the sidebar. As a four-row panel it could never answer "who changed
+           this, and when". -->
     </div>
   </section>
 
-  <!-- ===================== ACTION CENTER ===================== -->
-  <section class="mt-4">
-    <div class="reveal-item sc-card p-6">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">[[clipboard]] Action Center</h3>
-        <span class="badge badge-red">9 items</span>
+  <!-- ===================== PERFORMANCE LEADERS ===================== -->
+  <section class="dash-section">
+    <div class="dash-sec-head">
+      <div>
+        <p class="dash-sec-eyebrow">Performance</p>
+        <h3 class="dash-sec-title">[[sparkles]] Performance Leaders</h3>
       </div>
-      <div class="grid grid-cols-3 gap-3">
-        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Proposals awaiting approval</p>
-          <p class="mt-2 text-[15px] font-extrabold text-red-600 leading-none">3</p>
-          <a href="proposals.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">“SOLID Start: Solid Waste Segregation IEC”</a>
-          <a href="proposals.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">“GULAYAN SA PAARALAN: School Vegetable…”</a>
+      <span class="dash-sec-note">Ranked by training hours rendered and activities delivered</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- Most performing projects -->
+      <div class="reveal-item dash-panel lg:col-span-2">
+        <div class="dash-head">
+          <p class="dash-head-title">Most Performing Projects</p>
+          <a href="projects.html?role=admin" class="dash-head-link">All projects →</a>
         </div>
-        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Availability awaiting response</p>
-          <p class="mt-2 text-[15px] font-extrabold text-amber-600 leading-none">3</p>
-          <a href="availability.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Gabo · Aug 30 — BP screening</a>
-          <a href="availability.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Lumbre · Aug 30 — e-LIT demo booth</a>
-        </div>
-        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Rendered hours awaiting approval</p>
-          <p class="mt-2 text-[15px] font-extrabold text-lnu-700 leading-none">3</p>
-          <a href="rendered-hours.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Bautista · 2.5 hrs</a>
-          <a href="rendered-hours.html?role=admin" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">Prof. Aquino · 7.0 hrs</a>
-        </div>
+        <div id="dashTopProjects" class="space-y-2.5"></div>
       </div>
-      <div class="grid grid-cols-3 gap-3 mt-3">
-        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Objectives at risk</p>
-          <p class="mt-2 text-[15px] font-extrabold text-red-600 leading-none">2</p>
-          <a href="program-detail.html?role=admin&program=EXT-2026-003" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">KABUHIAN · association objective missed</a>
-          <p class="text-[10.5px] text-gray-400 mt-0.5">Target date Jun 27</p>
+
+      <!-- Most performing faculty -->
+      <div class="reveal-item dash-panel">
+        <div class="dash-head">
+          <p class="dash-head-title">Most Performing Faculty</p>
+          <a href="faculty-management.html?role=admin" class="dash-head-link">All →</a>
         </div>
-        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Programs nearing deadline (≤14d)</p>
-          <p class="mt-2 text-[15px] font-extrabold text-amber-600 leading-none">1</p>
-          <a href="program-detail.html?role=admin&program=EXT-2026-002" class="block text-[11.5px] font-semibold text-charcoal mt-2 truncate hover:text-lnu-700">HANDA · ends Sep 15 (22 days)</a>
-          <p class="text-[10.5px] text-gray-400 mt-0.5">Only 9 households remaining to target</p>
-        </div>
-        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">AI analyses awaiting approval</p>
-          <p class="mt-2 text-[15px] font-extrabold text-gold-700 leading-none">1</p>
-          <a href="ai-analysis.html?role=admin" class="text-[11px] font-bold text-lnu-700 mt-2 inline-block">Brgy. San Jose · Q2 2026 →</a>
-        </div>
+        <div id="dashTopFaculty" class="space-y-2.5"></div>
       </div>
     </div>
   </section>
 
   <!-- ===================== AI DECISION SUPPORT (Director-only) ===================== -->
-  <section class="mt-4">
-    <div class="reveal-item flex flex-wrap items-center justify-between gap-2 mb-3">
-      <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">
-        [[sparkles]] AI Decision Support
-        <span class="badge badge-blue">Director-only · aggregated inputs only</span>
-      </h3>
-      <a href="ai-analysis.html?role=admin" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open AI workspace →</a>
+  <section class="dash-section">
+    <div class="dash-sec-head">
+      <div>
+        <p class="dash-sec-eyebrow">Intelligence</p>
+        <h3 class="dash-sec-title">
+          [[sparkles]] AI Decision Support
+          <span class="badge badge-blue">Director-only · aggregated inputs only</span>
+        </h3>
+      </div>
+      <a href="ai-analysis.html?role=admin" class="dash-head-link">Open AI workspace →</a>
     </div>
-    <div class="reveal-item grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
       <!-- Community insights queue -->
-      <div class="sc-card p-5 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/50">
-        <div class="flex items-center justify-between mb-2">
-          <p class="font-bold text-[13.5px]">Community Insights Queue</p>
+      <div class="reveal-item dash-panel !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/50">
+        <div class="dash-head">
+          <p class="dash-head-title">Community Insights Queue</p>
           <span class="badge badge-gold">1 draft</span>
         </div>
-        <p class="text-[11.5px] text-gray-400 font-medium mb-2.5">Assessment analyses awaiting Admin approval</p>
+        <p class="dash-note mb-3">Assessment analyses awaiting Admin approval</p>
         <div class="p-3 rounded-xl border border-gray-100 bg-white">
           <p class="text-[12.5px] font-bold truncate">Brgy. San Jose · Q2 2026</p>
-          <p class="text-[11px] text-gray-400 mt-0.5">86 responses · gemini-3.6-flash · aggregated only</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">86 responses · gemini-flash · aggregated only</p>
           <div class="flex gap-2 mt-2.5">
             <a href="ai-analysis.html?role=admin" class="btn btn-primary !px-2.5 !py-1.5 text-[11px]">Review &amp; approve</a>
           </div>
         </div>
-        <p class="text-[10.5px] text-gray-400 mt-2.5">Failed generations appear here as “Analysis unavailable” with a retry — never a silent error.</p>
+        <p class="dash-note mt-3">Failed generations appear here as “Analysis unavailable” with a retry — never a silent error.</p>
       </div>
 
       <!-- Program narratives -->
-      <div class="sc-card p-5 col-span-2">
-        <div class="flex items-center justify-between mb-2">
-          <p class="font-bold text-[13.5px]">Program Narratives — latest health label per program</p>
-          <a href="program-narratives.html?role=admin" class="text-[12px] font-bold text-lnu-800 hover:text-lnu-600 transition">View all narratives →</a>
+      <div class="reveal-item dash-panel lg:col-span-2">
+        <div class="dash-head">
+          <p class="dash-head-title">Project Narratives — latest health label per project</p>
+          <a href="program-narratives.html?role=admin" class="dash-head-link">View all narratives →</a>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="sc-card p-4 ai-panel relative overflow-hidden">
             <div class="flex items-center justify-between mb-2">
               <p class="text-[12.5px] font-bold flex items-center gap-1.5 text-white">[[sparkles]] HANDA</p>
               <span class="narrative-health on-track">On track</span>
             </div>
             <p class="text-[11.5px] text-white/85 leading-snug">171 of 180 households trained (95%). Budget is 4 points above target — watch for overrun.</p>
-            <p class="text-[10px] text-white/60 mt-1.5">Aug 24 · gemini-3.6-flash</p>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="tier-badge tier-1">In CESO scope</span>
+              <span class="text-[10px] text-white/60">Aug 24 · gemini-flash</span>
+            </div>
           </div>
           <div class="sc-card p-4 ai-panel relative overflow-hidden">
             <div class="flex items-center justify-between mb-2">
-              <p class="text-[12.5px] font-bold flex items-center gap-1.5 text-white">[[sparkles]] e-LITERACY</p>
+              <p class="text-[12.5px] font-bold flex items-center gap-1.5 text-white">[[sparkles]] SENIOR CARE</p>
               <span class="narrative-health needs-attention">Needs attention</span>
             </div>
-            <p class="text-[11.5px] text-white/85 leading-snug">74 of 150 reached (49%); uplift 1.5/5 vs 1.9 target. Weekend cohorts recommended.</p>
-            <p class="text-[10px] text-white/60 mt-1.5">Aug 24 · gemini-3.6-flash</p>
+            <p class="text-[11.5px] text-white/85 leading-snug">74 of 150 reached (49%). 2 recommendations fall outside CESO scope — referred to interagency partners.</p>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="tier-badge tier-2">2 interagency referrals</span>
+              <span class="text-[10px] text-white/60">Aug 24 · gemini-flash</span>
+            </div>
           </div>
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-3">
           <span class="badge badge-green">LITRAWIYA · on track</span>
           <span class="badge badge-green">KABUHIAN · on track</span>
-          <span class="badge badge-green">SENIOR CARE · on track</span>
-          <a href="program-narratives.html?role=admin" class="text-[11px] font-bold text-gray-400 hover:text-lnu-700 transition ml-auto">+ history per program →</a>
+          <span class="badge badge-yellow">SENIOR CARE · interagency items</span>
+          <a href="program-narratives.html?role=admin" class="dash-head-link ml-auto">+ history per project →</a>
         </div>
       </div>
     </div>
   </section>
 
   <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
-    SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University
+    SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University
   </footer>
 </main>
 
@@ -287,87 +259,119 @@
 <script src="../assets/js/layout.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const BLUE='#003599', GOLD='#F6B800', EMERALD='#10b981', RED='#ef4444', SLATE='#cbd5e1';
+  const BLUE='#003599', GOLD='#F6B800', RED='#ef4444';
   const peso = n => '₱' + Number(n).toLocaleString('en-PH');
 
-  /* 1. Program Portfolio — doughnut with center total */
-  new Chart(document.getElementById('chStatus'), {
-    type:'doughnut',
-    data:{
-      labels:['Ongoing','Completed','Draft'],
-      datasets:[{ data:[4,1,1], backgroundColor:[BLUE,EMERALD,GOLD], borderWidth:3, borderColor:'#fff', hoverOffset:8 }]
-    },
-    options:{ maintainAspectRatio:false, cutout:'66%',
-      plugins:{ legend:{ position:'bottom' },
-        tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed} program${ctx.parsed === 1 ? '' : 's'}` } } } },
-    plugins:[{
-      id:'centerText',
-      afterDraw(chart){
-        const { ctx, chartArea } = chart;
-        const x = (chartArea.left + chartArea.right) / 2;
-        const y = (chartArea.top + chartArea.bottom) / 2;
-        ctx.save();
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#1f2937';
-        ctx.font = '800 26px Figtree, sans-serif';
-        ctx.fillText('6', x, y + 2);
-        ctx.fillStyle = '#9ca3af';
-        ctx.font = '600 10px Figtree, sans-serif';
-        ctx.fillText('PROGRAMS', x, y + 18);
-        ctx.restore();
-      }
-    }]
-  });
+  /* 1. Training Hours vs Target — rendered vs each PROJECT's annual target.
+        Targets exist at university + project level only (D-R5), never per program. */
+  const hProjects = DATA.projects.map(p => p.acr);
+  const hTarget   = DATA.projects.map(p => p.trainingHoursTarget);
+  const hRendered = DATA.projects.map(p => p.renderedTrainingHours);
 
-  /* 2. Budget Utilization — red over-allocated bars, ₱ axis, D7 tooltip */
-  const bLabels = ['LITRAWIYA','HANDA','KABUHIAN','e-LITERACY','SENIOR CARE','BATANG MATINIK'];
-  const bPlanned = [48000,62500,35000,40000,55000,28000];
-  const bUsed    = [31500,64500,33750,14200,21000,0];
-  const bOver    = bUsed.map((u,i) => u > bPlanned[i]);
-
-  new Chart(document.getElementById('chBudget'), {
+  new Chart(document.getElementById('chHours'), {
     type:'bar',
     data:{
-      labels:bLabels,
+      labels:hProjects,
       datasets:[
-        { label:'Allocated', data:bPlanned, backgroundColor:'#dbe6fe', borderRadius:6, maxBarThickness:18 },
-        { label:'Utilized',  data:bUsed, backgroundColor:bUsed.map((u,i) => bOver[i] ? RED : GOLD), borderRadius:6, maxBarThickness:18 }
+        { label:'Annual target', data:hTarget, backgroundColor:'#dbe6fe', borderRadius:5, maxBarThickness:16 },
+        { label:'Rendered',     data:hRendered, backgroundColor:BLUE, borderRadius:5, maxBarThickness:16 }
       ]
     },
     options:{ maintainAspectRatio:false,
       scales:{
-        y:{ beginAtZero:true, ticks:{ callback:v => '₱' + Number(v).toLocaleString('en-PH') }, grid:{ drawTicks:false } },
+        y:{ beginAtZero:true, ticks:{ callback:v => Number(v).toLocaleString('en-PH') + ' hrs' }, grid:{ drawTicks:false } },
         x:{ grid:{ display:false } }
       },
-      plugins:{ legend:{ display:false },
-        tooltip:{ callbacks:{ label(ctx){
-          const i = ctx.dataIndex;
-          if (ctx.dataset.label === 'Utilized') {
-            const pct = bPlanned[i] ? Math.round(bUsed[i] / bPlanned[i] * 100) : 0;
-            return ` Utilized: ${peso(ctx.parsed.y)} · ${pct}% of allocation${bOver[i] ? ' — over (D7)' : ''}`;
-          }
-          return ` Allocated: ${peso(ctx.parsed.y)}`;
-        } } } }
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{ size:10.5 } } },
+        tooltip:{ callbacks:{ label(ctx){ return ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('en-PH')} hrs`; } } } }
     }
   });
 
-  /* 3. Community Reach — horizontal top 10 + Others, rank ramp */
-  new Chart(document.getElementById('chReach'), {
-    type:'bar',
-    data:{
-      labels:[
-        'San Jose · Tacloban City','El Reposo · Tacloban City','Salvacion · Tacloban City','San Rafael · Dulag',
-        'Sagkahan · Tacloban City','Apitong · Tacloban City','Others (2 barangays)'
-      ],
-      datasets:[{ label:'Served', data:[186,171,126,96,74,52,63],
-        backgroundColor:[BLUE,BLUE,'#2547eb','#2547eb','#93b4fd','#93b4fd',SLATE],
-        borderRadius:7, maxBarThickness:20 }]
-    },
-    options:{ indexAxis:'y', maintainAspectRatio:false,
-      scales:{ x:{ beginAtZero:true, grid:{ drawTicks:false } }, y:{ grid:{ display:false }, ticks:{ font:{ size:11.5, weight:'600' } } } },
-      plugins:{ legend:{ display:false },
-        tooltip:{ callbacks:{ label: ctx => ` ${ctx.parsed.x} distinct beneficiaries served` } } } }
-  });
+  /* 2. Budget Utilized vs Annual Target — COMPACT BULLET ROWS (owner request
+        2026-09-25). The grouped bar chart could only label its axis with project
+        CODES, and a vertical axis has no room for a title. One row per project
+        now: full title, a utilization bar with a tick at 100%, amounts inline. */
+  const budgetRows = DATA.projects.map(p => {
+    const planned = p.budgetAllocated || 0;
+    const used = DATA.budgetEntries.filter(e => e.program === p.code).reduce((s,e) => s + e.amount, 0);
+    const pct = planned ? Math.min(used / planned * 100, 100) : 0;
+    const over = used > planned;
+    return `
+      <div class="flex items-center gap-3">
+        <span class="min-w-0 flex-1 text-[12px] font-semibold text-charcoal truncate" title="${p.title}">${p.title}</span>
+        <span class="bullet-track w-[150px] shrink-0">
+          <span class="bullet-fill ${over ? 'is-over' : ''}" style="width:${pct}%"></span>
+          <span class="bullet-tick"></span>
+        </span>
+        <span class="w-[118px] shrink-0 text-right text-[11px] text-gray-400 font-medium tabular-nums">
+          ${peso(used)} / ${peso(planned)}
+        </span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('budgetRows').innerHTML = budgetRows;
+
+  /* 3. Performance Leaders — the two rankings the Director actually acts on.
+        Projects are ranked by training hours rendered, then activities delivered;
+        faculty by rendered hours. Read from DATA.mostActive* (D-R5). */
+  /* Rank label. The 🥇🥈🥉 medals were removed 2026-09-25 (owner request): a
+     trophy glyph is not an institutional mark and renders inconsistently across
+     platforms. The order IS the ranking; the magnitude bar carries the emphasis. */
+  const rank = i => `#${i + 1}`;
+  const collegeColor = code => (DATA.colleges.find(c => c.code === code) || {}).color || BLUE;
+
+  /* Magnitude-bar scale (owner request 2026-09-25): ONE scale for BOTH lists —
+     the largest target in the set, or the largest value when nothing carries a
+     target — so a row's target marker shares the axis with its bar. Scaling per
+     row would make every bar full width and say nothing. */
+  const leaderScale = Math.max(
+    1,
+    ...DATA.mostActiveProjects.map(p => Math.max(p.trainingHours || 0, p.target || 0)),
+    ...DATA.mostActiveFaculty.map(f => f.renderedHours || 0)
+  );
+  const barPct = v => Math.round((v || 0) / leaderScale * 1000) / 10;
+
+  document.getElementById('dashTopProjects').innerHTML = DATA.mostActiveProjects.slice(0, 5).map((p, i) => {
+    const pct = p.target ? Math.round(p.trainingHours / p.target * 100) : 0;
+    return `
+    <a href="program-detail.html?role=admin&program=${p.code}"
+       class="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+      <span class="w-7 text-center text-[13px] font-extrabold text-gray-400 shrink-0">${rank(i)}</span>
+      <span class="w-1.5 h-9 rounded-full shrink-0" style="background:${collegeColor(p.college)}"></span>
+      <span class="min-w-0 flex-1">
+        <span class="block text-[12.5px] font-bold truncate">${p.acr}</span>
+        <span class="block text-[10.5px] text-gray-400 font-medium truncate">${p.college} · ${p.activities} activities · ${p.trainors} trainors</span>
+        <span class="leader-bar">
+          <span class="leader-bar-fill" style="width:${barPct(p.trainingHours)}%"></span>
+          ${p.target ? `<span class="leader-bar-tick" style="left:${barPct(p.target)}%"></span>` : ''}
+        </span>
+      </span>
+      <span class="text-right shrink-0">
+        <span class="block text-[13px] font-extrabold text-lnu-800">${Number(p.trainingHours).toLocaleString('en-PH')}</span>
+        <span class="block text-[10.5px] text-gray-400 font-medium">${pct}% of target</span>
+      </span>
+    </a>`;
+  }).join('');
+
+  document.getElementById('dashTopFaculty').innerHTML = DATA.mostActiveFaculty.slice(0, 5).map((f, i) => {
+    const initials = f.name.replace(/^(Prof\.|Dr\.)\s/, '').split(' ').map(w => w[0]).slice(0, 2).join('');
+    return `
+    <a href="faculty-management.html?role=admin" class="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+      <span class="w-7 text-center text-[13px] font-extrabold text-gray-400 shrink-0">${rank(i)}</span>
+      <span class="avatar w-8 h-8 text-[10.5px] shrink-0">${initials}</span>
+      <span class="min-w-0 flex-1">
+        <span class="block text-[12px] font-bold truncate">${f.name}</span>
+        <span class="block text-[10.5px] text-gray-400 font-medium truncate">${f.college} · ${f.projects} project${f.projects === 1 ? '' : 's'}</span>
+        <span class="leader-bar">
+          <span class="leader-bar-fill" style="width:${barPct(f.renderedHours)}%"></span>
+        </span>
+      </span>
+      <span class="text-right shrink-0">
+        <span class="block text-[12.5px] font-extrabold text-lnu-800">${Number(f.renderedHours).toFixed(1)}</span>
+        <span class="block text-[10.5px] text-gray-400 font-medium">hrs</span>
+      </span>
+    </a>`;
+  }).join('');
 });
 </script>
 </body>

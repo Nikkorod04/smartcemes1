@@ -13,13 +13,13 @@
             </div>
             <div>
                 <label class="label">Target program *</label>
-                <select required class="input" wire:model="form.extension_program_id">
+                <select required class="input" wire:model="form.extension_project_id">
                     <option value="">— select program —</option>
                     @foreach ($programs as $p)
                         <option value="{{ $p->id }}">{{ $p->code }} · {{ $p->title }}</option>
                     @endforeach
                 </select>
-                @error('form.extension_program_id') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
+                @error('form.extension_project_id') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="label">Target community *</label>

@@ -115,7 +115,7 @@
   </section>
 
   <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
-    SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University
+    SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University
   </footer>
 </main>
 
@@ -193,7 +193,7 @@ applyComFilters();
 /* ---------- Detail modal ---------- */
 function openCommunity(id){
   const c = D.communities.find(x => x.id===id);
-  const progs = D.programs.filter(p => p.community && p.community.id===c.id);
+  const progs = D.projects.filter(p => p.community && p.community.id===c.id);
   const summaries = D.assessmentSummaries.filter(s => s.community && s.community.id===c.id);
 
   document.getElementById('comBody').innerHTML = `

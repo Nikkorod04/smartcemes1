@@ -12,7 +12,7 @@
     @else
         <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             @foreach ($programs as $p)
-                <a href="{{ route('programs.show', $p) }}" class="reveal-item sc-card sc-card-hover p-5 flex flex-col" wire:key="myprog-{{ $p->id }}">
+                <a href="{{ route('projects.show', $p) }}" class="reveal-item sc-card sc-card-hover p-5 flex flex-col" wire:key="myprog-{{ $p->id }}">
                     <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
                         <span class="badge badge-gold font-bold tracking-wide">{{ $p->code }}</span>
                         <span class="badge badge-{{ config('smartcemes.status_colors')[$p->status] ?? 'gray' }}">{{ ucfirst($p->status) }}</span>

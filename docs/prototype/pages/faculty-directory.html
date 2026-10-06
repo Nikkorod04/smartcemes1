@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faculty Directory · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="faculty-directory">
+
+<script>const R=(new URLSearchParams(location.search).get('role'))||document.body.dataset.role||'admin';document.body.dataset.role=R;</script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+      <div>
+        <nav class="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 mb-1.5">
+          <a href="faculty-management.html?role=admin" class="hover:text-lnu-800 transition">Faculty Management</a>
+          <span class="text-gray-300">/</span>
+          <span class="text-gray-500" id="crumb">Faculty Directory</span>
+        </nav>
+        <h2 id="heading" class="text-[20px] font-extrabold tracking-tight leading-tight">Faculty Directory</h2>
+        <p id="subheading" class="text-[12.5px] text-gray-400 font-medium mt-0.5">Roster of extension faculty</p>
+      </div>
+      <div class="flex items-center gap-2" id="hdrActions"></div>
+    </div>
+  </section>
+
+  <div id="banner" class="hidden mt-4"></div>
+
+  <!-- ===================== SELF-SERVICE (faculty role) ===================== -->
+  <section id="selfPanel" class="hidden mt-4"></section>
+
+  <!-- ===================== TOOLBAR ===================== -->
+  <section class="reveal-item mt-4">
+    <div class="sc-card p-4 flex flex-wrap items-center gap-3">
+      <label class="relative flex-1 min-w-[220px] max-w-xs">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex">[[search]]</span>
+        <input id="dirSearch" class="input !pl-9" placeholder="Search name, ID, position, email…">
+      </label>
+
+      <div id="dirTabs" class="flex flex-wrap gap-1 bg-white rounded-xl border border-gray-100 p-1">
+        <button class="tab on" data-college="">All</button>
+        <button class="tab" data-college="CAS">CAS</button>
+        <button class="tab" data-college="COE">COE</button>
+        <button class="tab" data-college="CME">CME</button>
+      </div>
+
+      <select id="dirExpertise" class="input !w-[200px] !py-2 text-[12px]">
+        <option value="All">All expertise areas</option>
+      </select>
+
+      <select id="dirStatus" class="input !w-[140px] !py-2 text-[12px]">
+        <option value="All">All statuses</option>
+        <option value="Active">Active</option>
+        <option value="On Leave">On Leave</option>
+      </select>
+
+      <select id="dirSort" class="ml-auto input !w-[190px] !py-2 text-[12px]">
+        <option value="rank">Sort: rank (seniority)</option>
+        <option value="name">Sort: name A–Z</option>
+        <option value="hours">Sort: hours rendered</option>
+        <option value="id">Sort: employee ID</option>
+      </select>
+
+      <button id="dirAdd" class="btn btn-primary">[[users]] <span class="ml-1">Add Faculty</span></button>
+    </div>
+  </section>
+
+  <!-- ===================== DIRECTORY GRID ===================== -->
+  <section class="reveal-item mt-4">
+    <div class="sc-card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 class="font-bold text-[14px]">Roster</h3>
+        <div class="flex items-center gap-2">
+          <span id="dirCount" class="badge badge-gray"></span>
+          <button id="dirView" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">[[grid]] <span class="ml-1">Card view</span></button>
+        </div>
+      </div>
+      <div id="dirGrid" class="p-4 grid grid-cols-3 gap-4"></div>
+      <div id="dirEmpty" class="hidden px-5 py-14 text-center">
+        <p class="text-[13.5px] font-semibold text-gray-500">No faculty match your filters</p>
+        <p class="text-[12px] text-gray-400 mt-1">Try a different keyword, college, or expertise area.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
+    SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University
+  </footer>
+</main>
+
+<!-- ===================== PROFILE / EDIT DRAWER ===================== -->
+<div id="profOverlay" class="fixed inset-0 z-[60] bg-charcoal/45 backdrop-blur-[2px] no-print" style="display:none" onclick="closeProfile()"></div>
+<aside id="profDrawer" class="sc-drawer fixed inset-y-0 right-0 z-[70] w-[540px] bg-white shadow-pop overflow-hidden no-print" style="display:none">
+  <div id="profDrawerBody" class="min-h-full flex flex-col"></div>
+</aside>
+
+<!-- ===================== NEW FACULTY PROFILE MODAL (shared with faculty-management) ===================== -->
+<div id="addModal" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeAdd()"></div>
+  <div class="sc-modal relative max-w-2xl mx-auto mt-10 sc-card p-0 shadow-pop overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between gap-3 bg-gradient-to-r from-lnu-50/70 to-white">
+      <div class="flex items-start gap-3">
+        <span class="w-10 h-10 rounded-xl bg-lnu-800 text-white flex items-center justify-center shrink-0">[[users]]</span>
+        <div>
+          <h3 class="font-extrabold text-[16px] tracking-tight leading-tight">New Faculty Profile</h3>
+          <p class="text-[12px] text-gray-400 mt-0.5">
+            Employee ID <span class="font-mono font-semibold text-gray-500" id="afNextId">LNU-2026-0009</span> will be assigned automatically.
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeAdd()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition shrink-0">✕</button>
+    </div>
+
+    <form id="addForm" class="px-6 py-5 space-y-5" onsubmit="return false">
+
+      <fieldset>
+        <legend class="modal-legend">Identity</legend>
+        <div class="grid grid-cols-2 gap-4 mt-3">
+          <div class="col-span-2">
+            <label class="label" for="afName">Full name <span class="req">*</span></label>
+            <input id="afName" class="input" placeholder="Prof. Juan P. Dela Cruz" required>
+          </div>
+          <div>
+            <label class="label" for="afEmployeeId">Employee ID</label>
+            <input id="afEmployeeId" class="input font-mono" value="LNU-2026-0009" readonly>
+          </div>
+          <div>
+            <label class="label" for="afBirthdate">Birthdate</label>
+            <input id="afBirthdate" type="date" class="input">
+          </div>
+          <div>
+            <label class="label" for="afSex">Sex</label>
+            <select id="afSex" class="input">
+              <option value="">— Select —</option>
+              <option>Female</option>
+              <option>Male</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="afCivil">Civil status</label>
+            <select id="afCivil" class="input">
+              <option value="">— Select —</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Widowed</option>
+              <option>Separated</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="modal-legend">Assignment</legend>
+        <div class="grid grid-cols-2 gap-4 mt-3">
+          <div>
+            <label class="label" for="afCollege">College <span class="req">*</span></label>
+            <select id="afCollege" class="input" required>
+              <option value="CAS">CAS — College of Arts and Sciences</option>
+              <option value="COE">COE — College of Education</option>
+              <option value="CME">CME — College of Management and Entrepreneurship</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="afPosition">Position <span class="req">*</span></label>
+            <select id="afPosition" class="input" required></select>
+          </div>
+          <div class="col-span-2">
+            <label class="label" for="afExpertiseInput">
+              Expertise areas <span class="text-gray-400 font-normal">(select all that apply — used to match faculty to projects)</span>
+            </label>
+            <div class="ms" id="msExpertise">
+              <div class="ms-chips" id="msChips">
+                <span class="ms-placeholder" id="msPlaceholder">No expertise selected yet</span>
+              </div>
+              <div class="ms-picker">
+                <span class="ms-icon">[[search]]</span>
+                <input id="afExpertiseInput" class="ms-input" placeholder="Type to filter, then pick from the list…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="msOptions">
+                <button type="button" class="ms-toggle" id="msToggle" aria-label="Show expertise options">▾</button>
+              </div>
+              <div class="ms-options" id="msOptions" role="listbox"></div>
+              <p class="ms-hint" id="msHint">Choose from the canonical list so project matching stays consistent.</p>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="modal-legend">Contact</legend>
+        <div class="grid grid-cols-2 gap-4 mt-3">
+          <div class="col-span-2">
+            <label class="label" for="afEmail">Email <span class="req">*</span> <span class="text-gray-400 font-normal">(account username)</span></label>
+            <input id="afEmail" type="email" class="input" placeholder="jpdelacruz@lnu.edu.ph" required>
+          </div>
+          <div>
+            <label class="label" for="afPhone">Contact number</label>
+            <input id="afPhone" class="input" placeholder="0917 000 0000" inputmode="tel">
+          </div>
+          <div>
+            <label class="label" for="afAge">Age</label>
+            <input id="afAge" class="input" placeholder="Auto-computed from birthdate" readonly>
+          </div>
+          <div class="col-span-2">
+            <label class="label" for="afAddress">Address</label>
+            <input id="afAddress" class="input" placeholder="Street, Barangay, City/Municipality, Province">
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="flex items-start gap-2.5 rounded-xl border border-violet-100 bg-violet-50 p-3.5">
+        <span class="w-4 h-4 text-violet-600 shrink-0 inline-flex mt-px">[[chart]]</span>
+        <p class="text-[11.5px] text-gray-600 leading-snug">
+          Faculty contribution is tracked through <b>total training hours rendered</b> and
+          <b>project involvement</b>. There is <b>no per-professor training-hours target</b> — faculty are not
+          measured against an individual quota.
+        </p>
+      </div>
+
+      <div class="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50 p-3.5">
+        <span class="w-4 h-4 text-lnu-600 shrink-0 inline-flex mt-px">[[shield]]</span>
+        <p class="text-[11.5px] text-gray-600 leading-snug">
+          Account provisioning is <b>Admin-only</b> — there is no self-registration. A temporary password
+          <span class="font-mono">lnu-temp-2026</span> is auto-generated and must be changed at first login.
+          Faculty can edit their own <b>contact and expertise</b> details afterwards.
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
+        <button type="button" id="afSave" class="btn btn-primary">Save profile</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const D = window.DATA;
+  const qp  = new URLSearchParams(location.search);
+  const deepFaculty = qp.get('faculty');
+  const deepCollege = qp.get('college');
+  const wantNew     = qp.get('new') === '1';
+  const wantEdit    = qp.get('edit') === '1';
+
+  /* Which faculty member is "me" in the self-service view. */
+  const ME = D.users.faculty;
+
+  const FAC = D.faculty;
+  const initials = n => n.replace(/^(Prof\.|Dr\.)\s/,'').split(' ').map(w => w[0]).slice(0,2).join('');
+  const ageOf = bd => bd ? Math.floor((Date.now() - new Date(bd).getTime()) / 31557600000) : null;
+
+  let ROLE = document.body.dataset.role || 'admin';
+
+  /* ============================================================
+     ROLE-AWARE PAGE
+     - admin: full directory management (add / edit anyone)
+     - faculty: their OWN profile only, with a restricted field set
+     ============================================================ */
+  function applyRole() {
+    const isFaculty = ROLE === 'faculty';
+
+    /* toolbar: the Add button belongs to admin only */
+    document.getElementById('dirAdd').classList.toggle('hidden', isFaculty);
+    document.getElementById('dirTabs').classList.toggle('hidden', isFaculty);
+    document.getElementById('dirExpertise').classList.toggle('hidden', isFaculty);
+    document.getElementById('dirStatus').classList.toggle('hidden', isFaculty);
+    document.getElementById('dirSort').classList.add('hidden');
+
+    if (isFaculty) {
+      heading.textContent = 'My Faculty Profile';
+      subheading.textContent = 'Keep your contact details and declared expertise up to date';
+      crumb.textContent = 'My Profile';
+      document.title = 'My Faculty Profile · SmartCEMES';
+    }
+  }
+
+  /* ============================================================
+     SELF-SERVICE PANEL (faculty role)
+     The faculty-side edit view: faculty may update CONTACT details
+     and EXPERTISE. Position, college, status and employee ID are
+     administrator-controlled and render locked with a reason.
+     ============================================================ */
+  function renderSelfPanel() {
+    const panel = document.getElementById('selfPanel');
+    if (ROLE !== 'faculty') { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+
+    const f = FAC.find(x => x.name === ME.name) || FAC[0];
+    const fields = ['email','phone','address','birthdate','sex','civilStatus','expertise'];
+    const filled = fields.filter(k => {
+      const v = f[k];
+      return Array.isArray(v) ? v.length > 0 : !!(v && String(v).trim());
+    }).length;
+    const completeness = SC.pct(filled, fields.length);
+
+    panel.innerHTML = `
+      <div class="self-banner">
+        <span class="w-5 h-5 text-lnu-700 shrink-0 inline-flex mt-px">[[shield]]</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-[12.5px] font-bold text-charcoal">You can edit your own contact details and expertise areas.</p>
+          <p class="text-[11.5px] text-gray-500 font-medium mt-0.5 leading-snug">
+            Position, college, employment status and employee ID are administrator-controlled —
+            submit an availability request or contact CESO to have them changed.
+          </p>
+        </div>
+        <div class="self-meter shrink-0">
+          <span class="self-meter-bar"><span style="width:${completeness}%"></span></span>
+          <span class="self-meter-lbl">${completeness}% complete</span>
+        </div>
+      </div>`;
+  }
+
+  /* ============================================================
+     DIRECTORY GRID
+     ============================================================ */
+  let college = deepCollege && ['CAS','COE','CME'].includes(deepCollege) ? deepCollege : 'All';
+  let query = '', expertise = 'All', status = 'All', sort = 'rank';
+  let cardView = true;
+
+  if (college !== 'All') {
+    document.querySelectorAll('#dirTabs .tab').forEach(t => t.classList.toggle('on', t.dataset.college === college));
+  }
+
+  document.getElementById('dirExpertise').innerHTML =
+    '<option value="All">All expertise areas</option>' +
+    [...new Set(FAC.flatMap(f => f.expertise))].sort().map(e => `<option value="${e}">${e}</option>`).join('');
+
+  function sortFn(a, b) {
+    if (sort === 'name')  return a.name.localeCompare(b.name);
+    if (sort === 'hours') return b.renderedHours - a.renderedHours;
+    if (sort === 'id')    return a.employeeId.localeCompare(b.employeeId);
+    /* default: seniority, most senior first */
+    return (b.positionRank || 0) - (a.positionRank || 0) || a.name.localeCompare(b.name);
+  }
+
+  function filtered() {
+    if (ROLE === 'faculty') return FAC.filter(f => f.name === ME.name);
+    return FAC.filter(f =>
+      (college === 'All' || f.college === college) &&
+      (status === 'All' || f.status === status) &&
+      (expertise === 'All' || f.expertise.includes(expertise)) &&
+      (!query || `${f.name} ${f.employeeId} ${f.position} ${f.email} ${f.expertise.join(' ')}`
+        .toLowerCase().includes(query))
+    ).sort(sortFn);
+  }
+
+  function renderDirectory() {
+    const list = filtered();
+    const grid = document.getElementById('dirGrid');
+    const empty = document.getElementById('dirEmpty');
+    const cnt = document.getElementById('dirCount');
+
+    cnt.textContent = ROLE === 'faculty' ? 'Your profile' : `Showing ${list.length} of ${FAC.length}`;
+    empty.classList.toggle('hidden', list.length > 0);
+    grid.className = cardView
+      ? 'p-4 grid grid-cols-3 gap-4'
+      : 'p-0';
+
+    if (!list.length) { grid.innerHTML = ''; return; }
+
+    grid.innerHTML = list.map(f => {
+      const n = f.projectCount || 0;
+      const senior = (f.positionRank || 0) >= 13;
+      return `
+      <article class="sc-card p-5 reveal-item fac-card" data-id="${f.id}" tabindex="0" role="button" aria-label="Open profile of ${esc(f.name)}">
+        <div class="flex items-start gap-3.5">
+          <span class="avatar w-11 h-11 text-[13px]">${initials(f.name)}</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[13.5px] font-bold leading-snug truncate">${esc(f.name)}</p>
+            <p class="text-[11px] text-gray-400 font-medium mt-0.5 truncate">${esc(f.position)}</p>
+            <p class="text-[10.5px] text-gray-300 font-mono mt-0.5">${f.employeeId}</p>
+          </div>
+          <span class="badge ${f.status === 'Active' ? 'badge-green' : 'badge-yellow'} !text-[9.5px] !px-2 !py-0.5 shrink-0">${f.status === 'Active' ? 'Active' : 'On leave'}</span>
+        </div>
+
+        <div class="flex items-center gap-2 mt-3">
+          ${SC.collegePill(f.college)}
+          ${senior ? '<span class="badge badge-gold !text-[9.5px] !px-2 !py-0.5">Senior rank</span>' : ''}
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mt-3.5">
+          <div class="fac-mini-stat">
+            <p class="fac-mini-val">${SC.hours(f.renderedHours)}</p>
+            <p class="fac-mini-lbl">Hours rendered</p>
+          </div>
+          <div class="fac-mini-stat">
+            <p class="fac-mini-val">${n}</p>
+            <p class="fac-mini-lbl">Project${n === 1 ? '' : 's'}</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 mt-3">
+          ${f.expertise.slice(0,3).map(e => `<span class="expertise-tag">${esc(e)}</span>`).join('')}
+          ${f.expertise.length > 3 ? `<span class="expertise-tag">+${f.expertise.length - 3}</span>` : ''}
+        </div>
+
+        <p class="text-[10.5px] text-gray-400 font-medium mt-3 truncate">
+          <span class="font-mono text-gray-300">✉</span> ${esc(f.email)}
+        </p>
+      </article>`;
+    }).join('');
+
+    grid.querySelectorAll('.fac-card').forEach(card => {
+      const go = () => openProfile(+card.dataset.id);
+      card.addEventListener('click', go);
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+      });
+    });
+  }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  /* ============================================================
+     PROFILE DRAWER
+     Admin sees a read/edit profile with an "Edit" action.
+     Faculty sees the SELF-EDIT form directly (contact + expertise
+     editable, assignment fields locked).
+     ============================================================ */
+  const LOCKED = `
+    <span class="badge badge-gray !text-[9.5px] !px-2 !py-0.5">Admin controlled</span>`;
+
+  function selfEditBody(f) {
+    return `
+      <div class="p-5 border-b border-gray-100 bg-gradient-to-r from-lnu-50/60 to-white">
+        <div class="flex items-start gap-3.5">
+          <span class="avatar w-12 h-12 text-[15px]">${initials(f.name)}</span>
+          <div class="min-w-0 flex-1">
+            <p class="font-extrabold text-[15px] tracking-tight truncate">${esc(f.name)}</p>
+            <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">${esc(f.position)} · ${f.college}</p>
+            <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+              ${SC.collegePill(f.college)}
+              <span class="badge ${f.status === 'Active' ? 'badge-green' : 'badge-yellow'}">${f.status}</span>
+              <span class="badge badge-gray font-mono">${f.employeeId}</span>
+            </div>
+          </div>
+          <button onclick="closeProfile()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition shrink-0">✕</button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 space-y-5">
+        <p class="text-[11.5px] text-gray-500 font-medium leading-snug bg-blue-50 border border-blue-100 rounded-xl p-3">
+          You are editing <b>your own</b> profile. Changes to your contact details and expertise areas are
+          saved immediately; assignment fields are locked.
+        </p>
+
+        <fieldset>
+          <legend class="modal-legend">Editable by you</legend>
+          <div class="grid grid-cols-2 gap-4 mt-3">
+            <div class="col-span-2">
+              <label class="label" for="seEmail">Email <span class="req">*</span></label>
+              <input id="seEmail" type="email" class="input" value="${esc(f.email)}">
+            </div>
+            <div>
+              <label class="label" for="sePhone">Contact number</label>
+              <input id="sePhone" class="input" value="${esc(f.phone)}" inputmode="tel">
+            </div>
+            <div>
+              <label class="label" for="seBirthdate">Birthdate</label>
+              <input id="seBirthdate" type="date" class="input" value="${f.birthdate || ''}">
+            </div>
+            <div>
+              <label class="label" for="seSex">Sex</label>
+              <select id="seSex" class="input">
+                ${['','Female','Male'].map(v => `<option value="${v}"${f.sex === v ? ' selected' : ''}>${v || '— Select —'}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="label" for="seCivil">Civil status</label>
+              <select id="seCivil" class="input">
+                ${['','Single','Married','Widowed','Separated'].map(v => `<option value="${v}"${f.civilStatus === v ? ' selected' : ''}>${v || '— Select —'}</option>`).join('')}
+              </select>
+            </div>
+            <div class="col-span-2">
+              <label class="label" for="seAddress">Address</label>
+              <input id="seAddress" class="input" value="${esc(f.address)}" placeholder="Street, Barangay, City/Municipality, Province">
+            </div>
+            <div class="col-span-2">
+              <label class="label" for="seExpertiseInput">Expertise areas <span class="text-gray-400 font-normal">(choose from the canonical list)</span></label>
+              <div class="ms" id="msExpertise">
+                <div class="ms-chips" id="msChips">
+                  ${f.expertise.map(v => `<span class="ms-chip">${esc(v)}<button type="button" class="ms-x" aria-label="Remove ${esc(v)}">✕</button></span>`).join('')}
+                </div>
+                <div class="ms-picker">
+                  <span class="ms-icon">[[search]]</span>
+                  <input id="seExpertiseInput" class="ms-input" placeholder="Type to filter, then pick from the list…" autocomplete="off">
+                  <button type="button" class="ms-toggle" id="msToggle" aria-label="Show expertise options">▾</button>
+                </div>
+                <div class="ms-options" id="msOptions"></div>
+                <p class="ms-hint" id="msHint">Pick up to 5 areas. Used by CESO to match you to projects.</p>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="modal-legend">Managed by CESO administration</legend>
+          <div class="grid grid-cols-2 gap-4 mt-3">
+            <div class="locked-field">
+              <label class="label">Employee ID</label>
+              <input class="input font-mono" value="${f.employeeId}" disabled>
+            </div>
+            <div class="locked-field">
+              <label class="label">Position</label>
+              <input class="input" value="${esc(f.position)}" disabled>
+            </div>
+            <div class="locked-field">
+              <label class="label">College</label>
+              <input class="input" value="${esc(f.collegeName)}" disabled>
+            </div>
+            <div class="locked-field">
+              <label class="label">Employment status</label>
+              <input class="input" value="${f.status}" disabled>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="modal-legend">Contribution · read only</legend>
+          <div class="grid grid-cols-2 gap-3 mt-3">
+            <div class="sc-card p-4">
+              <p class="text-[24px] font-extrabold tracking-tight leading-none">${SC.hours(f.renderedHours)}</p>
+              <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">training hours rendered</p>
+            </div>
+            <div class="sc-card p-4">
+              <p class="text-[24px] font-extrabold tracking-tight leading-none">${f.projectCount || 0}</p>
+              <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">projects involved</p>
+            </div>
+          </div>
+          <p class="text-[10.5px] text-gray-400 font-medium mt-2.5">
+            There is no training-hours target for individual faculty — contribution is your actual rendered hours and involvement.
+          </p>
+        </fieldset>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex gap-2">
+        <button class="btn btn-ghost" onclick="closeProfile()">Cancel</button>
+        <button class="btn btn-primary flex-1" id="seSave">Save my changes</button>
+      </div>`;
+  }
+
+  function adminProfileBody(f) {
+    const projSet = f.projectList || [];
+    const age = ageOf(f.birthdate);
+    const row = p => `
+      <div class="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition cursor-pointer"
+           onclick="location.href='program-detail.html?role=admin&program=${p.code}'">
+        ${SC.collegePill(p.college)}
+        <div class="min-w-0 flex-1">
+          <p class="text-[12.5px] font-semibold truncate">${esc(p.acr)}</p>
+          <p class="text-[10.5px] text-gray-400 font-mono truncate">${p.code}</p>
+        </div>
+        <span class="badge ${p.role === 'Lead' ? 'badge-gold' : 'badge-gray'} !text-[9.5px] !px-2 !py-0.5 shrink-0">${p.role}</span>
+      </div>`;
+
+    return `
+      <div class="p-5 border-b border-gray-100 flex items-start gap-3.5">
+        <span class="avatar w-12 h-12 text-[15px]">${initials(f.name)}</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-extrabold text-[15px] tracking-tight truncate">${esc(f.name)}</p>
+          <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">${esc(f.position)}</p>
+          <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+            ${SC.collegePill(f.college)}
+            <span class="badge ${f.status === 'Active' ? 'badge-green' : 'badge-yellow'}">${f.status}</span>
+            <span class="badge badge-gray font-mono">${f.employeeId}</span>
+          </div>
+        </div>
+        <button onclick="closeProfile()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition shrink-0">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 space-y-5">
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Contribution · AY 2026–2027</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="sc-card p-4">
+              <p class="text-[26px] font-extrabold tracking-tight leading-none">${SC.hours(f.renderedHours)}</p>
+              <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">training hours rendered</p>
+            </div>
+            <div class="sc-card p-4">
+              <p class="text-[26px] font-extrabold tracking-tight leading-none">${projSet.length}</p>
+              <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">project${projSet.length === 1 ? '' : 's'} involved</p>
+            </div>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-1.5">
+            <span class="badge badge-gold">${f.leadCount || 0} lead</span>
+            <span class="badge badge-gray">${f.coLeadCount || 0} co-lead</span>
+            <span class="badge badge-blue">${f.communityCount || 0} communities</span>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Declared expertise (${f.expertise.length})</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${f.expertise.map(e => `<span class="expertise-tag !text-[11px] !px-2.5 !py-1">${esc(e)}</span>`).join('')}
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Extension involvement (${projSet.length})</p>
+          <div class="space-y-2">
+            ${projSet.length
+              ? projSet.map(row).join('')
+              : '<p class="text-[12px] text-gray-400">Not currently assigned to any project.</p>'}
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Contact &amp; personal details</p>
+          <div class="sc-card p-4">
+            <div class="kv"><span class="k">Email</span><span class="v text-[11.5px] font-mono">${esc(f.email)}</span></div>
+            <div class="kv"><span class="k">Phone</span><span class="v">${esc(f.phone) || '—'}</span></div>
+            <div class="kv"><span class="k">Age</span><span class="v">${age !== null ? age + ' years old' : '—'}${f.birthdate ? ` <span class="text-gray-400 font-normal">(b. ${f.birthdate})</span>` : ''}</span></div>
+            <div class="kv"><span class="k">Sex</span><span class="v">${f.sex || '—'}</span></div>
+            <div class="kv"><span class="k">Civil status</span><span class="v">${f.civilStatus || '—'}</span></div>
+            <div class="kv"><span class="k">Address</span><span class="v text-[11.5px]">${esc(f.address) || '—'}</span></div>
+            <div class="kv"><span class="k">College</span><span class="v">${esc(f.collegeName)}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex gap-2">
+        <button class="btn btn-outline flex-1" id="prEdit">Edit profile</button>
+        <button class="btn btn-primary flex-1" onclick="SC.toast('Availability request sent','success')">Request availability</button>
+      </div>`;
+  }
+
+  window.openProfile = (id) => {
+    const f = FAC.find(x => x.id === id); if (!f) return;
+    const isSelf = ROLE === 'faculty';
+    const body = isSelf ? selfEditBody(f) : adminProfileBody(f);
+    document.getElementById('profDrawerBody').innerHTML = body;
+
+    if (isSelf) {
+      wireMultiSelect(f.expertise, 'seExpertiseInput');
+      const save = document.getElementById('seSave');
+      if (save) save.addEventListener('click', () => {
+        const em = document.getElementById('seEmail').value.trim();
+        if (!em) { SC.toast('Email is required','error'); return; }
+        if (!MS.get().length) { SC.toast('Keep at least one expertise area','error'); return; }
+        SC.toast('Your profile has been updated','success');
+        closeProfile();
+      });
+    } else {
+      const edit = document.getElementById('prEdit');
+      if (edit) edit.onclick = () => { openEditAsSelf(f); };
+    }
+
+    document.getElementById('profOverlay').style.display = 'block';
+    document.getElementById('profDrawer').style.display = 'block';
+  };
+  window.closeProfile = () => {
+    document.getElementById('profOverlay').style.display = 'none';
+    document.getElementById('profDrawer').style.display = 'none';
+  };
+
+  /* ---- admin-side edit reuses the same self-edit form shape ---- */
+  function openEditAsSelf(f) {
+    document.getElementById('profDrawerBody').innerHTML = selfEditBody(f);
+    wireMultiSelect(f.expertise, 'seExpertiseInput');
+    const save = document.getElementById('seSave');
+    if (save) { save.textContent = 'Save changes'; save.addEventListener('click', () => { SC.toast('Profile updated','success'); closeProfile(); }); }
+  }
+
+  /* ============================================================
+     EXPERTISE MULTI-SELECT
+     One implementation, used by both the modal (af*) and the
+     drawer (se*). Field ids differ, behaviour does not.
+     ============================================================ */
+  let MS = null;
+
+  function wireMultiSelect(initial, inputId) {
+    const root      = document.getElementById('msExpertise');
+    if (!root) { MS = null; return null; }
+    const chipsEl   = document.getElementById('msChips');
+    const input     = document.getElementById(inputId);
+    const optionsEl = document.getElementById('msOptions');
+    const toggle    = document.getElementById('msToggle');
+    const hint      = document.getElementById('msHint');
+    const MAX       = 5;
+    const ALL       = (D.expertiseOptions || []).slice();
+    let selected    = (initial || []).slice();
+    let open        = false;
+
+    function renderChips() {
+      chipsEl.innerHTML = '';
+      if (!selected.length) {
+        const ph = document.createElement('span');
+        ph.className = 'ms-placeholder';
+        ph.textContent = 'No expertise selected yet';
+        chipsEl.appendChild(ph);
+      } else {
+        selected.forEach(v => {
+          const chip = document.createElement('span');
+          chip.className = 'ms-chip';
+          chip.innerHTML = `${esc(v)}<button type="button" class="ms-x" aria-label="Remove ${esc(v)}">✕</button>`;
+          chip.querySelector('.ms-x').addEventListener('click', () => {
+            selected = selected.filter(x => x !== v);
+            renderChips(); renderOptions();
+          });
+          chipsEl.appendChild(chip);
+        });
+      }
+      hint.textContent = selected.length >= MAX
+        ? `Maximum of ${MAX} expertise areas reached — remove one to add another.`
+        : `Pick up to ${MAX} areas so project matching stays consistent. ${selected.length}/${MAX} selected.`;
+      hint.classList.toggle('warn', selected.length >= MAX);
+    }
+
+    function renderOptions() {
+      const q = input.value.trim().toLowerCase();
+      const hits = ALL.filter(v => (!q || v.toLowerCase().includes(q)) && !selected.includes(v));
+      optionsEl.innerHTML = hits.length
+        ? hits.map(v => `<button type="button" class="ms-option" role="option" data-v="${esc(v)}">${esc(v)}</button>`).join('')
+        : `<p class="ms-none">${q ? 'No expertise matches your search.' : 'All expertise areas selected.'}</p>`;
+    }
+
+    function setOpen(v) { open = v; root.classList.toggle('open', open); if (open) renderOptions(); }
+
+    input.addEventListener('focus', () => setOpen(true));
+    input.addEventListener('input', () => { setOpen(true); renderOptions(); });
+    toggle.addEventListener('click', () => { setOpen(!open); if (open) input.focus(); });
+    optionsEl.addEventListener('click', e => {
+      const b = e.target.closest('.ms-option');
+      if (!b) return;
+      if (selected.length >= MAX) { hint.textContent = `Maximum of ${MAX} expertise areas reached.`; hint.classList.add('warn'); return; }
+      selected.push(b.dataset.v);
+      input.value = '';
+      renderChips(); renderOptions();
+      input.focus();
+    });
+    document.addEventListener('click', e => { if (!root.contains(e.target)) setOpen(false); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { setOpen(false); input.blur(); }
+      if (e.key === 'Backspace' && !input.value && selected.length) { selected.pop(); renderChips(); renderOptions(); }
+    });
+
+    renderChips();
+    MS = { get: () => selected.slice(), close: () => setOpen(false) };
+    return MS;
+  }
+
+  /* ============================================================
+     NEW FACULTY PROFILE MODAL
+     ============================================================ */
+  (function buildPositions() {
+    const sel = document.getElementById('afPosition');
+    if (!sel) return;
+    const groups = [];
+    (D.positionLadder || []).forEach(p => {
+      let g = groups.find(x => x.name === p.group);
+      if (!g) { g = { name: p.group, items: [] }; groups.push(g); }
+      g.items.push(p);
+    });
+    sel.innerHTML = '<option value="">— Select rank —</option>' +
+      groups.map(g => `<optgroup label="${g.name}">` +
+        g.items.map(p => `<option value="${p.label}" data-rank="${p.rank}">${p.label}</option>`).join('') +
+      `</optgroup>`).join('');
+  })();
+
+  (function wireAge() {
+    const bd = document.getElementById('afBirthdate');
+    const age = document.getElementById('afAge');
+    if (!bd || !age) return;
+    const sync = () => {
+      if (!bd.value) { age.value = ''; return; }
+      const yrs = ageOf(bd.value);
+      age.value = (yrs >= 0 && yrs < 120) ? yrs + ' years old' : '';
+    };
+    bd.addEventListener('change', sync);
+  })();
+
+  function nextEmployeeId() {
+    const nums = FAC.map(f => +(String(f.employeeId).split('-').pop()) || 0);
+    const n = (Math.max(...nums, 0) + 1);
+    return `LNU-2026-${String(n).padStart(4, '0')}`;
+  }
+
+  function resetAddForm() {
+    const form = document.getElementById('addForm');
+    if (form) form.reset();
+    const id = nextEmployeeId();
+    const a = document.getElementById('afEmployeeId'); if (a) a.value = id;
+    const b = document.getElementById('afNextId');     if (b) b.textContent = id;
+    const c = document.getElementById('afAge');        if (c) c.value = '';
+    if (MS) MS.close();
+  }
+
+  window.openAdd = () => {
+    resetAddForm();
+    wireMultiSelect([], 'afExpertiseInput');
+    document.getElementById('addModal').classList.remove('hidden');
+  };
+  window.closeAdd = () => {
+    document.getElementById('addModal').classList.add('hidden');
+    resetAddForm();
+  };
+
+  document.getElementById('afSave').addEventListener('click', () => {
+    const name = document.getElementById('afName').value.trim();
+    const email = document.getElementById('afEmail').value.trim();
+    const pos = document.getElementById('afPosition').value;
+    const exp = MS ? MS.get() : [];
+    if (!name)  { SC.toast('Full name is required','error'); return; }
+    if (!email) { SC.toast('Email is required','error'); return; }
+    if (!pos)   { SC.toast('Select a position rank','error'); return; }
+    if (!exp.length) { SC.toast('Select at least one expertise area','error'); return; }
+    SC.toast(`Faculty profile created — ${document.getElementById('afEmployeeId').value} assigned`,'success');
+    closeAdd();
+  });
+
+  /* ============================================================
+     WIRING
+     ============================================================ */
+  document.getElementById('dirAdd').onclick = () => window.openAdd();
+  document.getElementById('dirSearch').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); renderDirectory(); });
+  document.getElementById('dirExpertise').addEventListener('change', e => { expertise = e.target.value; renderDirectory(); });
+  document.getElementById('dirStatus').addEventListener('change', e => { status = e.target.value; renderDirectory(); });
+  document.getElementById('dirSort').addEventListener('change', e => { sort = e.target.value; renderDirectory(); });
+  document.querySelectorAll('#dirTabs .tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('#dirTabs .tab').forEach(x => x.classList.remove('on'));
+    t.classList.add('on'); college = t.dataset.college || 'All'; renderDirectory();
+  }));
+  document.getElementById('dirView').addEventListener('click', e => {
+    cardView = !cardView;
+    e.currentTarget.innerHTML = (cardView ? '[[grid]] <span class="ml-1">Card view</span>' : '[[list]] <span class="ml-1">Table view</span>');
+    SC.expandIcons(e.currentTarget);
+    renderDirectory();
+  });
+
+  /* bootstrap */
+  applyRole();
+  renderSelfPanel();
+  renderDirectory();
+  SC.runCounters();
+
+  /* deep links */
+  if (wantNew) window.openAdd();
+  if (deepFaculty) {
+    const f = FAC.find(x => String(x.id) === String(deepFaculty));
+    if (f) window.openProfile(f.id);
+  }
+  if (ROLE === 'faculty') {
+    const me = FAC.find(x => x.name === ME.name) || FAC[0];
+    window.openProfile(me.id);
+  } else if (wantEdit && deepFaculty) {
+    const f = FAC.find(x => String(x.id) === String(deepFaculty));
+    if (f) openEditAsSelf(f);
+  }
+});
+</script>
+</body>
+</html>

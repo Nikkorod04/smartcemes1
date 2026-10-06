@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Activity;
 use App\Models\ActivityProposal;
 use App\Models\AvailabilityRequest;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\RenderedHours;
 use App\Models\User;
@@ -31,7 +31,7 @@ class Phase3Seeder extends Seeder
         $nikko = $facultyBy('faculty3@lnu.com');
         $kent = $facultyBy('faculty4@lnu.com');
 
-        $programs = ExtensionProgram::query()->pluck('id', 'code');
+        $programs = ExtensionProject::query()->pluck('id', 'code');
         $activities = Activity::query()->pluck('id', 'title');
         $communityIds = DB::table('communities')->pluck('id', 'name');
 
@@ -81,7 +81,7 @@ class Phase3Seeder extends Seeder
 
             $proposal = ActivityProposal::create([
                 'faculty_id' => $row['faculty']->id,
-                'extension_program_id' => $programs[$row['program']],
+                'extension_project_id' => $programs[$row['program']],
                 'community_id' => DB::table('communities')->where('name', $row['community'])->value('id'),
                 'title' => $row['title'],
                 'proposed_start_date' => $row['start'],
@@ -111,7 +111,7 @@ class Phase3Seeder extends Seeder
             // Approved proposals auto-create their draft activity (5.12).
             if (! empty($row['activity'])) {
                 $activity = Activity::create([
-                    'extension_program_id' => $programs[$row['program']],
+                    'extension_project_id' => $programs[$row['program']],
                     'activity_proposal_id' => $proposal->id,
                     'title' => $row['activity'],
                     'planned_start_date' => $row['activity_start'] ?? $row['start'],

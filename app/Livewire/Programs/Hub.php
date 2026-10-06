@@ -7,8 +7,9 @@ use App\Models\ActivityImport;
 use App\Models\Beneficiary;
 use App\Models\BudgetUtilization;
 use App\Models\Community;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
+use App\Models\ProgramNarrative;
 use App\Models\ProgramObjective;
 use App\Models\RenderedHours;
 use App\Notifications\SmartCemesNotification;
@@ -17,19 +18,22 @@ use App\Services\ActivityEvaluationImport;
 use App\Services\BeneficiaryTemplate;
 use App\Services\KpiService;
 use App\Services\ProgramNarrativeService;
+use App\Services\TrainingHoursService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 #[Layout('layouts.app')]
 class Hub extends Component
 {
     use WithFileUploads;
+    use WithPagination;
 
-    public ExtensionProgram $program;
+    public ExtensionProject $program;
 
     #[Url]
     public string $tab = 'overview';
@@ -38,6 +42,9 @@ class Hub extends Component
 
     /** v4.12: beneficiary + attendance actions (Admin or Secretary). */
     public bool $canManageBeneficiaries = false;
+
+    /* ---------------- executive narrative modal (5.15) ---------------- */
+    public bool $showNarrativeModal = false;
 
     /* ---------------- objectives ---------------- */
     public bool $showObjList = false;
@@ -61,6 +68,10 @@ class Hub extends Component
         'title' => '', 'description' => '', 'venue' => '',
         'planned_start_date' => '', 'planned_end_date' => '',
         'start_time' => '08:00', 'end_time' => '12:00',
+        // R4 (§4.4): days carries the duration (0.5 = half day), participants is
+        // the R-Q1 manual trainee fallback, trainors_snapshot overrides the
+        // assigned-faculty count.
+        'no_of_days' => '1', 'participants' => '', 'trainors_snapshot' => '',
         'allocated_budget' => '', 'status' => 'draft', 'faculty_ids' => [],
     ];
 
@@ -139,6 +150,7 @@ class Hub extends Component
         'planned_end_date' => '',
         'target_beneficiaries' => '',
         'allocated_budget' => '',
+        'annual_target_hours' => '',
         'program_lead_id' => '',
         'community_ids' => [],
         'beneficiary_categories' => [],
@@ -150,152 +162,170 @@ class Hub extends Component
         'date_used' => '', 'activity_id' => '', 'receipt_reference' => '',
     ];
 
-    public function mount(ExtensionProgram $program): void
+    /**
+     * R2: the route parameter is `{project}` (it binds an ExtensionProject) and
+     * Livewire's implicit route-model binding matches the mount parameter BY
+     * NAME, so this must be `$project` — verified by probe: with `$program` here
+     * the HTTP request 500s while `Livewire::test(Hub::class, ['program' => …])`
+     * still worked, which is exactly the kind of split that hides a bug.
+     *
+     * The public property stays `$program` because it is read ~40 times across
+     * this class and the hub view; assigning across the name boundary once,
+     * here, is the whole adaptation.
+     */
+    public function mount(ExtensionProject $project): void
     {
-        // 5.2: Admin manages; faculty view read-only for programs they lead
+        // 5.2: Admin manages; faculty view read-only for projects they lead
         // or are assigned to; others are refused.
-        abort_unless(auth()->user()->can('view', $program), 403, 'This program is not available for your account.');
+        abort_unless(auth()->user()->can('view', $project), 403, 'This project is not available for your account.');
 
-        $this->program = $program;
-        $this->canManage = auth()->user()->can('manage', $program);
-        $this->canManageBeneficiaries = auth()->user()->can('manageBeneficiaries', $program);
+        $this->program = $project;
+        $this->canManage = auth()->user()->can('manage', $project);
+        $this->canManageBeneficiaries = auth()->user()->can('manageBeneficiaries', $project);
     }
 
     public function render()
     {
-        $kpi = app(KpiService::class);
+        $hours = app(TrainingHoursService::class);
 
-        $this->program->load(['activities', 'budgetUtilizations', 'programObjectives', 'communities']);
+        $this->program->load(['activities', 'budgetUtilizations', 'communities']);
 
-        // Objective meta computed ONCE per render (status, effective actual,
-        // progress, source) — shared by the overview card and the manager
-        // modal. 8.6: status ALWAYS derives live, never the stored column.
-        $statusMeta = [
-            'achieved' => ['badge-green', 'Achieved'],
-            'on_track' => ['badge-blue', 'On track'],
-            'not_met' => ['badge-yellow', 'Not met'],
-            'not_started' => ['badge-gray', 'Not started'],
-        ];
-        $objectiveMeta = $this->program->programObjectives
-            ->mapWithKeys(function ($o) use ($kpi, $statusMeta) {
-                $status = $kpi->statusFor($o);
-                $actual = $kpi->effectiveActual($o);
-                $target = $o->target_value !== null ? (float) $o->target_value : null;
-                $pct = ($target && $actual !== null && $target != 0) ? min(round($actual / $target * 100), 100) : 0;
-
-                return [$o->id => [
-                    'status' => $status,
-                    'actual' => $actual,
-                    'pct' => $pct,
-                    'source' => $kpi->actualSource($o),
-                    'badge' => $statusMeta[$status][0],
-                    'label' => $statusMeta[$status][1],
-                    'bar' => $status === 'not_met' ? 'bg-gold-500' : ($status === 'achieved' ? 'bg-emerald-500' : 'bg-lnu-800'),
-                ]];
-            });
+        // R4 / R-Q2: the results framework is SOFT-DEPRECATED and no longer has
+        // a surface on this page (D-R7 removed the 8.6 KPI tiles; the Overview
+        // card now shows the target model instead). `programObjectives` is
+        // therefore not eager-loaded and no objective meta is computed — but the
+        // relation, the table, `ProgramObjective`, `KpiService` and the
+        // `smartcemes.kpi_metrics` config all remain in place (retained unread),
+        // so historical rows stay inspectable and the migration stays
+        // reversible. The objective CRUD methods below are likewise retained
+        // but unreachable: no view calls them any more.
 
         $activities = $this->program->activities()->orderBy('planned_start_date')->get();
-        $enrolled = $this->program->beneficiaries()
+
+        // The enrolled roster is PAGINATED (owner request 2026-10-05): a mature
+        // program can carry hundreds of beneficiaries and the table had no
+        // bound. Its own page name keeps it independent of any other paginator
+        // that may later appear on this component.
+        //
+        // The order is shared with `BeneficiaryExportController`, so the
+        // exported sheet and this table agree row for row.
+        $enrolledPaginator = $this->program->beneficiaries()
             ->whereNull('beneficiaries.deleted_at')
-            ->orderBy('last_name')->get();
+            ->orderBy('beneficiaries.last_name')
+            ->orderBy('beneficiaries.first_name')
+            ->paginate(10, ['*'], 'beneficiariesPage');
+
+        $enrolledCount = $enrolledPaginator->total();
+
         $entries = $this->program->budgetUtilizations()->with('activity')->orderByDesc('date_used')->get();
         $utilized = (float) $entries->sum('amount');
-        $over = $this->program->allocated_budget > 0 && $utilized > (float) $this->program->allocated_budget;
 
         // Attendance counts: total rows + attendees (present/late) per activity.
         $attendanceCounts = Activity::query()
-            ->where('extension_program_id', $this->program->id)
+            ->where('extension_project_id', $this->program->id)
             ->withCount(['attendances', 'attendances as attendees_count' => fn ($q) => $q->whereIn('status', ['present', 'late'])])
             ->get();
         $attendancesByActivity = $attendanceCounts->pluck('attendances_count', 'id');
         $attendeesByActivity = $attendanceCounts->pluck('attendees_count', 'id');
 
-        // KPI scorecard vs targets: actuals live from 8.6, targets from the
-        // program's results framework (marker hidden when no target is set).
-        $targets = $this->program->programObjectives
-            ->filter(fn ($o) => $o->kpi_metric !== null && $o->target_value !== null)
-            ->groupBy('kpi_metric')
-            ->map(fn ($group) => (float) $group->first()->target_value);
+        /* ------------------------------------------------------------------ */
+        /* R4 PERFORMANCE SECTION (D-R7: the 8.6 KPI tiles are GONE) */
+        /* */
+        /* The Director tracks four things per project — trainors, trainees, */
+        /* training hours rendered and budget — each against its annual target. */
+        /* The 8.6 dictionary (community reach, participation rate, attendance */
+        /* consistency, budget utilization %, completion rate, knowledge gain, */
+        /* cost per beneficiary) is no longer surfaced at project level. */
+        /* ------------------------------------------------------------------ */
+        $performance = $hours->forProject($this->program);
+        $trainingRows = $performance['rows'];
+        $trainorsByActivity = $trainingRows->pluck('trainors', 'activity_id');
+        $traineesByActivity = $trainingRows->pluck('trainees', 'activity_id');
+        $traineeSourceByActivity = $trainingRows->pluck('trainees_source', 'activity_id');
+        $trainingHoursByActivity = $trainingRows->pluck('hours', 'activity_id');
 
-        $served = $kpi->communityReach($this->program);
-        $linked = $enrolled->count();
-        $reachTarget = $targets->get('community_reach');
-        $participation = $kpi->participationRate($this->program);
-        $participationTarget = $targets->get('participation_rate');
-        $consistency = $kpi->attendanceConsistency($this->program);
-        $consistencyTarget = $targets->get('attendance_consistency');
-        $budgetPct = $kpi->budgetUtilization($this->program);
-        $budgetTarget = $targets->get('budget_utilization');
-        $completion = $kpi->activityCompletionRate($this->program);
-        $completionTarget = $targets->get('activity_completion_rate');
-        $knowledgeGain = $kpi->knowledgeGain($this->program);
-        $scoredActivities = $activities->filter(fn ($a) => $a->pre_assessment_score !== null && $a->post_assessment_score !== null);
-        $satisfactionRated = $activities->filter(fn ($a) => $a->satisfaction_rating !== null);
+        // Budget has NO annual target (owner decision 2026-09-26): the project's
+        // ALLOCATION is its only budget figure, so it is the denominator. Every
+        // budget surface reads this same service value, so none can disagree.
+        $budgetAllocation = $performance['allocated_budget'];
+        $over = $budgetAllocation > 0 && $utilized > $budgetAllocation;
 
-        $barColor = function (?float $value, ?float $target, bool $over = false): string {
+        $hoursTarget = $performance['target_hours'];
+        $hoursActual = $performance['actual_hours'];
+
+        // The four bars of the "Training Hours vs Annual Target" panel, in the
+        // prototype's order. `bar` is a percentage for the progress element and
+        // `tone` the colour class, so the view holds no arithmetic.
+        $attainTone = function (?float $pct, bool $over = false): string {
             if ($over) {
                 return 'bg-red-500';
             }
-            if ($value === null) {
+            if ($pct === null) {
                 return 'bg-gray-300';
             }
 
-            return $target !== null ? ($value >= $target ? 'bg-emerald-500' : 'bg-red-500') : 'bg-lnu-800';
+            return $pct >= 100 ? 'bg-emerald-500' : ($pct >= 60 ? 'bg-lnu-600' : 'bg-gold-500');
         };
 
-        $scorecard = [
+        // The overview card needs the same tone decision without the "over"
+        // argument, so it is exposed as its own closure rather than duplicating
+        // the thresholds in Blade (one place decides what "on track" means).
+        $attainBg = fn (?float $pct): string => $pct === null
+            ? 'bg-gray-300'
+            : ($pct >= 100 ? 'bg-emerald-500' : ($pct >= 60 ? 'bg-lnu-600' : 'bg-gold-500'));
+
+        $hoursPct = $performance['hours_pct'];
+        $reachPct = $this->program->target_beneficiaries
+            ? round($performance['trainees'] / (int) $this->program->target_beneficiaries * 100, 1)
+            : null;
+        $completionPct = $performance['activity_count']
+            ? round($performance['completed_count'] / $performance['activity_count'] * 100, 1)
+            : null;
+
+        $hoursRows = [
             [
-                'label' => 'Community Reach',
-                'display' => number_format($served).($reachTarget !== null ? ' / '.number_format($reachTarget) : ''),
-                'pct_text' => $reachTarget > 0 ? (int) round($served / $reachTarget * 100).'%' : null,
-                'bar' => $reachTarget > 0 ? min((int) round($served / $reachTarget * 100), 100) : 100,
-                'marker' => $reachTarget > 0 ? min((int) round($reachTarget / max($served, $reachTarget, 1) * 100), 100) : null,
-                'color' => $barColor((float) $served, $reachTarget),
-                'caption' => 'Distinct beneficiaries with present/late attendance in non-cancelled activities (8.6)',
-                'caption_class' => 'text-gray-400',
+                'label' => 'Training hours rendered',
+                'display' => number_format($hoursActual).' / '.($hoursTarget === null ? '—' : number_format($hoursTarget)).' hrs',
+                'sub' => $hoursPct === null ? null : $hoursPct.'%',
+                'bar' => (int) min($hoursPct ?? 0, 100),
+                'tone' => $attainTone($hoursPct),
+                'caption' => $performance['trainors'].' trainors × '.$performance['trainees'].' trainees × '
+                    .$hours->formatDays($performance['training_days']).' days across '
+                    .$performance['completed_count'].' completed activit'.($performance['completed_count'] === 1 ? 'y' : 'ies')
+                    .' · formula trainors × trainees × days, no × 8',
             ],
             [
-                'label' => 'Participation Rate',
-                'display' => $participation === null ? '—' : round($participation).'%',
-                'pct_text' => $participation !== null ? $served.' of '.$linked.' enrolled' : null,
-                'bar' => $participation === null ? 0 : min((int) round($participation), 100),
-                'marker' => $participationTarget !== null ? min((int) round($participationTarget), 100) : null,
-                'color' => $barColor($participation, $participationTarget),
-                'caption' => 'Beneficiaries with at least one present/late attendance ÷ linked beneficiaries (8.6)',
-                'caption_class' => 'text-gray-400',
+                'label' => 'Trainors assigned',
+                'display' => (string) $performance['trainors'],
+                'sub' => 'faculty',
+                'bar' => (int) min($performance['trainors'] / 4 * 100, 100),
+                'tone' => 'bg-lnu-600',
+                'caption' => 'Lead plus co-lead faculty counted once per project',
             ],
             [
-                'label' => 'Attendance Consistency',
-                'display' => $consistency === null ? '—' : round($consistency).'%',
-                'pct_text' => $consistencyTarget !== null ? 'target ≥'.round($consistencyTarget).'%' : null,
-                'bar' => $consistency === null ? 0 : min((int) round($consistency), 100),
-                'marker' => $consistencyTarget !== null ? min((int) round($consistencyTarget), 100) : null,
-                'color' => $barColor($consistency, $consistencyTarget),
-                'caption' => 'Mean share of eligible activities attended per beneficiary (8.6)',
-                'caption_class' => 'text-gray-400',
+                'label' => 'Trainees / beneficiaries reached',
+                'display' => number_format($performance['trainees']).' / '.($this->program->target_beneficiaries ? number_format((int) $this->program->target_beneficiaries) : '—'),
+                'sub' => $reachPct === null ? null : $reachPct.'%',
+                'bar' => (int) min($reachPct ?? 0, 100),
+                'tone' => $attainTone($reachPct),
+                'caption' => 'Distinct beneficiaries with present or late attendance',
             ],
             [
-                'label' => 'Budget Utilization',
-                'display' => $budgetPct === null ? '—' : round($budgetPct).'%',
-                'pct_text' => $budgetTarget !== null ? 'target ≥'.round($budgetTarget).'%' : null,
-                'bar' => $budgetPct === null ? 0 : min((int) round($budgetPct), 100),
-                'marker' => $budgetTarget !== null ? min((int) round($budgetTarget), 100) : null,
-                'color' => $barColor($budgetPct, $budgetTarget, $over),
-                'caption' => $over
-                    ? 'Over-allocated by ₱'.number_format($utilized - (float) $this->program->allocated_budget).' — advisory warning (D7), not a hard block'
-                    : 'Utilized of allocated budget (8.6)',
-                'caption_class' => $over ? 'text-red-500 font-semibold' : 'text-gray-400',
+                'label' => 'Activities completed',
+                'display' => $performance['completed_count'].' / '.$performance['activity_count'],
+                'sub' => $completionPct === null ? null : $completionPct.'%',
+                'bar' => (int) min($completionPct ?? 0, 100),
+                'tone' => 'bg-gold-500',
+                'caption' => 'Completed activities out of all activities in this project',
             ],
-            [
-                'label' => 'Activity Completion Rate',
-                'display' => $completion === null ? '—' : round($completion).'%',
-                'pct_text' => $completionTarget !== null ? 'target ≥'.round($completionTarget).'%' : null,
-                'bar' => $completion === null ? 0 : min((int) round($completion), 100),
-                'marker' => $completionTarget !== null ? min((int) round($completionTarget), 100) : null,
-                'color' => $barColor($completion, $completionTarget),
-                'caption' => 'Completed ÷ (total − cancelled) activities (8.6)',
-                'caption_class' => 'text-gray-400',
-            ],
+        ];
+
+        $budgetVsAllocation = [
+            'allocated' => (float) $budgetAllocation,
+            'utilized' => $utilized,
+            'remaining' => max((float) $budgetAllocation - $utilized, 0),
+            'pct' => $budgetAllocation > 0 ? round($utilized / (float) $budgetAllocation * 100, 1) : null,
+            'over' => $over,
         ];
 
         $attendanceChartRows = $activities
@@ -305,7 +335,8 @@ class Hub extends Component
                 'attendees' => (int) ($attendeesByActivity[$a->id] ?? 0),
             ])->values();
 
-        $satisfactionRows = $satisfactionRated
+        $satisfactionRows = $activities
+            ->where('satisfaction_rating', '!=', null)
             ->map(fn ($a) => [
                 'label' => $a->title.' · '.$a->planned_start_date->format('M j'),
                 'rating' => (float) $a->satisfaction_rating,
@@ -313,40 +344,68 @@ class Hub extends Component
 
         $facultyOptions = Faculty::with('user')->orderBy('id')->get();
         $assignedFaculty = Activity::query()
-            ->where('extension_program_id', $this->program->id)
+            ->where('extension_project_id', $this->program->id)
             ->whereHas('faculty')
             ->with('faculty.user')
             ->get()
             ->flatMap(fn ($a) => $a->faculty->map(fn ($f) => ['activity' => $a, 'faculty' => $f]));
 
+        // The trainor roster tiles read the SAME service numbers as the bars, so
+        // the panel and the roster can never disagree.
+        $trainorRoster = $assignedFaculty
+            ->unique(fn ($x) => $x['faculty']->id)
+            ->map(fn ($x) => [
+                'faculty' => $x['faculty'],
+                'is_lead' => (int) $this->program->program_lead_id === (int) $x['faculty']->id,
+                'hours' => $assignedFaculty
+                    ->where('faculty.id', $x['faculty']->id)
+                    ->sum(fn ($row) => (float) ($trainingHoursByActivity[$row['activity']->id] ?? 0)),
+            ])
+            ->sortByDesc('is_lead')
+            ->values();
+
+        // 5.15: latest narrative attempt + latest COMPLETED version (full-narrative modal).
+        $latestNarrative = $this->program->programNarratives()->latest('id')->first();
+        $fullNarrative = $latestNarrative?->status === ProgramNarrative::STATUS_COMPLETED
+            ? $latestNarrative
+            : $this->program->programNarratives()
+                ->where('status', ProgramNarrative::STATUS_COMPLETED)
+                ->latest('id')
+                ->first();
+
         return view('livewire.programs.hub', [
-            'kpi' => $kpi,
-            'objectiveMeta' => $objectiveMeta,
+            'latestNarrative' => $latestNarrative,
+            'fullNarrative' => $fullNarrative,
             'activities' => $activities,
             'attendancesByActivity' => $attendancesByActivity,
             'attendeesByActivity' => $attendeesByActivity,
             'assignedFacultyByActivity' => $assignedFaculty
                 ->groupBy(fn ($x) => $x['activity']->id)
                 ->map(fn ($g) => $g->pluck('faculty.user.name')->all()),
-            'enrolled' => $enrolled,
+            'enrolledPaginator' => $enrolledPaginator,
+            'enrolledCount' => $enrolledCount,
             'entries' => $entries,
             'utilized' => $utilized,
-            'remaining' => (float) $this->program->allocated_budget - $utilized,
+            'remaining' => (float) $budgetAllocation - $utilized,
             'over' => $over,
-            'kpiMetrics' => config('smartcemes.kpi_metrics'),
             'facultyOptions' => $facultyOptions,
             'allCommunities' => Community::orderBy('name')->get(),
             'beneficiaryCategories' => config('smartcemes.beneficiary_categories'),
             'registry' => $this->showEnroll ? $this->registryResults() : collect(),
-            'served' => $served,
-            'scorecard' => $scorecard,
-            'knowledgeGain' => $knowledgeGain,
-            'costPerBeneficiary' => $kpi->costPerBeneficiary($this->program),
-            'avgSatisfaction' => $satisfactionRated->isNotEmpty() ? (float) $satisfactionRated->avg('satisfaction_rating') : null,
-            'scoredActivities' => $scoredActivities->count(),
-            'satisfactionRated' => $satisfactionRated->count(),
-            'avgPre' => $scoredActivities->isNotEmpty() ? (float) $scoredActivities->avg('pre_assessment_score') : null,
-            'avgPost' => $scoredActivities->isNotEmpty() ? (float) $scoredActivities->avg('post_assessment_score') : null,
+            'served' => $performance['trainees'],
+            // R4 performance payload
+            'performance' => $performance,
+            'hoursRows' => $hoursRows,
+            'attainBg' => $attainBg,
+            'budgetVsAllocation' => $budgetVsAllocation,
+            'trainorRoster' => $trainorRoster,
+            'trainorsByActivity' => $trainorsByActivity,
+            'traineesByActivity' => $traineesByActivity,
+            'traineeSourceByActivity' => $traineeSourceByActivity,
+            'trainingHoursByActivity' => $trainingHoursByActivity,
+            'traineeSourceLabels' => TrainingHoursService::SOURCE_LABELS,
+            'avgSatisfaction' => $satisfactionRows->isNotEmpty() ? (float) $satisfactionRows->avg('rating') : null,
+            'satisfactionRated' => $satisfactionRows->count(),
             'attendanceChartRows' => $attendanceChartRows,
             'satisfactionRows' => $satisfactionRows,
             'conflictingFaculty' => $this->showActivityForm ? $this->conflictingFacultyIds() : [],
@@ -365,7 +424,32 @@ class Hub extends Component
         $this->tab = $tab;
     }
 
+    /**
+     * The design-system paginator.
+     *
+     * Livewire's shipped pagination views use Tailwind classes that sit OUTSIDE
+     * the Vite content globs, so the default theme renders unstyled — hence the
+     * shared partial (§14).
+     */
+    public function paginationView(): string
+    {
+        return 'livewire.partials.pagination';
+    }
+
     /* ==================== OBJECTIVES ==================== */
+
+    /* ------------------------------------------------------------------ */
+    /* R4 / R-Q2 — SOFT-DEPRECATED, RETAINED UNREAD */
+    /* */
+    /* The 8.6 objective surface was removed in Phase R4 (D-R7): the */
+    /* Overview card, the Objective Manager modal and the objective form */
+    /* are gone from `hub-overview` / `hub-modals`, so nothing in any view */
+    /* calls the methods below any more. They are deliberately NOT deleted: */
+    /* the route stays reversible, historical `program_objectives` rows */
+    /* stay editable through the model layer, and R5/R6 can revive the */
+    /* surface without re-writing this logic. Do not wire new UI to these */
+    /* without re-reading §4.7 — the target model supersedes them. */
+    /* ------------------------------------------------------------------ */
 
     public function openObjManager(): void
     {
@@ -491,6 +575,18 @@ class Hub extends Component
         $this->dispatch('sc-toast', message: 'Narrative generated — aggregates only, Director-only', type: 'success');
     }
 
+    /** Full-narrative modal — Admin-only (D4); shows the latest completed version. */
+    public function openNarrativeModal(): void
+    {
+        $this->abortUnlessManage();
+        $this->showNarrativeModal = true;
+    }
+
+    public function closeNarrativeModal(): void
+    {
+        $this->showNarrativeModal = false;
+    }
+
     /* ==================== ACTIVITIES ==================== */
 
     public function openActivityForm(?int $id = null): void
@@ -509,6 +605,12 @@ class Hub extends Component
                 'planned_end_date' => $activity->planned_end_date->format('Y-m-d'),
                 'start_time' => $activity->start_time->format('H:i'),
                 'end_time' => $activity->end_time->format('H:i'),
+                // NULL days are shown as 1 (a full day) rather than an empty box:
+                // the form must always be saveable, and the service reads NULL
+                // as a full day too, so the round trip is lossless.
+                'no_of_days' => (string) ($activity->no_of_days ?? '1'),
+                'participants' => $activity->participants !== null ? (string) $activity->participants : '',
+                'trainors_snapshot' => $activity->trainors_snapshot !== null ? (string) $activity->trainors_snapshot : '',
                 'allocated_budget' => (string) $activity->allocated_budget,
                 'status' => $activity->status,
                 'faculty_ids' => $activity->faculty()->pluck('faculty_id')->all(),
@@ -520,6 +622,7 @@ class Hub extends Component
                 'planned_start_date' => $this->program->planned_start_date->format('Y-m-d'),
                 'planned_end_date' => $this->program->planned_start_date->format('Y-m-d'),
                 'start_time' => '08:00', 'end_time' => '12:00',
+                'no_of_days' => '1', 'participants' => '', 'trainors_snapshot' => '',
                 'allocated_budget' => '', 'status' => 'draft', 'faculty_ids' => [],
             ];
         }
@@ -552,6 +655,12 @@ class Hub extends Component
             'activityForm.planned_end_date' => "required|date|after_or_equal:activityForm.planned_start_date|before_or_equal:$endMax",
             'activityForm.start_time' => 'required',
             'activityForm.end_time' => 'required|after:activityForm.start_time',
+            // R4 (§4.4): 0.5 increments, half a day minimum. `multiple_of:0.5`
+            // is the rule that makes "half-day = 0.5" enforceable rather than a
+            // convention: it rejects 0.3, 0.75 and 1.2.
+            'activityForm.no_of_days' => 'required|numeric|min:0.5|max:60|multiple_of:0.5',
+            'activityForm.participants' => 'nullable|integer|min:0|max:10000',
+            'activityForm.trainors_snapshot' => 'nullable|integer|min:0|max:200',
             'activityForm.allocated_budget' => 'nullable|numeric|min:0',
             'activityForm.status' => 'required|in:draft,ongoing,completed,cancelled',
             'activityForm.faculty_ids' => 'array',
@@ -559,6 +668,8 @@ class Hub extends Component
             'activityForm.planned_start_date.after_or_equal' => "Activity dates must fall within the program range ($startMin – $endMax).",
             'activityForm.planned_start_date.before_or_equal' => "Activity dates must fall within the program range ($startMin – $endMax).",
             'activityForm.planned_end_date.before_or_equal' => "Activity dates must fall within the program range ($startMin – $endMax).",
+            'activityForm.no_of_days.multiple_of' => 'Days must be in 0.5 increments — 0.5 for a half day, 1 for a full day.',
+            'activityForm.no_of_days.min' => 'Days must be at least 0.5 (a half day).',
         ]);
 
         // 8.8 hard constraint: faculty assignment refused on schedule overlap.
@@ -579,7 +690,7 @@ class Hub extends Component
         $activity = Activity::updateOrCreate(
             ['id' => $this->editingActivityId],
             [
-                'extension_program_id' => $this->program->id,
+                'extension_project_id' => $this->program->id,
                 'title' => $this->activityForm['title'],
                 'description' => $this->activityForm['description'] ?: null,
                 'venue' => $this->activityForm['venue'] ?: null,
@@ -587,6 +698,11 @@ class Hub extends Component
                 'planned_end_date' => $this->activityForm['planned_end_date'],
                 'start_time' => $this->activityForm['start_time'],
                 'end_time' => $this->activityForm['end_time'],
+                // R4: three nullable columns. Empty strings become NULL so a
+                // cleared field means "not recorded", never 0.
+                'no_of_days' => $this->activityForm['no_of_days'] !== '' ? (float) $this->activityForm['no_of_days'] : null,
+                'participants' => $this->activityForm['participants'] !== '' ? (int) $this->activityForm['participants'] : null,
+                'trainors_snapshot' => $this->activityForm['trainors_snapshot'] !== '' ? (int) $this->activityForm['trainors_snapshot'] : null,
                 'allocated_budget' => $this->activityForm['allocated_budget'] !== '' ? $this->activityForm['allocated_budget'] : null,
                 'status' => $this->activityForm['status'],
             ]
@@ -595,7 +711,13 @@ class Hub extends Component
         $activity->faculty()->sync($this->activityForm['faculty_ids']);
 
         $this->showActivityForm = false;
-        $this->dispatch('sc-toast', message: $this->editingActivityId ? 'Activity updated' : 'Activity added', type: 'success');
+
+        // R4: surface the recomputed training hours so the effect of adding days
+        // and participants is visible at the moment of saving.
+        $breakdown = $activity->trainingBreakdown();
+        $this->dispatch('sc-toast', message: $this->editingActivityId
+            ? 'Activity updated · '.$breakdown['formula']
+            : 'Activity added · '.$breakdown['formula'], type: 'success');
     }
 
     public function completeActivity(int $id): void
@@ -1334,6 +1456,7 @@ class Hub extends Component
             'planned_end_date' => $this->program->planned_end_date->format('Y-m-d'),
             'target_beneficiaries' => (string) $this->program->target_beneficiaries,
             'allocated_budget' => (string) $this->program->allocated_budget,
+            'annual_target_hours' => $this->program->annual_target_hours !== null ? (string) $this->program->annual_target_hours : '',
             'program_lead_id' => (string) $this->program->program_lead_id,
             'community_ids' => $this->program->communities->pluck('id')->all(),
             'beneficiary_categories' => $this->program->beneficiary_categories ?? [],
@@ -1369,6 +1492,7 @@ class Hub extends Component
             'editForm.planned_end_date' => 'required|date|after_or_equal:editForm.planned_start_date',
             'editForm.target_beneficiaries' => 'nullable|integer|min:1',
             'editForm.allocated_budget' => 'nullable|numeric|min:0',
+            'editForm.annual_target_hours' => 'nullable|numeric|min:0',
             'editForm.program_lead_id' => 'nullable|exists:faculties,id',
             'editForm.community_ids' => 'array',
             'editForm.community_ids.*' => 'exists:communities,id',
@@ -1400,6 +1524,7 @@ class Hub extends Component
             'target_beneficiaries' => $this->editForm['target_beneficiaries'] ?: null,
             'beneficiary_categories' => $this->editForm['beneficiary_categories'],
             'allocated_budget' => $this->editForm['allocated_budget'] !== '' ? $this->editForm['allocated_budget'] : 0,
+            'annual_target_hours' => $this->editForm['annual_target_hours'] !== '' ? $this->editForm['annual_target_hours'] : null,
             'program_lead_id' => $this->editForm['program_lead_id'] ?: null,
             'status' => $this->editForm['status'],
             'updated_by' => auth()->id(),
@@ -1437,7 +1562,7 @@ class Hub extends Component
             'activity_id' => $this->budgetForm['activity_id'] ?: null,
             'receipt_reference' => $this->budgetForm['receipt_reference'] ?: 'REC-'.now()->format('Y').'-'.str_pad((string) ($this->program->budgetUtilizations()->count() + 1), 4, '0', STR_PAD_LEFT),
         ]);
-        $entry->extension_program_id = $this->program->id;
+        $entry->extension_project_id = $this->program->id;
         $entry->save();
 
         // D7: over-allocation never hard-blocks — save succeeds, warn + log.
@@ -1504,16 +1629,24 @@ class Hub extends Component
 
         $assigned = $faculty->activities()
             ->whereNotIn('status', ['cancelled'])
-            ->where('id', '!=', $this->editingActivityId ?? 0)
+            // MUST be qualified: `activities` is joined to `activity_faculty`,
+            // and the pivot has its own `id`, so a bare `id` is ambiguous and
+            // the query errors on every driver. This broke the 8.8 hard-block
+            // for any faculty member who already had an activity.
+            ->where('activities.id', '!=', $this->editingActivityId ?? 0)
             ->get();
 
         foreach ($assigned as $other) {
             if ($candidate->overlaps($other)) {
+                // FOUR placeholders — the range needs both ends. Passing three
+                // made the hard-block raise ArgumentCountError instead of
+                // refusing, so the guard crashed rather than blocking.
                 return sprintf(
                     '%s is already assigned to "%s" (%s – %s) which overlaps this schedule (8.8).',
                     $faculty->user->name,
                     $other->title,
-                    $other->planned_start_date->format('M j, Y')
+                    $other->planned_start_date->format('M j, Y'),
+                    $other->planned_end_date->format('M j, Y')
                 );
             }
         }

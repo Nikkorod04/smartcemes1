@@ -18,9 +18,9 @@
   <section class="pt-6 reveal-item">
     <div class="ai-panel p-6 flex items-start justify-between gap-6">
       <div class="min-w-0">
-        <span class="ai-chip">[[sparkles]] Executive Program Narratives</span>
-        <h1 class="mt-3 text-white font-extrabold text-xl tracking-tight leading-snug">Program Status at a Glance</h1>
-        <p class="mt-2 text-[12.5px] text-blue-100/75 leading-relaxed">AI-generated executive summaries of each extension program — objectives, KPIs, budget, risks, and recommended next actions. Director-only; full provenance is recorded for audit.</p>
+        <span class="ai-chip">[[sparkles]] Executive Project Narratives</span>
+        <h1 class="mt-3 text-white font-extrabold text-xl tracking-tight leading-snug">Project Status at a Glance</h1>
+        <p class="mt-2 text-[12.5px] text-blue-100/75 leading-relaxed">AI-generated executive summaries of each extension project — training hours against target, budget, activities, risks, and recommended next actions. Recommendations are filtered through the CESO scope guardrail; out-of-scope items appear as interagency referrals. Director-only; full provenance is recorded for audit.</p>
       </div>
       <div class="text-right shrink-0">
         <span class="badge badge-blue !bg-white/10 !text-blue-100 !border-white/20">Aggregated data only · no PII</span>
@@ -33,12 +33,12 @@
       <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">Latest Narratives
         <span class="badge badge-gray" id="narrCount"></span>
       </h3>
-      <span class="text-[12px] text-gray-400">One row per program — including programs with no narrative yet (first-class "unavailable" state).</span>
+      <span class="text-[12px] text-gray-400">One row per project — including projects with no narrative yet (first-class "unavailable" state).</span>
     </div>
     <div id="narrGrid" class="grid gap-4"></div>
   </section>
 
-  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
 </main>
 
 <script src="../assets/vendor/alpine.min.js" defer></script>
@@ -48,17 +48,18 @@
 const healthCls = h => h === 'at-risk' ? 'at-risk' : (h === 'needs-attention' ? 'needs-attention' : 'on-track');
 const healthLabel = h => h === 'at-risk' ? 'At risk' : (h === 'needs-attention' ? 'Needs attention' : 'On track');
 
-/* Demo version history per program (latest narrative lives in seed data) */
+/* Demo version history per project (latest narrative lives in seed data) */
 const HISTORY = {
-  'EXT-2026-001': [ { at:'Aug 10, 2026 · 8:15 AM', health:'on-track', label:'On track' },
+  'CAS-2026-001': [ { at:'Aug 10, 2026 · 8:15 AM', health:'on-track', label:'On track' },
                     { at:'Jul 27, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
-  'EXT-2026-002': [ { at:'Aug 10, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
-  'EXT-2026-003': [ { at:'Jun 28, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
-  'EXT-2026-004': [ { at:'Aug 18, 2026 · 8:15 AM', health:'needs-attention', label:'Needs attention' },
+  'CAS-2026-002': [ { at:'Aug 10, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
+  'CME-2026-001': [ { at:'Jun 28, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
+  'CAS-2026-003': [ { at:'Aug 18, 2026 · 8:15 AM', health:'needs-attention', label:'Needs attention' },
                     { at:'Jul 21, 2026 · 8:15 AM', health:'needs-attention', label:'Needs attention' },
                     { at:'Jun 30, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
-  'EXT-2026-005': [ { at:'Aug 20, 2026 · 8:15 AM', health:'on-track', label:'On track' } ],
-  'EXT-2026-006': [ { at:'Aug 24, 2026 · 8:15 AM', health:'failed', label:'Generation failed — API timeout · 3 retries exhausted · narrative unavailable' } ]
+  'CAS-2026-004': [ { at:'Aug 20, 2026 · 8:15 AM', health:'needs-attention', label:'Needs attention' } ],
+  'COE-2026-001': [ { at:'Aug 24, 2026 · 8:15 AM', health:'failed', label:'Generation failed — API timeout · 3 retries exhausted · narrative unavailable' } ],
+  'CAS-2026-005': [ { at:'Aug 22, 2026 · 8:15 AM', health:'on-track', label:'On track' } ]
 };
 
 function objectivesMet(code) {
@@ -67,13 +68,28 @@ function objectivesMet(code) {
   return { achieved, total: objs.length };
 }
 
+function omChip(om) {
+  return om.total
+    ? `<span class="badge ${om.achieved === om.total ? 'badge-green' : 'badge-blue'} !text-[10.5px]">Objectives met: ${om.achieved}/${om.total}</span>`
+    : '<span class="badge badge-gray !text-[10.5px]">No objectives yet</span>';
+}
+
+function scopeChips(n) {
+  const recs = (n.recommendations || []);
+  const t2 = recs.filter(r => r.tier === 2).length;
+  const t3 = recs.filter(r => r.tier === 3).length;
+  const t1 = recs.filter(r => r.tier === 1).length;
+  const out = [`<span class="tier-badge tier-1">${t1} in CESO scope</span>`];
+  if (t2) out.push(`<span class="tier-badge tier-2">${t2} interagency referral${t2 === 1 ? '' : 's'}</span>`);
+  if (t3) out.push(`<span class="tier-badge tier-3">${t3} suppressed</span>`);
+  return out.join('');
+}
+
 function narrCard(prog) {
   const n = (window.DATA.programNarratives || []).find(x => x.program && x.program.code === prog.code);
   const om = objectivesMet(prog.code);
   const hist = HISTORY[prog.code] || [];
-  const omChip = om.total
-    ? `<span class="badge ${om.achieved === om.total ? 'badge-green' : 'badge-blue'}">Objectives met: ${om.achieved} of ${om.total}</span>`
-    : '<span class="badge badge-gray">No objectives defined yet</span>';
+  const omChipHtml = omChip(om);
 
   if (!n) {
     return `
@@ -81,7 +97,7 @@ function narrCard(prog) {
       <div class="flex items-center justify-between gap-3">
         <div class="min-w-0">
           <p class="font-bold text-[14px] leading-snug">${prog.title}</p>
-          <p class="text-[11px] text-gray-400">${prog.code} · Lead: ${prog.lead.name} · ${prog.community.name}</p>
+          <p class="text-[11px] text-gray-400">${prog.code} · ${SC.collegePill(prog.college)} · Lead: ${prog.lead.name} · ${prog.community.name}</p>
         </div>
         <span class="narrative-health needs-attention">Narrative unavailable</span>
       </div>
@@ -92,9 +108,9 @@ function narrCard(prog) {
             <p class="text-[12.5px] font-bold text-gray-600">Narrative unavailable</p>
             <p class="text-[12px] text-gray-500 mt-0.5 leading-relaxed">${(HISTORY[prog.code]||[]).slice(-1)[0] && HISTORY[prog.code].slice(-1)[0].health === 'failed'
               ? 'The last generation failed (API timeout — 3 retries with backoff exhausted). Nothing was persisted; regenerate to try again.'
-              : 'No narrative has been generated for this program yet. Generation is Director-only and uses aggregate program data (no PII).'}</p>
+              : 'No narrative has been generated for this project yet. Generation is Director-only and uses aggregate project data (no PII).'}</p>
             <div class="flex items-center gap-2 mt-2.5">
-              ${omChip(om)}
+              ${omChipHtml}
               <button onclick="regenerate('${prog.code}', this)" class="btn btn-primary !px-3 !py-1.5 text-[11.5px]">⟳ Generate narrative</button>
             </div>
           </div>
@@ -109,7 +125,7 @@ function narrCard(prog) {
     <div class="flex items-center justify-between gap-3">
       <div class="min-w-0">
         <p class="font-bold text-[14px] leading-snug">${prog.title}</p>
-        <p class="text-[11px] text-gray-400">${prog.code} · Lead: ${prog.lead.name} · ${prog.community.name}</p>
+        <p class="text-[11px] text-gray-400 flex items-center gap-1.5">${prog.code} · ${SC.collegePill(prog.college)} · Lead: ${prog.lead.name} · ${prog.community.name}</p>
       </div>
       <span class="narrative-health ${healthCls(n.health_label)}">${healthLabel(n.health_label)}</span>
     </div>
@@ -117,9 +133,10 @@ function narrCard(prog) {
       <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
         <div class="flex items-center justify-between">
           <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Executive Summary</p>
-          ${omChip(om)}
+          ${omChipHtml}
         </div>
         <p class="text-[12.5px] text-gray-600 leading-snug mt-1">${n.summary}</p>
+        <div class="flex flex-wrap items-center gap-1.5 mt-2.5">${scopeChips(n)}</div>
       </div>
       <div class="space-y-2">
         <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
@@ -128,27 +145,21 @@ function narrCard(prog) {
         </div>
         <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
           <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Recommended Next Actions</p>
-          <ul class="mt-1 space-y-1.5 text-[12.5px] text-gray-600">${(n.recommendations && n.recommendations.length ? n.recommendations.map(r => `
-            <li class="flex items-start gap-1.5"><span class="text-lnu-700 mt-0.5 text-[10px]">▸</span>
-              <span><b>${r.priority}</b> — ${r.action}${r.rationale ? `<span class="block text-[11px] text-gray-400 mt-0.5 leading-snug">${r.rationale}</span>` : ''}</span></li>`) : ['<li class="text-gray-400 italic">None pending.</li>']).join('')}</ul>
+          <ul class="mt-1 space-y-1.5 text-[12.5px] text-gray-600">${(n.recommendations && n.recommendations.length ? n.recommendations.filter(r => r.tier !== 3).map(r => `
+            <li class="flex items-start gap-1.5"><span class="mt-0.5 text-[10px] ${r.tier === 2 ? 'text-gold-600' : 'text-lnu-700'}">${r.tier === 2 ? '⚠' : '▸'}</span>
+              <span><b>${r.priority}</b> — ${r.action}${r.rationale ? `<span class="block text-[11px] text-gray-400 mt-0.5 leading-snug">${r.rationale}</span>` : ''}${r.tier === 2 && r.agency ? `<span class="block text-[11px] font-semibold text-gold-700 mt-1">Interagency referral → ${r.agency}</span>` : ''}</span></li>`).join('') : '<li class="text-gray-400 italic">None pending.</li>')}</ul>
         </div>
       </div>
     </div>
     <div class="mt-3 flex items-center justify-between gap-3">
       <p class="text-[10.5px] text-gray-400">Generated ${n.generatedAt} · ${n.generatedBy || 'Director, CESO'} · ${n.model}</p>
       <div class="flex gap-2">
-        <button onclick="SC.toast('Provenance: model, prompt version, generated_at/by recorded for audit','info')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px]">Provenance</button>
+        <button onclick="SC.toast('Provenance: model, prompt version, generated_at/by and scope classification recorded for audit','info')" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px]">Provenance</button>
         <button onclick="regenerate('${prog.code}', this)" class="btn btn-outline !px-3 !py-1.5 text-[12px]">⟳ Generate</button>
       </div>
     </div>
     ${histBlock(prog.code, hist)}
   </div>`;
-}
-
-function omChip(om) {
-  return om.total
-    ? `<span class="badge ${om.achieved === om.total ? 'badge-green' : 'badge-blue'} !text-[10.5px]">Objectives met: ${om.achieved}/${om.total}</span>`
-    : '<span class="badge badge-gray !text-[10.5px]">No objectives yet</span>';
 }
 
 function histBlock(code, hist) {
@@ -163,19 +174,19 @@ function histBlock(code, hist) {
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <p class="text-[12px] font-semibold leading-snug">${h.health === 'failed' ? 'Generation attempt' : h.label + ' — narrative v' + (hist.indexOf(h) + 2)}</p>
-              <p class="text-[11px] text-gray-400 mt-0.5">${h.health === 'failed' ? h.label : 'Generated ' + h.at + ' · Director, CESO · gpt-4o-mini'}</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">${h.health === 'failed' ? h.label : 'Generated ' + h.at + ' · Director, CESO · gemini-2.0-flash'}</p>
             </div>
             <span class="shrink-0 text-[10.5px] font-bold px-2 py-1 rounded-lg ${h.health === 'failed' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}">${h.at.split(' · ')[0]}</span>
           </div>
         </li>`).join('')}
       </ol>
-      <p class="text-[11px] text-gray-400 mt-2 ml-1">Every generation creates a new row — the Director can browse past versions per program. Provenance (model, prompt version, generated_at/by) is recorded.</p>
+      <p class="text-[11px] text-gray-400 mt-2 ml-1">Every generation creates a new row — the Director can browse past versions per project. Provenance (model, prompt version, generated_at/by, scope classification) is recorded.</p>
     </div>
   </details>`;
 }
 
 function renderNarratives() {
-  const progs = window.DATA.programs;
+  const progs = window.DATA.projects;
   const withN = progs.filter(p => (window.DATA.programNarratives || []).find(x => x.program && x.program.code === p.code)).length;
   document.getElementById('narrCount').textContent = `${withN} of ${progs.length} programs generated`;
   document.getElementById('narrGrid').innerHTML = progs.map(narrCard).join('');

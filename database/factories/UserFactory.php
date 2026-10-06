@@ -43,4 +43,22 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * A faculty-role account (Phase R3 — the Faculty Management module tests
+     * need a faculty user without going through the seeders).
+     */
+    public function faculty(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_FACULTY,
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_ADMIN,
+        ]);
+    }
 }

@@ -1,5 +1,88 @@
 # SMARTCEMES — AI HANDOFF
-_Last updated: 2026-09-17 (session 15, v4.13 activity imports COMPLETE — steps 6–7 landed; 222 tests passing / 0 failures) · Blueprint v4.14 (with the v4.13 sections + revision entry inserted BEFORE v4.14) · Phases 1–5 COMPLETE · Prototype v4.1-conformant + redesign mirror_
+_Last updated: 2026-09-28 · **491 tests / 2894 assertions passing** · Blueprint **v4.20** · **Phases 1–5 COMPLETE · revision phases P0 + R1–R6 COMPLETE · R7 (docs/hardening) IN PROGRESS** · prototype v4.3_
+
+> ## ⚠️ READ THIS FIRST — the architecture changed after Phases 1–5
+>
+> Everything from Phases 1–5 still works, but the **extension hierarchy was restructured** by a
+> post-defence adviser review, tracked in **`revisions.md`** (phases `R1`–`R7`). If you read only one
+> thing before touching code, read this box and then `revisions.md` §10 (the tracker).
+>
+> **The hierarchy is now four levels, not three:**
+>
+> ```
+> College  →  Program  →  Project  →  Activity
+> (CAS/COE/CME/GRAD) (6 CESO thrusts) (was "ExtensionProgram")  (unchanged)
+> ```
+>
+> | Level | Table | Class | Route family |
+> |---|---|---|---|
+> | College | `colleges` | `App\Models\College` | `colleges.index` |
+> | Program (**BROAD**, one of 6 CESO thrusts) | `programs` | `App\Models\Program` | `programs.index` |
+> | Project (**NARROW**, was called "program") | `extension_projects` | `App\Models\ExtensionProject` | `projects.index` / `projects.show` / `projects.my` |
+>
+> **The single most common mistake a new session makes is reading "program" in old prose and building
+> the wrong level.** The R2 rename moved what used to be `extension_programs`/`ExtensionProgram` to
+> `extension_projects`/`ExtensionProject`; the name `programs`/`Program` now means the broad CESO thrust.
+> Legacy project codes (`EXT-2026-00X`) were kept for history; new projects get college prefixes
+> (`CAS-2026-001`).
+>
+> **Two things about the COLLEGE level that will bite you (both added 2026-09-25):**
+> - **The college set is FIXED at four — CAS, COE, CME and GRAD (the Graduate School) — and it is
+>   READ-ONLY.** There is **no college CRUD**: the component exposes no `create`/`edit`/`save`, the view
+>   has no New College or Edit button, and `CollegePolicy` has no write abilities. `CollegeSeeder` is the
+>   set's **only** owner, so a name, description or coordinator is corrected THERE. `manage` survives in
+>   the policy, but it now means **hub access** (the `/colleges` page is the Director's entry point to
+>   the whole hierarchy), **not** a write permission.
+> - **A project's college follows its SUBJECT DOMAIN, not its lead's college.** The R2 backfill derived
+>   it from `program_lead_id`, which filed the sports project under the *business* college (its lead
+>   teaches entrepreneurship) and the health project under *education*. Two leads now deliberately
+>   differ from their project's college, and **nothing validates that pairing** — so do not "fix" it.
+>
+> **Other decisions that override anything older in this file:**
+> - **Training hours = `trainors × trainees × days`. There is NO `× 8`.** §2.2A removed it — `days`
+>   already carries duration, so `× 8` double-counted. `TrainingHoursService` is the single source of
+>   truth. If you see `× 8` reappear, it is a regression.
+> - **Budget has NO annual target — the ALLOCATION is the basis** (v4.19, 2026-09-26). A project's
+>   `allocated_budget` is its only budget figure. `ExtensionProject::budgetAllocated()` is the single
+>   accessor; `budgetTarget()` no longer exists, and the per-project `annual_target_budget` column is
+>   **retained but unread** (the project form and `R4TargetsSeeder` no longer write it). The **university
+>   budget pool is unaffected**. No budget surface may say "Annual Target" — grep `budgetTarget` /
+>   `budgetVsTarget` if a regression is suspected.
+> - **Targets live at University + Project level ONLY** (D-R5). Broad programs and colleges carry **no**
+>   target. The university target is a *consumption pool*, not a ratio.
+> - **All 8.6 KPI surfaces were removed** from project/performance views (D-R7). The 8.6 dictionary,
+>   `KpiService` and `ProgramObjective` are **retained in code but unread** (R-Q2) — see §6.
+> - **The Admin Analytics page is GONE** (v4.20, owner decision 2026-09-27). `/analytics` — blueprint
+>   5.13's "six dashboards in six tabs" — was **deleted outright**: route, `App\Livewire\Analytics`,
+>   `analytics.blade.php`, the six `analytics/partials/tab-*.blade.php`, the sidebar entry, its five
+>   tests, and the prototype page. Four tabs duplicated the admin dashboard and Faculty Contribution was
+>   superseded by the R3 module; the two tabs with no substitute — the aggregate **Pending Actions list**
+>   and the **Community Reach chart** (with the retired `community_reach` measure) — were **accepted as
+>   deliberate losses**. Do not restore the nav entry or the route without an owner decision:
+>   `revisions.md` §21.
+> - **The college hub is a THREE-view drill-down** (2026-09-27, §23). `/colleges` → college → **the
+>   programs that college delivers** → that program's projects. **A college's programs are DERIVED from
+>   its projects** (`programs` has no `college_id`, §3) — never query or assign them. There is **no
+>   cross-college program or project list in the flow** any more; `/programs` and `/projects` still exist
+>   (they host the create forms) but nothing in the UI links to them for browsing.
+> - **The prototype now TRAILS Laravel on the hub.** `colleges.html` still shows the old two-view flow and
+>   its harnesses still assert it, so `_check.cjs`/`_hubtest.cjs` passing does NOT mean the hub matches
+>   the app. See `revisions.md` §23.6.
+> - **ALL create/edit for programs and projects happens on `/colleges`** (§25). New program → view 2;
+>   Edit program and New project → view 3, both as **modals**. `/programs` and `/projects` still resolve
+>   but are **read-only lists with no inbound links** — do not "fix" that by re-linking them, and do not
+>   re-add a deep link: the `?new=1` flag was deleted because the modal's Alpine `$wire.$watch` bridge
+>   never fired when the flag was already true at mount.
+> - **AI is admin-only and now three-tier** (§7.1): Tier 1 CESO intervention · Tier 2 interagency
+>   referral (citable agencies come **only** from the `interagency_agencies` catalogue) · Tier 3
+>   prohibited as CESO work.
+> - **The AI no longer recommends things CESO cannot do.** Malnutrition, roads, water potability etc. are
+>   *reclassified* as Tier-2 referrals, never dropped.
+>
+> **Where to look:** `revisions.md` is the authoritative record of every post-review change (§10 tracker;
+> §12–§18 are the phase write-ups). Where `revisions.md` and this file disagree, **`revisions.md` wins**,
+> and where either disagrees with `SYSTEM_BLUEPRINT_V4.txt`, the blueprint is the design contract but
+> `revisions.md` records the owner's later amendments.
 
 You are picking up **SmartCEMES**, an AI-powered Community Extension Monitoring and
 Evaluation System for Leyte Normal University (capstone project). This document
@@ -10,9 +93,209 @@ fully before writing any code.
 
 ## 1. CURRENT STATE (accurate as of this document)
 
+### 1.0 Where the project actually stands (2026-09-26)
+
+| Item | Value |
+|---|---|
+| **Tests** | **491 passing / 2894 assertions**, 0 failures |
+| Phases 1–5 (original build) | ✅ Complete |
+| P0 (prototype pass) | ✅ Complete |
+| R1 colleges + broad Program level | ✅ Complete — `revisions.md` §12 |
+| R2 `extension_programs` → `extension_projects` rename | ✅ Complete — §13 |
+| R3 Faculty Management module (R3a + R3b + **R3c**) | ✅ Complete — §14 + §18 |
+| R4 training-hours model + project performance | ✅ Complete — §15 |
+| R5 filters, rankings, dashboards, reports | ✅ Complete — §16 |
+| R6 AI guardrail + interagency catalogue | ✅ Complete — §17 |
+| **R7 hardening & docs** | 🔨 **IN PROGRESS — the only phase left** |
+| Local DB | MariaDB `smartcemes_v4` @ 127.0.0.1:3306, root/no password. **It does not auto-sync with the repo** — run `php artisan migrate:status` first if you hit a "table doesn't exist" error. |
+| Seeded demo data | 4 colleges · 6 programs · 8 projects · 15 activities · 57 beneficiaries · 8 accounts (6 faculty) |
+
+**R7 is complete except for the production deploy:**
+1. ~~Blueprint stale sections~~ ✅ *done — the blueprint is now **v4.20**. §15.3 covers the v4.16
+   stale-section rewrite; `revisions.md` §19.12 covers the v4.18 dashboard pass.*
+2. This file's own update. ✅ *done (2026-09-24, and again 2026-09-25)*
+3. Full test sweep + `pint` + a from-scratch re-seed. ✅ *done — **491 / 2894***
+4. Re-run the defence walkthrough end to end. ✅ *done — `docs/TEST-SCRIPT.md` rewritten and executed;
+   `tests/Feature/DefenceWalkthroughTest.php` pins every figure it prints.*
+5. ~~`docs/guides/*` + the role guides~~ ✅ *done — **verified 2026-09-25 by reading them.** The guides
+   were RENAMED and REWRITTEN for the revision: `01-create-program.md` → **`01-create-project.md`**,
+   `02-objectives.md` → **`02-targets.md`**, plus 7 more modified. The staleness banners are gone, and
+   `README.md` states the hierarchy, the two-level target rule and the no-`× 8` formula.*
+   ⚠️ *An earlier revision of this file claimed they were "still bannered, not refreshed" — that was
+   **wrong**; it had been asserted rather than checked. Do not re-open it without reading them.*
+
+**The only thing left in R7 is the production deploy** — see item 5 of §15.
+
+**Completed since the previous handoff (2026-09-24 → 2026-09-25), in order:**
+- the `/colleges` two-view hub, the `/programs` fidelity pass (D-R5-legal), the **collapsed admin nav**,
+  the **nightly database backup**, the **defence walkthrough re-run** — which found two real bugs in the
+  8.8 conflict guard (§14.2) — and the **blueprint v4.16 stale-section rewrite**;
+- the **college seals**: all four official seals now render on the cards and in the hero — the
+  Graduate School's landed 2026-09-27 (`revisions.md` §19.9.5), so `.college-crest` no longer renders
+  for any seeded college and is now a pure fallback, pinned by its own test;
+- the **project→college mapping correction**: a project's college is now its SUBJECT DOMAIN, not its
+  lead's college (§19.10);
+- the **Graduate School (GRAD)**: a fourth college, the college set made **FIXED and read-only (no
+  CRUD)**, and the graduate starter set — 2 faculty, a coordinator, the PANDAY project (§19.11);
+- the **admin dashboard pass**: the Audit Logs page, budget bullet rows, leader bars, and every emoji
+  and typographic glyph replaced with an SVG icon — in Laravel **and** the prototype (§19.12).
+
+**Completed 2026-09-26 — v4.19, the budget-basis correction (`revisions.md` §20):**
+- The dashboard's "Budget Utilized vs Annual Target" panel claimed a target that does not exist. Only
+  **2 of 8** projects carried an `annual_target_budget` at all, and both were seeded *equal to* their
+  allocation — so the denominator was already the allocation and **no figure changed**; the label was
+  the only lie. Every project-level budget surface now reads **"Allocated Budget"**.
+- `ExtensionProject::budgetAllocated()` is the single accessor; `budgetTarget()` is **gone**.
+  `TrainingHoursService::forProject()` returns **`allocated_budget`** (was `target_budget`) and the hub
+  payload is `budgetVsAllocation` (was `budgetVsTarget`).
+- `annual_target_budget` is **retained but unread**; the project form and `R4TargetsSeeder` no longer
+  write it. The **university budget pool is untouched** — that one is a real commitment.
+- Mirrored in the prototype (its `budgetTarget` demo field is gone) and in **PromptV2**, so the AI
+  narrative no longer calls an allocation a "target". **PromptV1 is left frozen** as the historical
+  record — do not "fix" it.
+- Two pre-existing prototype defects were fixed in passing: a stale `x 8` in the training-hours comment
+  and a `0.5-day = 4 hrs` caption (both double-counted the retired hourly factor).
+
+**Completed 2026-09-27 — v4.20, the Analytics removal (`revisions.md` §21):**
+- The Admin Analytics page (`/analytics`, blueprint 5.13 / 12.1) is **deleted outright** — the route and
+  its import, `App\Livewire\Analytics`, `analytics.blade.php`, the six `analytics/partials/tab-*.blade.php`,
+  the sidebar entry, its five tests and `docs/prototype/pages/analytics.html`. Four of its six tabs
+  duplicated the admin dashboard; Faculty Contribution was superseded by the R3 module.
+- **Two surfaces were knowingly lost, not relocated**: the aggregate Pending Actions list (the dashboard
+  keeps only *counts*; the four queues keep their own pages) and the Community Reach barangay chart, which
+  retires the `community_reach` measure. `/reports/community-impact` is a per-community cut, not a
+  replacement.
+- `KpiService::objectivesAtRisk()` now has **no production caller at all** — both consumers are gone (the
+  dashboard Action Center by P0m, the analytics pending tab by this change). Annotated retained-but-unread.
+- Suite **467 / 2139** (exactly the 5 tests that covered the page); all six prototype harnesses green.
+  The deleted files are archived under `.workbuddy-ai/backups/2026-09-27-analytics-removal/` — the last
+  git commit (2026-09-17) predates the whole revision, so `git checkout` could not have restored them.
+
+**Also completed 2026-09-27 — the Graduate School seal (`revisions.md` §19.9.5):**
+- `public/gs.png` (611×611) supplied by the owner; derived to `public/img/colleges/grad.png` (256px,
+  91.8 KB) with the same crop-to-alpha-bbox recipe as the first three, so all four seals fill 98% of
+  their frame. **The crop mattered** — `gs.png` filled only 79% of its frame against the others' 87%,
+  so a plain downscale would have rendered GRAD visibly smaller.
+- One line in `config/smartcemes.php` `college_logos`; both views pick it up from the existing `'logo'`
+  payload key, so **no view edit was needed**.
+- **All four colleges are now sealed**, so `.college-crest` no longer renders. `ExtensionHubTest` now
+  expects **0** crests (was 1), and a **new test pins the fallback** by dropping GRAD from the config —
+  necessary because the college set is fixed at four with no CRUD, so a broken fallback could never
+  surface in the UI.
+- Suite **468 / 2145**. All four seal URLs verified over HTTP: 200, `image/png`, byte-identical to disk.
+  The prototype was deliberately **not** mirrored (§19.9.2) and its harnesses stay green.
+
+**Also completed 2026-09-27 — the faculty self-edit widened (`revisions.md` §22):**
+- A faculty member now edits their own **specialization · department · contact number · address ·
+  expertise areas** from their profile. Employee ID, college, position, status **and** the login account
+  (name, email) stay Director-only. `FacultyPolicy::updateOwnContactDetails()` →
+  **`updateOwnProfile()`**; `Profile::editContact()`/`saveContact()` →
+  **`editProfile()`/`saveProfile()`**; the save writes an activity-log entry (`faculty_self_update`).
+- **This was NOT a new feature — it was the code catching up with its own contract.** Blueprint §2.3/§5.1,
+  `revisions.md` §11.10, the prototype's self-edit drawer and `docs/facultyguide.md` **all** said expertise
+  was self-editable; `revisions.md` §14.3 said the opposite, and the implementation followed §14.3. That
+  paragraph now carries a correction note. See §22.1 before touching this boundary.
+- **The entry point now exists.** `/faculty/{id}` was correctly scoped but unreachable — the faculty
+  sidebar had no link, so the only way in was to type the URL. New parameterless route **`faculty.me`**
+  (`/my-profile`) + the faculty nav's **"My Profile"** section, mirroring the prototype's nav exactly
+  (label `My Faculty Profile`, icon `users`). `Profile::mount()` takes the id as optional and falls back
+  to the authenticated user's own record, so one component serves both routes.
+- `Faculty::expertiseCategoryMap()` extracted from a *private* method on the Directory, because two
+  components now write expertise and must file an area under the same category.
+- Suite **476 / 2177**. All six prototype harnesses green — **the prototype needed no change**: its
+  faculty nav and its self-edit drawer were already correct, which is how the contradiction went unseen.
+
+**Also completed 2026-09-27 — the college hub drill-down (`revisions.md` §23):**
+- `/colleges` is now a **THREE**-view page. View 1 the four college cards; view 2 that college's hero,
+  KPIs and **the programs it delivers**; view 3 that program's projects. The drill-down reads
+  College → Program → Projects → Activities, which is what the hierarchy always claimed.
+- **Programs are DERIVED from the college's projects** — `programs` has no `college_id` (§3), so there is
+  nothing to query or assign. `Colleges\Index::programRows()` groups by `program_id` and rolls up through
+  `TrainingHoursService`, so this level cannot disagree with the project hub.
+- **Every cross-college browsing link is gone**: the hub hero's "Programs" button, the view-1 "View all
+  programs →", and the dashboard's "All projects →" (now "Manage programs →" at the hub). The project
+  hub's back-link was repointed to return to *that project's college and program* instead of the flat list.
+- **`/programs` and `/projects` still exist and `subs` was NOT trimmed.** They host the only create/edit
+  forms, and `subs` is a **highlight** list, not a navigation list — trimming it would leave the sidebar
+  with nothing lit on `/projects`, which is exactly where the New project action lands.
+- **New project** sits in view 3 and links to `/projects?college=…&program=…&new=1`; `Programs\Index`
+  gained a `#[Url] $new` flag that opens the form pre-filled. One create path, one validation ruleset.
+- Suite **484 / 2208**. All six prototype harnesses green — **the prototype is deliberately NOT mirrored
+  and is now BEHIND Laravel** (§23.6). That is the first time this project has recorded the prototype
+  trailing rather than leading; reconciling later means moving `colleges.html`, `_hubtest.cjs`,
+  `_check.cjs:224-307` and `PATTERNS.md` together.
+
+**Also completed 2026-09-28 — the hub's college-selected view redesigned (`revisions.md` §24):**
+- View 2 now leads with a **breadcrumb**, a **132px brand band** in the college's own colour carrying a
+  112px seal (plus a soft halo — two of the four seals have a navy ring that vanishes into a navy band),
+  a code watermark, and a 4-chip stat strip. The KPI tiles gained **tinted icon chips**; the program grid
+  went **2-up** so a college delivering one or two thrusts fills its row.
+- **View 3 was restyled too**, beyond the literal ask — once view 2 was rebuilt, view 3 looked like a
+  different, older product on the same page. Presentation only; no data, query, route or policy moved.
+- **One design RULE had been broken and is fixed:** PATTERNS §7 allows a `Training hours` label only on a
+  *project* card (no college or program has an hours target). The view-3 program KPI tile said exactly
+  that — it now reads **`Hours rendered`**. Pinned by
+  `ExtensionHubTest::test_only_project_cards_label_training_hours`.
+- **No new colour vocabulary** — every hue is already in `tailwind.config.js`. `npm run build` re-run
+  (`app-*.css` 99.30 → 104.34 kB).
+- **Verification needed a new tool.** Browser automation refuses on Windows, so `.workbuddy-ai/shot.sh`
+  logs in over HTTP with curl and screenshots the real page with headless Chrome. Two gotchas are in §24.5:
+  Chrome needs a **Windows** path for `--screenshot` (`cygpath -w`), and the snapshot must live under
+  `public/` or the CSS and Figtree fonts 404 and you judge a page rendered in the wrong typeface.
+
+**Also completed 2026-09-28 — the hub owns create/edit (`revisions.md` §25):**
+- **Three regressions from §23, all fixed.** (1) The 6 broad programs could not be added or edited —
+  unlinking `/programs` left its create form with **zero inbound links**. (2) "New project" navigated to
+  `/projects`, a page the owner had asked to remove. (3) Creation was broken: the modal's Alpine
+  `$wire.$watch` visibility bridge **only fires on change**, and the `?new=1` deep link set the flag
+  during `mount()`, so it never fired and the page rendered with **no form on it** (§14's known trap).
+- **The forms MOVED into the hub**: New program (view 2), Edit program (view 3), New project (view 3, a
+  **modal trigger**). Both modals render **server-side `@if`** with an empty `x-data`, so no Alpine
+  visibility gate is left to fail. The `?new=1` flag, its `mount()` and the deep link are **deleted**.
+- **MOVE, not duplicate**: `BroadPrograms` and `Programs\Index` lost their create/edit and form state —
+  keeping a second copy would have meant two implementations of one validation ruleset. **`/programs` and
+  `/projects` are now READ-ONLY lists** (they keep their roll-ups, filters and sort; `Programs\Index` went
+  from 232 to 124 lines). No route was deleted, and both stay in the nav's `subs` (§23.5).
+- **The 6 thrusts stay editable**, including adding one — the owner's decision, and a deliberate exception
+  to §3's "verbatim CESO thrust" framing.
+- Suite **485 / 2217**. 8 tests re-pointed at the hub (3 program-CRUD, 2 project-form, the walkthrough, 2
+  replaced in `ExtensionHubTest`), plus a guard asserting `new=1` no longer appears. Both modals were
+  **screenshotted open and confirmed visible** (§25.5).
+- **Two screenshot-harness lessons**: Chrome needs **`--user-data-dir`** or a hung run poisons the default
+  profile and later launches die with *no output and exit 0*; and **`--virtual-time-budget` hangs** waiting
+  on a Livewire round-trip — to photograph a modal, temporarily default its flag to `true` instead.
+
+**Verified working (smoke-tested by URL across all three roles, against the real MySQL driver):**
+all **63 routes** resolve, no 5xx on any surface, and **zero phantom nav entries** (every sidebar item
+points at a route that exists — historically some did not, and the sidebar silently hides them).
+
+**Known gaps, carried deliberately:**
+- `targets.html` has no Laravel counterpart contract — the real page is a **native build** (a recorded
+  deliberate divergence, `revisions.md` §16.10).
+- The faculty profile page has **no prototype at all** (the prototype renders faculty detail into a JS
+  drawer), so its trend chart is a native build too — `revisions.md` §18.4. Note the prototype **does**
+  carry the surrounding contract — its faculty nav has the "My Profile" section and its self-edit drawer
+  defines the writable-vs-locked field split (§22) — so "no prototype" applies to the *page*, not to the
+  behaviour.
+- The `/colleges` **college seals** are a Laravel-only build: the prototype keeps its `Logo`
+  placeholder (`revisions.md` §19.9). All **four** colleges are sealed in Laravel since 2026-09-27,
+  so `.college-crest` no longer renders there.
+- **The demo ranking is lopsided BY DECISION.** Five projects have 2 beneficiaries each, and BATANG
+  MATINIK has none *and* no activities, so the Performance Leaders panel is dominated by BUSOG. The
+  owner chose to skip the fix — see §16 G. It is **not** a bug, and any magnitude chart will show it.
+- **The Admin Analytics page is REMOVED BY DECISION** (v4.20, 2026-09-27) — see §1.0 and `revisions.md`
+  §21. Its aggregate Pending Actions list and its Community Reach chart are **gone, not relocated**.
+  Do not "restore" either without an owner decision.
+
+### 1.1 Historical session log (Phases 1–5 and v4.13 — superseded, kept for provenance)
+
+> The entries below describe the pre-revision state and are **historically accurate but no longer the
+> current design**. They are retained because they explain *why* certain code exists. Read them for
+> background, not for the current data model.
+
 - **SESSION 15 — v4.13 ACTIVITY IMPORTS: STEPS 6 (TESTS) + 7 (DOCS) COMPLETE
-  (2026-09-17)** — the feature is now DONE. **222 tests passing / 0 failures
-  (1082 assertions)**; pint clean.
+  (2026-09-17)** — the feature is now DONE. *(At the time: 222 tests / 1082 assertions.
+  The suite is now 491 / 2894 — see §1.0.)*
   - Step 6 tests: `BeneficiaryManagementTest` updated (the attendance test is
     rewritten to the import flow; the forbidden-action list now covers
     parse/confirm attendance + evaluation); NEW `ActivityAttendanceImportTest`
@@ -753,7 +1036,7 @@ fully before writing any code.
   inserted BEFORE v4.14) is the authoritative target design; Phases 1–5 are
   implemented.
 - **UI reference: DONE.** `docs/prototype/` is a complete, clickable static HTML
-  prototype (24 pages) brought to full blueprint-v4.1 conformance. All inline
+  prototype (now 29 pages) brought to full blueprint conformance. All inline
   scripts syntax-verified (29/29 OK). It is the visual source of truth for every
   screen, flow, state, and interaction — replicate its look and behavior in Blade/Livewire.
 - **`prev/` folder**: legacy v3 build reference. Its seeders (`prev/seeders/`) contain
@@ -763,18 +1046,94 @@ fully before writing any code.
 
 ## 2. AUTHORITATIVE DOCUMENTS (read in this order)
 
-1. `SYSTEM_BLUEPRINT_V4.txt` — THE contract. Where anything conflicts, blueprint wins.
-   - §2 users/roles/workflows · §5 features · §6 data models (6.1–6.18)
+1. **`revisions.md`** — **READ THIS SECOND (after the box at the top).** The post-defence adviser review
+   plan, phases `R1`–`R7`. §10 is the **status tracker**; §5 is the phase spec; §12–§18 are the
+   per-phase write-ups. This file records **every change made after Phases 1–5**, including the
+   hierarchy restructure, the amended training-hours formula, the target model, the 8.6 removals and the
+   AI guardrail. **Where this handoff and `revisions.md` disagree, `revisions.md` wins.**
+   ⚠️ Its §8 lists the blueprint sections that are stale.
+2. `SYSTEM_BLUEPRINT_V4.txt` — the design contract (v4.20). Where anything conflicts, the blueprint
+   wins — *except* where `revisions.md` records a later owner amendment, which supersedes it.
+   - §2 users/roles/workflows · §5 features · §6 data models
    - §7 controlled vocabularies (needs-assessment form, Sections I–IX)
-   - §8.6 KPI dictionary (single source of truth) · §8.8 scheduling hard constraints
-   - §11 phases · §14 design decisions D1–D13 · §18 revision history
-2. `docs/prototype/PATTERNS.md` — design-system rules (tokens, components, variants).
-3. `docs/prototype/assets/` — `smartcemes.css` (component classes), `tw-config.js`
+   - §8.6 KPI dictionary — **superseded by D-R7 for project/performance surfaces; retained in code
+     unread.** See §6 below before using it.
+   - §8.8 scheduling hard constraints · §11 phases · §14 design decisions D1–D13 · §18 revision history
+3. `docs/prototype/PATTERNS.md` — design-system rules (tokens, components, variants).
+4. `docs/prototype/assets/` — `smartcemes.css` (component classes), `tw-config.js`
    (lnu blue #003599 / gold #F6B800 / Figtree), `seed-data.js` (demo data), `layout.js` (nav).
-4. `prev/NEEDS ASSESSMENT_FORM.md` — source instrument behind §7 vocabularies.
-5. `docs/F-CES-002..005` — official university form scans (context reference only).
+5. `prev/NEEDS ASSESSMENT_FORM.md` — source instrument behind §7 vocabularies.
+6. `docs/F-CES-002..005` — official university form scans (context reference only).
+
+**Prototype harnesses — run these after ANY `docs/prototype/` edit.** They are the prototype's own
+test suite and they catch drift the Laravel suite cannot see:
+
+```bash
+node docs/prototype/_check.cjs          # structural: seed, nav contract, icons, deep links
+node docs/prototype/_smoke.cjs          # every page's script executes
+node docs/prototype/_hubtest.cjs        # 42  — the colleges hub click-through
+node docs/prototype/_facultytest.cjs    # 124 — faculty board/directory/drawer
+node docs/prototype/_dashtest.cjs       # 41  — admin dashboard
+node docs/prototype/_interagencytest.cjs # 44 — R6 interagency catalogue
+```
+
+Note `_check.cjs` enforces a **nav contract**: the admin sidebar must contain exactly ONE
+extension-structure entry (`Manage Extension Programs`) and must **not** contain separate
+`Colleges` / `Extension Programs` / `Extension Projects` items. See §14 for why this matters.
 
 ## 3. LOCKED DECISIONS (do not reopen)
+
+### 3.0 Revision decisions (2026-09-24) — these SUPERSEDE the older entries below where they conflict
+
+Full rationale in `revisions.md`. The short form:
+
+- **Hierarchy is `College → Program → Project → Activity`.** Program = one of the **6 verbatim CESO
+  thrusts** (broad, university-wide, carries **no** college FK and **no** target). Project = the
+  narrow, activity-bearing, target-bearing level that used to be called "program". See the table at the
+  top of this file.
+- **Training hours = `trainors × trainees × days` — NO `× 8`** (§2.2A). `days` is
+  `activities.no_of_days`, a `decimal(4,1)` so a half day (`0.5`) survives. One implementation:
+  `TrainingHoursService`. Never re-derive the formula in a view, a Livewire component, or another
+  service — the project hub and the faculty pages must agree, and there is a test that proves they do.
+- **Budget has NO annual target — the ALLOCATION is the basis** (owner decision 2026-09-26, v4.19).
+  A project has ONE budget figure, `allocated_budget`, so utilization is measured against it on every
+  surface. `ExtensionProject::budgetAllocated()` is the single accessor and `isOverAllocated()` uses it;
+  `TrainingHoursService::forProject()` returns the key **`allocated_budget`** (it used to be
+  `target_budget`). The per-project `annual_target_budget` column is **RETAINED BUT UNREAD** — the same
+  treatment D-R7 gives the 8.6 KPIs — the project form no longer collects one, and `R4TargetsSeeder`
+  no longer writes one. Training HOURS keep a real annual target at project level
+  (`annual_target_hours`) with the university pool above them, and the **university budget pool is
+  unaffected**. No budget surface may say "Annual Target" again — the strings to grep for are
+  `budgetTarget` (Laravel + prototype) and `budgetVsTarget` (the hub payload, now `budgetVsAllocation`).
+- **Trainee resolution order (R-Q1):** `attendance (present|late) → participants (manual) → 0`, and the
+  figure always carries a **source tag** (`attendance` / `manual` / `none`) the Director can see.
+  There is deliberately **no** fallback to enrolled beneficiaries — enrollment is project-level, so
+  falling back would inflate hours.
+- **Targets live at University + Project level ONLY** (D-R5). Broad programs and colleges carry none.
+  The university target is a **consumption pool**, not a ratio: `remaining = max(target − Σ actuals, 0.0)`.
+  Project targets are **never summed** into the pool (that is the double-counting bug D-R5 forbids).
+- **NULL over 0, everywhere.** No denominator / not measurable → `null`, and the UI says "not yet
+  measurable" rather than printing a fabricated `0`. A zero is a *claim*; absence of data is not.
+- **All 8.6 KPI surfaces removed** from project/performance views (D-R7). `KpiService`,
+  `ProgramObjective`, the `programObjectives` relation and `smartcemes.kpi_metrics` are **retained in
+  code but unread** (R-Q2) so historical rows stay inspectable and migrations stay reversible. Do not
+  add new readers.
+- **AI is a three-tier guardrail** (§7.1 below). Citable agencies come **only** from the
+  `interagency_agencies` catalogue, resolved by `agency_code`. A code that does not resolve is dropped
+  and **counted**, never laundered.
+- **The KAHAYAG brand is NOT referenced in the UI** — CESO's official agenda name is documented, but
+  the product does not surface it.
+- **No model declares `protected $table` by convention** — table names derive from the class. The
+  deliberate exception is `Program` (`protected $table = 'programs'`).
+- **Controlled vocabularies live in `config/smartcemes.php`.** Never hardcode option lists in views.
+- **Nav is config-driven** and items whose route does not exist are **silently hidden** — which is how
+  a broken entry can go unnoticed. `tests/Feature/RouteSurfaceTest.php` now asserts every nav item
+  resolves, so this cannot regress silently.
+- **The Admin Analytics page is REMOVED** (v4.20, owner decision 2026-09-27). `/analytics` no longer
+  exists; cross-project aggregates live on the admin dashboard and in the print reports, and the
+  `community_reach` measure retired with it. `revisions.md` §21 is the record.
+
+### 3.1 Original decisions (Phases 1–5) — still in force unless 3.0 above overrides
 
 - **Blueprint wins** over prototypes and over anything in `prev/`.
 - **Roles**: exactly three — admin (Director persona), secretary, faculty — single
@@ -831,103 +1190,180 @@ for MVP) · local public disk storage for uploads (max 10 MB; pdf/jpg/png/docx/x
 MIME + extension validated; dated folders) · Laravel database notifications →
 header bell · nightly DB backups (deployment item).
 
-## 5. DATA MODEL (Section 6 — build exactly this)
+## 5. DATA MODEL (Section 6 — as built, after the R1–R6 restructure)
 
-18 entities: users(6.1) · faculty(6.2) · communities(6.3, status active|prospecting;
-v4.5: also `type` community|school + nullable `school_level` — the table doubles
-as the partner-schools registry, schools always active)
-· extension_programs(6.4) · activities(6.5) · beneficiaries(6.6) · attendances(6.7)
-· availability_requests(6.8, admin-initiated) · needs_assessments(6.9, ~60 JSON
-columns per §7) · assessment_summaries(6.10, UNIQUE (community_id, quarter, year),
-recomputed on submission/review change) · assessment_analyses(6.11, draft→approved|discarded)
-· budget_utilizations(6.12, program required + optional activity) · activity_proposals
-(6.13, status machine + auto-create Activity on approval) · proposal_documents(6.14)
-· program_objectives(6.15, kpi_metric from locked keys or NULL=qualitative) ·
-program_narratives(6.16) · rendered_hours(6.17, UNIQUE (faculty_id, activity_id))
-· activity_imports(6.19, v4.13 — see SESSION 15).
+**Hierarchy tables (the R1–R2 additions — read the box at the top first):**
 
-Conventions: DECIMAL(12,2) money; JSON fields cast to array (arrays of strings);
-timestamps + SOFT DELETES everywhere; enum-like columns are strings validated
-against §6.18/§7 server-side. Pivots: extension_program_beneficiary,
-activity_faculty, community-program pivot.
+| Table | Class | Notes |
+|---|---|---|
+| `colleges` | `College` | **4 rows: CAS / COE / CME / GRAD** (the Graduate School). Carries a coordinator FK. **No target.** The set is **FIXED** — the UI has no college CRUD (removed 2026-09-25) and `CollegeSeeder` is its only owner. |
+| `programs` | `Program` | The **6 verbatim CESO thrusts** (broad level). No `college_id` — a thrust spans colleges. `nextCode()` → `PROG-{year}-{seq}`. |
+| `extension_projects` | `ExtensionProject` | The narrow level (was `extension_programs`/`ExtensionProgram` pre-R2). Has `college_id`, `program_id`, `annual_target_hours` and `allocated_budget` — **the allocation is the budget basis** (v4.19). `annual_target_budget` is **retained but unread**. Legacy codes `EXT-2026-00X` kept; new ones are college-prefixed (`CAS-2026-001`). |
+| `faculty_expertise` | `FacultyExpertise` | `faculty_id, area, category`, unique per (faculty, area). A table, not JSON, because the module filters and counts **by area**. |
 
-## 6. KPI DICTIONARY (8.6 — all dashboards/reports derive EXCLUSIVELY from this)
+**Core entities (Phases 1–5):** `users`(6.1) · `faculties`(6.2 — note the plural; **not** `faculty`) ·
+`communities`(6.3, `status` active|prospecting; v4.5 adds `type` community|school + nullable
+`school_level`, so the table doubles as the partner-schools registry) · `activities`(6.5, now carries
+`no_of_days` decimal(4,1), `participants`, `trainors_snapshot` from R4) · `beneficiaries`(6.6) ·
+`attendances`(6.7) · `availability_requests`(6.8, admin-initiated) · `needs_assessments`(6.9, ~60 JSON
+columns per §7) · `assessment_summaries`(6.10, UNIQUE (community_id, quarter, year), recomputed on
+submission/review change) · `assessment_analyses`(6.11, draft→approved|discarded; R6 adds
+`interagency_referrals` JSON) · `budget_utilizations`(6.12) · `activity_proposals`(6.13, status machine
++ auto-create Activity on approval) · `proposal_documents`(6.14) · `program_narratives`(6.16) ·
+`rendered_hours`(6.17, UNIQUE (faculty_id, activity_id)) · `activity_imports`(6.19, v4.13).
 
-Locked ProgramObjective.kpi_metric keys: `participation_rate`,
-`activity_completion_rate`, `attendance_consistency`, `budget_utilization`,
-`knowledge_gain`, `cost_per_beneficiary`, `community_reach` (rendered hours is a
-faculty-level KPI, NOT in this vocabulary). Objective status derivation:
-achieved (actual ≥ target) · not_met (target_date passed, actual < target) ·
-on_track (progressing, date not passed) · not_started. Numeric objectives
-live-compute actuals; qualitative use manual actual + evidence. Display always
-baseline → target → actual.
+**R4/R6 additions:** `university_targets`(4.7 — **ONE pool per AY**, the sole input to the annual
+target) · `interagency_agencies`(4.6 — `agency_code` unique, `agency_name`, `mandate`,
+`need_category`, `sample_service`, `contact_info`, `active`, `sort_order`, soft deletes; **no** `moa`,
+`pillar` or `abbr` columns, which were prototype-only).
 
-## 7. PHASES (Section 11) — STATUS: Phases 1–5 and v4.13 COMPLETE; next is Phase 6
+**Retained but UNREAD (R-Q2 / D-R7) — do not add readers:** `program_objectives`(6.15) and the
+`smartcemes.kpi_metrics` config. Historical rows stay inspectable; migrations stay reversible.
 
-All of the below is BUILT (see §1 for per-phase delivery notes and the code for
-details). Do not restart here.
+**Pivots:** `extension_project_beneficiary`, `community_extension_project`, `activity_faculty`.
 
-- **Phase 1 — Foundation: COMPLETE.** Laravel 12 at repo root, MySQL `smartcemes_v4`,
-  Breeze (no self-registration), roles + `EnsureRole` middleware, race-safe IDs,
-  six 2.4 accounts seeded.
-- **Phase 2 — Core Data Modules: COMPLETE.** Design system ported to Vite/Tailwind;
-  all §6 entities + pivots; `config/smartcemes.php` vocabularies; Livewire CRUD
-  (communities, programs, tabbed hub w/ objectives/activities/attendance/enrollment/
-  budgets); Sections I–IX wizard; authored official XLSX template (D11) + import
-  flow (D9/D10); Phase2Seeder.
-- **Phase 3 — Workflows: COMPLETE.** Proposals (Special Order, auto-create Activity,
-  8.8 range hard-block), availability (admin-initiated, required decline reason,
-  accept hard-block), secretary validation, rendered-hours lifecycle (auto-draft,
-  adjust-down-only, locked), database notifications + `smartcemes:notify-deadlines`
-  scheduler w/ 7-day dedup; Phase3Seeder.
-- **Phase 4 — Dashboards/Reports: COMPLETE.** Three role dashboards (admin w/
-  action center + AI panel; secretary; faculty), six-tab Analytics (8.6), custom
-  calendar (3 feeds + conflicts + 60-day list), four print reports w/ letterhead.
-- **Phase 5 — AI: COMPLETE.** Gemini pipeline (see §1).
-- **Phase 6 — Hardening (NEXT)**: feature tests for
-  the three approval workflows (partially covered already), query optimization,
-  production deploy, nightly backup script, security pass, docs.
+Conventions: DECIMAL(12,2) money; JSON fields cast to array (arrays of strings); timestamps + SOFT
+DELETES everywhere; enum-like columns are strings validated against §6.18/§7 server-side. All 37 tables
+live in the DB, of which ~9 are Laravel infrastructure (`cache`, `jobs`, `sessions`, …).
 
-## 8. PROTOTYPE MAP (docs/prototype/pages — replicate these in Laravel)
+## 6. KPI DICTIONARY (8.6) — ⚠️ RETAINED IN CODE, REMOVED FROM THE UI (D-R7)
 
-- `login.html` — demo role pills (admin/secretary/faculty) → dashboards via ?role=
-- `dashboard-admin/secretary/faculty.html` — role dashboards; admin has AI panel
-  (insights queue + narratives) and full action center (6 items); secretary has
-  ZERO AI surfaces; faculty has inline availability accept/decline
-- `analytics.html` — ONE Admin Analytics page, six tabs: Overview, Program
-  Performance, Budget Utilization, Community Reach, Faculty Contribution,
-  Pending Actions
-- `program-detail.html` — THE program hub: tabs Overview | Activities |
-  Beneficiaries | Budget; objective manager (locked KPI keys + qualitative);
-  Records modal (attendance/evaluation XLSX import, v4.13 — generated
-  templates, parse → preview → confirm, read-only for faculty); enroll
-  existing / register new
-  (dedup warn + confirm) / unenroll; budget entries w/ live D7 warning;
-  `?program=EXT-2026-00X` deep links; `?role=faculty` renders READ-ONLY
-  (admin-only elements hidden via `.admin-only` + `data-variant` CSS)
-- `programs.html` — list + Admin New Program modal (draft status) + `cancelled` status
-- `communities.html`, `faculty-management.html` (credentials + soft delete),
-- `proposals.html` (+proposal-new.html) — range validation BLOCKS approval (8.8),
-  auto-create Activity, transition log, Special Order attach + absence notice
-- `availability.html` — admin-initiated, accept/decline (required reason), overlap hard-block
-- `assessment-form.html` — Sections I–IX wizard + XLSX import (template download,
-  preview, auto-map to Other, per-field error list, confirm→pending)
-- `assessment-review.html` — secretary queue, reviewer stamps
-- `rendered-hours.html` — dual variant: admin approval queue (reject requires
-  remarks) / faculty My Rendered Hours (adjust down only, approved locked)
-- `calendar.html` — month grid + day panel + 60-day list; events derived from
-  activities + ACCEPTED availability + objective deadlines; computed conflict markers
-- `reports.html` — four print views (Annual I–VII, Results Framework w/ evidence,
-  Rendered Hours per activity/program, Community Partner Impact)
-- `ai-analysis.html` — insights workspace: priority needs, interventions, history &
-  pipeline states (draft/approved/failed+retry/pending)
-- `program-narratives.html` — per-program narratives, objectives-met, version history,
-  "Narrative unavailable" first-class state
-- Redirect stubs: activities/beneficiaries/budget.html → analytics or programs
+**Read this before using anything in this section.** The 8.6 KPI dictionary is **no longer surfaced**.
+R4 removed every 8.6 KPI tile from the project hub, dashboards and reports (decision **D-R7**), because
+the adviser's review replaced the results-framework model with the **target model** (§2.2B / D-R5):
 
-Demo conventions: `?role=` switches role shell (layout.js NAV); `?program=` deep-links
-the hub; footer says v4.1. In-page demo data that seed lacks (faculty assignments
-map, attendance state) is hard-coded per-page and marked as demo.
+- **What replaced it:** trainors / trainees / training hours / budget, measured against the university
+  pool and each project's annual targets. `TrainingHoursService` is the source; the project hub and the
+  University Targets page are the surfaces.
+- **What remains:** `KpiService`, `ProgramObjective`, the `programObjectives` relation, the
+  `smartcemes.kpi_metrics` config and the `program_objectives` table are all **retained but unread**
+  (R-Q2) — so historical rows stay inspectable and the migrations stay reversible. **Do not add new
+  readers.** The objective CRUD block is annotated soft-deprecated in `hub-modals.blade.php` and pinned
+  by `test_objective_crud_methods_remain_callable_for_compatibility`.
+- **Deliberately retained readers:** `Programs\Hub::currentComputedKpi()` still calls
+  `KpiService::liveKpi()` so the compatibility test passes. It is not reachable from the UI.
+
+For historical reference only, the locked keys were: `participation_rate`,
+`activity_completion_rate`, `attendance_consistency`, `budget_utilization`, `knowledge_gain`,
+`cost_per_beneficiary`, `community_reach` (rendered hours is a faculty-level KPI, not in this
+vocabulary). Objective status derivation was: achieved (actual ≥ target) · not_met (target_date passed,
+actual < target) · on_track (progressing, date not passed) · not_started.
+
+**Never inline KPI or training-hours maths in a view** — it goes through a service. That rule survives
+the change; only *which* service changed.
+
+## 7. PHASES — STATUS: Phases 1–5 COMPLETE · revision P0 + R1–R6 COMPLETE · R7 IN PROGRESS
+
+**There are two phase series, and they are different things.** Phases 1–5 are the original build
+(blueprint §11). `R1`–`R7` are the **post-defence adviser revision**, tracked in `revisions.md`. Do not
+confuse `Phase 6` (the original plan's hardening phase) with `R7` — **R7 absorbed Phase 6's remaining
+work**, and the "Phase 6" label is effectively retired.
+
+### 7.1 Original build — all BUILT, do not restart
+
+- **Phase 1 — Foundation: COMPLETE.** Laravel 12 at repo root, MySQL `smartcemes_v4`, Breeze (no
+  self-registration), roles + `EnsureRole` middleware, race-safe IDs, six accounts seeded (the
+  Graduate School pair arrived later — the blueprint's §2.4 ships **eight** accounts today).
+- **Phase 2 — Core Data Modules: COMPLETE.** Design system ported to Vite/Tailwind; §6 entities +
+  pivots; `config/smartcemes.php` vocabularies; Livewire CRUD; Sections I–IX wizard; authored official
+  XLSX template (D11) + import flow (D9/D10); `Phase2Seeder`.
+- **Phase 3 — Workflows: COMPLETE.** Proposals (Special Order, auto-create Activity, §8.8 range
+  hard-block), availability (admin-initiated, required decline reason, accept hard-block), secretary
+  validation, rendered-hours lifecycle (auto-draft, adjust-down-only, locked), database notifications +
+  `smartcemes:notify-deadlines` scheduler w/ 7-day dedup; `Phase3Seeder`.
+- **Phase 4 — Dashboards/Reports: COMPLETE.** Three role dashboards, custom calendar, four
+  print reports w/ letterhead. *(Note: the 8.6 KPI content of these was later replaced — see R4 — and
+  the Analytics page itself was REMOVED in v4.20, `revisions.md` §21.)*
+- **Phase 5 — AI: COMPLETE.** Gemini pipeline (see §1.1). *(Later guardrailed — see R6.)*
+- **Phase 6 — Hardening: RETIRED / ABSORBED INTO R7.** The feature tests it listed were written
+  (`Phase3WorkflowTest` covers the approval workflows). Production deploy and the nightly backup script
+  remain **outstanding deployment items** — see §15.
+
+### 7.2 Adviser revision — R1–R6 complete, R7 in progress
+
+Read `revisions.md` §10 for the authoritative tracker; §12–§18 hold the write-ups. Summary:
+
+| Phase | What it did | Status |
+|---|---|---|
+| **P0** | Prototype pass — the whole `docs/prototype/` layer rewritten to the revised model | ✅ §11 |
+| **R1** | `colleges` + broad `programs` level (CRUD, seeders, policies) | ✅ §12 |
+| **R2** | The big rename: `extension_programs` → `extension_projects` (+ 7 FK columns, 2 pivots, college-prefixed codes) | ✅ §13 |
+| **R3a/R3b** | Faculty `college_id` + `status`, `faculty_expertise`, the Faculty Management module (board + directory + profile) | ✅ §14 |
+| **R3c** | Finished the two faculty-profile training blocks (training contribution + performance trend) | ✅ §18 |
+| **R4** | Training-hours model (`trainors × trainees × days`, no `× 8`), `university_targets`, 8.6 KPI removal (D-R7) | ✅ §15 |
+| **R5** | Filters, rankings, dashboards, reports rebuilt on the target model | ✅ §16 |
+| **R6** | AI three-tier guardrail + the `interagency_agencies` catalogue + admin CRUD | ✅ §17 |
+| **R7** | Hardening & docs — blueprint v4.20, this handoff, test sweep, walkthrough | 🔨 **IN PROGRESS** |
+
+### 7.3 What R7 has left
+
+**One item left, non-code: the production deploy** (absorbed from the retired "Phase 6").
+
+Everything else is done: the blueprint (now **v4.20**), this file, the full sweep + `pint` + a
+from-scratch re-seed (**491 / 2894**), the defence walkthrough (§15.2), the nightly backup (§15.1),
+the **`docs/guides/*` refresh** (verified 2026-09-25 by reading them), the college seals
+(`revisions.md` §19.9), the project→college mapping rule (§19.10), the Graduate School + the read-only
+college set (§19.11), and the dashboard pass (§19.12).
+
+**Nothing feature-shaped is outstanding.** Everything a user can click exists and is smoke-verified.
+
+## 8. PROTOTYPE MAP (`docs/prototype/pages/` — 29 pages, the Laravel visual contract)
+
+The prototype is the **review surface**: the frontend is validated there before it is ported. The owner's
+standing directive is that **Laravel output must look like the prototype**. Run the harnesses (§2) after
+any prototype edit.
+
+**The revision pages (new/renamed by P0 — these are the ones a new session is most likely to get wrong):**
+
+| Prototype page | Laravel route | Notes |
+|---|---|---|
+| `colleges.html` | `/colleges` | **The hub** — header reads "Manage Extension Programs"; 4 college cards, click one to swap in its projects. |
+| `programs.html` | `/programs` | The **broad** level (6 CESO thrusts). |
+| `projects.html` | `/projects` | The project list (what used to be called "programs"). |
+| `program-detail.html` | `/projects/{project}` | The project performance hub. Tabs Overview / Activities / Beneficiaries / Budget. |
+| `my-programs.html` | `/my-projects` | Faculty's own projects. |
+| `faculty-management.html` | `/faculty` | The Engagement board. |
+| `faculty-directory.html` | `/faculty/directory` | The roster. |
+| `targets.html` | `/targets` | University pool + project attainment (R4). |
+| `interagency.html` | `/interagency` | Interagency catalogue CRUD (R6). |
+| `audit-logs.html` | `/audit-logs` | The audit trail — moved off the dashboard 2026-09-25 (`revisions.md` §19.12). A plain paginated list. |
+
+**⚠️ There is NO prototype page for the faculty profile.** The prototype renders faculty detail into a JS
+drawer (`#facDrawer` → `#facDrawerBody`) and never shows a per-person page, so `/faculty/{faculty}` has
+**no visual contract** — it is a native build, recorded as a deliberate divergence in `revisions.md`
+§18.4. Do not go looking for `faculty-profile.html`; it does not exist.
+
+The prototype is *not* silent about the surrounding behaviour, though, and that matters: its faculty nav
+carries the **"My Profile" section** with the `My Faculty Profile` item (which `/my-profile` mirrors), and
+its self-edit drawer (`faculty-directory.html?role=faculty`) defines the writable-vs-locked split that
+Laravel failed to implement until 2026-09-27 (`revisions.md` §22.1). Check it before changing the
+self-edit boundary.
+
+**⚠️ The prototype TRAILS Laravel on `/colleges`.** `colleges.html` still renders the old TWO-view hub
+(college → projects) with its "View all programs" link and its "Open projects" CTA. Laravel has been a
+three-view drill-down since 2026-09-27 (`revisions.md` §23), and that divergence is **accepted, not
+pending** — the owner chose Laravel-only. So `_check.cjs:224-307` and `_hubtest.cjs` (42 assertions)
+asserting the hub are asserting the *prototype's* older shape; a green harness run does **not** mean the
+hub matches the app. Reconciling means moving the markup, both harness blocks and `PATTERNS.md` together.
+
+**Unchanged from Phases 1–5:** `login.html` · `dashboard-admin|secretary|faculty.html` ·
+`communities.html` · `proposals.html` (+`proposal-new.html`) · `availability.html` ·
+`rendered-hours.html` · `assessment-form.html` · `assessment-review.html` · `calendar.html` ·
+`reports.html` · `ai-analysis.html` · `program-narratives.html` · `beneficiaries.html` ·
+Redirect stubs: `activities.html`, `budget.html` → `projects.html` (both pointed at `analytics.html`
+until it was deleted in v4.20).
+
+**⚠️ Two prototype-side stale artefacts found during the R7 audit (Laravel is correct in both cases):**
+- **`compliance.html` ("Program Compliance Matrix")** is still present and is still linked from
+  `index.html` and from the secretary dashboard's "Compliance Snapshot" card — but the blueprint's
+  **v4.12 entry records the Compliance Tracker as a *"phantom never-built"* config entry that was
+  deliberately removed**. The page and both links are stale leftovers. Laravel correctly has no
+  `/compliance` route.
+- `_check.cjs` enforces a **collapsed nav** (ONE `Manage Extension Programs` entry, not three) — but the
+  Laravel admin nav currently has three separate items. See §14.
+
+Demo conventions: `?role=` switches the role shell (layout.js NAV); `?program=` deep-links the hub;
+in-page demo data that the seed lacks is hard-coded per page and marked as demo.
 
 ## 9. DESIGN SYSTEM (port to Vite/Tailwind)
 
@@ -943,34 +1379,60 @@ map, attendance state) is hard-coded per-page and marked as demo.
   Prospecting/neutral→gray; Special→gold. Chart palette:
   ['#003599','#F6B800','#2547eb','#93b4fd','#fdd24a'].
 
-## 10. VERIFICATION STATUS (prototype)
+## 10. VERIFICATION STATUS
 
-- 29/29 inline scripts pass `node --check`; `seed-data.js` + `layout.js` re-checked
-  after the 2026-09-14 v4.5 mirror edits (El Reposo/Salvacion → Tacloban City,
-  HANDA goal/venue strings, nav label).
+### 10.1 Laravel (the deliverable)
+
+| Check | Status |
+|---|---|
+| `php artisan test` | **491 passing / 2894 assertions**, 0 failures |
+| `vendor/bin/pint` | Clean on all R1–R7-authored files. Repo-wide it still reports ~16 pre-existing issues, almost all `line_ending` (CRLF) noise plus a few operator-spacing nits in files the revision did not own. |
+| `npm run build` | ✓ 62 modules; CSS ≈ 104.34 kB |
+| `migrate:fresh --seed` | Clean on both SQLite and MariaDB 10.4 |
+| Route smoke (all 3 roles, real MySQL driver) | **No 5xx on any surface**; guest routes redirect (302) |
+| Nav integrity | **Zero phantom entries** — every nav item resolves to a real route (`RouteSurfaceTest`) |
+
+**Automated guards worth knowing about** (they exist because these classes of bug actually happened):
+`RouteSurfaceTest` (every nav item resolves; every nav + unlinked surface renders without a 5xx; the
+import templates download) · `FreshSeedHierarchyTest` (a fresh seed converges on a complete hierarchy) ·
+`ExtensionProjectRenameTest` (the R2 migration carries rows and children across, and `down()` restores
+them) · `R6GuardrailTest` (the AI tier rules) · `FacultyModuleTest` (includes the training-hours
+attribution and cross-view agreement checks).
+
+### 10.2 Prototype (the visual contract)
+
+- All **six** harnesses pass — `_check` · `_smoke` · `_hubtest` (42) · `_facultytest` (124) ·
+  `_dashtest` (41) · `_interagencytest` (44). See §2 for the commands.
 - Zero AI strings on secretary surfaces; AI pages are admin-only.
-- All KPI keys come from the locked 8.6 set; `beneficiaries_reached` purged.
-- Budget entries sum exactly to program utilized (HANDA deliberately over-allocated
-  by ₱2,000 to demo D7).
-- No links to retired standalone pages; nav has Analytics; footers say v4.1.
-- KNOWN DRIFT (accepted 2026-09-14): `communities.html` still shows the card
-  grid; the Laravel page is now a list view w/ partner-schools type filter.
+- **The 8.6 KPI vocabulary is no longer asserted as live** — it was removed from the UI (D-R7). The
+  prototype's `programs.html` still *renders* per-program targets, which **contradicts D-R5**; that page
+  was never updated when `colleges.html` was. Laravel is correct on this point. See §16.
+- Budget entries sum exactly to project utilized (HANDA deliberately over-allocated by ₱2,000 to demo D7).
+- **KNOWN DRIFT (accepted):** `communities.html` still shows the card grid; the Laravel page is a list
+  view with a partner-schools type filter.
 
 ## 11. OPERATING RULES FOR THE NEXT AGENT
 
-1. The blueprint is the contract; when UI and blueprint disagree, blueprint wins —
-   then update the prototype page to match.
-2. Never invent data that contradicts `seed-data.js` or §7 vocabularies.
-3. Every change to vocabularies, models, or workflows must be reflected in BOTH the
-   blueprint (bump revision history) and the prototype.
-4. Security posture: role middleware on every route/Livewire action; policies on all
-   controllers; upload validation (10 MB, MIME+extension); login throttling; Spatie
-   activity log on sensitive actions; DPA — aggregates only to the LLM; Admin-only AI.
-5. Do not add features listed in blueprint §1.2 (out of scope): OCR, extra XLSX
-   imports, partner portal, PDF/Excel export, predictive analytics, dark mode,
-   ERP/HR integration, mobile, multi-role accounts.
-6. After any prototype edit: re-run `node --check` on inline scripts and re-grep for
-   forbidden strings (secretary AI, beneficiaries_reached, retired page links).
+1. **`revisions.md` outranks this file** for anything after Phases 1–5. The blueprint is the design
+   contract, but the revision records the owner's later amendments.
+2. The blueprint is the contract; when UI and blueprint disagree, the blueprint wins — *then* update the
+   prototype page to match.
+3. Never invent data that contradicts `seed-data.js` or §7 vocabularies.
+4. Every change to vocabularies, models, or workflows must be reflected in **both** the blueprint (bump
+   the revision history) and the prototype.
+5. Security posture: role middleware on every route/Livewire action; policies on all controllers; upload
+   validation (10 MB, MIME+extension); login throttling; Spatie activity log on sensitive actions; DPA —
+   aggregates only to the LLM; **Admin-only AI**.
+6. Do not add features listed in blueprint §1.2 (out of scope): OCR, extra XLSX imports, partner portal,
+   PDF/Excel export, predictive analytics, dark mode, ERP/HR integration, mobile, multi-role accounts.
+7. **Never inline training-hours or KPI maths in a view.** Route it through a service
+   (`TrainingHoursService` for training delivery, `FacultyContributionService` for faculty contribution,
+   `RankingService` for rankings).
+8. **After any prototype edit**, re-run the six harnesses in §2 — not just `node --check`.
+9. **After any schema change**, `php artisan migrate:fresh --seed`, then `php artisan migrate:status` to
+   confirm nothing is pending. The local MariaDB does **not** track the repo automatically.
+10. Before claiming "the app works", walk the routes by URL per role — `Livewire::test()` bypasses
+    routing, middleware and the view finder, so a page can 500 while the whole suite is green (§14).
 
 ## 12. ENVIRONMENT NOTES
 
@@ -985,7 +1447,7 @@ map, attendance state) is hard-coded per-page and marked as demo.
 
 ## 13. RUNNING THE APP (dev + demo)
 
-Credentials — all six seeded accounts use password `password`:
+Credentials — all eight seeded accounts use password `password`:
 
 | Role | Email | Name |
 |---|---|---|
@@ -995,6 +1457,8 @@ Credentials — all six seeded accounts use password `password`:
 | Faculty | faculty2@lnu.com | Bianca Oledan |
 | Faculty | faculty3@lnu.com | Nikko Villas |
 | Faculty | faculty4@lnu.com | Kent Naputo |
+| Faculty (Graduate School) | faculty5@lnu.com | Dr. Ramon L. Villamor |
+| Faculty (Graduate School) | faculty6@lnu.com | Dr. Cristina P. Manalo |
 
 Commands:
 - Dev run: `php artisan serve` + `npm run build` (AI generation is SYNCHRONOUS
@@ -1006,19 +1470,36 @@ Commands:
   communities/schools, 6 programs, proposals + demo attachment files, etc.).
   NOTE: fresh-seed regenerates the Phase3Seeder demo stub PDFs; the public
   storage link (`php artisan storage:link`) persists across resets on Windows.
-- Tests: `php artisan test` (222 passing / 0 failures, 1082 assertions as of
-  2026-09-17 session 15; prior counts: 198 total session 14 → 192 session 13 →
-  188 session 12 → 179 session 11 → 175 session 10 → 163 session 9 → 149
-  session 8 → 131 session 7 → 128 session 6 → 126 session 5 → 117 session 4 →
-  107 session 3 → 103 session 2 → 94 session 1). Style: `vendor/bin/pint app tests`.
-  Manual end-to-end walkthrough (program → objectives → activities →
-  attendance → budget with expected results per step): `docs/TEST-SCRIPT.md`.
-  Full presentation demo script (~30 min, role-based acts, seeded-data
-  driven, fallback plans + panel Q&A table): `docs/features.md`.
-  Tests run on sqlite :memory: — never use raw MySQL-only SQL in app code that
+- Tests: `php artisan test` — **491 passing / 2894 assertions, 0 failures** (2026-09-28).
+  Growth across the revision: 232 (baseline) → 276 (R1) → 286 (R2) → 339 (R3a/R3b) → 378 (R4) →
+  403 (R5) → 423 (R6) → 437 (R3c) → 444 (R7 route-surface) → 470 (R7 college seals) → 467
+  (R7 graduate set — it REMOVED 5 college-CRUD tests and added 2, hence the dip) → 472
+  (R7 dashboard pass) → 467 (v4.20 Analytics removal — the 5 tests that covered the page) →
+  468 (the Graduate School seal) → 476 (the faculty self-edit widening) → 484 (the hub's Programs
+  level) → 485 (the hub redesign) → 485 (create/edit moved into the hub — 8 tests re-pointed,
+  2 replaced by 2) → **487 / 2233** (§26 — the hub's budget surfaces consolidated to one, the
+  chart turned into a doughnut, and the annual hours target made settable from the Edit modal;
+  2 new tests, 16 new assertions) → **488 / 2238** (§27 — the university targets page lost its
+  year chart, its D-R5 guardrail card and its Training Hours Formula card, and the Project-targets
+  sort was made to actually work; 1 net new test, 5 new assertions) → **489 / 2244** (§28 — the
+  retired-vocabulary sweep: five stale labels across the prototype and `/projects`, plus a D-R7 leak on
+  the faculty rendered-hours page that the project-scoped guards missed; +1 test, +6 assertions) →
+  **491 / 2894** (§29 — the Secretary's import template widened, and a sweep of every `route()` call
+  in the views against each route's role middleware found two more links a role could see but not
+  reach; +2 tests, +7 assertions).
+  Style: `vendor/bin/pint app tests`.
+  ⚠️ ~~`docs/TEST-SCRIPT.md` and the `docs/guides/*` walkthroughs predate the revision~~ — **both are
+  current as of 2026-09-25.** `TEST-SCRIPT.md` was rewritten and executed; the guides were renamed and
+  rewritten (`01-create-project.md`, `02-targets.md`, plus 7 more). A stale walkthrough claim is now
+  the exception, not the rule — but read before assuming either way (§16 E).
+  Tests run on **sqlite :memory:** — never use raw MySQL-only SQL in app code that
   tests exercise (see §14).
-- Git: repo initialized but NOTHING committed yet — make an initial commit
-  before starting new work (never commit `.env` / `GEMINI_API_KEY`).
+- Git: **one commit exists** — `725a4e5` (2026-09-17, "Initial commit: SmartCEMES capstone",
+  364 files) — and **nothing since**. So every change made through the entire revision (R1–R7, §20–§29)
+  is **uncommitted working-tree state**. Never commit `.env` / `GEMINI_API_KEY`.
+  ⚠️ This line previously read *"repo initialized but NOTHING committed yet"*, which contradicted §15's
+  own *"the last git commit (2026-09-17) predates the whole revision"* — both statements sat in this file
+  at the same time. The commit exists; only the *revision* is uncommitted.
 - `.env`: DB is `smartcemes_v4` (root, no password); `GEMINI_API_KEY` is set by
   the project owner locally (excluded from git — a fresh clone must re-add it);
   `GEMINI_MODEL=gemini-3.6-flash` (live-API verified 2026-09-13; Google
@@ -1046,12 +1527,19 @@ Commands:
   `style="display:none"` on x-show wrappers. Do NOT call `Alpine.start()`
   in app.js or import Alpine separately (dual-instance bugs); Livewire
   starts its own.
+  **⚠️ The `$watch` bridge is ONLY for a modal the user opens by CHANGING a property — a
+  click, a button, an action. It fires on CHANGE, so it can NEVER open a modal whose flag is
+  already `true` at `mount()`.** For a modal that may need to open at mount (a deep link, a
+  pre-filled form, a flag set in `mount()`), render it **server-side with `@if` and an empty
+  `x-data`** — no Alpine visibility gate at all. This exact mistake shipped a create form nobody
+  could see (`revisions.md` §25); it is the third time a watcher bridge has failed this way
+  (the import page, the assessment drawer, the project modal).
 - **Chart.js canvases**: guard re-inits with
   `if (Chart.getChart($refs.c)) Chart.getChart($refs.c).destroy();` before
   `new Chart(...)` — morphs can reuse the canvas and a second init throws
   "Canvas is already in use", aborting Alpine init for the subtree.
-- Eloquent attribute/relation shadowing: `ExtensionProgram` has an `objectives`
-  TEXT column → the ProgramObjective relation is `programObjectives()`;
+- Eloquent attribute/relation shadowing: **`ExtensionProject`** (renamed from `ExtensionProgram` in R2)
+  has an `objectives` TEXT column → the ProgramObjective relation is `programObjectives()`;
   `AssessmentAnalysis` has a `summary` TEXT column → the relation is
   `assessmentSummary()`. Never name relations after existing columns.
 - Livewire 3 full-page components require a SINGLE root element in their view —
@@ -1149,4 +1637,430 @@ Commands:
   and `Programs\Hub::parseImport()`); clean long-path leftovers with PHP's
   `unlink()`, not PowerShell.
 
-END OF HANDOFF — session 15 closed out v4.13 (activity imports: tests + docs + prototype mirror; all green at 222 tests / 0 failures). NEXT: Phase 6 (hardening: production deploy, nightly backup script, security pass, docs). Set GEMINI_API_KEY before any AI demo.
+### 14.1 Gotchas introduced by the R1–R7 revision
+
+These are new since the Phases 1–5 list above. Each one cost real debugging time.
+
+- **⚠️ A passing suite does NOT mean the app runs.** `Livewire::test(Component::class)` constructs the
+  component **directly** — it never resolves a route, the middleware stack, or the Blade view finder. So
+  component tests can be 100% green while a page 500s on load. This actually happened: `GET /my-projects`
+  returned **500** (`View [livewire.projects.my] not found.` — an R2 rename leftover) and survived a
+  437-test suite, because **nothing tested that page at all** and the tests that existed all used
+  `Livewire::test()`. **Before claiming "it works", walk the routes by URL per role.**
+  `tests/Feature/RouteSurfaceTest.php` now does this permanently.
+- **A nav entry pointing at a missing route is invisible.** The sidebar *silently hides* items whose
+  route does not exist. That is how Faculty Management stayed invisible for months and how a broken entry
+  can ship unnoticed. `RouteSurfaceTest::test_every_nav_item_points_at_a_real_route` now asserts it.
+- **`$collection->get($id)` cannot fail safely.** If a roll-up is keyed sequentially rather than by the
+  model id you are looking up, `get(1)`/`get(2)` all *resolve* — to the **wrong rows** — because ids start
+  at 1 and array offsets at 0. The symptom is one person's page showing another's figures, not an
+  exception. `FacultyContributionService::assertTrainingKeyedByFacultyId()` guards it.
+  **A one-element collection hides this entirely — test attribution with a 2+ member batch.**
+- **A service's return type and its consumer's parameter type are declared independently.** Probed the
+  real path or you will miss it: `trendForActivities(array $activities)` threw a `TypeError` on every
+  page load because the consumer hands over a `Collection`, while every unit test that hand-built an
+  array passed. Hand-built fixtures cannot catch a contract mismatch — probe the seeded DB.
+- **`php artisan migrate` on a populated DB silently leaves the hierarchy orphaned.** The R2 backfill
+  needs `colleges`/`programs` **rows** to exist, but `migrate` only creates those tables **empty**, so
+  projects get NULL links; the tightening step then sees the orphans, stays silent and leaves the columns
+  nullable. And `migrate` + `db:seed` also fails, because `Phase2Seeder` uses an unconditional
+  `ExtensionProject::create()` that collides on existing codes. **`migrate:fresh --seed` is the only
+  clean path.** Rehearse destructive fixes on a scratch DB first —
+  `DB_DATABASE=scratch php artisan migrate:fresh --seed` reuses `.env` credentials safely.
+- **The local MariaDB does not auto-sync with the repo.** A "table doesn't exist" error usually means
+  pending migrations, not a connection problem. `php artisan migrate:status` is the first diagnostic.
+- **`YEAR()` is MySQL-only.** Compute years in PHP — the suite runs on SQLite.
+- **PHP `+` on arrays keeps the LEFT operand.** `$defaults + $overrides` silently discards every
+  override. Use `array_merge()`. This made a scheduler test pass for the wrong reason.
+- **The `Faculty` model maps to the `faculties` table** (plural). A probe joined `faculty` and failed.
+- **A test that passes for the wrong reason is worse than no test.** Two R3c assertions encoded
+  rationales that were simply untrue (`substr($iso, 0, 7)` does *not* yield `'2026-03-15T00'`; the
+  `'undated'` bucket does *not* need reordering after `ksort` — `'u'` sorts above digits). Verify a test's
+  **rationale**, not just its colour.
+- **When a probe's output looks alarming, verify the join before forming a hypothesis.** A
+  differently-ordered collection once made correct wiring look like misattribution.
+- **Prototype harnesses need a `marker`.** `_shim.cjs`'s `boot(page, { marker })` finds the page's inline
+  script by a substring; the default (`renderEngagement`) only matches some pages. It returns rendered
+  **markup strings** via `innerHTML`, not a queryable DOM — inspect the string.
+
+### 14.2 Gotchas found by the walkthrough re-run (2026-09-24)
+
+- **Unqualified columns are ambiguous on a pivot join.** `$faculty->activities()` is a `belongsToMany`
+  over `activities` + `activity_faculty`, and **the pivot has its own `id`**. So
+  `->where('id', '!=', $x)` is ambiguous and throws on every driver — qualify it (`activities.id`).
+  The same shape is fine on a `hasMany` (`$project->activities()` joins nothing).
+- **`sprintf` with more placeholders than arguments raises `ArgumentCountError`, not a warning.** A
+  guard whose *message* is malformed fails **instead of guarding**. Count the `%s`.
+- **A guard with no test is not a guard.** The 8.8 conflict block was dead for two independent reasons
+  and the suite never noticed, because every existing test used faculty with **no prior activities** —
+  so the guard's query returned nothing and its message was never built. **Test the positive branch of
+  a guard, not just the absence of a crash.**
+- **`activities.participants` is a trainee FALLBACK (R-Q1), not the reach.** The project's **Trainees**
+  tile is a distinct beneficiary count from attendance, so it is 0 until attendance exists. Imported
+  attendance **replaces** the fallback, so computed hours can *drop* when attendance lands for fewer
+  people than `participants` claimed.
+- **The seeded demo data books faculty.** Nikko Villas is committed 2026-09-08 → 2026-10-16, so a
+  September activity assigned to him is refused by the (correct) hard block. Check the seeded
+  assignments before picking walkthrough dates.
+- **`php artisan test` can be killed (SIGTERM) in the foreground here while `vendor/bin/phpunit` runs
+  fine.** Use `vendor/bin/phpunit` for single-class runs in this environment.
+- **Never batch two `Edit` calls to the SAME file in one message.** They race — the second write
+  clobbers the first, so a config value you "definitely changed" is still old and tests fail on routes
+  that plainly exist.
+- **`nextCode()` is not a peek — it consumes a sequence number.** Calling it to "check what code you'd
+  get" mutates the `sequences` table. Restore it (or re-seed) afterwards.
+
+### 14.3 Gotchas found on 2026-09-25 (college set, dashboard, prototype)
+
+- **A harness that greps a page for a phrase matches the page's PROSE.** `_check.cjs` asserts the
+  dashboard does **not** contain "Recent Activity" — and my own explanatory comment ("Recent Activity
+  MOVED to its own page") satisfied it, so the harness reported the removed panel as still present.
+  Write comments about a removed thing **without naming it**. The same happened with a glyph inside a
+  code comment, which a sweep script then "helpfully" replaced.
+- **A missing icon name fails SILENTLY.** `x-sc.icon` resolves `$paths[$name] ?? $paths['doc']`, so a
+  typo renders a **document**; the prototype's `[[name]]` tokens render literally. Confirm a name
+  exists before using it — `alert` had to be ADDED for the warning glyph.
+- **`actingAs()` persists for the REST of the test.** A "guest" request after `actingAs($faculty)` is
+  still authenticated, so it returns **403** (from `EnsureRole`) instead of the **302** a real guest
+  gets. Assert the guest case FIRST. This made a test pass for the wrong reason — only `curl` against
+  the running app exposed it.
+- **A NULL `no_of_days` already means 1.0 day** (`TrainingHoursService`: `$row->no_of_days !== null ?
+  (float) $row->no_of_days : 1.0`). Back-filling the R4 columns therefore changes almost nothing — it
+  only flips `measurable` from false to true. **Do not "fix" thin training hours by filling them**;
+  the real driver is beneficiary enrollment (§16 G).
+- **`storage/framework/views/*.php` is in the Tailwind content globs**, so `php artisan view:clear`
+  moves the built CSS size. A sudden ~10 kB drop is not lost styling — check the classes, not the byte
+  count. And a regex looking for `.lg:grid-cols-3` must escape the COLON (`\.lg\\:grid-cols-3`).
+- **A `mysqld` started as a background task may exit on its own OR linger as an orphan — it varies.**
+  And **a `php artisan serve` left running while MariaDB is down does not error: it WEDGES.** It keeps
+  holding the port but answers nothing (`curl` → HTTP 000), because every request needs the DB for its
+  session. Always check 3306 alongside 8000.
+- **These docs contain mojibake ON PURPOSE.** `revisions.md:726` and `AI_HANDOFF.md:181`/`:1276`
+  document the sequences (`— → â€"`, `₱ → â‚±`, `· → Â·`), so a "does this file contain `Â·`?" check
+  false-positives on them. Also `·` (U+00B7) **is** the bytes `0xC2 0xB7` — the real test is the
+  DOUBLE-encoded form `0xC3 0x82 0xC2 0xB7`.
+
+### 14.4 Gotchas found on 2026-09-26 (the budget-basis correction)
+
+- **A "target" label can outlive the concept by a whole release.** The dashboard read
+  `annual_target_budget ?? allocated_budget` — a *silent fallback* — so the tile said "Annual Target" while
+  printing the allocation for 6 of 8 projects, and nothing on screen could tell you. A fallback that makes
+  two different concepts render identically is exactly how a wrong label survives. Prefer `?? null` plus a
+  visible "not set" state over `?? <something else>`.
+- **Check the DATA before believing a label.** The fix looked risky until a one-line query showed only
+  **2 of 8** projects had a target at all, and both equalled their allocation — i.e. zero figures would move.
+- **A retained-but-unread column still attracts WRITERS.** `R4TargetsSeeder` and the project create/edit
+  form were both still writing `annual_target_budget`. Leaving them would have kept an inert column looking
+  alive. When you retire a concept (D-R7 did it to the 8.6 KPIs), retire its writers too — not just its
+  readers.
+- **The prototype's demo data can contradict the Laravel data.** The prototype modelled `budget` and
+  `budgetTarget` as *different* numbers (48,000 vs 52,000) while Laravel's target was NULL — and HANDA was
+  flagged `overAllocated: true` against a target it did not actually exceed. Collapsing the two fields
+  fixed a demo bug, not just a label.
+- **Renaming a payload key is a contract change for the AI.** `ProgramAggregates` feeds PromptV2, whose
+  text stated `attainment_pct` is "against the project's ANNUAL TARGET". Renaming the key without touching
+  the prompt would have made the model narrate an allocation as a target. **Update the LIVE prompt; leave
+  the frozen one (PromptV1) alone** — the stored `raw_extracted_data` snapshot is what keeps old analyses
+  reproducible, not the current payload shape.
+- **`_check.cjs` guards can be written against a token that never existed.** Its colleges-hub guard tested
+  for `const bp = c.budgetTarget` while the code actually used `college.budgetTarget` — so it passed
+  vacuously. It now asserts the *property* (a computed `bp` must be rendered), not a literal string.
+
+## 15. OUTSTANDING WORK (complete list as of 2026-09-26)
+
+**Nothing feature-shaped is outstanding.** Everything a user can click exists and is smoke-verified.
+**One item remains, non-code: the production deploy (#5).**
+
+| # | Item | Type | Notes |
+|---|---|---|---|
+| 1 | ~~Blueprint revision entry + stale sections~~ | Docs | ✅ **DONE** — the blueprint is now **v4.20**. The v4.16 stale-section rewrite is §15.3; the v4.18 dashboard pass is `revisions.md` §19.12. |
+| 2 | ~~`docs/guides/*` refresh~~ | Docs | ✅ **DONE — verified 2026-09-25 by reading them.** The guides were renamed and rewritten (`01-create-project.md`, `02-targets.md`, plus 7 more) and the staleness banners are gone. **`docs/TEST-SCRIPT.md` is also current** (rewritten + executed, §15.2). |
+| 3 | ~~Defence walkthrough re-run~~ | Verification | ✅ **DONE (2026-09-24)** — script rewritten for the revised model, executed, and pinned by `DefenceWalkthroughTest`. Found two real bugs in the 8.8 guard. See §15.2. |
+| 4 | ~~Nightly DB backup script~~ | Deployment | ✅ **DONE (2026-09-24)** — `smartcemes:backup-database`, scheduled 02:00 daily, 14-dump retention. See below. |
+| 5 | Production deploy | Deployment | Absorbed from the retired "Phase 6". ← **the only remaining item of any kind**. Full step-by-step checklist: **§15.4**. |
+| 6 | ~~Prototype-fidelity gaps on `/programs` and `/colleges`; nav-collapse rule~~ | UI | ✅ **DONE (2026-09-24)** — `/colleges` became the two-view hub, `/programs` restored to the prototype (D-R5-legal), and the admin nav collapsed to one guarded hub entry. **Superseded: since 2026-09-27/28 the hub is a THREE-view drill-down (College → Program → Projects) and owns all create/edit — `revisions.md` §§23–§25.** |
+| 7 | ~~College seals · project→college mapping · Graduate School · dashboard pass~~ | UI + data | ✅ **DONE (2026-09-25)** — `revisions.md` §19.9 (the seals), §19.10 (the mapping rule), §19.11 (GRAD + the read-only college set), §19.12 (Audit Logs, budget bullet rows, leader bars, no emoji — in Laravel **and** the prototype). |
+
+### 15.1 The nightly backup (item 4 — completed)
+
+`php artisan smartcemes:backup-database`, registered in `routes/console.php` at **02:00 daily**,
+retaining the last 14 dumps.
+
+- **Driver-aware.** MySQL/MariaDB via `mysqldump` with `--single-transaction --skip-lock-tables
+  --quick --routines`; SQLite via `VACUUM INTO` (atomic — a plain file copy of a live database can
+  tear). A `:memory:` connection warns and exits 0, so a test suite never fails a scheduled run.
+- **The password goes through `MYSQL_PWD`, never argv** (argv is world-readable in the process list).
+  Asserted by `DatabaseBackupTest`.
+- **A partial dump can never be mistaken for a good one** — output is staged at `.tmp` and renamed
+  into place only after a non-empty check; any failure exits FAILURE and logs.
+- **`DB_DUMP_BINARY` is configurable and usually needs to be.** `mysqldump` is very often outside the
+  PATH on Windows (XAMPP/Laragon/WAMP) and on shared hosts. On this machine it lives at
+  `C:/xampp/mysql/bin/mysqldump.exe`. See `.env.example` for the backup block.
+- **Verified end to end on 2026-09-24**: a 250 KB dump of `smartcemes_v4` (37 tables), restored into a
+  scratch database with row counts identical to the live DB (3 colleges / 6 programs / 7 projects /
+  6 users). The scratch DB was dropped afterwards.
+
+**Production still needs:** the scheduler running (one cron entry: `* * * * * php /path/artisan
+schedule:run`), and `DB_DUMP_BINARY` set if `mysqldump` is not on the PATH.
+
+### 15.2 The defence walkthrough (item 3 — completed)
+
+`docs/TEST-SCRIPT.md` was rewritten for the revised model (it had described the pre-revision hierarchy
+since 2026-09-15 and taught the removed 8.6 objectives) and then **executed**.
+`tests/Feature/DefenceWalkthroughTest.php` drives steps 2, 3, 6, 7 and 8 through the real Livewire
+components and asserts **every figure the script prints** — so a model change that invalidates a
+number in the document fails a test rather than embarrassing someone mid-demo.
+
+**It found two real bugs, both in the 8.8 faculty-conflict hard-block** — neither reachable from the
+existing suite, because every existing test used faculty with **no prior activities**, so the guard's
+query never returned a row and its message was never built:
+
+1. `Hub::findScheduleConflict()` filtered `->where('id', '!=', …)` on the `$faculty->activities()`
+   relation, which joins `activities` to `activity_faculty` — **the pivot has its own `id`**, so the
+   column was ambiguous and the query threw on every driver. Assigning faculty to an activity
+   **crashed instead of saving**.
+2. The refusal message has **four `%s` placeholders and three arguments**, so the guard raised
+   `ArgumentCountError` **instead of refusing**. The hard-block did not work even when a conflict was
+   detected.
+
+Both fixed and pinned; the sprintf fix was **mutation-tested** (reverting it reproduces the failure).
+Also fixed: the `/projects` create button, list header and submit button still said **"New Program"**.
+
+**Three traps the re-run exposed, now written into the script:**
+- **Seeded bookings collide with naive dates.** Nikko Villas is committed to *Feeding Cycle 2* from
+  2026-09-08 → 2026-10-16; a September activity assigned to him is refused. The walkthrough's dates
+  moved to October, and step 12 deliberately uses the September window to *demonstrate* the block.
+- **`activities.participants` is a trainee FALLBACK, not the reach.** The project's **Trainees** tile is
+  a distinct beneficiary count from attendance, so it reads 0 until attendance is imported.
+- **Imported attendance REPLACES the fallback**, so the computed hours can *drop* when attendance lands
+  for fewer people than `participants` claimed. The script keeps `participants` equal to the number of
+  beneficiaries it registers so the hours stay stable across the import.
+
+> **Environment note:** in this environment `php artisan test` was killed (SIGTERM) in the foreground
+> while `vendor/bin/phpunit` ran fine — use the latter for single-class runs here.
+
+### 15.3 The blueprint stale-section rewrite (item 1 — completed)
+
+`SYSTEM_BLUEPRINT_V4.txt` moves **v4.15 → v4.16**. `revisions.md` §8 had listed the remaining stale
+sections; the cheap fixes landed in the v4.15 pass and the **full section rewrite** — the last
+substantial item — is now done. Roughly **90 claims** described the pre-revision system, and the worst
+were not cosmetic: §2 had the Director "defining and managing program objectives via the program hub's
+objective manager", §5.10 defined M&E as "all KPIs computed strictly per 8.6", §12 described a KPI
+scorecard and a Program Results Framework report, and §15 required that "all dashboard KPIs match the
+8.6 metric dictionary exactly".
+
+**Rewritten:** §2 (role workflows) · §3 (objectives) · §5.1/5.2/5.4/5.5/5.10/5.11/5.13/5.15 · §6.2,
+§6.4c, §6.15, §6.16 · §8.1/8.3/8.5/8.6 · §12 · §15 · §16.
+**Added:** **§14 D14–D20** — the revision's decisions as first-class design decisions (four-level
+hierarchy · the training-hours formula · the target model · the 8.6 retirement · the AI three-tier
+guardrail · contribution-based faculty performance · the collapsed navigation).
+**Deliberately NOT changed:** the **v4.1–v4.15 revision entries** are historical records; rewriting
+them would falsify what was decided when. A v4.16 banner says so explicitly.
+
+**Two more naming leftovers found and fixed:** the Analytics tab still read **"Program Performance"**
+(now "Project Performance", in **both** Laravel and the prototype — the prototype carried the same
+stale label; harnesses re-run green), and the report route `reports.results-framework` keeps its name
+deliberately (bookmarks) but §12.2 now says so.
+
+**Integrity:** 1 686 → 1 870 lines, no BOM, **zero** mojibake sequences. Every remaining
+`objective`/`KPI`/`results framework` hit was verified to be either a deliberate "retired" statement, a
+historical revision entry, or a retained-model field definition.
+
+### 15.4 The production deploy (item 5 — the ONLY outstanding item)
+
+Audited 2026-09-26. Everything the app needs is in the repo; what is missing is the environment. The
+checklist below is the whole deploy. **None of it has been run against a real server** — it is unexecuted
+until the target host is chosen.
+
+**What the repo already provides**
+- `composer setup` — install → copy `.env` → `key:generate` → `migrate --force` → `npm install` →
+  `npm run build`. It does **not** run `storage:link` or `db:seed`; add both.
+- `php artisan smartcemes:backup-database` (02:00) and `smartcemes:notify-deadlines` (07:00), both
+  registered in `routes/console.php` — confirmed by `php artisan schedule:list`.
+- **No queue worker is required.** AI generation is synchronous (v4.4). Only the two AI jobs implement
+  `ShouldQueue`, and both are `dispatchSync`ed; add a worker only if that is ever flipped back to async.
+- No `dd()` / `dump()` / `var_dump()` left in `app/`, `resources/views/` or `routes/`.
+
+**Steps**
+1. **PHP + extensions** — PHP 8.2+, with `pdo_mysql`, `zip` and `gd` (PhpSpreadsheet), `mbstring`, `xml`.
+2. **Database** — create the schema, then `php artisan migrate --force`. **Do NOT run a bare `migrate` on a
+   populated DB** (§14.1: the R2 backfill silently orphans the hierarchy). A fresh box is fine.
+3. **`php artisan key:generate`** — a clone without `APP_KEY` cannot decrypt sessions.
+4. **Production `.env`** — `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` = the real URL,
+   `LOG_LEVEL=warning`, plus the `DB_*` block. **`APP_DEBUG=true` in production leaks stack traces and
+   environment values on every error page.** `.env.example` now documents each of these inline.
+5. **`php artisan storage:link`** — uploads live on the **public** disk and are served from `/storage`.
+   Without the link, every proposal attachment, special order and import source file 404s.
+6. **`GEMINI_API_KEY`** — set it, or every AI surface shows its first-class "unavailable" state (D12: there
+   is no mock mode). Verify the quota before any demo.
+7. **Front-end assets** — `/public/build` is **gitignored**, so a fresh clone has NO compiled CSS/JS.
+   `npm ci && npm run build` must run on the server (or the build must be shipped with the release).
+8. **Scheduler** — one cron entry: `* * * * * cd /path/to/app && php artisan schedule:run`. Without it
+   neither the nightly backup nor the deadline notifications ever fire.
+9. **`DB_DUMP_BINARY`** — set it when `mysqldump` is not on the PATH (very common on XAMPP/Laragon/WAMP and
+   on shared hosts). Then run `php artisan smartcemes:backup-database` once by hand and confirm a
+   non-empty dump lands in `storage/app/backups`.
+10. **Caches** — `php artisan config:cache && php artisan route:cache && php artisan view:cache`. Re-run
+    `config:cache` after ANY `.env` change, or the old values keep being served.
+11. **Walk the routes by URL per role** (§11 rule 10) — a green suite is NOT a running app. Confirm no 5xx on
+    `/dashboard`, `/colleges`, `/programs`, `/projects`, `/projects/{id}`, `/targets`,
+    `/reports/*`, `/audit-logs` as admin, then the role surfaces as secretary and faculty.
+
+> **Before any PUBLIC deployment:** all eight seeded accounts (§13) use the password `password`. Change or
+> disable them, or the Director account is wide open.
+
+**Still needed from the owner:** the host (cPanel / Forge / VPS / other), whether the DB is local or managed,
+the domain (for `APP_URL` and HTTPS), and whether demo data should be seeded in production.
+
+## 16. KNOWN GAPS & INCONSISTENCIES (flagged, not silently resolved)
+
+A new session should know these are *known* rather than rediscover them.
+
+**A. Prototype pages that contradict a locked decision (Laravel is correct — do NOT "fix" Laravel):**
+- **`programs.html` renders per-program training-hours targets and attainment %** ("of 2,640 annual
+  target · 37%", per-card "149%"). This contradicts **D-R5** (targets at University + Project level
+  only). `colleges.html` *was* updated for D-R5 and carries an explicit comment; `programs.html` never
+  was. Note the nuance: the prototype's **project count and rendered hours** are legitimate *derived
+  roll-ups* of child projects, which D-R5 does **not** forbid — only the targets are forbidden.
+
+**B. Prototype-side stale leftovers:**
+- **`compliance.html`** and its two inbound links (`index.html`, `dashboard-secretary.html`) are stale —
+  the blueprint's v4.12 entry records the Compliance Tracker as a *"phantom never-built"* entry that was
+  deliberately removed.
+
+**C. Laravel `/programs` drift from the prototype — ✅ RESOLVED (2026-09-24):**
+- Summary tiles, the full toolbar (search / pillar chips / college select / sort / grid↔list, all
+  `#[Url]`), the 7-column list view, and the `← Colleges` / `View all projects →` header buttons are
+  all restored.
+- The card is now the prototype's: pillar accent bar, mono code badge, pillar chip, college pills,
+  3-stat row, status badge and a `View projects →` drill-down CTA.
+- **One deliberate correction:** the prototype's per-program training-hours target and attainment are
+  NOT restored — they contradict D-R5. What is shown is the *derived* roll-up (project count, hours
+  delivered, reach, budget consumed, college membership derived from the projects).
+  `tests/Feature/ExtensionHubTest.php` pins both halves of that rule.
+- The Laravel **Colleges** page no longer shares the invented gradient card either — it uses the
+  prototype's `.college-card`. *(It was the two-view hub when this was written; it has been a
+  **three-view** drill-down since 2026-09-27 and owns create/edit since 2026-09-28 —
+  `revisions.md` §§23–§25. The prototype still renders the two-view shape; see §8.)*
+
+**D. Nav structure — ✅ RESOLVED (2026-09-24):**
+- The admin sidebar now carries exactly **ONE** hierarchy entry — `Manage Extension Programs`
+  (`colleges.index`, `subs` = `colleges.index` / `programs.index` / `projects.index` / `projects.show`).
+  `Colleges`, `Extension Programs` and `Extension Projects` are no longer sidebar items, so the
+  prototype's own rule (`_check.cjs:196-210`) is satisfied.
+- **And it is now asserted on the Laravel side** (it never was — that is why it went unnoticed):
+  `CollegeProgramCrudTest` pins the collapse, the `subs`, the rendered sidebar and the topbar label.
+- `subs` are **exact route names, not wildcards**, so `RouteSurfaceTest` can validate them and still
+  walk `/programs` and `/projects` for a 5xx — without that the collapse would have silently *reduced*
+  route coverage.
+- Nav resolution is shared (`App\Support\Navigation`) by the sidebar and the topbar, so the highlight
+  and the page title cannot drift.
+
+**E. Documentation debt:**
+- ~~`README.md` is still the default Laravel boilerplate~~ — ✅ replaced 2026-09-24.
+- ~~`docs/TEST-SCRIPT.md`~~ — ✅ **rewritten for the revised model and executed 2026-09-24** (§15.2).
+  It is now the current walkthrough; the 2026-09-15 version described the pre-revision hierarchy.
+- ~~`SYSTEM_BLUEPRINT_V4.txt` stale sections~~ — ✅ **rewritten 2026-09-24 (v4.16, §15.3)**. The
+  v4.1–v4.15 revision entries are historical records and are left as written on purpose.
+- ~~`docs/guides/*`~~ — ✅ **DONE, verified 2026-09-25 by reading them.** The guides were renamed and
+  rewritten for the revision: `01-create-program.md` → **`01-create-project.md`**,
+  `02-objectives.md` → **`02-targets.md`** (which says outright that it *replaces* the old
+  objectives/results-framework guide), plus 7 more modified and a rewritten `README.md`. No banners,
+  no `ExtensionProgram` references. ⚠️ **The previous revision of this file claimed they were "still
+  bannered" — that was asserted, not checked.**
+- ⚠️ **That 2026-09-25 verification has since EXPIRED.** `docs/adminguide.md`, `docs/features.md` and
+  `docs/guides/01-create-project.md` were current as of the revision — but **§21, §23, §24 and §25 landed
+  on 2026-09-27/28 and were never propagated to them.** Found by grepping the doc set for the removed page
+  and the removed flow, *not* by reading: all three read perfectly plausibly. **Fixed 2026-09-28:**
+  - `adminguide.md` §9 was a six-tab walkthrough of the **deleted Analytics page** — as was its nav row
+    and checklist step 14. The section is now a tombstone that says so; the number is kept so §10–§16
+    keep theirs. Step 14 now verifies the hub's create/edit modals instead.
+  - `features.md` §3.8 demoed the same deleted page — now a "skip this step" tombstone, same numbering
+    trick. Its nav table lost the Analytics entry too.
+  - `01-create-project.md` — the *create-project* guide — taught a **dead create path**
+    (`View all programs → View all projects → New Project`), told the reader to go to `/projects` as the
+    "create path" (read-only since §25), and listed a **`Target budget (₱)` form field that no longer
+    exists** (retired by v4.19). All three corrected against `colleges/index.blade.php`, not from memory.
+  - `docs/prototype/PATTERNS.md` (×2), `assets/css/smartcemes.css` and `pages/colleges.html` each said
+    **"three college cards"** where the page renders four and `_hubtest.cjs:157` asserts four. Corrected.
+  - All six harnesses re-run green after the prototype-touching edits (§11 rule 8).
+  **Still outstanding, NOT fixed** (each needs a decision, not a grep): `revisions.md:3` carries a
+  `Status (2026-09-24)` date above a growth chain running to 2026-09-28, and its §10 R7 row still scopes
+  the phase to "blueprint v4.18" while the blueprint is v4.21. **Read the guides before trusting them** —
+  the guides directory has now proved this file can *under*-report staleness as easily as over-report it.
+
+  **Two items from this list are now CLOSED (2026-09-28).** `docs/prototype/pages/reports.html`'s retired
+  "8.6 KPI dictionary" footer was removed with the rest of the retired-vocabulary sweep (§28). And
+  `docs/prototype-backup-preR/` — a 1.4 MB, 24-page pre-revision copy of the prototype sitting *inside*
+  `docs/`, carrying its own `analytics.html` for a page deleted in v4.20 — has been moved out of the docs
+  tree. ⚠️ It was **untracked by git**, so a plain delete would have been unrecoverable; it was therefore
+  ARCHIVED to `.workbuddy-ai/backups/2026-09-28-prototype-backup-preR/` (the same convention the Analytics
+  removal used — §21), not hard-deleted.
+
+**F. Carried deliberate divergences (documented, not bugs):** the `targets.html` native rework
+(`revisions.md` §16.10), the faculty profile page having no prototype at all (§18.4), and the
+**college seals** — Laravel renders the official seals on `/colleges` (all four colleges, since the
+Graduate School's landed 2026-09-27 — §19.9.5), while the prototype still
+carries the `Logo` placeholder (§19.9; its own harnesses still *require* the placeholder, so do not
+"fix" the prototype without updating `_check.cjs:296` and `_hubtest.cjs:173–181` together).
+
+**G. The demo ranking is lopsided BY DECISION (2026-09-25) — do NOT "fix" it without asking:**
+- **Five projects have 2 beneficiaries each** (LITRAWIYA, HANDA, KABUHIAN, e-LITERACY, SENIOR CARE)
+  and **BATANG MATINIK has 0 beneficiaries and no activities at all**, so `Performance Leaders` is
+  dominated by BUSOG (134.5 h against 4.0, 3.0, 2.0). Any magnitude chart makes this visible.
+- The root cause is **beneficiary enrollment**, NOT the R4 training-hours columns: a NULL
+  `no_of_days` already counts as **1.0 day**, so back-filling them changes almost nothing (§14.3).
+- Fixing it properly means enrolling cohorts and seeding attendance for five projects — the PANDAY
+  job times five — and it would move pinned figures in `DefenceWalkthroughTest`, `FacultyModuleTest`
+  and the prototype's dashboard data. **The owner chose to skip it** (`revisions.md` §19.12.1).
+- Separately, the prototype's `universityTargets` rows still read
+  `colleges:'CAS, COE, CME', activeColleges:3`. **Those two fields are read by nothing** — the page's
+  college filter is built from `D.colleges` — so it is inert dead data, not a visible staleness. Left
+  alone rather than rewriting a year-keyed approved record.
+
+---
+
+END OF HANDOFF — updated 2026-09-28 for the post-revision architecture (**491 tests / 2894 assertions, 0 failures** · blueprint **v4.20** · prototype **29 pages**).
+**v4.19 (2026-09-26):** budget has NO annual target — the ALLOCATION is the basis (§3.0, §14.4, `revisions.md` §20).
+**v4.20 (2026-09-27):** the Admin Analytics page is REMOVED — `/analytics`, its six partials, nav entry, 5 tests and prototype page are deleted; the aggregate pending list and the community-reach chart went with it (§1.0, §3.0, `revisions.md` §21).
+**2026-09-27:** the Graduate School's seal landed — all four colleges are sealed and `.college-crest` is now a pure fallback (§1.0, `revisions.md` §19.9.5).
+**2026-09-27:** the faculty self-edit was widened to expertise + academic details, and `/my-profile` gave the page the entry point it never had (§1.0, `revisions.md` §22). **The code had contradicted its own contract since R3 — see §22.1 before touching anything here.**
+**2026-09-27:** `/colleges` became a three-view drill-down — College → Program → Projects → Activities, with no cross-college views in the flow (§1.0, `revisions.md` §23). **The prototype now TRAILS Laravel here, so a green `_hubtest.cjs` does not mean the hub matches the app.**
+**2026-09-28:** the hub's college-selected view was **redesigned** — breadcrumb, brand-coloured hero band with a haloed seal, icon-chip KPI tiles, 2-up program grid; view 3 restyled to match (§1.0, `revisions.md` §24). Presentation only; **one design rule was fixed** (the program hours label read `Training hours`, which only a project card may say).
+**2026-09-28:** **create/edit for programs and projects moved into the hub** as modals, fixing three §23 regressions — program CRUD unreachable, New project navigating to a removed-from-flow page, and a create modal that never opened (§1.0, `revisions.md` §25). `/programs` and `/projects` are read-only lists now.
+**2026-09-28:** the project hub's Overview was **consolidated to a single budget surface** — the Budget
+stat tile and the 4-row key/value list were removed, and the chart became a **doughnut** whose centre
+carries the true % of the allocation (its three slices double-count that allocation — the caveat is
+recorded in `hub.blade.php` and was accepted by the owner). **Target training hours is now settable from
+the Edit modal**, which it never was, and all eight seeded projects carry a target — so the six legacy
+ones read 0–0.7 % of target, which is the honest figure rather than a bug (§16 G). `revisions.md` §26.
+**2026-09-28:** the **university targets page** lost three blocks at the owner's request — the
+**Progress Across the Year chart**, the **D-R5 guardrail card** and the **Training Hours Formula card**
+(§27). The **Project-targets sort was inert** (the blade pinned `sortBy('code')` while the select
+offered three keys, for an Alpine comparator that was never written); it is now sorted server-side and
+pinned by a test. ⚠️ A test had been **guarding** the removed copy — it now pins the absence. The D-R5
+disclosure survives on the project hub. `revisions.md` §27.
+**2026-09-28:** a **retired-vocabulary sweep** of the prototype found **five labels that outlived their
+concepts** — budget *attainment* on `/targets`, "Budget vs **target**" on `/projects` (wrong in Laravel
+AND the prototype), and an "8.6 KPI dictionary" footer on the print report. It also found a **D-R7 leak**
+the guards missed: the faculty's rendered-hours page said its hours *"count toward the 8.6 KPI"*, and the
+prototype's copy still carried a hardcoded **per-professor "Target 40 hrs / semester"** bar that P0h had
+removed. D-R7's guards are all project-scoped and that page had **no test at all** — it has one now.
+`revisions.md` §28.
+**2026-09-28:** the **Secretary's beneficiary import template was 403'ing** — the hub showed the
+download link inside a modal gated on `$canManageBeneficiaries` (admin + secretary) while the route
+was `role:admin`. Widened to match its two sibling templates. **A sweep of every `route()` call in
+`resources/views/` against each route's role middleware** (29 role-gated routes, 38 links) then found
+**two more links a role could see but not reach**: the hub's "University pool →" (faculty AND
+secretary) and the faculty profile's Directory breadcrumb (faculty). Both hidden for non-admins and
+pinned by a test. `revisions.md` §29.
+**How to SEE a page change:** `bash .workbuddy-ai/shot.sh <out.png> "<path>"` logs in and screenshots the real page with headless Chrome. Windows has no browser automation, so this is the only way to review a redesign (§24.5).
+**NEXT: finish R7** — the ONLY item left is the **production deploy**. Everything else is done: the nightly DB backup (§15.1 — set `DB_DUMP_BINARY` if
+`mysqldump` is not on the PATH), the defence walkthrough (§15.2), the blueprint stale-section rewrite
+(§15.3), the college seals (§19.9), the project→college mapping correction (§19.10), the Graduate
+School + read-only college set (§19.11), the dashboard pass (§19.12), the Analytics removal (§21), and
+the faculty self-edit widening (§22).
+
+Set `GEMINI_API_KEY` before any AI demo — and read `revisions.md` §19.9–§19.12, §21 and §22 first:
+**the college set, the dashboard, the removed Analytics page and the faculty self-edit are the four
+places where older prose in this file will mislead you.**

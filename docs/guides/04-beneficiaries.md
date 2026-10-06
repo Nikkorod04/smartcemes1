@@ -1,6 +1,6 @@
 # Guide 04 — Beneficiaries: Register, Enroll, Dedup & XLSX Import (with real examples)
 
-**Role: Admin** · Path: program hub → **Beneficiaries** tab
+**Role: Admin** · Path: project hub → **Beneficiaries** tab
 · Prerequisite: guide 01 (SIKAD-DIGITAL exists)
 
 You will register 5 beneficiaries (auto-enrolled), trigger the
@@ -10,7 +10,7 @@ import a spreadsheet.
 ## 1. Register these 5 beneficiaries
 
 On the **Beneficiaries** tab, click **Register new** and fill each row (the
-municipality pre-fills from the program's community — Tacloban City). The
+municipality pre-fills from the project's community — Tacloban City). The
 contact number may stay at its default `09123456789`.
 
 | First name | Last name | Age | Sex | Barangay | Category |
@@ -44,12 +44,12 @@ canceling aborts.
 ## 3. Enroll an existing beneficiary from the registry
 
 1. Click **Enroll existing**; search `Tan` (Roberto G. Tan — a seeded
-   beneficiary from Brgy. San Jose, enrolled in other programs).
+   beneficiary from Brgy. San Jose, enrolled in other projects).
 2. Click **Enroll** on his row.
 
-**Expected:** toast "Beneficiary enrolled"; Roberto appears in the program's
+**Expected:** toast "Beneficiary enrolled"; Roberto appears in the project's
 beneficiary table. The registry is global — one person can be enrolled in
-multiple programs.
+multiple projects.
 
 2. Try enrolling him again.
 
@@ -62,7 +62,7 @@ Click **Unenroll** on any row you don't want (e.g. Roberto, or the duplicate
 Maria).
 
 **Expected:** toast "Beneficiary unenrolled"; the row leaves the table. (He
-stays in the global registry — only the program link is removed.)
+stays in the global registry — only the project link is removed.)
 
 ## 5. Bulk import via XLSX (v4.7 pattern)
 

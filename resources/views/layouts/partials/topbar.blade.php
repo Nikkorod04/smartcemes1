@@ -1,19 +1,9 @@
 @php
 $role = auth()->user()->role;
-$navGroups = config('smartcemes.nav.'.$role);
-$allItems = collect($navGroups)->pluck('items')->flatten(1)
-    ->filter(fn ($i) => Route::has($i['route']))
-    ->values();
-$families = $allItems->map(fn ($i) => str($i['route'])->before('.')->toString())->countBy();
-$pageLabel = 'SmartCEMES';
-foreach ($allItems as $i) {
-    $family = str($i['route'])->before('.')->toString();
-    if (request()->routeIs($i['route']) || url()->current() === route($i['route'])
-        || ($families->get($family) === 1 && request()->routeIs($family.'.*'))) {
-        $pageLabel = $i['label'];
-        break;
-    }
-}
+/* Shared with the sidebar so the highlight and the page title cannot drift.
+   A sub-page of a collapsed hub resolves to the HUB's label, so a project hub
+   still reads "Manage Extension Programs". */
+$pageLabel = \App\Support\Navigation::pageLabel($role);
 $initials = collect(explode(' ', auth()->user()->name))
     ->map(fn ($p) => mb_substr(preg_replace('/^(Dr\.|Prof\.|Mr\.|Ms\.)\s*/u', '', $p), 0, 1))
     ->take(2)

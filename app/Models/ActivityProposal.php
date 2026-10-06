@@ -20,7 +20,7 @@ class ActivityProposal extends Model
 
     protected $fillable = [
         'faculty_id',
-        'extension_program_id',
+        'extension_project_id',
         'community_id',
         'created_activity_id',
         'title',
@@ -69,7 +69,7 @@ class ActivityProposal extends Model
 
     public function program()
     {
-        return $this->belongsTo(ExtensionProgram::class, 'extension_program_id');
+        return $this->belongsTo(ExtensionProject::class, 'extension_project_id');
     }
 
     public function community()
@@ -108,6 +108,24 @@ class ActivityProposal extends Model
      */
     public function violatesProgramRange(): bool
     {
+        /*
+         * The project may have been ARCHIVED, in which case this relation
+         * resolves to null and there is no date range left to violate.
+         *
+         * Guarding here rather than at the call sites is deliberate: this method
+         * is reached unconditionally by BOTH the review drawer (every proposal in
+         * the list) and `Proposals\Index::approve()`. Dereferencing a null
+         * project took the whole `/proposals` page down with a 500 the moment any
+         * project was archived.
+         *
+         * `false` is the honest answer — the 8.8 range rule cannot be evaluated
+         * against a project that is no longer live, and returning `true` would
+         * invent a violation.
+         */
+        if ($this->program === null) {
+            return false;
+        }
+
         return $this->proposed_start_date < $this->program->planned_start_date
             || $this->proposed_end_date > $this->program->planned_end_date;
     }

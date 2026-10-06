@@ -22,3 +22,10 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# --- Session / tooling scratch (never commit) ---
+.workbuddy-ai/
+output/
+~$*
+# --- Stray local database dump ---
+smartcemes_v4
+

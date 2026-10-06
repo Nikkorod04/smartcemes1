@@ -1,59 +1,135 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SmartCEMES
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**AI-powered Community Extension Monitoring & Evaluation System** for
+**Leyte Normal University (LNU)** — Community Extension Services Office (CESO).
 
-## About Laravel
+A capstone project. Laravel 12 · Livewire 3 · Tailwind/Vite · Alpine · Chart.js · MariaDB · Google
+Gemini (flash-class).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Status (2026-09-24)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| | |
+|---|---|
+| **Tests** | **444 passing / 1960 assertions, 0 failures** |
+| Original build (Phases 1–5) | ✅ Complete |
+| Adviser revision (P0, R1–R6) | ✅ Complete |
+| **R7 — hardening & docs** | 🔨 **In progress — documentation and verification only, no features** |
 
-## Learning Laravel
+**The system runs. No feature work is outstanding.** Everything a user can click exists and has been
+smoke-tested by URL across all three roles.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## ⚠️ The hierarchy is four levels — read this before touching code
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+College  →  Program  →  Project  →  Activity
+CAS/COE/CME/GRAD   6 CESO   (was "ExtensionProgram")   (unchanged)
+                   thrusts
+```
 
-## Laravel Sponsors
+A post-defence adviser review restructured this. **"Program" used to mean the entity that is now a
+"Project"** — the rename is the single most common source of confusion.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| Level | Table | Class | Routes |
+|---|---|---|---|
+| College | `colleges` | `College` | `colleges.index` |
+| Program (**broad**, one of 6 CESO thrusts) | `programs` | `Program` | `programs.index` |
+| Project (**narrow**, was "program") | `extension_projects` | `ExtensionProject` | `projects.index` / `projects.show` / `projects.my` |
+| Activity | `activities` | `Activity` | — |
 
-### Premium Partners
+Two other decisions override older documentation:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Training hours = `trainors × trainees × days`. There is NO `× 8`** — `days` already carries duration.
+  `TrainingHoursService` is the single implementation.
+- **Targets live at University + Project level only.** Broad programs and colleges carry none. The
+  university target is a *consumption pool*, not a ratio.
 
-## Contributing
+## Quick start
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer install
+npm install && npm run build
 
-## Code of Conduct
+cp .env.example .env
+php artisan key:generate          # then set GEMINI_API_KEY for any AI feature
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+php artisan migrate:fresh --seed  # 4 colleges, 6 programs, 7 projects, demo data
+php artisan serve
+```
 
-## Security Vulnerabilities
+> **If you hit "table doesn't exist"**, your database is behind the migrations — the local MariaDB does
+> not track the repo automatically. Run `php artisan migrate:status` first; a plain `migrate` on a
+> populated database leaves the hierarchy orphaned, so use `migrate:fresh --seed`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Demo accounts
 
-## License
+All six use password `password`:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Role | Email |
+|---|---|
+| Admin (Director) | `admin@lnu.com` |
+| Secretary | `secretary@lnu.com` |
+| Faculty | `faculty1@lnu.com` … `faculty4@lnu.com` |
+
+Roles are fixed to exactly three. **AI is admin-only** — secretary and faculty have no AI surfaces.
+
+## Verification
+
+```bash
+php artisan test                     # 444 tests / 1960 assertions
+vendor/bin/pint app tests            # style
+
+# the prototype's own harnesses — run after ANY docs/prototype/ edit
+node docs/prototype/_check.cjs
+node docs/prototype/_smoke.cjs
+node docs/prototype/_hubtest.cjs
+node docs/prototype/_facultytest.cjs
+node docs/prototype/_dashtest.cjs
+node docs/prototype/_interagencytest.cjs
+```
+
+> **A passing suite does not mean the app runs.** `Livewire::test()` constructs components directly and
+> bypasses routing, middleware and the view finder — a page can 500 while every test is green. That
+> actually happened (`/my-projects`). `tests/Feature/RouteSurfaceTest.php` now walks every surface by URL
+> per role; keep it that way.
+
+## Documentation — read in this order
+
+| Document | What it is |
+|---|---|
+| **`revisions.md`** | **The post-review record. §10 is the status tracker; §12–§19 are the phase write-ups.** Authoritative for everything after Phases 1–5. |
+| **`AI_HANDOFF.md`** | Session handoff — current state, locked decisions, data model, gotchas. Start with the box at the top. |
+| `SYSTEM_BLUEPRINT_V4.txt` | The design contract (v4.19). `revisions.md` records later owner amendments that supersede it. |
+| `docs/prototype/` | The visual contract. Laravel output should look like these pages. |
+
+### Known documentation debt
+
+- **`docs/adminguide.md` · `docs/secretaryguide.md` · `docs/facultyguide.md` · `docs/features.md`** —
+  refreshed for v4.13 but **not** for the post-defence revision, so they still call a **project** a
+  "program" and still reference the retired results framework / 8.6 KPIs. Treat them as rough structural
+  guides, not as current. (`facultyguide.md` had the worst single case; its retired-feature reference is
+  fixed, but the "program" naming throughout is not.)
+- ~~`docs/TEST-SCRIPT.md` and `docs/guides/*`~~ — **✅ current.** `TEST-SCRIPT.md` was rewritten and executed
+  2026-09-24, and the 11 `docs/guides/*` walkthroughs were renamed and rewritten for the revision
+  (`01-create-project.md`, `02-targets.md`, …) and verified 2026-09-25. **Read before assuming either way** —
+  this file has under-reported progress as often as it has over-reported it.
+
+**Deployment:** there is no deploy script yet. The step-by-step checklist lives in `AI_HANDOFF.md` §15.4.
+
+## Conventions that matter
+
+- **Never inline training-hours or KPI maths in a view** — go through a service
+  (`TrainingHoursService`, `FacultyContributionService`, `RankingService`).
+- **NULL over 0.** No denominator / not measurable → `null`, and the UI says "not yet measurable" rather
+  than printing a fabricated `0`.
+- **Controlled vocabularies live in `config/smartcemes.php`** — never hardcode option lists in views.
+- **Spatie Activity Log is required** on sensitive actions.
+- **The nav is config-driven**, and items whose route does not exist are *silently hidden* — so a broken
+  entry has no visible symptom. `RouteSurfaceTest` asserts every item resolves.
+- **Tests run on SQLite `:memory:`** while dev runs on MariaDB — no MySQL-only SQL in app code paths.
+
+## Out of scope
+
+Per blueprint §1.2: OCR, extra XLSX imports, partner portal, PDF/Excel export, predictive analytics, dark
+mode, ERP/HR integration, mobile, multi-role accounts.

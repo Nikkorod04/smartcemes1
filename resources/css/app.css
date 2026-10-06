@@ -101,6 +101,17 @@
   background: #F6B800; color: #1f2937;
   font-size: 10.5px; font-weight: 700;
 }
+/* Drill-down signal on a collapsed hub entry (prototype `.nav-chevron`).
+   Pushed to the right; when a badge precedes it the badge takes the auto
+   margin instead, so the two sit together. */
+.sc-nav-link .nav-chevron {
+  margin-left: auto;
+  color: #c3c8d2;
+  transition: color .18s ease, transform .18s ease;
+}
+.sc-nav-link .sc-nav-badge + .nav-chevron { margin-left: 4px; }
+.sc-nav-link:hover .nav-chevron { color: #003599; transform: translateX(2px); }
+.sc-nav-link.active .nav-chevron { color: #003599; }
 
 /* ---------- Cards / KPI ---------- */
 .sc-card {
@@ -321,6 +332,543 @@ tr:hover .row-actions { opacity:1; }
 .narrative-health.on-track        { background:#ecfdf5; color:#047857; border:1px solid #d1fae5; }
 .narrative-health.at-risk         { background:#fef2f2; color:#b91c1c; border:1px solid #fee2e2; }
 .narrative-health.needs-attention { background:#fffbeb; color:#b45309; border:1px solid #fef3c7; }
+
+/* ============================================================
+   FACULTY ENGAGEMENT BOARD (revision §5 R3 / D-R9)
+   Ported verbatim from docs/prototype/assets/css/smartcemes.css so the
+   Laravel module and the prototype cannot drift. The prototype is the
+   visual contract for this page.
+   ============================================================ */
+.eng-switch {
+  display:inline-flex; gap:2px; padding:3px;
+  background:#f4f5f7; border:1px solid #eceef1; border-radius:11px;
+}
+.eng-switch button {
+  padding:5px 12px; border-radius:8px; border:0; cursor:pointer;
+  font-size:11.5px; font-weight:700; color:#6b7280;
+  background:transparent; transition:all .15s ease;
+}
+.eng-switch button:hover { color:#003599; }
+.eng-switch button.on {
+  background:#fff; color:#003599;
+  box-shadow:0 1px 3px rgba(16,24,40,.10);
+}
+
+/* -- leaderboard rows -- */
+.eng-row {
+  position:relative; display:block; width:100%; text-align:left;
+  padding:10px 12px; border-radius:13px; cursor:pointer;
+  border:1px solid #eef0f4; background:#fff;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.eng-row:hover {
+  border-color:#c7d7fb; box-shadow:0 4px 14px rgba(0,53,153,.07);
+  transform:translateX(2px);
+}
+.eng-row.on { border-color:#003599; box-shadow:0 0 0 2px rgba(0,53,153,.10); }
+
+/* subtle bar track painted behind each row */
+.eng-row-fill {
+  position:absolute; left:0; top:0; bottom:0;
+  border-radius:13px 0 0 13px; opacity:.07; pointer-events:none;
+  transition:width .45s cubic-bezier(.22,.8,.28,1);
+}
+.eng-row-inner { position:relative; display:flex; align-items:center; gap:11px; }
+
+.eng-rank {
+  width:24px; height:24px; border-radius:8px; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; background:#f4f5f7; color:#9ca3af;
+}
+.eng-rank.top1 { background:linear-gradient(135deg,#d99a06,#F6B800); color:#fff; }
+.eng-rank.top2 { background:#e8ecf4; color:#4b5563; }
+.eng-rank.top3 { background:#f6ece0; color:#955c0c; }
+
+.eng-val {
+  font-size:13px; font-weight:800; color:#111827;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.eng-val small { font-size:10px; font-weight:600; color:#9ca3af; }
+.eng-sub { font-size:10.5px; color:#9ca3af; font-weight:600; }
+
+/* -- college split strip -- */
+.eng-split { display:flex; height:8px; border-radius:999px; overflow:hidden; background:#eef0f4; }
+.eng-split > span { display:block; height:100%; transition:width .5s cubic-bezier(.22,.8,.28,1); }
+.eng-split-legend { display:flex; flex-wrap:wrap; gap:10px; }
+.eng-split-legend > span { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:#6b7280; }
+.eng-dot { width:7px; height:7px; border-radius:3px; flex-shrink:0; }
+
+/* -- chart frame -- */
+.eng-chart-wrap { position:relative; height:290px; }
+
+/* -- insight chips -- */
+.eng-note {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:9px 11px; border-radius:11px;
+  background:#f8fafc; border:1px solid #eef0f4;
+  font-size:11px; color:#4b5563; font-weight:600; line-height:1.45;
+}
+.eng-note b { color:#111827; font-weight:800; }
+
+/* ============================================================
+   DASHBOARD — ported verbatim from docs/prototype/assets/css/smartcemes.css
+   (revision §5 R5). The admin dashboard is built from these primitives so its
+   vertical rhythm and card geometry match the prototype exactly rather than
+   being re-derived with ad-hoc Tailwind. R3 did the same with the eng-* block.
+   ============================================================ */
+
+/* Two steps for "space above a section", one for the header→content gap.
+   Every section on the dashboard uses these, so vertical rhythm is even. */
+.dash-section { margin-top:30px; }
+.dash-section:first-of-type { margin-top:0; }
+
+.dash-sec-head {
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:12px; flex-wrap:wrap; margin-bottom:14px;
+}
+.dash-sec-eyebrow {
+  font-size:10.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.13em; color:#9ca3af;
+}
+.dash-sec-title {
+  font-size:15px; font-weight:800; letter-spacing:-.015em;
+  line-height:1.25; margin-top:4px;
+  display:flex; align-items:center; gap:8px;
+}
+.dash-sec-note { font-size:11.5px; font-weight:500; color:#9ca3af; }
+
+/* Uniform title row inside a panel: same size, same gap, same baseline
+   whether the right-hand side is a link, a badge, or a legend. */
+.dash-head {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; flex-wrap:wrap; margin-bottom:14px;
+}
+.dash-head-title {
+  font-size:13.5px; font-weight:700; letter-spacing:-.01em;
+  color:#1f2937; display:flex; align-items:center; gap:8px;
+}
+.dash-head-link {
+  font-size:12px; font-weight:700; color:#003599; white-space:nowrap;
+  transition:color .18s ease;
+}
+.dash-head-link:hover { color:#2547eb; }
+.dash-note { font-size:11px; font-weight:500; color:#9ca3af; line-height:1.5; }
+
+/* Fixed internal rhythm so the four KPI tiles line up across the row even
+   when a caption wraps to two lines. */
+.dash-kpi { display:flex; flex-direction:column; }
+.dash-kpi-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.dash-kpi-icon {
+  width:40px; height:40px; border-radius:12px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.dash-kpi-value {
+  font-size:27px; font-weight:800; letter-spacing:-.03em; line-height:1;
+  margin-top:16px; font-variant-numeric:tabular-nums;
+}
+.dash-kpi-value.is-money { font-size:24px; }
+.dash-kpi-label {
+  font-size:12.5px; font-weight:600; color:#4b5563; margin-top:8px;
+}
+.dash-kpi-foot { margin-top:auto; padding-top:12px; }
+
+/* Chart / list container */
+.dash-panel {
+  background:#fff; border:1px solid #eef0f4; border-radius:16px;
+  padding:20px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px -20px rgba(16,24,40,.22);
+  transition:box-shadow .22s ease, border-color .22s ease;
+}
+.dash-panel:hover { border-color:#e3e8f0; box-shadow:0 2px 4px rgba(16,24,40,.04), 0 14px 32px -20px rgba(16,24,40,.26); }
+
+/* chart canvas wells get a consistent height + no stray margin */
+.dash-chart { position:relative; width:100%; }
+
+/* Leaderboard row — the Performance Leaders list (R5) */
+.dash-leader {
+  display:flex; align-items:center; gap:12px; padding:10px; border-radius:12px;
+  border:1px solid #f3f4f6; transition:border-color .18s ease, background .18s ease;
+}
+.dash-leader:hover { border-color:#b9cdf7; background:#f7faff; }
+.dash-leader-rank {
+  width:28px; text-align:center; font-size:13px; font-weight:800;
+  color:#9ca3af; flex-shrink:0;
+}
+.dash-leader-stripe { width:6px; height:36px; border-radius:999px; flex-shrink:0; }
+
+@media (max-width:1023px) {
+  .dash-section { margin-top:26px; }
+}
+
+/* ============================================================
+   INTERAGENCY / THREE-TIER GUARDRAIL (revision §5 R6 / §7.1)
+   Ported verbatim from docs/prototype/assets/css/smartcemes.css so the
+   Laravel pages and the prototype cannot drift. The three tiers are a
+   visual contract: Tier 1 green (CESO can deliver), Tier 2 amber (refer
+   out), Tier 3 red (prohibited — audit only, never a CESO recommendation).
+   ============================================================ */
+
+/* CESO three pillars — Social / Economic / Environmental */
+.pillar {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 9px; border-radius:999px;
+  font-size:10.5px; font-weight:700; white-space:nowrap;
+}
+.pillar-Social        { background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe; }
+.pillar-Economic      { background:#ecfdf5; color:#047857; border:1px solid #d1fae5; }
+.pillar-Environmental { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+
+/* Tier badge */
+.tier-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 9px; border-radius:7px;
+  font-size:10px; font-weight:800; letter-spacing:.03em;
+  text-transform:uppercase; white-space:nowrap;
+}
+.tier-1 { background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
+.tier-2 { background:#fff7ed; color:#b45309; border:1px solid #fed7aa; }
+.tier-3 { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+
+/* Left rail that colours a whole card by tier */
+.tier-card { border-left-width:3px !important; }
+.tier-card.tier-1 { border-left-color:#10b981 !important; }
+.tier-card.tier-2 { border-left-color:#f59e0b !important; }
+.tier-card.tier-3 { border-left-color:#ef4444 !important; }
+
+/* "Refer to <agency>" note under a referral card */
+.interagency-note {
+  background:#fff7ed; border:1px solid #fed7aa;
+  border-radius:12px; padding:12px 14px;
+}
+
+/* ============================================================
+   EXTENSION HUB (R7 fidelity pass) — ported from the prototype's
+   docs/prototype/assets/css/smartcemes.css so /colleges and /programs
+   render the same components the visual contract defines.
+   ============================================================ */
+
+/* Section eyebrow used across the hub */
+.hub-eyebrow {
+  font-size:10.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.13em; color:#9ca3af;
+}
+
+/* ---- College card (hub view 1) ----
+   The whole card is the drill-down control, so it is a <button>; nothing
+   interactive is nested inside it. */
+.college-card {
+  position:relative; display:flex; flex-direction:column;
+  background:#fff; border:1px solid #eef0f4; border-radius:20px;
+  overflow:hidden; cursor:pointer; text-align:left; width:100%;
+  box-shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px -18px rgba(16,24,40,.18);
+  transition:transform .22s cubic-bezier(.4,0,.2,1), box-shadow .22s ease, border-color .22s ease;
+}
+.college-card:hover {
+  transform:translateY(-4px);
+  border-color:#dbe3f0;
+  box-shadow:0 2px 4px rgba(16,24,40,.04), 0 20px 40px -16px rgba(10,42,102,.24);
+}
+.college-card:hover .college-card-cta { gap:10px; }
+.college-card:hover .college-card-cta svg { transform:translateX(3px); }
+.college-card:focus-visible { outline:3px solid #F6B800; outline-offset:3px; }
+
+/* Logo / media area — the official college seal on a brand-tinted band */
+.college-media {
+  position:relative; height:116px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+/* soft diagonal sheen so the flat brand fill does not read as a plain block */
+.college-media::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 46%),
+             radial-gradient(120% 100% at 82% 8%, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 60%);
+}
+/* crest and seal sit ABOVE the sheen, so the gradient never washes the mark out */
+.college-media .college-crest,
+.college-media .college-logo { position:relative; z-index:1; }
+.college-logo {
+  width:96px; height:96px; object-fit:contain; display:block; flex-shrink:0;
+}
+.college-crest {
+  width:58px; height:58px; border-radius:18px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:16px; letter-spacing:-.02em; color:#fff;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.32);
+  backdrop-filter:blur(2px);
+}
+.college-card-cta {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:700; color:#003599;
+  transition:gap .2s ease;
+}
+.college-card-cta svg { width:14px; height:14px; transition:transform .2s ease; }
+
+/* ---- Budget bullet row (owner request 2026-09-25) -----------------------
+   Utilization against each project's allocated budget, with a tick at 100%.
+   Replaces the grouped bar chart, whose x-axis could only carry project CODES —
+   there was no room for a title. */
+.bullet-track {
+  position:relative; display:block; height:10px; border-radius:5px;
+  background:#dbe6fe;
+}
+.bullet-fill {
+  position:absolute; left:0; top:0; height:10px; border-radius:5px;
+  background:#F6B800;
+}
+.bullet-fill.is-over { background:#ef4444; }
+/* the 100% reference — always at the end of the track, since the track IS the target */
+.bullet-tick {
+  position:absolute; right:0; top:-2px; width:1px; height:14px;
+  background:#94a3b8;
+}
+
+/* ---- Leader bar (owner request 2026-09-25) ------------------------------
+   One magnitude bar per leaderboard row. Scaled to the largest target in the
+   set (or the largest value when nothing has a target), so a row's target
+   marker shares the axis with its bar. */
+.leader-bar {
+  position:relative; display:block; height:6px; border-radius:3px;
+  background:#f1f5f9; margin-top:5px;
+}
+.leader-bar-fill {
+  position:absolute; left:0; top:0; height:6px; border-radius:3px;
+  background:#F6B800;
+}
+.leader-bar-tick {
+  position:absolute; top:-2px; width:1px; height:10px;
+  background:#94a3b8;
+}
+
+/* Metric row inside a college card — fixed height keeps cards aligned.
+   Children are <span>s: the whole card is a <button>, and only phrasing
+   content is valid inside it. */
+.college-metrics {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  border:1px solid #f1f2f5; border-radius:14px; overflow:hidden; background:#fcfcfd;
+}
+.college-metrics > span { padding:11px 8px; text-align:center; }
+.college-metrics > span + span { border-left:1px solid #f1f2f5; }
+.college-metrics .m-val {
+  font-size:19px; font-weight:800; letter-spacing:-.02em; line-height:1;
+  color:#1f2937; font-variant-numeric:tabular-nums;
+}
+.college-metrics .m-cap {
+  font-size:9.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:#9ca3af; margin-top:6px;
+}
+
+/* Accent-tinted footer strip */
+.college-foot {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; flex-wrap:wrap;
+  padding:13px 22px; background:#fafbfc; border-top:1px solid #f1f2f5;
+}
+
+/* ---- Hub view 2 — breadcrumb, hero, KPI tiles, section heads ------------
+   Added 2026-09-28 (owner request: the college-selected view read as bland).
+   The hero deliberately reuses the `.college-media` sheen so the hero and the
+   view-1 card share ONE media treatment — the Director visually "opens" the
+   card they clicked, rather than arriving somewhere unrelated. */
+
+.hub-crumb { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.hub-crumb-link {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:700; color:#6b7280;
+  padding:5px 11px; border-radius:999px; background:#fff;
+  border:1px solid #eef0f4; cursor:pointer;
+  transition:color .18s ease, border-color .18s ease, background .18s ease;
+}
+.hub-crumb-link:hover { color:#003599; border-color:#bfd2fe; background:#f8faff; }
+.hub-crumb-link:focus-visible { outline:3px solid #F6B800; outline-offset:2px; }
+.hub-crumb-sep { color:#d1d5db; flex-shrink:0; }
+.hub-crumb-here { font-size:12px; font-weight:700; color:#003599; }
+
+.college-hero {
+  position:relative; background:#fff; border:1px solid #eef0f4;
+  border-radius:20px; overflow:hidden;
+  box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 44px -30px rgba(10,42,102,.30);
+}
+/* Taller than the card's 116px band, same sheen recipe. */
+.college-hero-media {
+  position:relative; height:132px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.college-hero-media::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 46%),
+             radial-gradient(120% 100% at 82% 8%, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 60%);
+}
+/* Soft halo BEHIND the seal. Two of the four seals carry a navy outer ring, and
+   on a navy band (CAS #003599) that ring disappears into the fill — the mark
+   reads as a floating disc. The halo gives every seal an edge on every brand
+   colour. (revisions §19.9.4 flagged this on the card; the hero seal is 112px
+   rather than 96px, so it is more visible here.) */
+.college-hero-media::before {
+  content:''; position:absolute; width:196px; height:196px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,.36) 0%, rgba(255,255,255,0) 70%);
+}
+/* Oversized code watermark — brand presence without a second colour. */
+.college-hero-mark {
+  position:absolute; right:18px; bottom:-16px;
+  font-size:76px; font-weight:800; letter-spacing:-.045em; line-height:1;
+  color:rgba(255,255,255,.15); pointer-events:none; user-select:none;
+}
+.college-hero-seal {
+  position:relative; z-index:1;
+  width:112px; height:112px; object-fit:contain; display:block; flex-shrink:0;
+}
+.college-hero-body { padding:22px 26px 24px; }
+.college-hero-name {
+  font-size:23px; font-weight:800; letter-spacing:-.022em; line-height:1.15; color:#1f2937;
+}
+.college-hero-sub { font-size:12.5px; font-weight:500; color:#9ca3af; margin-top:7px; }
+.college-hero-desc { font-size:13px; line-height:1.65; color:#6b7280; margin-top:13px; max-width:64ch; }
+.college-hero-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:17px; }
+.hero-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11.5px; font-weight:700; color:#374151;
+  padding:6px 12px; border-radius:999px;
+  background:#f7f9fc; border:1px solid #eef0f4;
+}
+.hero-chip svg { color:#9ca3af; }
+
+.hub-kpi {
+  position:relative; background:#fff; border:1px solid #eef0f4; border-radius:16px;
+  padding:16px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+  transition:transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s ease, border-color .2s ease;
+}
+.hub-kpi:hover {
+  transform:translateY(-2px); border-color:#dbe3f0;
+  box-shadow:0 14px 30px -20px rgba(10,42,102,.30);
+}
+.hub-kpi-chip {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:32px; height:32px; border-radius:10px; margin-bottom:12px;
+}
+.hub-kpi-chip--lnu     { background:#eef4ff; color:#003599; }
+.hub-kpi-chip--gold    { background:#fffaeb; color:#b87508; }
+.hub-kpi-chip--emerald { background:#ecfdf5; color:#047857; }
+.hub-kpi-chip--slate   { background:#f4f5f7; color:#4b5563; }
+.hub-kpi-val {
+  font-size:26px; font-weight:800; letter-spacing:-.025em; line-height:1;
+  color:#1f2937; font-variant-numeric:tabular-nums;
+}
+.hub-kpi-cap {
+  font-size:11px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.09em; color:#6b7280; margin-top:9px;
+}
+.hub-kpi-sub { font-size:11.5px; font-weight:500; color:#9ca3af; margin-top:3px; }
+
+.hub-sec-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.hub-sec-title { font-size:16px; font-weight:800; letter-spacing:-.015em; margin-top:4px; color:#1f2937; }
+.hub-sec-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.hub-sec-hint { font-size:11.5px; font-weight:500; color:#9ca3af; }
+
+/* Program card — the hub's middle level. Same lift language as `.college-card`
+   and `.proj-card` so all three levels feel like one family. */
+.prog-card {
+  position:relative; display:flex; flex-direction:column;
+  background:#fff; border:1px solid #eef0f4; border-radius:18px;
+  overflow:hidden; cursor:pointer; text-align:left; width:100%;
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+  transition:transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s ease, border-color .2s ease;
+}
+.prog-card:hover {
+  transform:translateY(-3px); border-color:#dbe3f0;
+  box-shadow:0 16px 34px -18px rgba(10,42,102,.26);
+}
+.prog-card:hover .college-card-cta svg { transform:translateX(3px); }
+.prog-card:focus-visible { outline:3px solid #F6B800; outline-offset:3px; }
+
+/* ---- Back bar (hub view 2) ---- */
+.hub-back {
+  display:inline-flex; align-items:center; gap:7px;
+  font-size:12.5px; font-weight:700; color:#003599;
+  padding:7px 13px 7px 10px; border-radius:10px;
+  background:#eef4ff; border:1px solid #dbe7fb;
+  transition:background .18s ease, transform .18s ease;
+}
+.hub-back:hover { background:#e2ecfd; transform:translateX(-2px); }
+.hub-back svg { width:14px; height:14px; }
+
+/* ---- Project card (hub view 2 + /programs grid) ---- */
+.proj-card {
+  position:relative; display:flex; flex-direction:column;
+  background:#fff; border:1px solid #eef0f4; border-radius:16px;
+  overflow:hidden; cursor:pointer; text-align:left; width:100%;
+  transition:transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s ease, border-color .2s ease;
+}
+.proj-card:hover {
+  transform:translateY(-3px); border-color:#dbe3f0;
+  box-shadow:0 12px 28px -12px rgba(10,42,102,.2);
+}
+.proj-card:focus-visible { outline:3px solid #F6B800; outline-offset:3px; }
+/* The card is a DIV whose BODY is the link (the footer carries the archive
+   button), so focus lands on the inner anchor — draw the ring from the card. */
+.proj-card:focus-within { outline:3px solid #F6B800; outline-offset:3px; }
+.proj-archive-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:26px; height:26px; flex-shrink:0; border-radius:8px;
+  color:#9ca3af; background:transparent; border:1px solid transparent;
+  transition:color .15s ease, background .15s ease, border-color .15s ease;
+}
+.proj-archive-btn:hover { color:#b91c1c; background:#fef2f2; border-color:#fee2e2; }
+.proj-archive-btn:focus-visible { outline:2px solid #F6B800; outline-offset:2px; }
+.proj-card-stripe { height:4px; width:100%; flex-shrink:0; }
+.proj-stat {
+  border-radius:11px; padding:9px 10px; background:#fafbfc; border:1px solid #f1f2f5;
+}
+.proj-stat .s-val {
+  font-size:15px; font-weight:800; letter-spacing:-.01em; line-height:1;
+  color:#1f2937; font-variant-numeric:tabular-nums;
+}
+.proj-stat .s-cap {
+  font-size:9px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.07em; color:#9ca3af; margin-top:5px;
+}
+
+/* ---- Empty state ---- */
+.hub-empty {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:52px 24px;
+  border:1.5px dashed #e2e5ec; border-radius:16px; background:#fcfcfd;
+}
+.hub-empty-badge {
+  width:56px; height:56px; border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  background:#f1f4f9; color:#9ca3af; margin-bottom:14px;
+}
+
+/* ---- Faculty mini-card (college view of the hub) ----
+   Contribution is total hours rendered + project involvement.
+   There is NO per-professor training target, so no progress bar and no
+   attainment tone is rendered here. */
+.fac-mini { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease, border-color .18s ease; }
+.fac-mini:hover { box-shadow:0 8px 22px rgba(15,23,42,.09); transform:translateY(-2px); border-color:#dbe0ea; }
+.fac-mini:focus-visible { outline:3px solid #F6B800; outline-offset:3px; }
+.fac-mini-stat {
+  padding:9px 10px; border-radius:10px; background:#f7f8fa; border:1px solid #eef0f4;
+}
+.fac-mini-val { font-size:15px; font-weight:800; letter-spacing:-.02em; color:#1f2430; line-height:1.1; }
+.fac-mini-lbl {
+  font-size:9.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.07em; color:#9ca3af; margin-top:3px;
+}
+
+/* Expertise tag — used on the faculty mini-cards */
+.expertise-tag {
+  display:inline-flex; align-items:center;
+  padding:2.5px 8px; border-radius:7px;
+  font-size:10.5px; font-weight:600;
+  background:#f4f6fa; color:#4b5563; border:1px solid #eceef1;
+}
+
+/* Hub toolbar row — keeps the filter controls on one line and wraps cleanly */
+.hub-toolbar {
+  display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+}
 
 /* ============================================================
    PRINT — reports use #print-area to produce clean hard copies

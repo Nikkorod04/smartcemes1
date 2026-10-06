@@ -43,19 +43,24 @@ class ConfidenceScore
         return self::scale(0.5 * $sample + 0.3 * $completeness + 0.2 * $output);
     }
 
-    /** ProgramNarrative: KPI coverage + program richness + returned sections. */
+    /** ProgramNarrative: metric coverage + project richness + returned sections. */
     public static function forNarrative(array $aggregates, array $result): float
     {
-        $kpiKeys = [
-            'participation_rate', 'activity_completion_rate', 'attendance_consistency',
-            'budget_utilization', 'knowledge_gain', 'cost_per_beneficiary', 'community_reach',
+        // R5: coverage is measured over the R4/R5 metric dictionary the narrative
+        // is now built from — was the 8.6 KPI list, which the payload no longer
+        // carries (and which the UI no longer displays).
+        $metricPaths = [
+            'training.trainors', 'training.trainees', 'training.training_hours',
+            'training.training_days', 'budget.utilized', 'activities.total',
         ];
-        $kpis = collect($kpiKeys)
-            ->filter(fn ($key) => ($aggregates['kpis'][$key] ?? null) !== null)->count();
-        $coverage = count($kpiKeys) > 0 ? $kpis / count($kpiKeys) : 0;
+        $present = collect($metricPaths)
+            ->filter(fn ($path) => data_get($aggregates, $path) !== null)->count();
+        $coverage = count($metricPaths) > 0 ? $present / count($metricPaths) : 0;
 
-        $richness = (($aggregates['objectives']['total'] ?? 0) > 0 ? 0.5 : 0)
-            + (($aggregates['activities']['total'] ?? 0) > 0 ? 0.5 : 0);
+        // Richness: a project with activities and at least one measured input is
+        // narratable. Objectives no longer contribute — they are retained unread.
+        $richness = (($aggregates['activities']['total'] ?? 0) > 0 ? 0.5 : 0)
+            + (($aggregates['training']['trainors'] ?? 0) > 0 ? 0.5 : 0);
 
         $sections = collect(['summary', 'health_label', 'risks', 'recommendations'])
             ->filter(fn ($key) => ! empty($result['data'][$key] ?? null))->count();

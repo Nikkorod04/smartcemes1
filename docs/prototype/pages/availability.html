@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Availability Requests Â· SmartCEMES</title>
+<title>Availability Requests · SmartCEMES</title>
 <script src="../assets/vendor/tailwind.js"></script>
 <script src="../assets/js/tw-config.js"></script>
 <link rel="stylesheet" href="../assets/css/smartcemes.css">
@@ -21,7 +21,7 @@
   <div data-variant="admin">
 
     <section class="pt-6 reveal-item">
-      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 Â· Request faculty availability for scheduled activities</p>
+      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 · Request faculty availability for scheduled activities</p>
       <div class="mt-3 flex items-center gap-2 flex-wrap">
         <button onclick="openNewRequest()" class="btn btn-primary">+ New Availability Request</button>
         <p class="text-[12.5px] text-gray-400">Requests are tied to an activity; faculty accept or decline with a reason.</p>
@@ -53,7 +53,7 @@
             <div class="flex items-center gap-2">
               <label class="relative">
                 <span class="js-icon absolute left-3 top-1/2 -translate-y-1/2" data-icon="search" data-cls="!w-4 !h-4 text-gray-400"></span>
-                <input id="avQ" class="input !w-56 !pl-9 !py-2 bg-white" placeholder="Search historyâ€¦">
+                <input id="avQ" class="input !w-56 !pl-9 !py-2 bg-white" placeholder="Search history…">
               </label>
               <select id="avStatus" class="input !w-36 !py-2 bg-white">
                 <option value="all">All statuses</option>
@@ -84,7 +84,7 @@
           <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
             <span class="js-icon" data-icon="clock" data-cls="!w-5 !h-5 text-lnu-700"></span> New Availability Request
           </h3>
-          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">×</button>
         </div>
 
         <div class="space-y-4">
@@ -119,11 +119,11 @@
           </div>
           <div>
             <label class="label">Remarks to Faculty <span class="text-gray-400 font-normal">(optional)</span></label>
-            <textarea id="nrRemarks" rows="3" class="input resize-none" placeholder="e.g., Proctoring for the mid-year reading evaluationâ€¦"></textarea>
+            <textarea id="nrRemarks" rows="3" class="input resize-none" placeholder="e.g., Proctoring for the mid-year reading evaluation…"></textarea>
           </div>
           <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3">
             <span class="js-icon" data-icon="clock" data-cls="!w-4 !h-4 text-lnu-600 shrink-0"></span>
-            <p class="text-[12px] text-gray-500 leading-snug">Date and time default to the selected activity's schedule â€” adjust if the faculty member will only be free for part of it. The faculty will be notified and must accept or decline.</p>
+            <p class="text-[12px] text-gray-500 leading-snug">Date and time default to the selected activity's schedule — adjust if the faculty member will only be free for part of it. The faculty will be notified and must accept or decline.</p>
           </div>
         </div>
 
@@ -140,7 +140,7 @@
   <div data-variant="faculty" style="display:none">
 
     <section class="pt-6 reveal-item">
-      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 Â· Respond to availability requests from the Director's Office</p>
+      <p class="text-[13px] text-gray-400 font-medium">Monday, August 24, 2026 · Respond to availability requests from the Director's Office</p>
     </section>
 
     <!-- PENDING REQUESTS -->
@@ -186,12 +186,12 @@
             <span class="js-icon" data-icon="clock" data-cls="!w-5 !h-5 text-lnu-700"></span>
             <span x-text="mode==='accept' ? 'Accept Request' : 'Decline Request'"></span>
           </h3>
-          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+          <button @click="open=false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">×</button>
         </div>
         <p id="avrWho" class="text-[13px] text-gray-500 -mt-2 mb-4"></p>
 
         <label class="label" x-text="mode==='accept' ? 'Remarks (optional)' : 'Reason for Declining' + ' ' + ' *'"></label>
-        <textarea x-model="r" rows="4" class="input resize-none" :placeholder="mode==='accept' ? 'e.g., Confirmed â€” will coordinate with the venue.' : 'State your reason â€” e.g., class conflict, prior commitmentâ€¦'"></textarea>
+        <textarea x-model="r" rows="4" class="input resize-none" :placeholder="mode==='accept' ? 'e.g., Confirmed — will coordinate with the venue.' : 'State your reason — e.g., class conflict, prior commitment…'"></textarea>
         <p x-show="mode==='decline'" class="mt-1.5 text-[11.5px] font-medium" :class="r.trim().length >= 10 ? 'text-emerald-600' : 'text-gray-400'">
           <span x-text="r.trim().length"></span> / 10 characters minimum
         </p>
@@ -207,7 +207,7 @@
 
   </div><!-- /faculty variant -->
 
-  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype Â· Community Extension Services Office Â· Leyte Normal University</footer>
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
 </main>
 
 <script>
@@ -244,16 +244,16 @@ function renderAvCards() {
         <span class="avatar ${a.faculty.id % 2 === 0 ? 'gold' : ''} w-10 h-10 text-[12px]">${initials(a.faculty.name)}</span>
         <div class="min-w-0 flex-1">
           <p class="font-bold text-[13px] truncate">${a.activity.title}</p>
-          <p class="text-[11px] text-gray-400 truncate">${a.faculty.name} Â· ${a.faculty.dept}</p>
+          <p class="text-[11px] text-gray-400 truncate">${a.faculty.name} · ${a.faculty.dept}</p>
         </div>
         <span class="w-2 h-2 rounded-full bg-gold-500 pulse-dot shrink-0"></span>
       </div>
       <div class="mt-3 flex items-end justify-between gap-3">
         <div>
           <p class="text-[17px] font-extrabold tracking-tight leading-none">${a.date}</p>
-          <span class="badge badge-gold mt-1.5">${a.start} â€“ ${a.end}</span>
+          <span class="badge badge-gold mt-1.5">${a.start} – ${a.end}</span>
         </div>
-        <div class="text-[11.5px] text-gray-400 text-right leading-snug">Requested ${a.requestedAt}<br>Remarks: â€œ${a.remarks || 'â€”'}â€</div>
+        <div class="text-[11.5px] text-gray-400 text-right leading-snug">Requested ${a.requestedAt}<br>Remarks: “${a.remarks || '—'}â€</div>
       </div>
     </div>`).join('');
 }
@@ -279,9 +279,9 @@ function renderAvHistory() {
           <div><p class="font-semibold text-[13px] leading-tight">${a.faculty.name}</p><p class="text-[11px] text-gray-400">${a.faculty.dept}</p></div>
         </div>
       </td>
-      <td class="whitespace-nowrap text-[12.5px]">${a.date}<br><span class="text-gray-400 text-[11.5px]">${a.start} â€“ ${a.end}</span></td>
+      <td class="whitespace-nowrap text-[12.5px]">${a.date}<br><span class="text-gray-400 text-[11.5px]">${a.start} – ${a.end}</span></td>
       <td><span class="badge ${statusBadge(a.status)}">${statusLabel(a.status)}</span></td>
-      <td class="text-[12.5px] italic text-gray-400 max-w-[220px]">${a.decline_reason ? 'â€œ' + a.decline_reason + 'â€' : (a.remarks ? 'â€œ' + a.remarks + 'â€' : '<span class="not-italic text-gray-300">â€”</span>')}</td>
+      <td class="text-[12.5px] italic text-gray-400 max-w-[220px]">${a.decline_reason ? '“' + a.decline_reason + 'â€' : (a.remarks ? '“' + a.remarks + 'â€' : '<span class="not-italic text-gray-300">—</span>')}</td>
     </tr>`).join('')
     : '<tr><td colspan="5" class="!py-10 text-center text-gray-400 text-[13px]">No matching records.</td></tr>';
 }
@@ -290,7 +290,7 @@ function openNewRequest() {
   const selA = document.getElementById('nrActivity');
   const selF = document.getElementById('nrFaculty');
   selA.innerHTML = DATA.activities.map(a => `<option value="${a.id}">${a.title}</option>`).join('');
-  selF.innerHTML = DATA.faculty.filter(f => f.status === 'Active').map(f => `<option value="${f.id}">${f.name} â€” ${f.dept}</option>`).join('');
+  selF.innerHTML = DATA.faculty.filter(f => f.status === 'Active').map(f => `<option value="${f.id}">${f.name} — ${f.dept}</option>`).join('');
   selA.value = DATA.activities.find(a => a.status === 'Upcoming')?.id || DATA.activities[0].id;
   syncActivityMeta(); // defaults the date/time fields from the linked activity's schedule
   document.getElementById('nrRemarks').value = '';
@@ -306,7 +306,7 @@ const t2m = t => { const m = String(t||'').match(/(\d+):(\d+)\s*(AM|PM)/i); if (
 function syncActivityMeta() {
   const a = DATA.activities.find(x => x.id === Number(document.getElementById('nrActivity').value));
   if (!a) return;
-  document.getElementById('nrActMeta').textContent = a.program.title + ' Â· ' + a.venue + ' Â· ' + a.date + ' (' + a.start + ' â€“ ' + a.end + ')';
+  document.getElementById('nrActMeta').textContent = a.program.title + ' · ' + a.venue + ' · ' + a.date + ' (' + a.start + ' – ' + a.end + ')';
   document.getElementById('nrDate').value = toISODate(a.date);
   document.getElementById('nrStart').value = a.start;
   document.getElementById('nrEnd').value = a.end;
@@ -347,21 +347,21 @@ function renderFaCards() {
         <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[clipboard]]</span>
         <div class="min-w-0 flex-1">
           <p class="font-bold text-[13px] truncate">${a.activity.title}</p>
-          <p class="text-[11px] text-gray-400 truncate">${a.activity.program.title} Â· ${a.activity.venue}</p>
+          <p class="text-[11px] text-gray-400 truncate">${a.activity.program.title} · ${a.activity.venue}</p>
         </div>
         <span class="w-2 h-2 rounded-full bg-gold-500 pulse-dot shrink-0"></span>
       </div>
       <div class="mt-3 flex items-end justify-between gap-3">
         <div>
           <p class="text-[17px] font-extrabold tracking-tight leading-none">${a.date}</p>
-          <span class="badge badge-gold mt-1.5">${a.start} â€“ ${a.end}</span>
+          <span class="badge badge-gold mt-1.5">${a.start} – ${a.end}</span>
         </div>
         <div class="flex gap-1.5 pb-0.5">
-          <button onclick="openAvRespond(${a.id},'accept')" class="btn btn-success-soft !px-3 !py-1.5 text-[12px]">âœ“ Accept</button>
+          <button onclick="openAvRespond(${a.id},'accept')" class="btn btn-success-soft !px-3 !py-1.5 text-[12px]">✓ Accept</button>
           <button onclick="openAvRespond(${a.id},'decline')" class="btn btn-danger-soft !px-2.5 !py-1.5 text-[12px]">Decline</button>
         </div>
       </div>
-      ${a.remarks ? `<p class="mt-2 text-[11.5px] italic text-gray-500">From the Director: â€œ${a.remarks}â€</p>` : ''}
+      ${a.remarks ? `<p class="mt-2 text-[11.5px] italic text-gray-500">From the Director: “${a.remarks}â€</p>` : ''}
     </div>`).join('');
 }
 
@@ -371,16 +371,16 @@ function renderFaTable() {
   document.getElementById('faTable').innerHTML = mine.map(a => `
     <tr>
       <td class="font-semibold text-[13px] leading-tight">${a.activity.title}</td>
-      <td class="whitespace-nowrap text-[12.5px]">${a.date}<br><span class="text-gray-400 text-[11.5px]">${a.start} â€“ ${a.end}</span></td>
+      <td class="whitespace-nowrap text-[12.5px]">${a.date}<br><span class="text-gray-400 text-[11.5px]">${a.start} – ${a.end}</span></td>
       <td><span class="badge ${statusBadge(a.status)}">${statusLabel(a.status)}</span></td>
-      <td class="text-[12.5px] italic text-gray-400 max-w-[280px]">${a.decline_reason ? 'â€œ' + a.decline_reason + 'â€' : (a.remarks ? 'â€œ' + a.remarks + 'â€' : '<span class="not-italic text-gray-300">â€”</span>')}</td>
+      <td class="text-[12.5px] italic text-gray-400 max-w-[280px]">${a.decline_reason ? '“' + a.decline_reason + 'â€' : (a.remarks ? '“' + a.remarks + 'â€' : '<span class="not-italic text-gray-300">—</span>')}</td>
     </tr>`).join('');
 }
 
 function openAvRespond(id, mode) {
   const a = DATA.availabilityRequests.find(x => x.id === id); if (!a) return;
   AV_ACTIVE = a;
-  document.getElementById('avrWho').textContent = a.activity.title + ' Â· ' + a.date + ' Â· ' + a.start + ' â€“ ' + a.end;
+  document.getElementById('avrWho').textContent = a.activity.title + ' · ' + a.date + ' · ' + a.start + ' – ' + a.end;
   window.dispatchEvent(new CustomEvent('open-av-respond', { detail: { mode } }));
 }
 
@@ -407,14 +407,14 @@ window.confirmAvRespond = (mode, remarks) => {
   if (mode === 'accept') {
     const hit = acceptOverlap(AV_ACTIVE);
     if (hit) {
-      SC.toast('Cannot accept â€” overlaps your ' + hit.type + ' â€œ' + hit.other.title + 'â€ (' + hit.other.start + ' â€“ ' + hit.other.end + ')', 'error');
+      SC.toast('Cannot accept — overlaps your ' + hit.type + ' “' + hit.other.title + 'â€ (' + hit.other.start + ' – ' + hit.other.end + ')', 'error');
       return; // accept is refused
     }
   }
   AV_ACTIVE.status = mode;
   AV_ACTIVE.decline_reason = mode === 'decline' ? remarks.trim() : null;
   AV_ACTIVE.respondedAt = 'Aug 24, 2026';
-  SC.toast(mode === 'accept' ? 'Request accepted â€” conflict-free Â· calendar updated' : 'Request declined', mode === 'accept' ? 'success' : 'info');
+  SC.toast(mode === 'accept' ? 'Request accepted — conflict-free · calendar updated' : 'Request declined', mode === 'accept' ? 'success' : 'info');
   renderFaCards(); renderFaTable();
 };
 

@@ -67,11 +67,39 @@ class UserSeeder extends Seeder
                 'email' => 'faculty4@lnu.com',
                 'role' => User::ROLE_FACULTY,
                 'profile' => [
-                    'department' => 'College of Business Administration',
+                    'department' => 'College of Management and Entrepreneurship',
                     'specialization' => 'Entrepreneurship',
                     'position' => 'Instructor III',
                     'phone' => '0906 771 2250',
                     'address' => 'Tanauan, Leyte',
+                ],
+            ],
+            /* The Graduate School (owner request 2026-09-25). `department` holds the
+               FULL official unit name so the R3a backfill maps it to GRAD
+               deterministically — the department map needs a 'graduate school'
+               entry or these two would link to no college at all. */
+            [
+                'name' => 'Dr. Ramon L. Villamor',
+                'email' => 'faculty5@lnu.com',
+                'role' => User::ROLE_FACULTY,
+                'profile' => [
+                    'department' => 'Graduate School',
+                    'specialization' => 'Research & Extension Management',
+                    'position' => 'Professor II',
+                    'phone' => '0921 448 7712',
+                    'address' => 'Tacloban City, Leyte',
+                ],
+            ],
+            [
+                'name' => 'Dr. Cristina P. Manalo',
+                'email' => 'faculty6@lnu.com',
+                'role' => User::ROLE_FACULTY,
+                'profile' => [
+                    'department' => 'Graduate School',
+                    'specialization' => 'Community Development',
+                    'position' => 'Associate Professor I',
+                    'phone' => '0919 330 5584',
+                    'address' => 'Palo, Leyte',
                 ],
             ],
         ];

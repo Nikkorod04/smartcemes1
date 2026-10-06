@@ -13,22 +13,18 @@
   body[data-variant="faculty"] .faculty-only { display:block; }
 </style>
 </head>
-<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="programs">
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="program-detail">
 
 <div id="sc-topbar"></div>
 <div id="sc-sidebar"></div>
 
 <main class="pl-72 pr-6 pb-12">
 
-  <section class="pt-6 reveal-item">
-    <a href="programs.html" class="text-[12px] font-bold text-gray-400 hover:text-lnu-700 transition">← Extension Programs</a>
-  </section>
-
-  <!-- READ-ONLY BANNER (faculty) -->
+    <!-- READ-ONLY BANNER (faculty) -->
   <section class="faculty-only mt-2">
     <div class="sc-card p-3.5 !border-lnu-100 !bg-lnu-50/60 flex items-center gap-3">
       <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0">[[shield]]</span>
-      <p class="text-[12.5px] text-lnu-800 font-semibold">Read-only view — you can browse the program's overview, activities, beneficiaries, and budget. Editing is done by the Director's office.</p>
+      <p class="text-[12.5px] text-lnu-800 font-semibold">Read-only view — you can browse this project's performance, activities, beneficiaries, and budget. Editing is done by the Director's office.</p>
     </div>
   </section>
 
@@ -41,38 +37,46 @@
   <section id="hubOverBanner" class="mt-4 hidden reveal-item"></section>
 
   <!-- STAT TILES -->
-  <section id="hubTiles" class="mt-4 grid grid-cols-4 gap-4 reveal-item"></section>
+  <section id="hubTiles" class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4 reveal-item"></section>
 
-  <!-- KPI SCORECARD VS TARGETS + ATTENDANCE & SATISFACTION -->
+  <!-- TRAINING HOURS vs TARGET  +  BUDGET vs TARGET -->
   <section class="mt-4 grid grid-cols-3 gap-4 reveal-item">
     <div class="sc-card p-6 col-span-2">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
-        <h3 class="font-bold text-[14px] flex items-center gap-2"><span class="js-icon" data-icon="chart" data-cls="!w-[18px] !h-[18px] text-lnu-700"></span> KPI Scorecard vs Targets</h3>
-        <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-400 font-medium">
-          <span class="flex items-center gap-1.5"><span class="legend-dot bg-emerald-500"></span>meets target</span>
-          <span class="flex items-center gap-1.5"><span class="legend-dot bg-red-500"></span>below / over</span>
-          <span class="flex items-center gap-1.5"><span class="legend-dot bg-lnu-800"></span>no target</span>
-          <span class="flex items-center gap-1.5"><span class="w-3 h-0 border-t-2 border-dashed border-gold-500"></span>target</span>
-        </div>
+        <h3 class="font-bold text-[14px] flex items-center gap-2"><span class="js-icon" data-icon="clock" data-cls="!w-[18px] !h-[18px] text-lnu-700"></span> Training Hours vs Annual Target</h3>
+        <span class="badge badge-blue" id="hubHoursBadge">—</span>
       </div>
-      <p class="text-[11.5px] text-gray-400 font-medium mb-4">Actuals auto-computed live from program data (8.6) · targets from the program's results framework</p>
-      <div id="hubScorecardRows" class="space-y-4"></div>
-      <div id="hubScorecardTiles" class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-3 gap-3"></div>
+      <p class="text-[11.5px] text-gray-400 font-medium mb-4">
+        Formula: <span class="font-semibold text-gray-500">trainors × trainees × days</span> (days carry the duration — 1.0 for a full day, 0.5 for a half day). Summed across every completed activity.
+      </p>
+      <div id="hubHoursRows" class="space-y-4"></div>
+      <div id="hubHoursTiles" class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-3 gap-3"></div>
     </div>
 
     <div class="sc-card p-6">
       <div class="flex items-center justify-between mb-1">
-        <h3 class="font-bold text-[14px]">Attendance &amp; Satisfaction</h3>
-        <span class="badge badge-blue">per activity</span>
+        <h3 class="font-bold text-[14px]">Budget vs Allocated Budget</h3>
+        <span class="badge badge-blue" id="hubBudgetBadge">—</span>
+      </div>
+      <p class="text-[11.5px] text-gray-400 font-medium mb-3">Utilized against this project's FY 2026 allocation</p>
+      <div class="relative h-60" id="hubBudgetChartWrap"><canvas id="chBudgetVsTarget"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ATTENDANCE -->
+  <section class="mt-4 reveal-item">
+    <div class="sc-card p-6">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-[14px]">Attendance per Activity</h3>
+        <span class="badge badge-blue">trainee counts</span>
       </div>
       <p class="text-[11.5px] text-gray-400 font-medium mb-3">Completed activities · attendees recorded</p>
       <div class="relative h-56" id="hubAttChartWrap"><canvas id="chAttendance"></canvas></div>
-      <div id="hubAttRatings" class="mt-3 space-y-1.5"></div>
     </div>
   </section>
 
   <!-- TABS -->
-  <section class="reveal-item mt-5" x-data="{t:'overview'}">
+  <section id="hubActivities" class="reveal-item mt-5" x-data="{t:'overview'}">
     <div class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
       <button :class="t==='overview' ? 'tab on' : 'tab'" @click="t='overview'; window.renderHub('overview')">Overview</button>
       <button :class="t==='activities' ? 'tab on' : 'tab'" @click="t='activities'; window.renderHub('activities')">Activities</button>
@@ -83,10 +87,14 @@
     <!-- OVERVIEW -->
     <div x-show="t==='overview'" class="mt-4 grid grid-cols-3 gap-4">
       <div class="sc-card p-6 col-span-2">
-        <h3 class="font-bold text-[14px] mb-2 flex items-center gap-2"><span class="js-icon" data-icon="folder" data-cls="!w-[18px] !h-[18px] text-lnu-700"></span> Program Goal</h3>
+        <h3 class="font-bold text-[14px] mb-2 flex items-center gap-2"><span class="js-icon" data-icon="folder" data-cls="!w-[18px] !h-[18px] text-lnu-700"></span> Project Goal</h3>
         <p id="hubGoal" class="text-[13.5px] text-gray-600 leading-relaxed"></p>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+          <p class="label">Delivery strategy</p>
+          <p id="hubStrategy" class="text-[12.5px] text-gray-500 leading-relaxed"></p>
+        </div>
         <div class="mt-5 pt-4 border-t border-gray-100">
-          <p class="label">Linked Community & Partners</p>
+          <p class="label">Linked Community &amp; Partners</p>
           <div class="flex flex-wrap gap-2" id="hubPartners"></div>
         </div>
         <div class="mt-5 pt-4 border-t border-gray-100">
@@ -95,13 +103,17 @@
         </div>
       </div>
 
-      <!-- RESULTS FRAMEWORK -->
+      <!-- ASSIGNED FACULTY / TRAINORS -->
       <div class="sc-card p-6">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-[14px]">Results Framework</h3>
-          <button onclick="window.openObjManager()" class="btn btn-outline !px-2.5 !py-1.5 !text-[11px] admin-only">Manage</button>
+          <h3 class="font-bold text-[14px]">Trainors &amp; Faculty</h3>
+          <span class="badge badge-gray" id="hubTrainorCount">—</span>
         </div>
-        <div id="hubObjectives" class="space-y-3"></div>
+        <div id="hubTrainors" class="space-y-2.5"></div>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+          <p class="label">Program &amp; college</p>
+          <div id="hubProgramLink" class="space-y-2"></div>
+        </div>
       </div>
 
       <!-- EXECUTIVE NARRATIVE (Director-only) -->
@@ -110,7 +122,7 @@
           <h3 class="font-bold text-[14px] flex items-center gap-2"><span class="js-icon" data-icon="sparkles" data-cls="!w-[18px] !h-[18px] text-gold-500"></span> Executive Narrative <span class="badge badge-gold">Director-only</span></h3>
           <div class="flex gap-2">
             <a href="program-narratives.html?role=admin" class="btn btn-ghost !px-2.5 !py-1.5 !text-[11px]">History →</a>
-            <button onclick="SC.toast('Program narrative generation queued — Director-only','info')" class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">Generate program narrative</button>
+            <button onclick="SC.toast('Project narrative generation queued — Director-only','info')" class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">Generate narrative</button>
           </div>
         </div>
         <div id="hubNarrative" class="mt-3"></div>
@@ -122,14 +134,14 @@
       <div class="sc-card p-0 overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
-            <h3 class="font-bold text-[14px]">Program Activities</h3>
+            <h3 class="font-bold text-[14px]">Project Activities</h3>
             <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Planned dates must fall within <span id="hubRangeNote" class="font-semibold"></span></p>
           </div>
           <button class="btn btn-primary admin-only" onclick="event.preventDefault();window.openActivityModal()">[[calendar]] Add Activity</button>
         </div>
         <div class="overflow-x-auto">
           <table class="sc-table">
-            <thead><tr><th>Activity</th><th>Date</th><th>Time</th><th>Venue</th><th>Status</th><th class="!text-right">Attendees</th><th></th></tr></thead>
+            <thead><tr><th>Activity</th><th>Date</th><th>Time</th><th>Venue</th><th class="!text-right">Trainors</th><th class="!text-right">Trainees</th><th class="!text-right">Days</th><th class="!text-right">Training Hrs</th><th>Status</th><th></th></tr></thead>
             <tbody id="hubActivityRows"></tbody>
           </table>
         </div>
@@ -212,69 +224,10 @@
     </div>
   </section>
 
-  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
 </main>
 
 <!-- ==================== MODALS ==================== -->
-
-<!-- Objective manager -->
-<div id="mObjList" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
-  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mObjList')"></div>
-  <div class="sc-modal relative max-w-2xl mx-auto mt-20 sc-card p-6 shadow-pop">
-    <div class="flex items-center justify-between mb-1">
-      <h3 class="font-bold text-[15px]">Objective Manager</h3>
-      <button class="btn btn-ghost !px-2 !py-1 !text-[11px]" onclick="closeModal('mObjList')">✕</button>
-    </div>
-    <p class="text-[12px] text-gray-400 font-medium mb-4">Measurable objectives with locked KPI metrics, or qualitative objectives tracked manually.</p>
-    <div id="objManagerList" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
-    <button class="btn btn-primary w-full mt-4" onclick="window.openObjForm()">+ Add objective</button>
-  </div>
-</div>
-
-<!-- Objective form -->
-<div id="mObjForm" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
-  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeModal('mObjForm')"></div>
-  <div class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
-    <h3 class="font-bold text-[15px] mb-1" id="objFormTitle">Add objective</h3>
-    <p class="text-[12px] text-gray-400 font-medium mb-4">KPI metric is validated against the locked KPI dictionary.</p>
-    <div class="space-y-3">
-      <div><label class="label">Objective statement *</label><textarea id="ofObjective" rows="2" class="input" placeholder="e.g. Raise reading proficiency from baseline to target"></textarea></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="label">KPI metric</label>
-          <select id="ofKpi" class="input" onchange="window.objKpiChanged()">
-            <option value="">Qualitative (manual tracking)</option>
-            <option value="participation_rate">Participation Rate (%)</option>
-            <option value="activity_completion_rate">Activity Completion Rate (%)</option>
-            <option value="attendance_consistency">Attendance Consistency (%)</option>
-            <option value="budget_utilization">Budget Utilization (%)</option>
-            <option value="knowledge_gain">Knowledge Gain (points)</option>
-            <option value="cost_per_beneficiary">Cost per Beneficiary (₱)</option>
-            <option value="community_reach">Community Reach (count)</option>
-          </select>
-        </div>
-        <div><label class="label">Unit</label><input id="ofUnit" class="input" placeholder="%, persons, /5 score…"></div>
-      </div>
-      <div class="grid grid-cols-3 gap-3">
-        <div><label class="label">Baseline</label><input id="ofBaseline" type="number" step="0.1" class="input"></div>
-        <div><label class="label">Target *</label><input id="ofTarget" type="number" step="0.1" class="input"></div>
-        <div><label class="label">Target date</label><input id="ofDate" type="date" class="input"></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3 items-end">
-        <div id="ofActualWrap" class="hidden"><label class="label">Manual actual (qualitative)</label><input id="ofActual" type="number" step="0.1" class="input"></div>
-        <div id="ofComputedWrap" class="hidden rounded-xl border border-lnu-100 bg-lnu-50/60 px-3.5 py-2.5">
-          <p class="text-[10px] font-bold uppercase tracking-wider text-lnu-700">Currently computed · live</p>
-          <p class="text-[14px] font-extrabold text-lnu-900 mt-0.5 leading-none" id="ofComputedValue">No data yet</p>
-          <p class="text-[10.5px] text-lnu-700/70 mt-1">The actual auto-computes from program data — set the target against this value.</p>
-        </div>
-        <div><label class="label">Evidence notes</label><input id="ofEvidence" class="input" placeholder="Where is the evidence?"></div>
-      </div>
-    </div>
-    <div class="flex justify-end gap-2 mt-5">
-      <button class="btn btn-ghost" onclick="closeModal('mObjForm')">Cancel</button>
-      <button class="btn btn-primary" onclick="window.saveObjective()">Save objective</button>
-    </div>
-  </div>
-</div>
 
 <!-- Activity create/edit -->
 <div id="mActivity" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
@@ -592,22 +545,16 @@
 (function () {
   const D = window.DATA;
 
-  const KPI_LABEL = {
-    participation_rate:'Participation Rate', activity_completion_rate:'Activity Completion',
-    attendance_consistency:'Attendance Consistency', budget_utilization:'Budget Utilization',
-    knowledge_gain:'Knowledge Gain', cost_per_beneficiary:'Cost per Beneficiary', community_reach:'Community Reach'
-  };
   const OBJ_STATUS = { achieved:['badge-green','Achieved'], on_track:['badge-blue','On track'], not_met:['badge-yellow','Not met'], not_started:['badge-gray','Not started'] };
   const ACT_BADGE  = { Completed:'badge-green', Ongoing:'badge-blue', Upcoming:'badge-blue', Draft:'badge-yellow', Cancelled:'badge-red' };
-  const KNOWLEDGE  = { 'EXT-2026-001':{pre:58.2,post:70.6}, 'EXT-2026-002':{pre:61.0,post:72.8}, 'EXT-2026-003':{pre:64.0,post:75.2} };
   const ASSIGN     = { 1:[1,2], 2:[1], 4:[3], 5:[3], 6:[7], 8:[2] };
 
   const qp = new URLSearchParams(location.search);
   const code = qp.get('program') || 'EXT-2026-001';
-  let PROG = D.programs.find(p => p.code === code) || D.programs[0];
+  let PROG = D.projects.find(p => p.code === code || p.legacyCode === code) || D.projects[0];
   const VARIANT = (qp.get('role') === 'faculty') ? 'faculty' : (document.body.dataset.role === 'faculty' ? 'faculty' : 'admin');
   document.body.dataset.variant = VARIANT;
-  let editActId = null, editObjIdx = null;
+  let editActId = null;
 
   /* ---------- helpers ---------- */
   const $ = id => document.getElementById(id);
@@ -628,8 +575,8 @@
   /* ---------- hero + tiles ---------- */
   function renderHero() {
     const acts = D.activities.filter(a => a.program === PROG);
-    const over = utilized() > PROG.budget;
-    const narrative = D.programNarratives.find(n => n.program === PROG);
+    const over = utilized() > PROG.budgetAllocated;
+    const college = SC.collegeMeta(PROG.college) || { color:'#003599', name:'—' };
     $('hubHero').innerHTML = `
       <div class="relative h-24 bg-gradient-to-r from-lnu-800 to-lnu-600"
            style="background-image:radial-gradient(circle at 88% -30%, rgba(246,184,0,.4), transparent 46%), radial-gradient(rgba(255,255,255,.13) 1px, transparent 1.4px); background-size:auto, 16px 16px;"></div>
@@ -639,21 +586,23 @@
             <span class="avatar w-16 h-16 text-lg !ring-4 !ring-white shadow-pop">${PROG.lead.name.split(' ').map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('')}</span>
             <div class="min-w-0 pb-0.5">
               <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
-                <span class="badge badge-gold font-bold tracking-wide">${PROG.code}</span>
+                <span class="badge badge-gold font-bold tracking-wide font-mono">${PROG.code}</span>
+                ${SC.collegePill(PROG.college, college.name)}
+                ${SC.pillarChip(PROG.pillar)}
                 <span class="badge ${PROG.status==='Ongoing'?'badge-blue':PROG.status==='Completed'?'badge-green':'badge-yellow'}">${PROG.status}</span>
-                <span class="badge badge-gray">${(D.communities.find(c=>c.name===PROG.community.name)||{}).status === 'Prospecting' ? 'Prospecting community' : 'Literacy · Education sector'}</span>
-                ${over ? '<span class="badge badge-red">⚠ Budget over-allocated</span>' : ''}
+                ${over ? '<span class="badge badge-red">Over allocated budget</span>' : ''}
               </div>
               <h1 class="font-extrabold text-[19px] tracking-tight leading-tight">${esc(PROG.title)}</h1>
+              <p class="text-[12px] text-gray-400 font-medium mt-1">Under <a href="projects.html?role=admin&program=${PROG.program}" class="font-semibold text-lnu-700 hover:underline">${esc(PROG.programTitle)}</a></p>
             </div>
           </div>
           <div class="flex gap-2 pb-1 admin-only">
-            <button onclick="SC.toast('Program report exported (print view)','success')" class="btn btn-outline !py-2">Export</button>
+            <button onclick="SC.toast('Project report exported (print view)','success')" class="btn btn-outline !py-2">Export</button>
             <button onclick="window.openActivityModal()" class="btn btn-primary !py-2">[[calendar]] Add Activity</button>
           </div>
         </div>
         <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-x-7 gap-y-2.5 text-[12.5px] text-gray-600">
-          <span class="flex items-center gap-2"><span class="js-icon" data-icon="people" data-cls="!w-4 !h-4 text-lnu-600"></span><span class="font-semibold">${esc(PROG.lead.name)}</span><span class="text-gray-400">· Lead</span></span>
+          <span class="flex items-center gap-2"><span class="js-icon" data-icon="people" data-cls="!w-4 !h-4 text-lnu-600"></span><span class="font-semibold">${esc(PROG.lead.name)}</span><span class="text-gray-400">· Lead trainor</span></span>
           <span class="flex items-center gap-2"><span class="js-icon" data-icon="pin" data-cls="!w-4 !h-4 text-red-400"></span>${esc(PROG.community.name)}, ${esc(PROG.community.municipality)}, ${esc(PROG.community.province)}</span>
           <span class="flex items-center gap-2"><span class="js-icon" data-icon="calendar" data-cls="!w-4 !h-4 text-emerald-500"></span>${esc(PROG.start)} – ${esc(PROG.end)}</span>
           <span class="flex items-center gap-2"><span class="js-icon" data-icon="clipboard" data-cls="!w-4 !h-4 text-gold-600"></span>${acts.length} activities scheduled</span>
@@ -662,41 +611,42 @@
 
     $('hubRangeNote').textContent = PROG.start + ' – ' + PROG.end;
 
-    const ut = utilized(), pct = PROG.budget ? Math.min(Math.round(ut/PROG.budget*100),130) : 0;
-    const enrolled = enrolledBeneficiaries().length;
-    const kg = KNOWLEDGE[PROG.code];
-    const completed = acts.filter(a=>a.status==='Completed').length;
-    const upcoming = acts.filter(a=>a.status==='Upcoming').length;
+    const ut = utilized();
+    const completed = acts.filter(a => a.status === 'Completed').length;
+    const upcoming = acts.filter(a => a.status === 'Upcoming').length;
+    const hp = PROG.hoursPct;
+    const bp = PROG.budgetPct;
+    const reachPct = SC.pct(PROG.reached, PROG.target);
+
     $('hubTiles').innerHTML = `
       <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Budget</p><span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center">[[wallet]]</span></div>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${money(PROG.budget)}</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">allocated · FY 2026</p>
-        <div class="progress"><span style="width:${Math.min(pct,100)}%" class="${over?'bg-red-500':'bg-lnu'}"></span></div>
-        <p class="text-[11px] text-gray-500 font-semibold mt-2">${money(ut)} utilized · ${pct}%</p>
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Trainors</p><span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center">[[users]]</span></div>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${PROG.trainors}</p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1">assigned faculty · lead + co-leads</p>
       </div>
+
       <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Beneficiaries</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">[[people]]</span></div>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${PROG.reached}<span class="text-[14px] text-gray-400 font-bold"> / ${PROG.target}</span></p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">reached of target · ${enrolled} enrolled in hub</p>
-        <div class="progress"><span style="width:${Math.min(Math.round(PROG.reached/PROG.target*100),100)}%" class="bg-emerald-500"></span></div>
-        <p class="text-[11px] text-gray-500 font-semibold mt-2">${Math.round(PROG.reached/PROG.target*100)}% of target reached</p>
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Trainees</p><span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">[[people]]</span></div>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${PROG.trainees}</p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-2.5">trainees in the latest render</p>
+        <div class="progress"><span style="width:${Math.min(reachPct,100)}%" class="bg-blue-500"></span></div>
+        <p class="text-[11px] text-gray-500 font-semibold mt-2">${PROG.reached} of ${PROG.target} target reached</p>
       </div>
+
       <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Activities</p><span class="w-8 h-8 rounded-lg bg-gold-50 text-gold-700 flex items-center justify-center">[[clipboard]]</span></div>
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Training Hrs</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">[[clock]]</span></div>
+        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${SC.hours(PROG.renderedTrainingHours)}<span class="text-[14px] text-gray-400 font-bold"> / ${SC.num(PROG.trainingHoursTarget)}</span></p>
+        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-2.5">rendered of annual target</p>
+        <div class="progress"><span style="width:${Math.min(hp,100)}%" class="${SC.attainTone(hp)}"></span></div>
+        <p class="text-[11px] text-gray-500 font-semibold mt-2">${hp}% of annual target</p>
+      </div>
+
+      <div class="sc-card sc-card-hover p-5">
+        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Activities</p><span class="w-8 h-8 rounded-lg bg-violet-50 text-violet-700 flex items-center justify-center">[[clipboard]]</span></div>
         <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none flex items-center gap-2">${acts.length}${upcoming ? `<span class="badge badge-blue">${upcoming} upcoming</span>` : ''}</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">this program</p>
-        <div class="progress"><span style="width:${acts.length ? Math.round(completed/acts.length*100) : 0}%" class="bg-gold"></span></div>
-        <p class="text-[11px] text-gray-500 font-semibold mt-2">${completed} completed</p>
-      </div>
-      <div class="sc-card sc-card-hover p-5 ${kg ? '!border-emerald-100 !bg-gradient-to-br !from-white !to-emerald-50/60' : ''}">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Knowledge Gain</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">[[chart]]</span></div>
-        ${kg ? `
-          <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600 flex items-center gap-1.5">+${(kg.post-kg.pre).toFixed(1)} pts</p>
-          <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">average score uplift</p>
-          <p class="text-[11px] text-gray-500 font-semibold mt-auto">Baseline ${kg.pre} → Post-test ${kg.post}</p>` : `
-          <p class="mt-3 text-[15px] font-bold text-gray-400 leading-snug">No scored activities yet</p>
-          <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">pre/post scores pending</p>`}
+        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-2.5">in this project</p>
+        <div class="progress"><span style="width:${acts.length ? Math.round(completed/acts.length*100) : 0}%" class="bg-gold-500"></span></div>
+        <p class="text-[11px] text-gray-500 font-semibold mt-2">${completed} completed · ${PROG.noOfDays} training days</p>
       </div>`;
 
     const banner = $('hubOverBanner');
@@ -704,118 +654,129 @@
       banner.classList.remove('hidden');
       banner.innerHTML = `<div class="sc-card p-4 !border-amber-200 !bg-amber-50/70 flex items-start gap-3">
         <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">[[wallet]]</span>
-        <div><p class="text-[13px] font-bold text-amber-800">This program exceeded its ${money(PROG.budget)} allocation by ${money(ut - PROG.budget)} (${Math.round(ut/PROG.budget*100)}%)</p>
-        <p class="text-[12px] text-amber-700 mt-0.5">Entries are still saved; a persistent warning badge shows on the program and overruns are written to the activity log (D7). Review is advisory, not blocking.</p></div></div>`;
+        <div><p class="text-[13px] font-bold text-amber-800">This project exceeded its ${money(PROG.budgetAllocated)} allocation by ${money(ut - PROG.budgetAllocated)} (${PROG.budgetPct}%)</p>
+        <p class="text-[12px] text-amber-700 mt-0.5">Entries are still saved; a persistent warning badge shows on the project and overruns are written to the activity log (D7). Review is advisory, not blocking.</p></div></div>`;
     } else { banner.classList.add('hidden'); banner.innerHTML = ''; }
 
     renderScorecard();
   }
 
-  /* ---------- KPI scorecard vs targets + attendance & satisfaction ---------- */
-  const SATISFACTION = { 1:4.6, 2:4.7, 4:4.6, 5:4.5, 6:4.4, 8:4.8 };
-
+  /* ---------- Training hours vs annual target + budget vs allocation ------
+     Adviser revision D-R7: the 8.6 KPI dictionary (participation rate,
+     attendance consistency, activity completion rate, knowledge gain,
+     cost per beneficiary, community reach, budget utilization) is NO LONGER
+     shown at project level. The Director tracks four things per project:
+     trainors, trainees, training hours rendered (against the annual HOURS
+     target) and budget (against the ALLOCATION — budget has no target, owner
+     decision 2026-09-26). Formula: trainors x trainees x days — no x 8.   */
   function renderScorecard() {
     const acts = D.activities.filter(a => a.program === PROG);
-    const completedActs = acts.filter(a => a.status === 'Completed' && a.attendees != null);
-    const scheduled = acts.filter(a => a.status !== 'Cancelled').length;
-    const enrolled = enrolledBeneficiaries().length;
-    const ut = utilized(), over = ut > PROG.budget;
-    const objs = D.programObjectives[PROG.code] || [];
-    const targetFor = m => { const o = objs.find(x => x.kpi === m && x.target != null); return o ? +o.target : null; };
-    const actualFor = m => { const o = objs.find(x => x.kpi === m && x.actual != null); return o ? +o.actual : null; };
+    const completedActs = acts.filter(a => a.status === 'Completed');
+    const ut = utilized(), over = ut > PROG.budgetAllocated;
 
-    const reach = PROG.reached;
-    const reachTarget = targetFor('community_reach');
-    const participation = enrolled ? Math.round(reach / enrolled * 100) : null;
-    const participationTarget = targetFor('participation_rate');
-    const consistency = actualFor('attendance_consistency');
-    const consistencyTarget = targetFor('attendance_consistency');
-    const budgetPct = PROG.budget ? Math.round(ut / PROG.budget * 100) : null;
-    const budgetTarget = targetFor('budget_utilization');
-    const completion = scheduled ? Math.round(completedActs.length / scheduled * 100) : null;
-    const completionTarget = targetFor('activity_completion_rate');
-    const kg = KNOWLEDGE[PROG.code];
-    const gain = kg ? +(kg.post - kg.pre).toFixed(1) : null;
-    const rated = completedActs.filter(a => SATISFACTION[a.id] != null);
-    const avgSat = rated.length ? rated.reduce((s,a) => s + SATISFACTION[a.id], 0) / rated.length : null;
-    const cost = reach ? ut / reach : null;
+    const hoursTarget = PROG.trainingHoursTarget || 0;
+    const hoursActual = PROG.renderedTrainingHours || 0;
+    const hoursPct = hoursTarget ? Math.round(hoursActual / hoursTarget * 100) : 0;
+    const budgetPct = PROG.budgetAllocated ? Math.round(ut / PROG.budgetAllocated * 100) : 0;
 
-    const colorFor = (value, target, isOver) => isOver ? 'bg-red-500'
-      : value == null ? 'bg-gray-300'
-      : target != null ? (value >= target ? 'bg-emerald-500' : 'bg-red-500') : 'bg-lnu';
+    /* ---- header badges ---- */
+    $('hubHoursBadge').textContent = `${hoursPct}% of target`;
+    $('hubHoursBadge').className = 'badge ' + SC.attainBadge(hoursPct);
+    $('hubBudgetBadge').textContent = `${budgetPct}% of allocation`;
+    $('hubBudgetBadge').className = 'badge ' + (over ? 'badge-red' : SC.attainBadge(budgetPct));
 
+    /* ---- training hours vs target rows ---- */
     const rows = [
-      { label:'Community Reach', display:`${reach}${reachTarget != null ? ' / ' + reachTarget : ''}`,
-        sub: reachTarget ? Math.round(reach / reachTarget * 100) + '%' : null,
-        bar: reachTarget ? Math.min(Math.round(reach / reachTarget * 100), 100) : 100,
-        marker: reachTarget ? Math.min(Math.round(reachTarget / Math.max(reach, reachTarget) * 100), 100) : null,
-        color: colorFor(reach, reachTarget, false),
-        caption:'Distinct beneficiaries with present/late attendance in non-cancelled activities (8.6)' },
-      { label:'Participation Rate', display: participation == null ? '—' : participation + '%',
-        sub: participation == null ? null : `${reach} of ${enrolled} enrolled`,
-        bar: participation == null ? 0 : Math.min(participation, 100),
-        marker: participationTarget != null ? Math.min(participationTarget, 100) : null,
-        color: colorFor(participation, participationTarget, false),
-        caption:'Beneficiaries with at least one present/late attendance ÷ linked beneficiaries (8.6)' },
-      { label:'Attendance Consistency', display: consistency == null ? '—' : consistency + '%',
-        sub: consistencyTarget != null ? 'target ≥' + consistencyTarget + '%' : null,
-        bar: consistency == null ? 0 : Math.min(consistency, 100),
-        marker: consistencyTarget != null ? Math.min(consistencyTarget, 100) : null,
-        color: colorFor(consistency, consistencyTarget, false),
-        caption:'Mean share of eligible activities attended per beneficiary (8.6)' },
-      { label:'Budget Utilization', display: budgetPct == null ? '—' : budgetPct + '%',
-        sub: budgetTarget != null ? 'target ≥' + budgetTarget + '%' : null,
-        bar: budgetPct == null ? 0 : Math.min(budgetPct, 100),
-        marker: budgetTarget != null ? Math.min(budgetTarget, 100) : null,
-        color: colorFor(budgetPct, budgetTarget, over),
-        caption: over ? `Over-allocated by ${money(ut - PROG.budget)} — advisory warning (D7), not a hard block` : 'Utilized of allocated budget (8.6)',
-        danger: over },
-      { label:'Activity Completion Rate', display: completion == null ? '—' : completion + '%',
-        sub: completionTarget != null ? 'target ≥' + completionTarget + '%' : null,
-        bar: completion == null ? 0 : Math.min(completion, 100),
-        marker: completionTarget != null ? Math.min(completionTarget, 100) : null,
-        color: colorFor(completion, completionTarget, false),
-        caption:'Completed ÷ (total − cancelled) activities (8.6)' },
+      { label:'Training hours rendered', display:`${SC.hours(hoursActual)} / ${SC.num(hoursTarget)} hrs`,
+        sub:`${hoursPct}%`, bar:Math.min(hoursPct,100),
+        color:SC.attainTone(hoursPct),
+        caption:`${PROG.trainors} trainors × ${PROG.trainees} trainees × ${PROG.noOfDays} days across ${completedActs.length} completed activit${completedActs.length === 1 ? 'y' : 'ies'}` },
+      { label:'Trainors assigned', display:`${PROG.trainors}`,
+        sub:'faculty', bar:Math.min(PROG.trainors / 4 * 100, 100), color:'bg-lnu-600',
+        caption:'Lead plus co-lead faculty counted once per project' },
+      { label:'Trainees / beneficiaries reached', display:`${SC.num(PROG.reached)} / ${SC.num(PROG.target)}`,
+        sub:`${SC.pct(PROG.reached, PROG.target)}%`, bar:Math.min(SC.pct(PROG.reached, PROG.target),100),
+        color:SC.attainTone(SC.pct(PROG.reached, PROG.target)),
+        caption:'Distinct beneficiaries with present or late attendance' },
+      { label:'Activities completed', display:`${completedActs.length} / ${acts.length}`,
+        sub:acts.length ? Math.round(completedActs.length / acts.length * 100) + '%' : null,
+        bar:acts.length ? Math.min(Math.round(completedActs.length / acts.length * 100),100) : 0,
+        color:'bg-gold-500',
+        caption:'Completed activities out of all activities in this project' }
     ];
 
-    $('hubScorecardRows').innerHTML = rows.map(r => `
+    $('hubHoursRows').innerHTML = rows.map(r => `
       <div>
         <div class="flex items-center justify-between text-[12.5px]">
           <span class="font-semibold">${r.label}</span>
           <span class="font-bold">${r.display}${r.sub ? ` <span class="text-gray-400 font-semibold">· ${r.sub}</span>` : ''}</span>
         </div>
-        <div class="relative mt-1.5">
+        <div class="mt-1.5">
           <div class="progress !h-2"><span style="width:${r.bar}%" class="${r.color}"></span></div>
-          ${r.marker != null ? `<span class="marker" style="left:${r.marker}%"></span>` : ''}
         </div>
-        <p class="text-[10.5px] ${r.danger ? 'text-red-500 font-semibold' : 'text-gray-400'} mt-1">${r.caption}</p>
+        <p class="text-[10.5px] text-gray-400 mt-1">${r.caption}</p>
       </div>`).join('');
 
-    $('hubScorecardTiles').innerHTML = `
+    $('hubHoursTiles').innerHTML = `
       <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Cost per Beneficiary</p>
-        <p class="text-[15px] font-extrabold mt-1">${cost == null ? '—' : money(Math.round(cost * 100) / 100)}</p>
-        <p class="text-[10.5px] text-gray-400">${cost == null ? 'no beneficiaries served yet' : money(ut) + ' ÷ ' + reach + ' served'}</p>
+        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Hours remaining</p>
+        <p class="text-[15px] font-extrabold mt-1">${hoursTarget - hoursActual > 0 ? SC.hours(hoursTarget - hoursActual) + ' hrs' : 'Target met'}</p>
+        <p class="text-[10.5px] text-gray-400">to reach the ${SC.num(hoursTarget)} hr annual target</p>
       </div>
       <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Knowledge Gain</p>
-        <p class="text-[15px] font-extrabold mt-1 ${gain == null ? 'text-gray-300' : gain >= 0 ? 'text-emerald-600' : 'text-red-600'}">${gain == null ? 'No scores' : (gain >= 0 ? '+' : '') + gain.toFixed(1) + ' pts'}</p>
-        <p class="text-[10.5px] text-gray-400">${gain == null ? 'pre/post scores pending' : '1 scored activity'}</p>
+        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Avg hours / activity</p>
+        <p class="text-[15px] font-extrabold mt-1">${completedActs.length ? SC.hours(Math.round(hoursActual / completedActs.length * 10) / 10) : '—'}</p>
+        <p class="text-[10.5px] text-gray-400">across completed activities</p>
       </div>
       <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/60">
-        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Avg Satisfaction</p>
-        <p class="text-[15px] font-extrabold mt-1">${avgSat == null ? '—' : avgSat.toFixed(2) + ' / 5'}</p>
-        <p class="text-[10.5px] text-gray-400">${rated.length === 0 ? 'no evaluation ratings yet' : rated.length + ' evaluated activit' + (rated.length === 1 ? 'y' : 'ies')}</p>
+        <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">Training days</p>
+        <p class="text-[15px] font-extrabold mt-1">${PROG.noOfDays}</p>
+        <p class="text-[10.5px] text-gray-400">Days carry the duration — 0.5 is a half day</p>
       </div>`;
 
-    $('hubAttRatings').innerHTML = rated.length ? rated.map(a => `
-      <p class="text-[11px] text-gray-500 flex items-center justify-between">
-        <span class="truncate">${esc(a.title)} · ${esc(a.date)}</span>
-        <span class="badge ${SATISFACTION[a.id] >= 4 ? 'badge-green' : SATISFACTION[a.id] >= 3 ? 'badge-yellow' : 'badge-red'}">${SATISFACTION[a.id].toFixed(1)}/5</span>
-      </p>`).join('') : '<p class="text-[11px] text-gray-400 italic">No satisfaction ratings imported yet.</p>';
+    /* ---- budget vs allocation ----
+       Owner decision 2026-09-28: doughnut, THREE slices. Same known caveat as the
+       Laravel hub: Allocated = Utilized + Remaining, so the ring sums to 2x the
+       allocation, and Chart.js's share-of-ring % would understate utilisation. The
+       centre label carries the true share OF THE ALLOCATION. `remaining` is clamped
+       at 0 because HANDA is over-allocated by design (the D7 demo). */
+    const wrapB = $('hubBudgetChartWrap');
+    if (!document.getElementById('chBudgetVsTarget')) wrapB.innerHTML = '<canvas id="chBudgetVsTarget"></canvas>';
+    const elB = document.getElementById('chBudgetVsTarget');
+    if (Chart.getChart(elB)) Chart.getChart(elB).destroy();
+    const allocB  = PROG.budgetAllocated;
+    const remainB = Math.max(0, allocB - ut);
+    const pctB    = v => allocB > 0 ? Math.round(v / allocB * 1000) / 10 : 0;
+    new Chart(elB, {
+      type:'doughnut',
+      data:{
+        labels:['Allocated ' + money(allocB), 'Utilized ' + money(ut), 'Remaining ' + money(remainB)],
+        datasets:[{ data:[allocB, ut, remainB],
+          backgroundColor:['#003599', over ? '#ef4444' : '#F6B800', '#e5e7eb'],
+          borderWidth:0 }]
+      },
+      options:{ maintainAspectRatio:false, cutout:'60%',
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, boxHeight:10, padding:10, font:{ size:11 } } },
+          tooltip:{ callbacks:{ label: ctx => ' ' + ctx.label + ' — ' + pctB(ctx.parsed) + '% of allocation' } } }
+      },
+      plugins:[{ id:'hubBudgetCentre', afterDraw(chart) {
+        const a = chart.chartArea;
+        if (!a) { return; }
+        const cx = (a.left + a.right) / 2, cy = (a.top + a.bottom) / 2, c2 = chart.ctx;
+        c2.save(); c2.textAlign = 'center'; c2.textBaseline = 'middle';
+        c2.fillStyle = over ? '#dc2626' : '#003599';
+        c2.font = '700 20px Figtree, ui-sans-serif, system-ui';
+        c2.fillText(allocB > 0 ? pctB(ut) + '%' : '—', cx, cy - 7);
+        c2.fillStyle = '#9ca3af'; c2.font = '600 10px Figtree, ui-sans-serif, system-ui';
+        c2.fillText(over ? 'over allocation' : 'of allocation', cx, cy + 11);
+        c2.restore();
+      } }]
+    });
 
+    /* ---- attendance chart (trainees per completed activity) ---- */
+    const withAtt = completedActs.filter(a => a.attendees != null);
     const wrap = $('hubAttChartWrap');
-    if (!completedActs.length) {
+    if (!withAtt.length) {
       wrap.innerHTML = '<div class="h-full flex items-center justify-center rounded-xl border border-dashed border-gray-200"><p class="text-[12px] text-gray-400 italic px-4 text-center">No completed activities with attendance yet.</p></div>';
     } else {
       if (!document.getElementById('chAttendance')) wrap.innerHTML = '<canvas id="chAttendance"></canvas>';
@@ -824,41 +785,66 @@
       new Chart(el, {
         type:'bar',
         data:{
-          labels: completedActs.map(a => `${a.title} · ${a.date}`),
-          datasets:[{ label:'Attendees', data: completedActs.map(a => a.attendees),
-            backgroundColor: completedActs.map((_,i) => i % 2 === 0 ? '#003599' : '#2547eb'),
+          labels: withAtt.map(a => `${a.title} · ${a.date}`),
+          datasets:[{ label:'Trainees', data: withAtt.map(a => a.attendees),
+            backgroundColor: withAtt.map((_,i) => i % 2 === 0 ? '#003599' : '#2547eb'),
             borderRadius:7, maxBarThickness:24 }]
         },
         options:{ indexAxis:'y', maintainAspectRatio:false,
           scales:{ x:{ beginAtZero:true, grid:{ drawTicks:false } }, y:{ grid:{ display:false }, ticks:{ font:{ size:11, weight:'600' } } } },
-          plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.parsed.x} attendees recorded` } } } }
+          plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.parsed.x} trainees recorded` } } } }
       });
     }
   }
 
-  /* ---------- overview: partners, categories, objectives, narrative ---------- */
+  /* ---------- overview: partners, categories, trainors, narrative ---------- */
   function renderOverview() {
     $('hubGoal').textContent = PROG.goal;
+    $('hubStrategy').textContent = PROG.strategy || '—';
     $('hubPartners').innerHTML = `<span class="chip on !py-1.5 !text-[12px]">[[pin]] ${esc(PROG.community.name)} · Primary community</span>`;
-    $('hubCategories').innerHTML = ['Pupils','Parents','Community volunteers'].map(c => `<span class="chip !py-1.5 !text-[12px]">${c}</span>`).join('');
 
-    const objs = D.programObjectives[PROG.code] || [];
-    $('hubObjectives').innerHTML = objs.length ? objs.map((o,i) => {
-        const [cls, label] = OBJ_STATUS[o.status] || OBJ_STATUS.not_started;
-        const base = o.baseline ?? 0, tgt = o.target ?? 0, act = o.actual ?? 0;
-        const pv = tgt ? Math.min(Math.round(act/tgt*100),100) : 0;
-        const bar = o.status === 'not_met' ? 'bg-gold' : (o.status === 'achieved' ? 'bg-emerald-500' : 'bg-lnu');
-        return `<div class="mt-3 pt-3 border-t border-gray-100 first:border-0 first:pt-0 first:mt-0">
-          <div class="flex items-start justify-between gap-2">
-            <p class="text-[12.5px] font-semibold leading-snug">${esc(o.objective)}</p>
-            <span class="badge ${cls} shrink-0">${label}</span>
-          </div>
-          <p class="text-[10.5px] text-gray-400 font-medium mt-0.5">${o.kpi ? KPI_LABEL[o.kpi] : 'Qualitative · manual'}${o.unit ? ' · ' + o.unit : ''}${o.target_date ? ' · due ' + esc(o.target_date) : ''}</p>
-          <div class="progress mt-2"><span style="width:${pv}%" class="${bar}"></span></div>
-          <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline ${o.baseline ?? '—'} → Target ${o.target ?? '—'} → Actual <span class="text-charcoal">${o.actual ?? '—'}</span> <span class="text-gray-400 font-medium">· ${o.kpi ? 'auto (live)' : 'manual'}</span></p>
-          ${o.evidence ? `<p class="text-[11px] text-gray-400 mt-1"><span class="font-semibold text-gray-500">Evidence:</span> ${esc(o.evidence)}</p>` : ''}
-        </div>`;
-      }).join('') : '<p class="text-[12.5px] text-gray-400 mt-2">No objectives defined yet. Use Manage to add measurable objectives with locked KPI metrics, or qualitative ones tracked manually.</p>';
+    const cats = [...new Set(D.beneficiaries.filter(b => b.program === PROG.acr).map(b => b.category))];
+    $('hubCategories').innerHTML = (cats.length ? cats : ['Community members','Beneficiaries','Local volunteers'])
+      .map(c => `<span class="chip !py-1.5 !text-[12px]">${esc(c)}</span>`).join('');
+
+    /* ---- assigned trainors (lead + co-leads) ---- */
+    const trainors = [PROG.lead, ...(PROG.coLeads || [])];
+    $('hubTrainorCount').textContent = `${trainors.length} trainor${trainors.length === 1 ? '' : 's'}`;
+    $('hubTrainors').innerHTML = trainors.map((f, i) => {
+      return `
+      <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-lnu-200 transition cursor-pointer"
+           onclick="location.href='faculty-management.html?role=admin'">
+        <span class="avatar w-8 h-8 text-[10px]">${f.name.replace(/^(Prof\.|Dr\.)\s/,'').split(' ').map(w=>w[0]).slice(0,2).join('')}</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-[12px] font-semibold truncate">${esc(f.name)}</p>
+          <p class="text-[10px] text-gray-400 truncate">${esc(f.expertise[0] || f.position)}</p>
+        </div>
+        <div class="text-right shrink-0">
+          <span class="badge ${i === 0 ? 'badge-gold' : 'badge-gray'} !text-[9.5px] !px-2 !py-0.5">${i === 0 ? 'Lead' : 'Co-lead'}</span>
+          <p class="text-[10px] text-gray-400 font-semibold mt-1">${SC.hours(f.renderedHours)} hrs rendered</p>
+        </div>
+      </div>`;
+    }).join('');
+
+    /* ---- program + college linkage ---- */
+    const college = SC.collegeMeta(PROG.college) || {};
+    $('hubProgramLink').innerHTML = `
+      <a href="projects.html?role=admin&program=${PROG.program}"
+         class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+        <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0">[[folder]]</span>
+        <div class="min-w-0">
+          <p class="text-[12px] font-semibold truncate">${esc(PROG.programTitle)}</p>
+          <p class="text-[10px] text-gray-400 font-medium">Broad program · ${esc(PROG.pillar)} pillar</p>
+        </div>
+      </a>
+      <a href="colleges.html?role=admin&college=${PROG.college}"
+         class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
+        ${SC.collegePill(PROG.college)}
+        <div class="min-w-0">
+          <p class="text-[12px] font-semibold truncate">${esc(college.short || PROG.college)}</p>
+          <p class="text-[10px] text-gray-400 font-medium truncate">${esc(college.name || '')}</p>
+        </div>
+      </a>`;
 
     const n = D.programNarratives.find(x => x.program === PROG);
     const nHost = $('hubNarrative');
@@ -867,13 +853,14 @@
         <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
           <div class="flex flex-wrap items-center gap-2 mb-2">
             <span class="narrative-health ${n.health_label}">${{ 'on-track':'On track','at-risk':'At risk','needs-attention':'Needs attention' }[n.health_label]}</span>
+            ${n.scopeStatus === 'out-of-scope-detected' ? '<span class="tier-badge tier-2">Interagency items detected</span>' : '<span class="tier-badge tier-1">In CESO scope</span>'}
             <span class="text-[11px] text-gray-400 font-medium">Generated ${esc(n.generatedAt)} · ${esc(n.generatedBy || 'Director, CESO')} · ${esc(n.model)}</span>
           </div>
           <p class="text-[13px] text-gray-600 leading-relaxed">${esc(n.summary)}</p>
         </div>` : `
         <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center">
-          <p class="text-[12.5px] text-gray-500 font-semibold">No narrative generated yet for this program.</p>
-          <p class="text-[11.5px] text-gray-400 mt-1">The Director can generate an executive summary from program aggregates (no PII leaves the system).</p>
+          <p class="text-[12.5px] text-gray-500 font-semibold">No narrative generated yet for this project.</p>
+          <p class="text-[11.5px] text-gray-400 mt-1">The Director can generate an executive summary from project aggregates (no PII leaves the system).</p>
         </div>`;
     }
   }
@@ -883,11 +870,18 @@
     const rows = D.activities.filter(a => a.program === PROG);
     $('hubActivityRows').innerHTML = rows.length ? rows.map(a => {
       const conflict = window._conflictFor && window._conflictFor(a);
+      const trs = a.trainors != null ? a.trainors : (a.facultyIds || []).length;
+      const days = a.noOfDays != null ? a.noOfDays : 1;
+      const hrs = a.trainingHours != null ? a.trainingHours : trs * (a.attendees || 0) * days;
       return `<tr>
         <td><p class="font-semibold text-charcoal">${esc(a.title)}</p><p class="text-[11px] text-gray-400">${a.attendees != null ? a.attendees + ' recorded attendees' : 'No attendance yet'}</p></td>
         <td>${esc(a.date)}</td>
         <td class="whitespace-nowrap">${esc(a.start)} – ${esc(a.end)}</td>
         <td class="text-gray-500">${esc(a.venue)}</td>
+        <td class="!text-right font-semibold">${trs}</td>
+        <td class="!text-right font-semibold">${a.attendees != null ? a.attendees : '—'}</td>
+        <td class="!text-right text-gray-500">${days}</td>
+        <td class="!text-right font-bold text-lnu-700">${SC.num(hrs)}</td>
         <td><span class="badge ${ACT_BADGE[a.status] || 'badge-gray'}">${a.status}</span>${conflict ? ' <span class="conflict-marker">⚠ conflict</span>' : ''}</td>
         <td class="!text-right row-actions whitespace-nowrap">
           <button class="btn btn-ghost !px-2 !py-1 !text-[11px]" onclick="window.openRecords(${a.id})">Records</button>
@@ -895,7 +889,7 @@
           ${a.status !== 'Completed' && a.status !== 'Cancelled' ? `<button class="btn btn-success-soft !px-2 !py-1 !text-[11px] admin-only" onclick="window.askComplete(${a.id})">Complete</button>` : ''}
         </td>
       </tr>`;
-    }).join('') : `<tr><td colspan="6" class="text-center text-gray-400 py-8">No activities yet for this program.</td></tr>`;
+    }).join('') : `<tr><td colspan="10" class="text-center text-gray-400 py-8">No activities yet for this project.</td></tr>`;
   }
 
   /* ---------- beneficiaries tab ---------- */
@@ -918,7 +912,7 @@
   /* ---------- budget tab ---------- */
   function renderBudget() {
     const entries = budgetFor(), ut = utilized();
-    const alloc = PROG.budget, pct = alloc ? Math.round(ut/alloc*100) : 0, rem = alloc - ut;
+    const alloc = PROG.budgetAllocated, pct = alloc ? Math.round(ut/alloc*100) : 0, rem = alloc - ut;
     const served = Math.max(enrolledBeneficiaries().length, 1);
     $('hubBudgetAllocated').textContent = money(alloc);
     $('hubBudgetUtilized').textContent = money(ut);
@@ -949,95 +943,13 @@
   };
   window.refreshHub = function(){ renderHero(); renderOverview(); renderActivities(); renderBeneficiaries(); renderBudget(); };
 
-  /* ---------- objective manager ---------- */
-  window.openObjManager = function(){ renderObjManager(); openModal('mObjList'); };
-  function renderObjManager() {
-    const objs = D.programObjectives[PROG.code] || [];
-    $('objManagerList').innerHTML = objs.length ? objs.map((o,i) => {
-        const [cls, label] = OBJ_STATUS[o.status] || OBJ_STATUS.not_started;
-        const pv = o.target ? Math.min(Math.round((o.actual ?? 0)/o.target*100),100) : 0;
-        const bar = o.status === 'not_met' ? 'bg-gold' : (o.status === 'achieved' ? 'bg-emerald-500' : 'bg-lnu');
-        const src = o.kpi ? 'auto (live)' : 'manual';
-        return `<div class="p-3 rounded-xl border border-gray-100 bg-gray-50/50">
-          <div class="flex items-start justify-between gap-2">
-            <p class="text-[12.5px] font-semibold leading-snug min-w-0">${esc(o.objective)}</p>
-            <span class="badge ${cls} shrink-0">${label}</span>
-          </div>
-          <p class="text-[10.5px] text-gray-400 mt-0.5">${o.kpi ? KPI_LABEL[o.kpi] : 'Qualitative · manual'}${o.unit ? ' · ' + esc(o.unit) : ''}${o.target_date ? ' · due ' + esc(o.target_date) : ''} · ${src}</p>
-          <div class="progress mt-2"><span style="width:${pv}%" class="${bar}"></span></div>
-          <p class="text-[11px] text-gray-500 font-semibold mt-1.5">Baseline ${o.baseline ?? '—'} → Target ${o.target ?? '—'} → Actual <span class="text-charcoal">${o.actual ?? '—'}</span></p>
-          <div class="flex justify-end gap-1 mt-2">
-            <button class="btn btn-outline !px-2 !py-1 !text-[11px]" onclick="window.editObjective(${i})">Edit</button>
-            <button class="btn btn-danger-soft !px-2 !py-1 !text-[11px]" onclick="window.deleteObjective(${i})">Delete</button>
-          </div>
-        </div>`;
-      }).join('') : '<p class="text-[12.5px] text-gray-400 py-4 text-center">No objectives yet — add the first one.</p>';
-  }
-  window.editObjective = function(i){ editObjIdx = i; window.openObjForm(true); };
-  window.deleteObjective = function(i){
-    const objs = D.programObjectives[PROG.code] || [];
-    objs.splice(i,1); renderObjManager(); renderHero(); window.renderHub('overview');
-    SC.toast('Objective deleted · change logged','warn');
-  };
-  /* Demo live-value preview (mirrors the Laravel 8.6 live computation;
-     derivable from in-page demo data where possible, else "No data yet"). */
-  function computedForKpi(k){
-    const acts = D.activities.filter(a => a.program === PROG);
-    if (k === 'community_reach') return PROG.reached;
-    if (k === 'budget_utilization' && PROG.budget) return Math.round(utilized()/PROG.budget*100);
-    if (k === 'knowledge_gain' && KNOWLEDGE[PROG.code]) return +(KNOWLEDGE[PROG.code].post - KNOWLEDGE[PROG.code].pre).toFixed(1);
-    if (k === 'activity_completion_rate' && acts.length) return Math.round(acts.filter(a=>a.status==='Completed').length/acts.length*100);
-    return null;
-  }
-  window.openObjForm = function(edit){
-    editObjIdx = edit ? editObjIdx : null;
-    $('objFormTitle').textContent = editObjIdx != null ? 'Edit objective' : 'Add objective';
-    const o = editObjIdx != null ? (D.programObjectives[PROG.code] || [])[editObjIdx] : null;
-    $('ofObjective').value = o ? o.objective : '';
-    $('ofKpi').value = o ? (o.kpi || '') : '';
-    $('ofUnit').value = o ? (o.unit || '') : '';
-    $('ofBaseline').value = o ? (o.baseline ?? '') : '';
-    $('ofTarget').value = o ? (o.target ?? '') : '';
-    $('ofActual').value = o && !o.kpi ? (o.actual ?? '') : '';
-    $('ofEvidence').value = o ? (o.evidence || '') : '';
-    if (o && o.target_date) { const d = new Date(o.target_date); $('ofDate').value = isNaN(d) ? '' : d.toISOString().slice(0,10); }
-    else { $('ofDate').value = ''; }
-    window.objKpiChanged();
-    openModal('mObjForm');
-  };
-  window.objKpiChanged = function(){
-    const kpi = $('ofKpi').value;
-    $('ofActualWrap').classList.toggle('hidden', !!kpi);
-    $('ofComputedWrap').classList.toggle('hidden', !kpi);
-    if (kpi) {
-      $('ofActual').value = ''; // a manual actual is never stored for numeric objectives
-      const v = computedForKpi(kpi);
-      $('ofComputedValue').textContent = v === null ? 'No data yet' : v + ($('ofUnit').value ? ' ' + $('ofUnit').value : '');
-    }
-  };
-  window.saveObjective = function(){
-    const statement = $('ofObjective').value.trim();
-    const target = $('ofTarget').value;
-    if (!statement || target === '') { SC.toast('Objective statement and target are required','error'); return; }
-    const o = {
-      objective: statement,
-      kpi: $('ofKpi').value || null,
-      baseline: $('ofBaseline').value === '' ? null : +$('ofBaseline').value,
-      target: +target,
-      actual: !$('ofKpi').value && $('ofActual').value !== '' ? +$('ofActual').value : null,
-      unit: $('ofUnit').value || null,
-      status: 'not_started',
-      target_date: $('ofDate').value ? fmtHuman($('ofDate').value) : null,
-      evidence: $('ofEvidence').value || ''
-    };
-    if (o.kpi) { o.status = 'on_track'; }
-    else if (o.actual != null) { o.status = o.actual >= o.target ? 'achieved' : 'on_track'; }
-    const objs = D.programObjectives[PROG.code] = (D.programObjectives[PROG.code] || []);
-    if (editObjIdx != null) objs[editObjIdx] = o; else objs.push(o);
-    editObjIdx = null; closeModal('mObjForm'); closeModal('mObjList');
-    renderObjManager(); renderHero(); window.renderHub('overview');
-    SC.toast('Objective saved to the results framework','success');
-  };
+  /* P0o (2A-ii): the objective authoring surface was removed from this page.
+     It was unreachable — its only entry point was defined but called from nowhere
+     — so the two objective modals and the whole manager/form JS block are gone.
+     The `programObjectives` SEED is deliberately retained: calendar.html (Feed 3)
+     and program-narratives.html (objectivesMet) still read it as read-only
+     displays. Objectives are therefore no longer authored anywhere in the
+     prototype; R4 decides whether the concept survives into the Laravel build. */
 
   /* ---------- activities: create/edit + conflict hard-block ---------- */
   const TIMES = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
@@ -1145,16 +1057,17 @@
   window.demoConfirmRecords = function(kind){
     const a = D.activities.find(x=>x.id===window._recAct);
     if (kind === 'attendance') {
-      a.attendees = 2; // demo: 2 applied, 1 blank skipped (D10 confirm step)
+      a.attendees = 2; // demo: 2 applied, 1 blank skipped
+      if (a.trainors == null) a.trainors = (window._assignFor(a.id) || []).length || 1;
+      if (a.noOfDays == null) a.noOfDays = a.noOfDays || 1;
+      a.trainingHours = a.trainors * a.attendees * (a.noOfDays || 1);
       $('recAttLast').classList.remove('hidden');
       closeModal('mRecords'); renderHero(); window.renderHub('activities');
-      SC.toast('Attendance imported — 2 applied, 1 blank skipped · source file archived (6.19)','success');
+      SC.toast('Attendance imported — training hours recomputed (' + SC.num(a.trainingHours) + ' hrs) · source file archived','success');
     } else {
-      KNOWLEDGE[PROG.code] = { pre:45.0, post:65.0 }; // demo: per-metric means (D13)
-      SATISFACTION[a.id] = 4.5;
       $('recEvalLast').classList.remove('hidden');
       closeModal('mRecords'); renderHero(); window.renderHub('activities');
-      SC.toast('Evaluation scores applied — the activity aggregates now feed knowledge gain and reports','success');
+      SC.toast('Evaluation scores applied to the activity records','success');
     }
   };
   function recMeanTile(label, value, suffix, note) {
@@ -1166,21 +1079,20 @@
     </div>`;
   }
   function renderRecEvalMeans() {
-    const kg = KNOWLEDGE[PROG.code] || { pre:null, post:null };
     const a = D.activities.find(x=>x.id===window._recAct);
-    const sat = a ? SATISFACTION[a.id] : null;
+    const avg = a && a.evalAverages ? a.evalAverages : null;
     const current = [
-      recMeanTile('Pre-test mean', kg.pre, ''),
-      recMeanTile('Post-test mean', kg.post, ''),
-      recMeanTile('Satisfaction mean', sat, '/5'),
+      recMeanTile('Pre-test mean', avg ? avg.pre : null, ''),
+      recMeanTile('Post-test mean', avg ? avg.post : null, ''),
+      recMeanTile('Satisfaction mean', avg ? avg.satisfaction : null, '/5'),
     ].join('');
     const was = (before, suffix) => before == null ? 'no previous score' : 'was ' + (+before).toFixed(2) + suffix;
     $('recEvalCurrent').innerHTML = current;
     $('recEvalFacultyCurrent').innerHTML = current;
     $('recEvalProjected').innerHTML = [
-      recMeanTile('Pre-test mean', 45.0, '', was(kg.pre, '')),
-      recMeanTile('Post-test mean', 65.0, '', was(kg.post, '')),
-      recMeanTile('Satisfaction mean', 4.5, '/5', was(sat, '/5')),
+      recMeanTile('Pre-test mean', 45.0, '', was(avg ? avg.pre : null, '')),
+      recMeanTile('Post-test mean', 65.0, '', was(avg ? avg.post : null, '')),
+      recMeanTile('Satisfaction mean', 4.5, '/5', was(avg ? avg.satisfaction : null, '/5')),
     ].join('');
   }
 
@@ -1267,7 +1179,7 @@
     D.budgetEntries.push({ id: Date.now()%100000, program: PROG.code, activityIndex: ai, item, amount: amt, date: fmtHuman(dt), ref: 'REC-2026-' + String(Math.floor(1000+Math.random()*9000)) });
     closeModal('mBudget');
     renderHero(); window.renderHub('budget');
-    if (utilized() > PROG.budget) SC.toast('Entry saved · allocation exceeded — warning badge persists, log entry written (D7)','warn');
+    if (utilized() > PROG.budgetAllocated) SC.toast('Entry saved · allocated budget exceeded — warning badge persists, log entry written','warn');
     else SC.toast('Utilization entry saved','success');
   };
 

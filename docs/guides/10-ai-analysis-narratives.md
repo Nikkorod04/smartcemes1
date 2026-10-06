@@ -1,18 +1,20 @@
-# Guide 10 — AI Analysis (Community Insights) & Program Narratives (worked example)
+# Guide 10 — AI Analysis (Community Insights) & Project Narratives (worked example)
 
 **Role: Admin ONLY** (D4 — Secretary and Faculty have no AI access; visiting
 `/ai-analysis` as them yields 403) · Paths: **AI Analysis Review** and
-**Program Narratives**
+**Project Narratives**
 
 One governed pipeline, two outputs: **community assessment insights**
-(approval-gated, institutional use) and **program narratives** (no gate,
+(approval-gated, institutional use) and **project narratives** (no gate,
 Director-internal decision support). Everything sent to Google Gemini is
 **aggregates only** — counts, percentages, distributions. Never respondent
 names/PII (D3, DPA).
 
 **Best precondition:** a Secretary friend has validated a few assessments
 first (each validation recomputes that community's quarterly summary — the
-summaries are what the AI consumes).
+summaries are what the AI consumes). `GEMINI_API_KEY` must be set.
+
+---
 
 ## Part A — Community insights (/ai-analysis)
 
@@ -24,7 +26,7 @@ summaries are what the AI consumes).
    quarter your friends just validated. Check the hero chips: model,
    "No PII", n respondents, confidence.
 3. Click **Generate** — the button swaps to a spinner ("Generating…");
-   generation is synchronous, so results appear in-request (a few seconds).
+   generation is **synchronous**, so results appear in-request (a few seconds).
 
 **Expected:** a **draft** analysis appears with:
 - **Situation summary** of the community.
@@ -38,7 +40,30 @@ summaries are what the AI consumes).
 persisted. That is designed behavior (D12 — live API only, no mock mode),
 not a broken page.
 
-### A2. The DPA audit view
+### A2. The three-tier scope guardrail — the important part
+
+This is what stops the AI recommending work CESO cannot do. Every
+recommendation is classified **before it is shown**:
+
+| Tier | Meaning | How it appears |
+|---|---|---|
+| **1** | CESO can deliver this itself | A normal **recommended intervention** |
+| **2** | A real need, but **not CESO's work** | An **interagency referral** card, naming an agency |
+| **3** | Prohibited as CESO work | **Suppressed** — audit note only, never a recommendation |
+
+**Expected on a good run:** most cards are Tier 1; a few are Tier 2 and carry a
+*"Refer to &lt;agency&gt;"* note. A need CESO cannot serve is **reclassified as
+a referral, never silently dropped** — that is the whole point of the guardrail.
+
+**Check the agency names.** A Tier-2 card may only cite an agency that exists in
+the **Interagency Catalogue** (sidebar → *Interagency Catalogue*, in
+Intelligence & Reports). The model may not invent one. Try it:
+
+1. Sidebar → **Interagency Catalogue**. Eight agencies are seeded.
+2. Note one you would expect to see, e.g. a health or agriculture agency.
+3. Back on the analysis, confirm the referral names a real catalogue entry.
+
+### A3. The DPA audit view
 
 Open the **Community response data** accordion on the draft.
 
@@ -47,7 +72,7 @@ indicators (electricity %, training availability %, avg satisfaction) and
 distribution lists with counts/percentages. **No respondent names anywhere**
 — this is the privacy audit view: aggregation-before-send, verifiable.
 
-### A3. Approve or discard (the gate)
+### A4. Approve or discard (the gate)
 
 1. Click **Approve**.
 
@@ -55,12 +80,11 @@ distribution lists with counts/percentages. **No respondent names anywhere**
 officer; approved analyses carry the "Approved" provenance label (this is
 what institutional/community-facing use requires).
 
-2. Generate another (or ask the secretary to validate more assessments
-   first) and click **Discard** on that one.
+2. Generate another and click **Discard** on that one.
 
 **Expected:** the draft is discarded; it remains in history with its state.
 
-### A4. History & provenance
+### A5. History & provenance
 
 Look at the history table.
 
@@ -68,26 +92,32 @@ Look at the history table.
 generated-at/by, status, and (when approved) the **approving officer** —
 full provenance for audit.
 
-## Part B — Program narratives (executive summaries)
+---
+
+## Part B — Project narratives (executive summaries)
 
 ### B1. Generate
 
-1. Go to **Program Narratives** (or open a program hub and click
-   **Generate program narrative** — e.g. on **EXT-2026-001 LITRAWIYA**).
+1. Go to **Project Narratives** (or open a project hub and click
+   **Generate narrative** — e.g. on **EXT-2026-001 LITRAWIYA**).
 2. Click **Generate**.
 
 **Expected:** an executive summary card with:
 - A **health label** — On track / At risk / Needs attention (derived by the
-  model from the KPI inputs).
+  model from the **target-model** inputs).
 - Executive summary text, **top risks**, and **next actions** with priority.
-- The chip **"Objectives met: X/Y"** — derived live from the 8.6 rules,
-  NOT from the AI (the AI is told the numbers; the chip is computed
-  independently).
+- Delivery figures **against the project's annual targets** (training hours
+  rendered vs target, budget utilized vs target, beneficiaries reached).
 - A provenance footer (model · prompt version · generated by/at).
+
+> **The old "Objectives met: X/Y" chip is gone.** It derived from the 8.6
+> objective machinery, which was removed from the UI (D-R7). What you see
+> instead is attainment against the project's **own annual targets** — the
+> same numbers as the hub's Overview tab.
 
 ### B2. Version history (no gate)
 
-1. Click **Generate** again for the same program.
+1. Click **Generate** again for the same project.
 
 **Expected:** a **new version** is created — nothing is overwritten; browse
 the version-history timeline to compare. Narratives have **no approval
@@ -98,18 +128,23 @@ gate), but provenance is still recorded.
 
 Open the LITRAWIYA hub → Overview while reading the narrative.
 
-**Expected:** the narrative's budget/participation/reach statements match
-the hub's live numbers — the pipeline consumes the same 8.6 KPI dictionary
-the dashboards use.
+**Expected:** the narrative's budget / hours / reach statements match the hub's
+live numbers — both come from `TrainingHoursService`, so they cannot disagree.
+
+---
 
 ## Talking points if anyone asks
 
 | Question | Answer |
 |---|---|
 | What data leaves the system? | Aggregates only — the accordion shows the exact payload (D3). |
+| What if the AI suggests something CESO cannot do? | It is **reclassified** as a Tier-2 interagency referral, with a named agency from the catalogue. It is never dropped and never presented as CESO work (D-R8). |
+| Can the AI invent an agency? | No — the catalogue is the closed vocabulary; an unresolvable code is dropped and counted, never laundered. |
 | Why approve analyses but not narratives? | Analyses feed institutional/community-facing use (gate, D4); narratives are Director-internal (5.15). |
 | What if Gemini fails? | First-class "unavailable" state + Retry + persisted error — no mock mode (D12). |
 | Is the confidence the AI's? | No — a deterministic data-confidence (sample size + coverage), clamped, guidance-only. |
+
+---
 
 ## Report back
 
@@ -117,9 +152,11 @@ the dashboards use.
 |---|---|
 | Generate (spinner) → draft with needs + interventions | ☐ |
 | Confidence chip present (data-derived) | ☐ |
+| **Tier-2 referrals name a real Interagency Catalogue agency** | ☐ |
+| **No Tier-3 item appears as a recommendation** | ☐ |
 | DPA accordion shows aggregates only, no names | ☐ |
 | Approve stamps approver; Discard works | ☐ |
 | History shows model + prompt version + approver | ☐ |
-| Narrative: health label + Objectives met X/Y chip | ☐ |
+| Narrative: health label + attainment vs annual targets | ☐ |
 | Regenerate → new version, nothing overwritten | ☐ |
 | (If API failed) clean "unavailable" state + Retry | ☐ |

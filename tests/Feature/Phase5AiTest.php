@@ -8,7 +8,7 @@ use App\Livewire\ProgramNarratives;
 use App\Models\AssessmentAnalysis;
 use App\Models\AssessmentSummary;
 use App\Models\Community;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\NeedsAssessment;
 use App\Models\ProgramNarrative;
 use App\Models\User;
@@ -42,7 +42,7 @@ class Phase5AiTest extends TestCase
             'community_id' => $community->id, 'quarter' => 2, 'year' => 2026,
         ])->first();
 
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-050', 'title' => 'AI Test Program',
             'planned_start_date' => '2026-01-01', 'planned_end_date' => '2026-12-31',
             'status' => 'ongoing', 'allocated_budget' => 10000,
@@ -149,7 +149,10 @@ class Phase5AiTest extends TestCase
         $this->assertSame('completed', $analysis->status);
         $this->assertSame('Income insufficiency dominates.', $analysis->summary);
         $this->assertSame(config('smartcemes.ai.model'), $analysis->metadata['model']);
-        $this->assertSame('v1', $analysis->metadata['prompt_version']);
+        // R6/D-R10: the analysis prompt was rewritten to PromptV2, which carries
+        // the interagency catalogue. The version tag moves with it so a stored
+        // analysis stays reproducible from metadata alone.
+        $this->assertSame('v2', $analysis->metadata['prompt_version']);
         $this->assertSame('gemini', $analysis->metadata['api']);
         $this->assertSame(900, $analysis->metadata['tokens']);
 
@@ -289,7 +292,7 @@ class Phase5AiTest extends TestCase
     {
         $data = $this->seedSummary();
         $narrative = ProgramNarrative::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'generated_by' => $data['admin']->id,
             'status' => 'failed',
             'error_message' => 'Narrative unavailable — quota exceeded.',

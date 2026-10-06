@@ -78,7 +78,7 @@ class Index extends Component
         // ON APPROVAL: auto-create the linked Activity in draft status (5.12),
         // copying title and dates, and stamp created_activity_id.
         $activity = Activity::create([
-            'extension_program_id' => $proposal->extension_program_id,
+            'extension_project_id' => $proposal->extension_project_id,
             'activity_proposal_id' => $proposal->id,
             'title' => $proposal->title,
             'description' => $proposal->description,

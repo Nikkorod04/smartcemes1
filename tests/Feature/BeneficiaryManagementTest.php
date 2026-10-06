@@ -6,7 +6,7 @@ use App\Livewire\Beneficiaries\Index as BeneficiariesIndex;
 use App\Livewire\Programs\Hub;
 use App\Models\Activity;
 use App\Models\Beneficiary;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\User;
 use App\Services\ActivityAttendanceTemplate;
@@ -29,7 +29,7 @@ class BeneficiaryManagementTest extends TestCase
         $facultyUser = User::factory()->create(['role' => 'faculty']);
         $faculty = Faculty::create(['user_id' => $facultyUser->id, 'employee_id' => 'LNU-2026-0009']);
 
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-010',
             'title' => 'Beneficiary Management Program',
             'planned_start_date' => '2026-01-01',
@@ -98,7 +98,7 @@ class BeneficiaryManagementTest extends TestCase
             'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
         ]);
 
-        $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['program' => $data['program']]);
+        $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['project' => $data['program']]);
 
         // Enroll existing from the global registry.
         $test->call('openEnroll')->assertSet('showEnroll', true)
@@ -129,7 +129,7 @@ class BeneficiaryManagementTest extends TestCase
         ]);
 
         Livewire::actingAs($data['secretary'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openImport')
             ->set('importFile', $file)
             ->call('parseImport')
@@ -144,7 +144,7 @@ class BeneficiaryManagementTest extends TestCase
     {
         $data = $this->seedBase();
         $activity = Activity::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'title' => 'Training Session',
             'planned_start_date' => '2026-03-01',
             'planned_end_date' => '2026-03-01',
@@ -160,7 +160,7 @@ class BeneficiaryManagementTest extends TestCase
 
         // v4.13: attendance is import-only via the official XLSX template.
         Livewire::actingAs($data['secretary'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openRecords', $activity->id)
             ->set('attendanceImportFile', $this->makeAttendanceXlsx([
                 [$beneficiary->id, $beneficiary->last_name, $beneficiary->first_name, $beneficiary->barangay, 'Present'],
@@ -183,7 +183,7 @@ class BeneficiaryManagementTest extends TestCase
 
         foreach (['openProgramEdit', 'newObjective', 'openActivityForm', 'openBudgetForm'] as $action) {
             Livewire::actingAs($data['secretary'])
-                ->test(Hub::class, ['program' => $data['program']])
+                ->test(Hub::class, ['project' => $data['program']])
                 ->call($action)
                 ->assertForbidden();
         }
@@ -213,7 +213,7 @@ class BeneficiaryManagementTest extends TestCase
 
         foreach ($cases as [$action, $args]) {
             Livewire::actingAs($data['facultyUser'])
-                ->test(Hub::class, ['program' => $data['program']])
+                ->test(Hub::class, ['project' => $data['program']])
                 ->call($action, ...$args)
                 ->assertForbidden();
         }
@@ -229,7 +229,7 @@ class BeneficiaryManagementTest extends TestCase
             'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
         ]);
 
-        $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['program' => $data['program']]);
+        $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['project' => $data['program']]);
 
         // Submitting a duplicate holds for confirmation — nothing is created yet.
         $test->call('openRegister')
@@ -255,7 +255,7 @@ class BeneficiaryManagementTest extends TestCase
         $data = $this->seedBase();
 
         Livewire::actingAs($data['secretary'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openRegister')
             ->set('registerForm.first_name', 'Maria')
             ->set('registerForm.last_name', 'Santos')
@@ -279,7 +279,7 @@ class BeneficiaryManagementTest extends TestCase
 
         // Padded input still matches the registry entry…
         Livewire::actingAs($data['secretary'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openRegister')
             ->set('registerForm.first_name', '  Juan  ')
             ->set('registerForm.last_name', ' Dela Cruz ')
@@ -308,7 +308,7 @@ class BeneficiaryManagementTest extends TestCase
         }
 
         // First submit warns on Juan Dela Cruz…
-        $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['program' => $data['program']]);
+        $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['project' => $data['program']]);
         $test->call('openRegister')
             ->set('registerForm.first_name', 'Juan')
             ->set('registerForm.last_name', 'Dela Cruz')
@@ -372,14 +372,14 @@ class BeneficiaryManagementTest extends TestCase
         $data = $this->seedBase();
 
         $this->actingAs($data['secretary'])
-            ->get(route('programs.show', ['program' => $data['program'], 'tab' => 'beneficiaries']))
+            ->get(route('projects.show', ['project' => $data['program'], 'tab' => 'beneficiaries']))
             ->assertOk()
             ->assertSee('Enrolled Beneficiaries')
             ->assertSee('Enroll existing');
 
         $this->actingAs($data['secretary'])
-            ->get(route('programs.show', ['program' => $data['program'], 'tab' => 'activities']))
+            ->get(route('projects.show', ['project' => $data['program'], 'tab' => 'activities']))
             ->assertOk()
-            ->assertSee('Program Activities');
+            ->assertSee('Project Activities');
     }
 }

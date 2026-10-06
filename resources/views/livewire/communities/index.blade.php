@@ -26,6 +26,7 @@
             <option value="">All Statuses</option>
             <option value="active">Active</option>
             <option value="prospecting">Prospecting</option>
+            <option value="archived">Archived</option>
         </select>
 
         <div class="ml-auto">
@@ -39,8 +40,13 @@
 <section class="mt-4">
     @if ($communities->isEmpty())
         <div class="reveal-item sc-card px-5 py-12 text-center">
-            <p class="text-[13.5px] font-semibold text-gray-500">No records match your filters</p>
-            <p class="text-[12px] text-gray-400 mt-1">Try a different keyword, type, or province.</p>
+            @if ($status === 'archived')
+                <p class="text-[13.5px] font-semibold text-gray-500">No archived records</p>
+                <p class="text-[12px] text-gray-400 mt-1">Archived communities and partner schools appear here.</p>
+            @else
+                <p class="text-[13.5px] font-semibold text-gray-500">No records match your filters</p>
+                <p class="text-[12px] text-gray-400 mt-1">Try a different keyword, type, or province.</p>
+            @endif
         </div>
     @else
         <div class="reveal-item sc-card p-0 overflow-hidden">
@@ -77,8 +83,14 @@
                                 <td class="text-gray-500">{{ $c->contact_person ?? '—' }}</td>
                                 <td class="text-gray-500 whitespace-nowrap">{{ $c->contact_number ?? '—' }}</td>
                                 <td class="!text-right"><span class="font-bold text-charcoal">{{ $c->isSchool() ? '—' : number_format($c->beneficiaries_count) }}</span></td>
-                                <td class="!text-right"><span class="font-bold text-charcoal">{{ $c->isSchool() ? '—' : $c->extension_programs_count }}</span></td>
-                                <td><span class="badge {{ $c->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($c->status) }}</span></td>
+                                <td class="!text-right"><span class="font-bold text-charcoal">{{ $c->isSchool() ? '—' : $c->extension_projects_count }}</span></td>
+                                <td>
+                                    @if ($c->trashed())
+                                        <span class="badge badge-gray">Archived</span>
+                                    @else
+                                        <span class="badge {{ $c->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($c->status) }}</span>
+                                    @endif
+                                </td>
                                 <td class="!text-right row-actions whitespace-nowrap">
                                     <button wire:click="viewDetail({{ $c->id }})" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Details</button>
                                 </td>
@@ -108,7 +120,7 @@
                 <h3 class="font-extrabold text-[16px] tracking-tight">{{ $editingId ? ($form['type'] === 'school' ? 'Edit Partner School' : 'Edit Community Partner') : 'New Community / Partner School' }}</h3>
                 <p class="text-[12px] text-gray-400 mt-0.5">New communities enter the prospecting pipeline for needs assessment.</p>
             </div>
-            <button type="button" wire:click="$set('showForm', false)" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition">✕</button>
+            <button type="button" wire:click="$set('showForm', false)" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -215,8 +227,12 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <span class="badge {{ $detail->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($detail->status) }}</span>
-                    <button wire:click="closeDetail" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition">✕</button>
+                    @if ($detail->trashed())
+                        <span class="badge badge-gray">Archived</span>
+                    @else
+                        <span class="badge {{ $detail->status === 'active' ? 'badge-green' : 'badge-gray' }}">{{ ucfirst($detail->status) }}</span>
+                    @endif
+                    <button wire:click="closeDetail" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
                 </div>
             </div>
 
@@ -250,7 +266,7 @@
                         @foreach ($detailPrograms as $p)
                             <div class="flex items-center gap-2.5 py-2 border-b border-dashed border-gray-100 last:border-0">
                                 <span class="w-1.5 h-1.5 rounded-full bg-lnu-800 shrink-0"></span>
-                                <a href="{{ route('programs.show', $p) }}" class="text-[12px] font-semibold truncate hover:text-lnu-800 transition">{{ $p->title }}</a>
+                                <a href="{{ route('projects.show', $p) }}" class="text-[12px] font-semibold truncate hover:text-lnu-800 transition">{{ $p->title }}</a>
                                 <span class="text-[11px] text-gray-400 ml-auto whitespace-nowrap">since {{ $p->planned_start_date->format('M j, Y') }}</span>
                             </div>
                         @endforeach
@@ -277,10 +293,16 @@
                 <p class="text-[11.5px] text-gray-400 leading-relaxed mb-1">School records are extension partners — programs link them as partners and activity venues rather than through enrollment.</p>
             @endif
 
+            @if ($detail->trashed())
+                <p class="text-[11.5px] text-gray-400 mb-1">This record is archived. Restore it to make it active in the registry again.</p>
+            @endif
+
             <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-gray-100">
                 <button wire:click="closeDetail" class="btn btn-ghost">Close</button>
-                <button wire:click="edit({{ $detail->id }})" class="btn btn-outline"><x-sc.icon name="edit" class="w-4 h-4" />Edit</button>
-                @if (! $detail->trashed())
+                @if ($detail->trashed())
+                    <button wire:click="restore({{ $detail->id }})" class="btn btn-primary"><x-sc.icon name="loader" class="w-4 h-4" />Restore</button>
+                @else
+                    <button wire:click="edit({{ $detail->id }})" class="btn btn-outline"><x-sc.icon name="edit" class="w-4 h-4" />Edit</button>
                     <button wire:click="confirmDelete({{ $detail->id }}); closeDetail" wire:confirm="Archive this community? It can be restored later." class="btn btn-danger-soft"><x-sc.icon name="trash" class="w-4 h-4" />Archive</button>
                 @endif
             </div>

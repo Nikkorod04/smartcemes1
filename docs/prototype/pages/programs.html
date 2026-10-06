@@ -19,33 +19,56 @@
 
   <!-- ===================== PAGE HEADER ===================== -->
   <section class="pt-6 reveal-item">
-    <div class="flex items-end justify-between gap-4">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
       <div>
-        <h2 id="pageHeading" class="text-[20px] font-extrabold tracking-tight leading-tight">Extension Programs</h2>
-        <p id="pageSub" class="text-[12.5px] text-gray-400 font-medium mt-0.5">Portfolio of community extension programs across colleges</p>
+        <h2 class="text-[20px] font-extrabold tracking-tight leading-tight">Extension Programs</h2>
+        <p class="text-[12.5px] text-gray-400 font-medium mt-0.5">
+          Broad thematic programs under the three CESO pillars — each containing one or more extension projects
+        </p>
       </div>
-      <div id="headAction"></div>
+      <div class="flex items-center gap-2">
+        <a href="colleges.html?role=admin" class="btn btn-outline">← Colleges</a>
+        <a href="projects.html?role=admin" class="btn btn-outline">View all projects →</a>
+        <button id="btnNewProgram" class="btn btn-primary">[[folder]] <span class="ml-1">New Program</span></button>
+      </div>
     </div>
   </section>
 
-  <!-- ===================== TOOLBAR + VIEWS ===================== -->
-  <section class="mt-4 reveal-item" x-data="{v:'grid'}">
+  <!-- ===================== HIERARCHY BREADCRUMB ===================== -->
+    <!-- ===================== SUMMARY TILES ===================== -->
+  <section id="summaryTiles" class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4"></section>
 
+  <!-- ===================== TOOLBAR + FILTERS ===================== -->
+  <section class="mt-5" x-data="{v:'grid'}">
     <div class="sc-card p-4 flex flex-wrap items-center gap-3">
-      <label class="relative flex-1 min-w-[230px]">
+      <label class="relative flex-1 min-w-[220px]">
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex">[[search]]</span>
-        <input id="q" class="input !pl-9" placeholder="Search program, code, lead, or community…">
+        <input id="q" class="input !pl-9" placeholder="Search program, thrust, or college…">
       </label>
 
-      <div id="statusChips" class="flex flex-wrap items-center gap-2">
-        <button class="chip on" data-status="All">All</button>
-        <button class="chip" data-status="Ongoing">Ongoing</button>
-        <button class="chip" data-status="Completed">Completed</button>
-        <button class="chip" data-status="Draft">Draft</button>
-        <button class="chip" data-status="Cancelled">Cancelled</button>
+      <!-- Pillar filter -->
+      <div id="pillarChips" class="flex flex-wrap items-center gap-2">
+        <button class="chip on" data-pillar="All">All pillars</button>
+        <button class="chip" data-pillar="Social">Social</button>
+        <button class="chip" data-pillar="Economic">Economic</button>
+        <button class="chip" data-pillar="Environmental">Environmental</button>
       </div>
 
+      <!-- College filter -->
+      <select id="collegeSel" class="input !w-[170px]">
+        <option value="All">All colleges</option>
+        <option value="CAS">CAS — Arts &amp; Sciences</option>
+        <option value="COE">COE — Education</option>
+        <option value="CME">CME — Management</option>
+      </select>
+
       <div class="ml-auto flex items-center gap-3">
+        <select id="sortSel" class="input !w-[190px] text-[12px]">
+          <option value="hours">Sort: training hours rendered</option>
+          <option value="projects">Sort: most projects</option>
+          <option value="budget">Sort: budget</option>
+          <option value="title">Sort: A–Z</option>
+        </select>
         <div class="flex bg-gray-100 rounded-xl p-1">
           <button @click="v='grid'" title="Grid view"
             :class="v==='grid' ? 'bg-white shadow-sm text-lnu-800' : 'text-gray-400 hover:text-gray-600'"
@@ -56,7 +79,6 @@
             <span class="w-[18px] h-[18px] inline-flex"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></span>
           </button>
         </div>
-        <div id="toolAction"></div>
       </div>
     </div>
 
@@ -70,12 +92,12 @@
       <table class="sc-table">
         <thead>
           <tr>
-            <th>Code</th>
             <th>Program</th>
-            <th>Lead</th>
-            <th>Community</th>
-            <th>Budget Utilization</th>
-            <th>Status</th>
+            <th>Pillar</th>
+            <th>Lead College</th>
+            <th class="!text-right">Projects</th>
+            <th class="!text-right">Training Hours</th>
+            <th class="!text-right">Budget</th>
             <th></th>
           </tr>
         </thead>
@@ -84,25 +106,31 @@
     </div>
   </section>
 
-  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
 </main>
 
-<!-- NEW PROGRAM MODAL (Admin) -->
+<!-- ===================== NEW PROGRAM MODAL ===================== -->
 <div id="mNewProgram" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
   <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeNP()"></div>
   <div class="sc-modal relative max-w-2xl mx-auto mt-16 sc-card p-6 shadow-pop">
     <h3 class="font-bold text-[15px] mb-1">New Extension Program</h3>
-    <p class="text-[12px] text-gray-400 font-medium mb-4">Created by the Director's office. Programs start as <span class="font-semibold text-charcoal">draft</span>; faculty submit proposals into existing programs.</p>
+    <p class="text-[12px] text-gray-400 font-medium mb-4">
+      Programs are the <span class="font-semibold text-charcoal">broad</span> thematic level. Faculty then submit projects into an existing program.
+    </p>
     <div class="grid grid-cols-2 gap-3">
-      <div class="col-span-2"><label class="label">Title *</label><input id="npTitle" class="input" placeholder="e.g. KABUHIAN: Livelihood Skills Training"></div>
-      <div class="col-span-2"><label class="label">Description</label><textarea id="npDesc" rows="2" class="input" placeholder="Short description of the program"></textarea></div>
-      <div class="col-span-2"><label class="label">Goals (narrative)</label><textarea id="npGoals" rows="2" class="input" placeholder="High-level goals — measurable objectives are added in the program hub's results framework"></textarea></div>
-      <div><label class="label">Planned start *</label><input id="npStart" type="date" class="input"></div>
-      <div><label class="label">Planned end *</label><input id="npEnd" type="date" class="input"></div>
-      <div><label class="label">Target beneficiaries *</label><input id="npTarget" type="number" class="input" placeholder="e.g. 120"></div>
-      <div><label class="label">Allocated budget (₱)</label><input id="npBudget" type="number" class="input" placeholder="e.g. 45000"></div>
-      <div><label class="label">Program lead</label><select id="npLead" class="input"></select></div>
-      <div><label class="label">Primary community</label><select id="npCommunity" class="input"></select></div>
+      <div class="col-span-2"><label class="label">Program title *</label><input id="npTitle" class="input" placeholder="e.g. Health &amp; Community Wellness"></div>
+      <div class="col-span-2"><label class="label">Description</label><textarea id="npDesc" rows="2" class="input" placeholder="What this program covers across the community"></textarea></div>
+      <div><label class="label">Pillar *</label>
+        <select id="npPillar" class="input">
+          <option>Social</option><option>Economic</option><option>Environmental</option>
+        </select>
+      </div>
+      <div><label class="label">Lead college *</label>
+        <select id="npCollege" class="input"></select>
+      </div>
+      <div><label class="label">Target training hours / year *</label><input id="npHours" type="number" class="input" placeholder="e.g. 400"></div>
+      <div><label class="label">Target budget / year (₱) *</label><input id="npBudget" type="number" class="input" placeholder="e.g. 120000"></div>
+      <div class="col-span-2"><label class="label">CESO thrust it responds to</label><input id="npThrust" class="input" placeholder="e.g. Reading &amp; Numeracy Development"></div>
     </div>
     <div class="flex justify-end gap-2 mt-5">
       <button class="btn btn-ghost" onclick="closeNP()">Cancel</button>
@@ -116,152 +144,216 @@
 <script src="../assets/js/layout.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const ROLE = document.body.dataset.role || 'admin';
-  const P = window.DATA.programs;
+  const D = window.DATA;
   const ico = (n,c) => `<span class="${c} inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${SC.icons[n]}</span>`;
-  const GRADS = [
-    'from-lnu-800 to-lnu-500',
-    'from-gold-400 to-gold-600',
-    'from-emerald-500 to-teal-600',
-    'from-blue-700 to-indigo-500',
-    'from-rose-500 to-orange-400',
-    'from-violet-600 to-fuchsia-500'
-  ];
-  const BADGE = { Ongoing:'badge-green', Completed:'badge-green', Draft:'badge-yellow', Cancelled:'badge-red' };
+  const PILLAR_TONE = { Social:'#2547eb', Economic:'#10b981', Environmental:'#15803d' };
+  const STATUS_BADGE = { Ongoing:'badge-green', Draft:'badge-yellow', Completed:'badge-green' };
 
-  /* ---------- Role variants ---------- */
-  const IS_FAC = ROLE === 'faculty';
-  if (IS_FAC) { location.replace('my-programs.html?role=faculty'); return; }
-  const BASE = P.map(p => ({ p }));
-  headAction.innerHTML = `<button id="btnNew" class="btn btn-primary">${ico('folder','w-4 h-4')} New Program</button>`;
-  toolAction.innerHTML = '<button id="btnExport" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Export</button>';
+  /* ---------------- Summary tiles ---------------- */
+  const PG = D.programs;
+  const totHours = PG.reduce((s,p) => s + p.renderedTrainingHours, 0);
+  const totHoursTarget = PG.reduce((s,p) => s + p.trainingHoursTarget, 0);
+  const totUtil = PG.reduce((s,p) => s + p.utilized, 0);
+  const totBudget = PG.reduce((s,p) => s + p.budgetAllocated, 0);
+  const totReached = PG.reduce((s,p) => s + p.reached, 0);
 
-  /* ---------- State ---------- */
-  let status = 'All', query = '';
+  function tile(icon, tone, value, label, cap, extra) {
+    return `<div class="sc-card p-5 reveal-item">
+      <div class="flex items-center justify-between">
+        <span class="w-10 h-10 rounded-xl ${tone.bg} ${tone.fg} flex items-center justify-center">${ico(icon,'w-5 h-5')}</span>
+        ${extra || ''}
+      </div>
+      <p class="mt-4 text-[24px] font-extrabold tracking-tight leading-none">${value}</p>
+      <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">${label}</p>
+      <p class="text-[11px] text-gray-400 font-medium mt-2">${cap}</p>
+    </div>`;
+  }
 
-  const hay = x => `${x.p.code} ${x.p.title} ${x.p.lead.name} ${x.p.community.name} ${x.p.community.municipality}`.toLowerCase();
-  const filtered = () => BASE.filter(x =>
-    (status === 'All' || x.p.status === status) &&
-    (!query || hay(x).includes(query))
-  );
+  document.getElementById('summaryTiles').innerHTML = [
+    tile('folder', { bg:'bg-lnu-50', fg:'text-lnu-800' }, PG.length,
+         'Extension Programs', 'Across the 3 CESO pillars'),
+    tile('clipboard', { bg:'bg-blue-50', fg:'text-blue-700' },
+         D.projects.length, 'Extension Projects',
+         'Nested under these programs'),
+    tile('clock', { bg:'bg-emerald-50', fg:'text-emerald-600' },
+         SC.hours(totHours), 'Training Hours Rendered',
+         `of ${SC.num(totHoursTarget)} annual target · ${SC.pct(totHours, totHoursTarget)}%`,
+         `<span class="badge ${SC.attainBadge(SC.pct(totHours,totHoursTarget))}">${SC.pct(totHours,totHoursTarget)}%</span>`),
+    tile('wallet', { bg:'bg-gold-50', fg:'text-gold-700' },
+         '₱' + SC.num(totUtil), 'Budget Utilized',
+         `of ₱${SC.num(totBudget)} allocated`,
+         `<span class="badge ${SC.attainBadge(SC.pct(totUtil,totBudget))}">${SC.pct(totUtil,totBudget)}%</span>`)
+  ].join('');
 
-  /* ---------- Card template ---------- */
-  function cardHTML(x, i) {
-    const p = x.p, grad = GRADS[i % GRADS.length];
-    const acr = (p.title.split(':')[0] || '').toUpperCase();
-    const util = SC.pct(p.utilized, p.budget);
-    const bar = util >= 90 ? 'bg-emerald-500' : util === 0 ? 'bg-gray-300' : 'bg-lnu-600';
+  /* ---------------- State ---------------- */
+  let pillar = 'All', college = 'All', query = '', sort = 'hours';
+
+  function sortFn(a, b) {
+    if (sort === 'projects') return b.projectCount - a.projectCount;
+    if (sort === 'budget')   return b.budgetAllocated - a.budgetAllocated;
+    if (sort === 'title')    return a.title.localeCompare(b.title);
+    return b.renderedTrainingHours - a.renderedTrainingHours;
+  }
+
+  const filtered = () => PG
+    .filter(p =>
+      (pillar === 'All' || p.pillar === pillar) &&
+      (college === 'All' || p.college === college) &&
+      (!query || `${p.code} ${p.title} ${p.blurb} ${p.thrust} ${p.collegeName}`.toLowerCase().includes(query))
+    )
+    .sort(sortFn);
+
+  /* ---------------- Card ---------------- */
+  function cardHTML(p, i) {
+    const hp = p.hoursPct, bp = p.budgetAllocated ? SC.pct(p.utilized, p.budgetAllocated) : 0;
+    const accent = PILLAR_TONE[p.pillar] || '#003599';
     return `
     <article class="sc-card sc-card-hover overflow-hidden flex flex-col">
-      <div class="relative h-20 bg-gradient-to-r ${grad} overflow-hidden shrink-0">
-        <span class="absolute right-16 -top-9 w-24 h-24 rounded-full bg-white/10"></span>
-        <span class="absolute -right-3 -bottom-7 text-[62px] font-black text-white/15 leading-none select-none">${acr}</span>
-      </div>
-      <div class="p-4 flex flex-col flex-1">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide">${p.code}</span>
-          <span class="badge ${BADGE[p.status]}">${p.status}</span>
-        </div>
-        <h3 class="mt-2.5 font-bold text-[14px] leading-snug line-clamp-2 min-h-[40px]">${p.title}</h3>
-        <div class="mt-2 flex items-center gap-2 min-w-0">
-          <span class="avatar w-6 h-6 text-[8.5px]">${p.lead.initials}</span>
-          <span class="text-[11.5px] text-gray-600 font-medium truncate">${p.lead.name}</span>
-          ${x.tag ? `<span class="ml-auto badge ${x.tag === 'Program Lead' ? 'badge-gold' : 'badge-gray'} !text-[9.5px] !px-2 !py-0.5">${x.tag}</span>` : ''}
-        </div>
-        <p class="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-400">${ico('pin','w-3.5 h-3.5')} ${p.community.name} · ${p.community.municipality}</p>
-        <div class="pt-3 border-t border-gray-50 mt-auto">
-          <div class="flex items-center justify-between text-[11px] mb-1.5">
-            <span class="text-gray-400 font-medium">Budget · ${SC.money(p.utilized)} of ${SC.money(p.budget)}</span>
-            <span class="font-bold text-charcoal">${util}%</span>
+      <div class="h-1.5 shrink-0" style="background:${accent}"></div>
+      <div class="p-5 flex flex-col flex-1">
+
+        <div class="flex items-start justify-between gap-3">
+          <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide font-mono">${p.code}</span>
+          <div class="flex items-center gap-1.5">
+            ${SC.pillarChip(p.pillar)}
           </div>
-          <div class="progress"><span style="width:${util}%" class="${bar}"></span></div>
-          <div class="flex items-center justify-between mt-2.5">
-            <p class="text-[10.5px] text-gray-400 font-medium">${ico('people','w-3 h-3')} ${p.reached}/${p.target} reached</p>
-            <a href="program-detail.html?role=${ROLE}&program=${p.code}" onclick="event.stopPropagation()"
-               class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Details</a>
+        </div>
+
+        <h3 class="mt-2.5 font-bold text-[14.5px] leading-snug">${p.title}</h3>
+        <p class="mt-1.5 text-[11.5px] text-gray-500 leading-relaxed line-clamp-2 min-h-[34px]">${p.blurb}</p>
+
+        <div class="mt-3 flex items-center gap-2">
+          ${SC.collegePill(p.college)}
+          <span class="text-[10.5px] text-gray-400 font-medium truncate">${p.thrust}</span>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-gray-50 mt-auto space-y-3">
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <p class="text-[16px] font-extrabold tracking-tight leading-none">${SC.hours(p.renderedTrainingHours)}</p>
+              <p class="text-[10px] text-gray-400 font-semibold mt-1">Training hrs</p>
+              <p class="text-[9.5px] text-gray-300 font-medium">of ${SC.num(p.trainingHoursTarget)}</p>
+            </div>
+            <div>
+              <p class="text-[16px] font-extrabold tracking-tight leading-none">${p.projectCount}</p>
+              <p class="text-[10px] text-gray-400 font-semibold mt-1">Project${p.projectCount === 1 ? '' : 's'}</p>
+              <p class="text-[9.5px] text-gray-300 font-medium">${p.reached} reached</p>
+            </div>
+            <div>
+              <p class="text-[16px] font-extrabold tracking-tight leading-none">₱${SC.num(Math.round(p.utilized / 1000))}k</p>
+              <p class="text-[10px] text-gray-400 font-semibold mt-1">Budget</p>
+              <p class="text-[9.5px] text-gray-300 font-medium">${bp}% of target</p>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between text-[10.5px] mb-1">
+              <span class="text-gray-400 font-semibold">Training hours vs annual target</span>
+              <span class="font-bold ${hp >= 100 ? 'text-emerald-600' : 'text-charcoal'}">${hp}%</span>
+            </div>
+            <div class="progress"><span style="width:${Math.min(hp,100)}%" class="${SC.attainTone(hp)}"></span></div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <span class="badge ${STATUS_BADGE[p.status] || 'badge-gray'}">${p.status}</span>
+            <a href="projects.html?role=admin&program=${p.id}" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">View projects →</a>
           </div>
         </div>
       </div>
     </article>`;
   }
 
-  /* ---------- Row template ---------- */
-  function rowHTML(x) {
-    const p = x.p, util = SC.pct(p.utilized, p.budget);
+  /* ---------------- Row ---------------- */
+  function rowHTML(p) {
+    const hp = p.hoursPct, bp = p.budgetAllocated ? SC.pct(p.utilized, p.budgetAllocated) : 0;
     return `
-    <tr class="cursor-pointer" title="Open program details" onclick="location.href='program-detail.html?role=${ROLE}&program=${p.code}'">
-      <td class="font-mono text-[12px] text-gray-500">${p.code}</td>
-      <td class="max-w-[260px]"><p class="font-semibold text-[13px] truncate">${p.title}</p></td>
-      <td><span class="inline-flex items-center gap-2"><span class="avatar w-6 h-6 text-[8.5px]">${p.lead.initials}</span><span class="text-[12.5px] whitespace-nowrap">${p.lead.name.replace('Prof. ','')}</span>${x.tag ? `<span class="badge ${x.tag === 'Program Lead' ? 'badge-gold' : 'badge-gray'} !text-[9.5px] !px-2 !py-0.5">${x.tag}</span>` : ''}</span></td>
-      <td class="text-[12.5px]">${p.community.name}<span class="block text-[10.5px] text-gray-400">${p.community.municipality}</span></td>
+    <tr class="cursor-pointer" title="View this program's projects" onclick="location.href='projects.html?role=admin&program=${p.id}'">
+      <td class="max-w-[300px]">
+        <p class="font-semibold text-[13px]">${p.title}</p>
+        <p class="text-[10.5px] text-gray-400 font-medium font-mono">${p.code} · ${p.thrust}</p>
+      </td>
+      <td>${SC.pillarChip(p.pillar)}</td>
+      <td>${SC.collegePill(p.college)}</td>
+      <td class="!text-right font-semibold">${p.projectCount}</td>
       <td class="w-[150px]">
         <div class="flex items-center gap-2">
-          <div class="progress flex-1"><span style="width:${util}%" class="${util >= 90 ? 'bg-emerald-500' : util === 0 ? 'bg-gray-300' : 'bg-lnu-600'}"></span></div>
-          <span class="text-[11.5px] font-bold w-8 text-right">${util}%</span>
+          <div class="progress flex-1"><span style="width:${Math.min(hp,100)}%" class="${SC.attainTone(hp)}"></span></div>
+          <span class="text-[11.5px] font-bold w-12 text-right">${SC.hours(p.renderedTrainingHours)}<span class="font-normal text-gray-400">/${SC.num(p.trainingHoursTarget)}</span></span>
         </div>
       </td>
-      <td><span class="badge ${BADGE[p.status]}">${p.status}</span></td>
-      <td class="text-right"><a href="program-detail.html?role=${ROLE}&program=${p.code}" onclick="event.stopPropagation()" class="text-[12px] font-bold text-lnu-800 hover:text-lnu-600 transition">Details →</a></td>
+      <td class="!text-right">
+        <span class="font-semibold">₱${SC.num(p.utilized)}</span>
+        <span class="block text-[10.5px] text-gray-400">of ₱${SC.num(p.budgetAllocated)} allocated · ${bp}%</span>
+      </td>
+      <td class="text-right"><a href="projects.html?role=admin&program=${p.id}" onclick="event.stopPropagation()" class="text-[12px] font-bold text-lnu-800 hover:text-lnu-600 transition">Projects →</a></td>
     </tr>`;
   }
 
-  const EMPTY_GRID = `
-    <div class="col-span-full sc-card p-10 text-center">
-      <span class="mx-auto w-12 h-12 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center">${ico('folder','w-6 h-6')}</span>
-      <p class="mt-3 font-bold text-[13.5px]">No programs match your filters</p>
-      <p class="text-[12px] text-gray-400 mt-1">Try a different keyword or reset the status chips.</p>
-    </div>`;
-
   function render() {
     const list = filtered();
-    countLine.textContent = `Showing ${list.length} of ${BASE.length} ${IS_FAC ? 'assignments' : 'programs'}${query ? ` for “${query}”` : ''}${status !== 'All' ? ` · ${status}` : ''}`;
-    gridView.innerHTML = list.length ? list.map(cardHTML).join('') : EMPTY_GRID;
+    countLine.textContent = `Showing ${list.length} of ${PG.length} programs`
+      + (pillar !== 'All' ? ` · ${pillar}` : '')
+      + (college !== 'All' ? ` · ${college}` : '')
+      + (query ? ` for “${query}”` : '');
+
+    gridView.innerHTML = list.length ? list.map(cardHTML).join('') : `
+      <div class="col-span-full sc-card p-10 text-center">
+        <span class="mx-auto w-12 h-12 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center">${ico('folder','w-6 h-6')}</span>
+        <p class="mt-3 font-bold text-[13.5px]">No programs match your filters</p>
+        <p class="text-[12px] text-gray-400 mt-1">Try a different keyword, pillar, or college.</p>
+      </div>`;
+
     listView.innerHTML = list.length ? list.map(rowHTML).join('')
-      : '<tr><td colspan="7" class="text-center py-10 text-[12.5px] text-gray-400">Nothing to show — adjust your search or status filter.</td></tr>';
+      : '<tr><td colspan="7" class="text-center py-10 text-[12.5px] text-gray-400">Nothing to show — adjust your filters.</td></tr>';
   }
 
-  /* ---------- Wiring ---------- */
-  q.addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
-  statusChips.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
-    statusChips.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-    ch.classList.add('on');
-    status = ch.dataset.status;
-    render();
+  /* ---------------- Wiring ---------------- */
+  document.getElementById('q').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+  document.getElementById('collegeSel').addEventListener('change', e => { college = e.target.value; render(); });
+  document.getElementById('sortSel').addEventListener('change', e => { sort = e.target.value; render(); });
+  document.getElementById('pillarChips').querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
+    document.getElementById('pillarChips').querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    ch.classList.add('on'); pillar = ch.dataset.pillar; render();
   }));
 
-  const bn = document.getElementById('btnNew');
-  if (bn) bn.onclick = openNP;
-  const bx = document.getElementById('btnExport');
-  if (bx) bx.onclick = () => SC.toast('Program portfolio exported (demo)','success');
-
-  /* ---------- New Program modal ---------- */
-  function openNP() {
-    npLead.innerHTML = window.DATA.faculty.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-    npCommunity.innerHTML = window.DATA.communities.map(c => `<option value="${c.id}">${c.name} · ${c.municipality}</option>`).join('');
+  /* ---------------- New Program modal ---------------- */
+  document.getElementById('btnNewProgram').onclick = () => {
+    document.getElementById('npCollege').innerHTML = D.colleges
+      .map(c => `<option value="${c.code}">${c.code} — ${c.short}</option>`).join('');
     document.getElementById('mNewProgram').classList.remove('hidden');
-  }
-  function closeNP() { document.getElementById('mNewProgram').classList.add('hidden'); }
-  window.closeNP = closeNP;
-  function saveNewProgram() {
-    const title = npTitle.value.trim(), start = npStart.value, end = npEnd.value, target = npTarget.value;
-    if (!title || !start || !end || !target) { SC.toast('Title, planned dates, and target beneficiaries are required','error'); return; }
-    const F = window.DATA.faculty, C = window.DATA.communities;
-    const lead = F.find(f => f.id === +npLead.value) || F[0];
-    const community = C.find(c => c.id === +npCommunity.value) || C[0];
-    const nextNum = Math.max(...P.map(p => +p.code.split('-')[2])) + 1;
-    const code = 'EXT-2026-' + String(nextNum).padStart(3,'0');
-    const fd = iso => { const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'2-digit',year:'numeric'}); };
-    window.DATA.programEnrollments[code] = [];
-    P.push({
-      code, title, description: npDesc.value.trim(), goal: npGoals.value.trim(),
-      lead, community, status:'Draft',
-      budget: +npBudget.value || 0, utilized: 0, target: +target, reached: 0,
-      start: fd(start), end: fd(end), progress: 0, overAllocated: false
-    });
-    closeNP();
-    SC.toast(`Draft program created (${code}) — manage it in its hub`,'success');
+  };
+  window.closeNP = () => document.getElementById('mNewProgram').classList.add('hidden');
+
+  window.saveNewProgram = () => {
+    const title = document.getElementById('npTitle').value.trim();
+    const hours = document.getElementById('npHours').value;
+    const budget = document.getElementById('npBudget').value;
+    if (!title || !hours || !budget) { SC.toast('Title, target training hours, and target budget are required','error'); return; }
+
+    const cc = document.getElementById('npCollege').value;
+    const seq = PG.length + 1;
+    const id = 'PROG-' + String(seq).padStart(2,'0');
+    const code = 'PROG-' + title.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase();
+
+    const pg = {
+      id, code, title,
+      pillar: document.getElementById('npPillar').value,
+      college: cc,
+      blurb: document.getElementById('npDesc').value.trim() || 'Newly drafted program — description pending.',
+      full: document.getElementById('npDesc').value.trim(),
+      thrust: document.getElementById('npThrust').value.trim() || '—',
+      status:'Draft',
+      targetHours: +hours, budget: +budget,
+      projectCount:0, trainingHoursTarget:0, renderedTrainingHours:0,
+      budgetAllocated:0, utilized:0, target:0, reached:0, trainors:0, hoursPct:0
+    };
+    pg.collegeName = (D.colleges.find(c => c.code === cc) || {}).name || '—';
+    PG.push(pg);
+
+    window.closeNP();
+    SC.toast(`Draft program created (${code}) — add projects to it from the Projects page`,'success');
     render();
-  }
+  };
 
   render();
 });

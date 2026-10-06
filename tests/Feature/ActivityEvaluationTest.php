@@ -6,7 +6,7 @@ use App\Livewire\Programs\Hub;
 use App\Models\Activity;
 use App\Models\ActivityImport;
 use App\Models\Beneficiary;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\ProgramObjective;
 use App\Models\User;
@@ -38,7 +38,7 @@ class ActivityEvaluationTest extends TestCase
         $facultyUser = User::factory()->create(['role' => 'faculty']);
         $faculty = Faculty::create(['user_id' => $facultyUser->id, 'employee_id' => 'LNU-2026-0009']);
 
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-010',
             'title' => 'Evaluation Import Program',
             'planned_start_date' => '2026-01-01',
@@ -49,7 +49,7 @@ class ActivityEvaluationTest extends TestCase
         ]);
 
         $activity = Activity::create(array_merge([
-            'extension_program_id' => $program->id,
+            'extension_project_id' => $program->id,
             'title' => 'Skills Training',
             'planned_start_date' => '2026-03-01',
             'planned_end_date' => '2026-03-01',
@@ -107,7 +107,7 @@ class ActivityEvaluationTest extends TestCase
     protected function openParsed(array $data, UploadedFile $file)
     {
         return Livewire::actingAs($data['secretary'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openRecords', $data['activity']->id)
             ->call('setRecordsTab', 'evaluation')
             ->set('evaluationImportFile', $file)
@@ -359,7 +359,7 @@ class ActivityEvaluationTest extends TestCase
         $this->assertSame(20.0, $kpi->knowledgeGain($data['program']));
 
         $objective = ProgramObjective::create([
-            'extension_program_id' => $data['program']->id,
+            'extension_project_id' => $data['program']->id,
             'objective' => 'Achieve at least 15 points knowledge gain',
             'kpi_metric' => 'knowledge_gain',
             'target_value' => 15,
@@ -376,7 +376,7 @@ class ActivityEvaluationTest extends TestCase
         // One Testable per call — an aborted action invalidates the instance.
         foreach (['parseEvaluationImport', 'confirmEvaluationImport'] as $action) {
             Livewire::actingAs($data['facultyUser'])
-                ->test(Hub::class, ['program' => $data['program']])
+                ->test(Hub::class, ['project' => $data['program']])
                 ->call($action)
                 ->assertForbidden();
         }

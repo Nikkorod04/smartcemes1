@@ -7,7 +7,8 @@ use App\Models\Activity;
 use App\Models\Attendance;
 use App\Models\Beneficiary;
 use App\Models\BudgetUtilization;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
+use App\Models\Faculty;
 use App\Models\ProgramNarrative;
 use App\Models\ProgramObjective;
 use App\Models\User;
@@ -19,9 +20,9 @@ class RedesignUiTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function program(array $overrides = []): ExtensionProgram
+    protected function program(array $overrides = []): ExtensionProject
     {
-        return ExtensionProgram::create(array_merge([
+        return ExtensionProject::create(array_merge([
             'code' => 'EXT-2026-070',
             'title' => 'Redesign Test Program',
             'planned_start_date' => '2026-01-01',
@@ -44,10 +45,10 @@ class RedesignUiTest extends TestCase
         ]);
     }
 
-    protected function activity(ExtensionProgram $program, array $overrides = []): Activity
+    protected function activity(ExtensionProject $program, array $overrides = []): Activity
     {
         return Activity::create(array_merge([
-            'extension_program_id' => $program->id,
+            'extension_project_id' => $program->id,
             'title' => 'First Aid Training',
             'planned_start_date' => '2026-03-10',
             'planned_end_date' => '2026-03-10',
@@ -57,18 +58,53 @@ class RedesignUiTest extends TestCase
         ], $overrides));
     }
 
-    public function test_admin_dashboard_renders_kpi_markers_and_top10_reach(): void
+    /**
+     * A role that cannot reach a route must not be shown a link to it.
+     *
+     * `hub-overview`'s "University pool ->" pointed at `targets.index`, which is
+     * admin-only, while the Targets & Allocation card carried NO role guard — so
+     * faculty and secretary both saw a link that 403'd. Found by sweeping every
+     * `route()` call in the views against each route's role middleware; nothing in
+     * the suite could see it, because `RouteSurfaceTest` walks routes by role but
+     * never inspects the links a page renders.
+     */
+    public function test_the_hub_hides_the_university_pool_link_from_non_admins(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $secretary = User::factory()->create(['role' => 'secretary']);
+        $lead = Faculty::factory()->create();
+        $program = $this->program(['program_lead_id' => $lead->id]);
+
+        $poolLink = route('targets.index');
+
+        // The Director keeps it — that page is theirs.
+        Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
+            ->assertSee($poolLink);
+
+        // Neither of the other two may be offered a link they cannot follow.
+        Livewire::actingAs($secretary)->test(Hub::class, ['project' => $program])
+            ->assertDontSee($poolLink);
+
+        Livewire::actingAs($lead->user)->test(Hub::class, ['project' => $program])
+            ->assertDontSee($poolLink);
+    }
+
+    public function test_admin_dashboard_renders_the_r5_target_kpis_and_performance_leaders(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $program = $this->program();
+        // R4 / D-R7: the dashboard's KPI row now reports training hours against
+        // the annual pool instead of the objective-status doughnut. The
+        // ProgramObjective below is deliberately created to prove the dashboard
+        // ignores it (retained unread, R-Q2).
         ProgramObjective::create([
-            'extension_program_id' => $program->id,
+            'extension_project_id' => $program->id,
             'objective' => 'Keep budget on target',
             'kpi_metric' => 'budget_utilization',
             'target_value' => 90,
         ]);
         BudgetUtilization::create([
-            'extension_program_id' => $program->id,
+            'extension_project_id' => $program->id,
             'item_name' => 'Materials',
             'amount' => 500,
             'date_used' => '2026-03-01',
@@ -76,7 +112,7 @@ class RedesignUiTest extends TestCase
 
         $overAllocated = $this->program(['code' => 'EXT-2026-071', 'allocated_budget' => 100]);
         BudgetUtilization::create([
-            'extension_program_id' => $overAllocated->id,
+            'extension_project_id' => $overAllocated->id,
             'item_name' => 'Overrun',
             'amount' => 150,
             'date_used' => '2026-03-02',
@@ -93,13 +129,39 @@ class RedesignUiTest extends TestCase
             ]);
         }
 
+        // R5: the dashboard was rebuilt on the prototype's dash-* primitives.
+        // The R4 KPI row and Performance Leaders survive; the 8.6 surfaces and
+        // the R5-removed Community Reach chart do not.
         $this->actingAs($admin)->get('/dashboard')->assertOk()
-            ->assertSee('Objectives Achieved')
-            ->assertSee('doughnut', false)
-            ->assertSee('Others (2 barangays)')
-            ->assertSee('left:90%')
-            ->assertSee('#ef4444', false)
-            ->assertSee('mini-seg', false);
+            ->assertSee('Training Hours Rendered')
+            ->assertSee('Budget Utilized of')
+            ->assertSee('Pending Approvals')
+            // R5 charts: exactly the two the prototype keeps (hours + budget).
+            ->assertSee('Training Hours vs Target')
+            ->assertSee('Budget Utilized vs Allocated Budget')
+            /* The over-allocation colour moved OUT of the inline Chart.js config and
+               into the stylesheet (owner request 2026-09-25) — the bullet row now
+               marks the state with a class, so assert the STATE, not the hex.
+               HANDA is seeded over its allocated budget, so it must appear. */
+            ->assertSee('bullet-fill is-over', false)
+            /* Stage 3 (owner request 2026-09-25): every leaderboard row now carries
+               a magnitude bar, and the 🥇🥈🥉 medals are gone — the rank is `#N`. */
+            ->assertSee('leader-bar-fill', false)
+            ->assertDontSee('🥇')
+            ->assertSee('#1')
+            ->assertSee('mini-seg', false)
+            // R5 §5 step 1: the two rankings the Director acts on.
+            ->assertSee('Performance Leaders')
+            ->assertSee('Most Performing Projects')
+            ->assertSee('Most Performing Faculty')
+            // R5: the Community Reach chart and its Others grouping are GONE.
+            ->assertDontSee('Community Reach')
+            ->assertDontSee('Others (2 barangays)')
+            ->assertDontSee('Trainees Reached')
+            // The Action Center was removed by the P0m prototype pass.
+            ->assertDontSee('Action Center')
+            ->assertDontSee('Objectives Achieved')
+            ->assertDontSee('<h3>KPI Scorecard vs Targets</h3>', false);
     }
 
     public function test_dashboard_renders_narrative_summary_text(): void
@@ -107,7 +169,7 @@ class RedesignUiTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $program = $this->program();
         ProgramNarrative::create([
-            'extension_program_id' => $program->id,
+            'extension_project_id' => $program->id,
             'generated_by' => $admin->id,
             'status' => 'completed',
             'summary' => 'Households trained on disaster preparedness with strong uptake.',
@@ -121,13 +183,18 @@ class RedesignUiTest extends TestCase
             ->assertSee('gemini-3.6-flash');
     }
 
-    public function test_hub_scorecard_renders_live_metrics_with_objective_markers(): void
+    public function test_hub_performance_renders_training_hours_and_budget_against_targets(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $program = $this->program();
+        // R4 / D-R7: the 8.6 KPI tiles are gone. This is the replacement — the
+        // quantities the Director tracks. Hours carry an annual target; budget
+        // does NOT (owner decision 2026-09-26) — its allocation is the basis.
+        $program->update(['annual_target_hours' => 100]);
+
         foreach ([['attendance_consistency', 80], ['community_reach', 50]] as [$metric, $target]) {
             ProgramObjective::create([
-                'extension_program_id' => $program->id,
+                'extension_project_id' => $program->id,
                 'objective' => 'Objective '.$metric,
                 'kpi_metric' => $metric,
                 'target_value' => $target,
@@ -138,6 +205,8 @@ class RedesignUiTest extends TestCase
             'pre_assessment_score' => 40,
             'post_assessment_score' => 55,
             'satisfaction_rating' => 4.5,
+            'no_of_days' => 1.0,
+            'participants' => 10,
         ]);
         $beneficiary = $this->beneficiary(1, 'San Jose');
         Attendance::create([
@@ -147,26 +216,124 @@ class RedesignUiTest extends TestCase
             'status' => 'present',
         ]);
 
-        Livewire::actingAs($admin)->test(Hub::class, ['program' => $program])
-            ->assertSee('KPI Scorecard vs Targets')
-            ->assertSee('Attendance Consistency')
-            ->assertSee('left:80%')
-            ->assertSee('4.5/5')
-            ->assertSee('Attendees')
-            ->assertSee("indexAxis: 'y'", false)
-            ->assertSee('+15.0 pts')
-            ->assertSee('Cost per Beneficiary');
+        Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
+            ->assertSee('Training Hours vs Annual Target')
+            ->assertSee('Budget vs Allocated Budget')
+            ->assertSee('Training hours rendered')
+            ->assertSee('Trainors assigned')
+            ->assertSee('Trainees / beneficiaries reached')
+            ->assertSee('Activities completed')
+            ->assertSee('Attendance per Activity')
+            // R4 / D-R3: the formula is stated on the surface, not the 8.6 vocabulary.
+            ->assertSee('no × 8')
+            ->assertSee('completed activit')
+            ->assertDontSee('KPI Scorecard vs Targets')
+            ->assertDontSee('Cost per Beneficiary')
+            // 2026-09-28: the Overview keeps exactly ONE budget surface — the chart.
+            // The Budget stat tile and the 4-row key/value list under the chart were
+            // both removed as duplicates of it. The chart is now a doughnut (owner
+            // decision; it carries a documented caveat — see hub.blade.php).
+            ->assertDontSee('utilized of allocated budget')
+            ->assertDontSee('Utilized to date')
+            ->assertSee("type: 'doughnut'", false)
+            ->assertDontSee('Knowledge Gain');
     }
 
-    public function test_hub_scorecard_hides_markers_without_objective_targets(): void
+    public function test_hub_performance_states_no_target_rather_than_printing_zero(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $program = $this->program(); // no annual targets set
+
+        Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
+            ->assertSee('Training Hours vs Annual Target')
+            ->assertSee('No annual target set')
+            ->assertDontSee('KPI Scorecard vs Targets');
+    }
+
+    protected function completedNarrative(ExtensionProject $program, User $admin): ProgramNarrative
+    {
+        return ProgramNarrative::create([
+            'extension_project_id' => $program->id,
+            'generated_by' => $admin->id,
+            'status' => 'completed',
+            'summary' => 'BUSOG is progressing well across both feeding cycles.',
+            'health_label' => 'on-track',
+            'risks' => ['Rice supply volatility may affect cycle 3.'],
+            'recommendations' => [
+                ['priority' => 'High', 'action' => 'Lock in a second rice supplier', 'rationale' => 'Single-supplier dependency flagged.'],
+            ],
+            'raw_extracted_data' => [
+                'program' => ['code' => $program->code, 'status' => 'ongoing', 'period' => '2026-01-01 to 2026-12-31', 'communities' => []],
+                'objectives' => [
+                    'total' => 1,
+                    'status_counts' => ['achieved' => 1, 'on_track' => 0, 'not_met' => 0, 'not_started' => 0],
+                    'list' => [[
+                        'objective' => 'Reach 30 pupils', 'kpi_metric' => 'community_reach',
+                        'baseline' => 0, 'target' => 30, 'actual' => 30, 'status' => 'achieved', 'target_date' => '2026-12-31',
+                    ]],
+                ],
+                'kpis' => ['community_reach' => 30, 'attendance_consistency' => 98.9],
+                'activities' => ['total' => 3, 'completed' => 2, 'overdue' => 0],
+                'budget' => ['allocated' => 85000, 'utilized' => 78000, 'over_allocated' => false],
+            ],
+            'confidence_score' => 0.82,
+            'metadata' => ['model' => 'gemini-3.6-flash', 'prompt_version' => 'v1', 'confidence_basis' => 'derived'],
+            'generated_at' => now(),
+        ]);
+    }
+
+    public function test_hub_full_narrative_modal_shows_risks_actions_and_aggregates(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $program = $this->program();
+        $this->completedNarrative($program, $admin);
 
-        Livewire::actingAs($admin)->test(Hub::class, ['program' => $program])
-            ->assertSee('KPI Scorecard vs Targets')
-            ->assertDontSee('target ≥')
-            ->assertDontSee('class="marker"', false)
-            ->assertSee('No completed activities with attendance yet.');
+        Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
+            ->assertSee('View full narrative')
+            ->assertSee('Generate program narrative')
+            ->assertSee('Read the full narrative')
+            ->assertSeeHtml('wire:loading.flex')
+            ->assertSee('Generating executive narrative')
+            ->assertDontSee('Data the AI reviewed')
+            ->call('openNarrativeModal')
+            ->assertSet('showNarrativeModal', true)
+            ->assertSee('Data the AI reviewed')
+            ->assertSee('Rice supply volatility may affect cycle 3.')
+            ->assertSee('Lock in a second rice supplier')
+            ->assertSee('confidence 0.82')
+            ->assertSee('Reach 30 pupils')
+            ->assertSee('₱85,000 allocated')
+            ->call('closeNarrativeModal')
+            ->assertSet('showNarrativeModal', false);
+    }
+
+    public function test_hub_hides_full_narrative_button_without_completed_narrative(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $program = $this->program();
+        ProgramNarrative::create([
+            'extension_project_id' => $program->id,
+            'generated_by' => $admin->id,
+            'status' => 'failed',
+            'error_message' => 'Narrative unavailable — API quota exceeded.',
+            'generated_at' => now(),
+            'metadata' => ['model' => 'gemini-3.6-flash'],
+        ]);
+
+        Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
+            ->assertSee('Narrative unavailable')
+            ->assertDontSee('View full narrative')
+            ->assertDontSee('Read the full narrative');
+    }
+
+    public function test_hub_narrative_modal_is_admin_only(): void
+    {
+        $user = User::factory()->create(['role' => 'faculty']);
+        $faculty = Faculty::create(['user_id' => $user->id, 'employee_id' => 'LNU-2026-0099']);
+        $program = $this->program(['program_lead_id' => $faculty->id]);
+
+        Livewire::actingAs($user)->test(Hub::class, ['project' => $program])
+            ->call('openNarrativeModal')
+            ->assertForbidden();
     }
 }

@@ -73,7 +73,7 @@
                                         default => 'bg-red-50 !border !border-red-200 text-red-600',
                                     },
                                 ]) title="{{ $e['title'] }}{{ $e['conflict'] ? ' — CONFLICT' : '' }}">
-                                {{ $e['conflict'] ? '⚠ ' : '' }}{{ $e['title'] }}
+                                @if ($e['conflict'])<x-sc.icon name="alert" class="w-3 h-3" /> @endif{{ $e['title'] }}
                             </span>
                         @endforeach
                         @if ($cellEvents->count() > 2)
@@ -119,11 +119,11 @@
                                     <span class="inline-flex items-center gap-1 text-[10.5px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md"><x-sc.icon name="clock" class="w-3 h-3" /> {{ $e['time'] }}</span>
                                 @endif
                                 @if ($e['type'] === 'deadline')
-                                    <a href="{{ route('programs.show', $e['model']['program']) }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open deadline →</a>
+                                    <a href="{{ route('projects.show', $e['model']['program']) }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open deadline →</a>
                                 @elseif ($e['type'] === 'availability')
                                     <a href="{{ route('availability.index') }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open availability →</a>
                                 @else
-                                    <a href="{{ route('programs.show', $e['model']->program) }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open activity →</a>
+                                    <a href="{{ route('projects.show', $e['model']->program) }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open activity →</a>
                                 @endif
                             </div>
                         </div>
@@ -170,7 +170,7 @@
                                 @endif
                             </p>
                         </div>
-                        <a href="{{ $e['type'] === 'availability' ? route('availability.index') : route('programs.show', $e['model']['program'] ?? $e['model']->program) }}"
+                        <a href="{{ $e['type'] === 'availability' ? route('availability.index') : route('projects.show', $e['model']['program'] ?? $e['model']->program) }}"
                            class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 shrink-0">Open →</a>
                     </li>
                 @endforeach

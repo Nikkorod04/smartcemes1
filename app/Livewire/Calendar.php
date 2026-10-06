@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Activity;
 use App\Models\AvailabilityRequest;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -163,7 +163,7 @@ class Calendar extends Component
     protected function allVisiblePrograms($user)
     {
         if (! $user->isFaculty()) {
-            return ExtensionProgram::with('programObjectives')->get();
+            return ExtensionProject::with('programObjectives')->get();
         }
 
         $faculty = Faculty::where('user_id', $user->id)->first();
@@ -171,7 +171,7 @@ class Calendar extends Component
             return collect();
         }
 
-        return ExtensionProgram::query()
+        return ExtensionProject::query()
             ->where(fn ($q) => $q
                 ->where('program_lead_id', $faculty->id)
                 ->orWhereHas('activities', fn ($w) => $w->whereHas('faculty', fn ($f) => $f->where('faculty_id', $faculty->id))))

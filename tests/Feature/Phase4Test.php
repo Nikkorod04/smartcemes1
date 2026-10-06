@@ -6,7 +6,7 @@ use App\Livewire\Calendar;
 use App\Models\Activity;
 use App\Models\Attendance;
 use App\Models\Beneficiary;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\User;
 use App\Services\KpiService;
@@ -47,24 +47,6 @@ class Phase4Test extends TestCase
         $this->actingAs($user)->get('/dashboard')->assertOk();
     }
 
-    public function test_analytics_admin_only(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $secretary = User::factory()->create(['role' => 'secretary']);
-
-        $this->actingAs($admin)->get('/analytics')->assertOk();
-        $this->actingAs($secretary)->get('/analytics')->assertForbidden();
-    }
-
-    public function test_analytics_all_tabs_render(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-
-        foreach (['overview', 'performance', 'budget', 'reach', 'faculty', 'pending'] as $tab) {
-            $this->actingAs($admin)->get('/analytics?tab='.$tab)->assertOk();
-        }
-    }
-
     public function test_calendar_renders_for_all_roles(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -82,24 +64,24 @@ class Phase4Test extends TestCase
         $other = User::factory()->create(['role' => 'faculty']);
         $otherFaculty = Faculty::create(['user_id' => $other->id, 'employee_id' => 'LNU-2026-0100']);
 
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-030', 'title' => 'Calendar Test',
             'planned_start_date' => '2026-01-01', 'planned_end_date' => '2026-12-31',
             'status' => 'ongoing', 'allocated_budget' => 0,
         ]);
 
         $mineA = Activity::create([
-            'extension_program_id' => $program->id, 'title' => 'My Activity',
+            'extension_project_id' => $program->id, 'title' => 'My Activity',
             'planned_start_date' => '2026-09-01', 'planned_end_date' => '2026-09-01',
             'start_time' => '08:00:00', 'end_time' => '10:00:00', 'status' => 'ongoing',
         ]);
         $mineB = Activity::create([
-            'extension_program_id' => $program->id, 'title' => 'Second Assignment',
+            'extension_project_id' => $program->id, 'title' => 'Second Assignment',
             'planned_start_date' => '2026-09-03', 'planned_end_date' => '2026-09-03',
             'start_time' => '08:00:00', 'end_time' => '11:00:00', 'status' => 'ongoing',
         ]);
         $theirs = Activity::create([
-            'extension_program_id' => $program->id, 'title' => 'Other Activity',
+            'extension_project_id' => $program->id, 'title' => 'Other Activity',
             'planned_start_date' => '2026-09-02', 'planned_end_date' => '2026-09-02',
             'start_time' => '08:00:00', 'end_time' => '11:00:00', 'status' => 'ongoing',
         ]);
@@ -137,7 +119,7 @@ class Phase4Test extends TestCase
     public function test_results_framework_report_renders(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-031', 'title' => 'Results Framework Test',
             'planned_start_date' => '2026-01-01', 'planned_end_date' => '2026-12-31',
             'status' => 'ongoing', 'allocated_budget' => 0,
@@ -165,13 +147,13 @@ class Phase4Test extends TestCase
         // 8.6: reach counts DISTINCT beneficiaries with present/late attendance.
         $admin = User::factory()->create(['role' => 'admin']);
         [$facultyUser, $faculty] = $this->facultyAccount();
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-040', 'title' => 'KPI Test',
             'planned_start_date' => '2026-01-01', 'planned_end_date' => '2026-12-31',
             'status' => 'ongoing', 'allocated_budget' => 0,
         ]);
         $activity = Activity::create([
-            'extension_program_id' => $program->id, 'title' => 'Act',
+            'extension_project_id' => $program->id, 'title' => 'Act',
             'planned_start_date' => '2026-09-01', 'planned_end_date' => '2026-09-01',
             'start_time' => '08:00:00', 'end_time' => '11:00:00', 'status' => 'completed',
         ]);

@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Beneficiary;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+
 /**
  * Official beneficiary XLSX import template (blueprint v4.7, 5.4).
  *
@@ -10,6 +14,12 @@ namespace App\Services;
  * (D9 convention); per-row errors are shown on screen only and never
  * persisted. Rows with errors or duplicates are skipped on confirm — the
  * import never rejects the whole file.
+ *
+ * SINCE 2026-10-05 this class also OWNS THE WORKBOOK LAYOUT (`build()`), so the
+ * blank template the Director downloads and the export of a project's enrolled
+ * list are produced by one implementation and cannot drift apart. The export is
+ * deliberately the SAME sheet shape as the import template: it round-trips, so a
+ * Director can download the list, edit it, and import it straight back.
  */
 class BeneficiaryTemplate
 {
@@ -37,6 +47,95 @@ class BeneficiaryTemplate
     public static function headers(): array
     {
         return array_map(fn ($col) => $col['header'], self::COLUMNS);
+    }
+
+    /**
+     * One beneficiary as a row in COLUMNS order.
+     *
+     * Keyed off `array_keys(self::COLUMNS)` rather than a hand-written list, so
+     * adding a column to the template cannot silently desynchronise the export.
+     */
+    public static function rowFor(Beneficiary $beneficiary): array
+    {
+        return array_map(
+            fn (string $field) => $beneficiary->{$field},
+            array_keys(self::COLUMNS)
+        );
+    }
+
+    /**
+     * @param  iterable<Beneficiary>  $beneficiaries
+     * @return array<int, array<int, mixed>>
+     */
+    public static function rowsFor(iterable $beneficiaries): array
+    {
+        $rows = [];
+
+        foreach ($beneficiaries as $beneficiary) {
+            $rows[] = self::rowFor($beneficiary);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build the workbook.
+     *
+     * `$rows === null` produces the BLANK template — the grey example row is
+     * written so encoders can see the expected shape. Passing rows produces the
+     * EXPORT instead: same headers, same widths, same freeze pane, the project's
+     * own data where the example row would be.
+     *
+     * @param  array<int, array<int, mixed>>|null  $rows
+     */
+    public static function build(?array $rows = null, ?string $contextLabel = null): Spreadsheet
+    {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Beneficiaries');
+
+        $isExport = $rows !== null;
+
+        $sheet->setCellValue('A1', $isExport
+            ? 'SmartCEMES — Beneficiary List · '.($contextLabel ?? 'Program').' · Leyte Normal University CESO'
+            : 'SmartCEMES — Official Beneficiary Import Template v1 · Leyte Normal University CESO');
+        $sheet->mergeCells('A1:B1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(12);
+
+        $sheet->setCellValue('A2', 'One row = one beneficiary. Do not change the column headers. First name, last name, barangay and beneficiary category are required.');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->setItalic(true);
+
+        $sheet->setCellValue('A3', $isExport
+            ? 'This is the program\'s enrolled list in the import format — edit it and import it straight back.'
+            : 'Blank Contact Number defaults to '.self::DEFAULT_CONTACT_NUMBER.'. Unknown beneficiary categories auto-map to "Other".');
+        $sheet->getStyle('A3')->getFont()->setSize(10)->setItalic(true);
+
+        $headers = self::headers();
+        $sheet->fromArray($headers, null, 'A5');
+        $lastCol = Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->getStyle('A5:'.$lastCol.'5')->getFont()->setBold(true)->setSize(9);
+        $sheet->freezePane('A6');
+        $sheet->getRowDimension(5)->setRowHeight(28);
+        $sheet->getStyle('A5:'.$lastCol.'5')->getAlignment()->setWrapText(true)->setVertical('top');
+
+        foreach (range(1, count($headers)) as $colIndex) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($colIndex))->setWidth(24);
+        }
+
+        if ($isExport) {
+            if ($rows !== []) {
+                $sheet->fromArray($rows, null, 'A6');
+            }
+        } else {
+            // Example row so encoders see the expected format (delete before importing).
+            $sheet->fromArray([
+                'Juan', 'Reyes', 'Dela Cruz', '42', 'Male', self::DEFAULT_CONTACT_NUMBER,
+                'San Jose', 'Tacloban City', 'Farmer',
+            ], null, 'A6');
+            $sheet->getStyle('A6:'.$lastCol.'6')->getFont()->setItalic(true)->getColor()->setRGB('808080');
+        }
+
+        return $spreadsheet;
     }
 
     /**

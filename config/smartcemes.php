@@ -21,6 +21,56 @@ return [
 
     /*
     |----------------------------------------------------------------------
+    | Revised hierarchy (v4.15 / Phase R1)
+    |----------------------------------------------------------------------
+    | College → Program → Project → Activity. Programs are the six verbatim
+    | CESO thrusts (§3), each tagged with one of the three pillars.
+    */
+    'pillars' => [
+        'social' => 'Social',
+        'economic' => 'Economic',
+        'environmental' => 'Environmental',
+    ],
+
+    'pillar_colors' => [
+        'social' => 'blue',
+        'economic' => 'gold',
+        'environmental' => 'green',
+    ],
+
+    'college_statuses' => ['active', 'inactive'],
+    'program_statuses' => ['active', 'inactive'],
+
+    /*
+    |----------------------------------------------------------------------
+    | College seals
+    |----------------------------------------------------------------------
+    | The official seal a college renders on its card and in its hero. Keys
+    | are `colleges.code`; values are paths relative to `public/`.
+    |
+    | These are 256px derivatives of the authored originals in `public/`
+    | (CAS/COE/CME at 2560-3000px, 2.3-3.0 MB each; the Graduate School's
+    | `gs.png` at 611px, 300 KB), downscaled and cropped to their alpha
+    | bounding box so all four carry the same visual weight — each seal fills
+    | 98% of its 256px frame, and the set is ~285 KB instead of ~8.0 MB.
+    |
+    | The originals' filenames are NOT uniform: the three colleges use
+    | `{CODE}.png` while the Graduate School's source is `gs.png`. The
+    | derivatives all follow the folder's lowercase-code convention, so this
+    | map is keyed by `colleges.code` and never derives a path from a filename.
+    |
+    | A code with no entry falls back to the code crest in the UI, so a
+    | college without a seal still renders.
+    */
+    'college_logos' => [
+        'CAS' => 'img/colleges/cas.png',
+        'COE' => 'img/colleges/coe.png',
+        'CME' => 'img/colleges/cme.png',
+        'GRAD' => 'img/colleges/grad.png',
+    ],
+
+    /*
+    |----------------------------------------------------------------------
     | Status enumerations (6.18)
     |----------------------------------------------------------------------
     */
@@ -78,6 +128,92 @@ return [
     'community_types' => ['community', 'school'],
 
     'school_levels' => ['elementary', 'secondary', 'higher_ed'],
+
+    /*
+    |----------------------------------------------------------------------
+    | Faculty Management (revision §4.5 / Phase R3)
+    |
+    | `expertise_options` and `position_ladder` are ported VERBATIM from
+    | docs/prototype/assets/js/seed-data.js (expertiseOptions / positionLadder)
+    | so the Laravel module and the prototype cannot drift apart.
+    |----------------------------------------------------------------------
+    */
+    'faculty_statuses' => ['active', 'on_leave', 'inactive'],
+
+    /*
+    | Canonical expertise vocabulary — powers the profile multi-select and the
+    | Faculty Directory expertise filter. Sorted alphabetically (the prototype
+    | list is already in this order). New areas are free text at the UI level:
+    | the picker is type-to-filter, so this list is a floor, not a ceiling.
+    */
+    'expertise_options' => [
+        'Assessment Design', 'Business Planning', 'Community Organizing', 'Community Wellness',
+        'Cultural Heritage', 'Digital Literacy', 'Disaster Preparedness', 'Early Childhood Education',
+        'Entrepreneurship', 'Environmental Conservation', 'Financial Literacy', 'Geriatric Care',
+        'Health Literacy', 'ICT Training', 'Literacy & Reading', 'Local Governance',
+        'Media & Information Literacy', 'Mother-Tongue Pedagogy', 'Numeracy & Math Instruction',
+        'Peace & Conflict Resolution', 'Remedial Instruction', 'Solid Waste Management',
+        'Special & Inclusive Education', 'Sports Coaching',
+    ],
+
+    /*
+    | Optional grouping for expertise areas (feeds `faculty_expertise.category`).
+    | Areas absent from this map keep a NULL category — which is honest, and the
+    | UI shows them under "Other".
+    */
+    'expertise_categories' => [
+        'Literacy' => [
+            'Literacy & Reading', 'Remedial Instruction', 'Mother-Tongue Pedagogy',
+            'Media & Information Literacy',
+        ],
+        'Numeracy' => [
+            'Numeracy & Math Instruction', 'Assessment Design',
+        ],
+        'Livelihood' => [
+            'Entrepreneurship', 'Business Planning', 'Financial Literacy',
+        ],
+        'Environment' => [
+            'Environmental Conservation', 'Solid Waste Management', 'Disaster Preparedness',
+        ],
+        'Health & Wellness' => [
+            'Health Literacy', 'Community Wellness', 'Geriatric Care',
+        ],
+        'Technology' => [
+            'Digital Literacy', 'ICT Training',
+        ],
+        'Governance & Community' => [
+            'Community Organizing', 'Local Governance', 'Peace & Conflict Resolution',
+            'Cultural Heritage',
+        ],
+        'Education & Sports' => [
+            'Early Childhood Education', 'Special & Inclusive Education', 'Sports Coaching',
+        ],
+    ],
+
+    /*
+    | Faculty position ladder — INSTITUTIONAL ORDER, most junior first.
+    | `rank` sorts, `label` displays, `group` buckets for the filters.
+    */
+    'position_ladder' => [
+        ['rank' => 1,  'group' => 'Instructor',           'label' => 'Instructor I'],
+        ['rank' => 2,  'group' => 'Instructor',           'label' => 'Instructor II'],
+        ['rank' => 3,  'group' => 'Instructor',           'label' => 'Instructor III'],
+        ['rank' => 4,  'group' => 'Assistant Professor',  'label' => 'Assistant Professor I'],
+        ['rank' => 5,  'group' => 'Assistant Professor',  'label' => 'Assistant Professor II'],
+        ['rank' => 6,  'group' => 'Assistant Professor',  'label' => 'Assistant Professor III'],
+        ['rank' => 7,  'group' => 'Assistant Professor',  'label' => 'Assistant Professor IV'],
+        ['rank' => 8,  'group' => 'Associate Professor',  'label' => 'Associate Professor I'],
+        ['rank' => 9,  'group' => 'Associate Professor',  'label' => 'Associate Professor II'],
+        ['rank' => 10, 'group' => 'Associate Professor',  'label' => 'Associate Professor III'],
+        ['rank' => 11, 'group' => 'Associate Professor',  'label' => 'Associate Professor IV'],
+        ['rank' => 12, 'group' => 'Associate Professor',  'label' => 'Associate Professor V'],
+        ['rank' => 13, 'group' => 'Professor',            'label' => 'Professor I'],
+        ['rank' => 14, 'group' => 'Professor',            'label' => 'Professor II'],
+        ['rank' => 15, 'group' => 'Professor',            'label' => 'Professor III'],
+        ['rank' => 16, 'group' => 'Professor',            'label' => 'Professor IV'],
+        ['rank' => 17, 'group' => 'Professor',            'label' => 'Professor V'],
+        ['rank' => 18, 'group' => 'Professor',            'label' => 'Professor VI'],
+    ],
 
     /*
     |----------------------------------------------------------------------
@@ -182,7 +318,34 @@ return [
     'ai' => [
         'endpoint' => env('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta/models'),
         'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
-        'prompt_version' => 'v1',
+        // v2 (R6, feedback #8/#9): embeds the CESO scope, the Tier-3 prohibition
+        // list and the interagency catalogue. v1 is RETAINED in the codebase
+        // (`PromptV1`) so pre-R6 analyses stay reproducible from their recorded
+        // `metadata.prompt_version`.
+        'prompt_version' => 'v2',
+
+        /*
+        | Transient-failure retry (2026-10-02).
+        |
+        | Gemini returns 503 UNAVAILABLE under peak load ("temporarily
+        | restricting capacity for preview or flash models") and 429
+        | RESOURCE_EXHAUSTED when a quota is hit. Google's documented remedy is
+        | exponential backoff with jitter on 408/429/5xx — and explicitly NOT on
+        | 4xx, since a bad key, a depleted prepay balance (402) or a retired
+        | model id cannot be fixed by asking again.
+        |
+        | The budget is deliberately small because the whole generation runs
+        | inside the web request (dispatchSync), so the Director is waiting.
+        | A failure that survives these attempts still lands in the same
+        | first-class "Analysis unavailable" state with the same manual Retry.
+        */
+        'retry' => [
+            'max_attempts' => (int) env('GEMINI_RETRY_MAX_ATTEMPTS', 3),
+            'base_delay_ms' => (int) env('GEMINI_RETRY_BASE_MS', 1000),
+            'max_delay_ms' => (int) env('GEMINI_RETRY_MAX_MS', 8000),
+            // Hard wall-clock ceiling for the whole call, retries included.
+            'total_budget_ms' => (int) env('GEMINI_RETRY_BUDGET_MS', 120000),
+        ],
     ],
 
     /*
@@ -266,9 +429,41 @@ return [
 
     /*
     |----------------------------------------------------------------------
+    | Nightly database backup (R7 — absorbed from the retired "Phase 6")
+    |----------------------------------------------------------------------
+    | `dump_binary` is the mysqldump executable. It is configurable because a
+    | shared host or a Windows box (XAMPP/Laragon/WAMP) very often has it
+    | OUTSIDE the PATH — the default `mysqldump` then fails at 02:00 with
+    | "'mysqldump' is not recognized", and a backup that silently stops
+    | happening is worse than none. Override with DB_DUMP_BINARY in `.env`.
+    |
+    | `directory` defaults to storage/app/backups. `keep` is the retention
+    | count; the scheduled run uses it unless --keep is passed.
+    */
+    'backup' => [
+        'dump_binary' => env('DB_DUMP_BINARY', 'mysqldump'),
+        'directory' => env('DB_BACKUP_DIR'),
+        'keep' => (int) env('DB_BACKUP_KEEP', 14),
+    ],
+
+    /*
+    |----------------------------------------------------------------------
     | Role navigation (ported from docs/prototype/assets/js/layout.js).
-    | Items whose route does not exist yet are hidden automatically —
-    | later phases add routes and the nav fills in.
+    |
+    | Items whose route does not exist yet are hidden automatically — later
+    | phases add routes and the nav fills in.
+    |
+    | COLLAPSED HIERARCHY (prototype PATTERNS v4.3 / revisions.md §11.4):
+    | the admin sidebar exposes exactly ONE extension-structure entry,
+    | "Manage Extension Programs". `Colleges`, `Extension Programs` and
+    | `Extension Projects` must NOT appear as separate items — the whole
+    | College → Program → Project → Activity chain is navigated from inside
+    | the hub. `subs[]` lists the route names that keep that single entry
+    | highlighted while the user is anywhere in the chain, and that
+    | `RouteSurfaceTest` still walks for a 5xx (they are no longer nav items,
+    | so nothing else would cover them).
+    | `tests/Feature/CollegeProgramCrudTest` asserts this rule, so it cannot
+    | silently regress (the prototype asserts the same in `_check.cjs:196-210`).
     |----------------------------------------------------------------------
     */
     'nav' => [
@@ -277,15 +472,41 @@ return [
                 'section' => 'Overview',
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'grid'],
-                    ['key' => 'analytics', 'label' => 'Analytics', 'route' => 'analytics.index', 'icon' => 'chart'],
+                    ['key' => 'targets', 'label' => 'University Targets', 'route' => 'targets.index', 'icon' => 'shield'],
                     ['key' => 'calendar', 'label' => 'Calendar', 'route' => 'calendar.index', 'icon' => 'calendar'],
+                ],
+            ],
+            [
+                'section' => 'Extension Programs',
+                'items' => [
+                    [
+                        'key' => 'manage-programs',
+                        'label' => 'Manage Extension Programs',
+                        'route' => 'colleges.index',
+                        'icon' => 'folder',
+                        'badge' => 3,
+                        /* `subs` is a HIGHLIGHT list, not a navigation list — it
+                           decides which sidebar entry stays lit, and creates no
+                           link. It deliberately still names all four routes even
+                           though /programs and /projects are no longer promoted
+                           anywhere in the UI (§23): the New project action lands
+                           the Director on /projects, and without `projects.index`
+                           here the sidebar would show nothing highlighted on the
+                           very page they just arrived at. */
+                        'subs' => ['colleges.index', 'programs.index', 'projects.index', 'projects.show'],
+                    ],
                 ],
             ],
             [
                 'section' => 'Management',
                 'items' => [
-                    ['key' => 'faculty-management', 'label' => 'Faculty Management', 'route' => 'faculty.index', 'icon' => 'users'],
-                    ['key' => 'programs', 'label' => 'Extension Programs', 'route' => 'programs.index', 'icon' => 'folder'],
+                    [
+                        'key' => 'faculty-management',
+                        'label' => 'Faculty Management',
+                        'route' => 'faculty.index',
+                        'icon' => 'users',
+                        'subs' => ['faculty.directory'],
+                    ],
                     ['key' => 'communities', 'label' => 'Communities & Partner Schools', 'route' => 'communities.index', 'icon' => 'pin'],
                 ],
             ],
@@ -301,8 +522,12 @@ return [
                 'section' => 'Intelligence & Reports',
                 'items' => [
                     ['key' => 'ai-analysis', 'label' => 'AI Analysis Review', 'route' => 'ai-analysis.index', 'icon' => 'sparkles'],
-                    ['key' => 'program-narratives', 'label' => 'Program Narratives', 'route' => 'program-narratives.index', 'icon' => 'sparkles'],
+                    ['key' => 'program-narratives', 'label' => 'Project Narratives', 'route' => 'program-narratives.index', 'icon' => 'sparkles'],
+                    ['key' => 'interagency', 'label' => 'Interagency Catalogue', 'route' => 'interagency.index', 'icon' => 'shield'],
                     ['key' => 'reports', 'label' => 'Reports', 'route' => 'reports.index', 'icon' => 'doc'],
+                    // Audit Logs (owner request 2026-09-25) — moved off the dashboard,
+                    // where it was a four-row panel, into a page of its own.
+                    ['key' => 'audit-logs', 'label' => 'Audit Logs', 'route' => 'audit-logs.index', 'icon' => 'list'],
                 ],
             ],
         ],
@@ -332,7 +557,7 @@ return [
                 'section' => 'Overview',
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'grid'],
-                    ['key' => 'my-programs', 'label' => 'My Programs', 'route' => 'programs.my', 'icon' => 'folder'],
+                    ['key' => 'my-projects', 'label' => 'My Projects', 'route' => 'projects.my', 'icon' => 'folder'],
                     ['key' => 'calendar', 'label' => 'Calendar', 'route' => 'calendar.index', 'icon' => 'calendar'],
                 ],
             ],
@@ -344,6 +569,21 @@ return [
                     ['key' => 'assessment-form', 'label' => 'Encode Assessment', 'route' => 'assessments.create', 'icon' => 'clipboard'],
                     ['key' => 'availability', 'label' => 'Availability Requests', 'route' => 'availability.index', 'icon' => 'clock'],
                     ['key' => 'rendered-hours', 'label' => 'Rendered Hours', 'route' => 'rendered-hours.my', 'icon' => 'clock'],
+                ],
+            ],
+            [
+                /* Its own section, mirroring the prototype's faculty nav
+                   (`layout.js`, section "My Profile"). Faculty maintain their
+                   own contact details, academic details and expertise here;
+                   assignment fields (position, college, status) and the login
+                   account stay admin-controlled.
+
+                   The route is `faculty.me` — a PARAMETERLESS route, because
+                   `App\Support\Navigation` resolves nav route names with no
+                   parameters and `faculty.show` needs a `{faculty}` id. */
+                'section' => 'My Profile',
+                'items' => [
+                    ['key' => 'my-faculty-profile', 'label' => 'My Faculty Profile', 'route' => 'faculty.me', 'icon' => 'users'],
                 ],
             ],
         ],

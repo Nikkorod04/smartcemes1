@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\GenerateProgramNarrative;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\ProgramNarrative;
 
 /**
@@ -13,12 +13,12 @@ use App\Models\ProgramNarrative;
  */
 class ProgramNarrativeService
 {
-    public function generateFor(ExtensionProgram $program): ProgramNarrative
+    public function generateFor(ExtensionProject $program): ProgramNarrative
     {
         abort_unless(auth()->user()?->isAdmin(), 403, 'Admin-only AI access (D4).');
 
         $narrative = ProgramNarrative::create([
-            'extension_program_id' => $program->id,
+            'extension_project_id' => $program->id,
             'generated_by' => auth()->id(),
             'status' => ProgramNarrative::STATUS_PENDING,
             'metadata' => [

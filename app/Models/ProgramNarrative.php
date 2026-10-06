@@ -19,7 +19,7 @@ class ProgramNarrative extends Model
     public const STATUS_FAILED = 'failed';
 
     protected $fillable = [
-        'extension_program_id',
+        'extension_project_id',
         'generated_by',
         'status',
         'summary',
@@ -52,7 +52,7 @@ class ProgramNarrative extends Model
 
     public function program()
     {
-        return $this->belongsTo(ExtensionProgram::class, 'extension_program_id');
+        return $this->belongsTo(ExtensionProject::class, 'extension_project_id');
     }
 
     public function generator()

@@ -1,4 +1,4 @@
-SMARTCEMES SYSTEM BLUEPRINT v4.14
+SMARTCEMES SYSTEM BLUEPRINT v4.21
 =================================
 AI-Powered Community Extension Monitoring and Evaluation System
 for Leyte Normal University
@@ -17,16 +17,68 @@ The system is scoped as an MVP-first capstone build: every core workflow must
 be complete and demonstrable end-to-end, while high-risk or low-value items
 are explicitly parked as future work (1.2).
 
-IMPLEMENTATION STATUS: nothing has been built yet. This blueprint is the
-authoritative target design; every feature described here is pending
-implementation (see Section 11). The HTML prototype under docs/prototype (v4)
-is the PRIMARY visual design reference - a floor, not a ceiling: its design
-tokens (lnu/gold palettes, Figtree) and component classes are ported into a
-proper Vite + Tailwind production build, and the UI is improved wherever this
-blueprint demands it. prev/prototype is a v3 HISTORICAL reference only; it
-must not drive structure (its standalone Activities/Beneficiaries/Budget
-pages and secretary AI access are superseded by this blueprint). Wherever any
-prototype differs from this blueprint, the blueprint wins.
+IMPLEMENTATION STATUS (updated 2026-09-28): Phases 1-5 are COMPLETE and the system is
+running (491 tests / 2894 assertions passing, 0 failures). This blueprint remains the
+authoritative TARGET DESIGN, but it has been AMENDED by a post-defence adviser review:
+phases R1-R7 in revisions.md restructured the extension hierarchy, replaced the training-
+hours formula, replaced the results-framework model with the target model, added an
+AI scope guardrail, (v4.19) withdrew the per-project annual BUDGET target in favour of
+the allocation, and (v4.20) REMOVED the six-tab Admin Analytics page. Where this
+blueprint conflicts with revisions.md, revisions.md records the owner's later decision
+and WINS. Read revisions.md first (its section 10 is the status tracker), then this
+document.
+
+    *** v4.16: THE STALE PROSE HAS BEEN REWRITTEN. Sections 2, 3, 5.x, 6.15,
+    8.1/8.3/8.5, 8.6, 12, 14, 15 and 16 now describe the post-revision system:
+    "program" means the BROAD level and "project" the narrow one, the objective
+    manager / results framework / 8.6 KPI scorecard are marked RETIRED, and the
+    target model, the collapsed hierarchy navigation and the three-tier AI
+    guardrail are described as the current design. Section 14 gains D14-D20.
+    The v4.1-v4.15 revision entries are HISTORICAL RECORDS and are left as
+    written on purpose - do not "correct" them. ***
+
+    *** v4.17: THE COLLEGE SET IS FIXED AT FOUR, AND READ-ONLY. The Graduate
+    School (GRAD) joins CAS / COE / CME at the College level - it is the unit
+    that runs the master's and doctoral programmes, and it delivers extension
+    work. The college CRUD is REMOVED: CollegeSeeder is the set's only owner,
+    so a name, description or coordinator is corrected there, not in the UI.
+    CollegePolicy keeps `manage` as the HUB-ACCESS ability only. See §6.4a,
+    D14 and revisions.md §19.11. ***
+
+    *** v4.18: THE ADMIN DASHBOARD. The recent activity panel became its own
+    AUDIT LOGS page under Intelligence & Reports; budget utilization is now
+    COMPACT BULLET ROWS labelled with project TITLES (the old grouped bars
+    could only carry codes); each Performance Leaders row carries a magnitude
+    bar with its target as a marker; and every emoji and typographic glyph
+    (medals, ✕, ✓, ⚠) was replaced with an SVG icon. See §12.1 and
+    revisions.md §19.12. ***
+
+    *** v4.19: BUDGET HAS NO ANNUAL TARGET. A project has ONE budget figure -
+    its ALLOCATION - so utilization is measured against `allocated_budget`
+    everywhere. The per-project `annual_target_budget` column is RETAINED BUT
+    UNREAD (the same treatment D-R7 gives the 8.6 KPIs) and the project form no
+    longer collects one. Training HOURS keep their annual target at project
+    level with the university pool above them, and the UNIVERSITY BUDGET POOL
+    IS UNAFFECTED. Every budget surface now reads "Allocated Budget", never
+    "Annual Target". See D16 and revisions.md §20. ***
+
+    *** v4.20: THE ADMIN ANALYTICS PAGE IS REMOVED (owner decision 2026-09-27).
+    The six-tab page at /analytics (5.13 / 12.1) is DELETED - route, component,
+    six partials, nav entry, its five tests, and its prototype page with them.
+    Four of the six tabs duplicated the admin dashboard, Faculty Contribution
+    was superseded by the R3 Faculty module, and the two tabs with no
+    substitute - the aggregate Pending Actions list and the Community Reach
+    chart - were accepted as deliberate losses. Cross-project aggregates now
+    live on the admin dashboard and in the print reports (12.2). The
+    `community_reach` measure goes with it, consistently with D-R7's retirement
+    of the 8.6 dictionary. See 5.13, 12.1 and revisions.md §21. ***
+
+The HTML prototype under docs/prototype (v4.3) is the PRIMARY visual design reference -
+a floor, not a ceiling: its design tokens (lnu/gold palettes, Figtree) and component
+classes are ported into a proper Vite + Tailwind production build, and the UI is improved
+wherever this blueprint demands it. prev/prototype is a v3 HISTORICAL reference only; it
+must not drive structure (its standalone Activities/Beneficiaries/Budget pages and
+secretary AI access are superseded by this blueprint).
 
 Core purpose: make extension work visible, measurable, accountable, and
 actionable. Faculty and staff record data as a byproduct of their normal
@@ -60,9 +112,13 @@ narratives), done completely rather than many AI features done partially.
 - Authentication and role-based access (admin, secretary, faculty)
 - Faculty management with automatic employee IDs
 - Programs, communities, beneficiaries, activities CRUD with relationships
-- Program-scoped management hub (tabbed program detail page)
-- Program results framework: measurable objectives per program with
-  baseline/target/actual, auto-derived status, and evidence notes
+- Project-scoped management hub (tabbed project detail page)
+- The TARGET MODEL: training hours rendered against each project's annual
+  HOURS target and the University annual pool, with budget measured against
+  each project's allocation (v4.19). The former results framework (measurable
+  objectives with baseline/target/actual, auto-derived status, evidence notes)
+  and the 8.6 KPI dictionary are RETIRED from the UI (D-R7) - see 5.10, 8.6
+  and D17
 - Manual needs-assessment encoding (full structured form, Sections I-IX)
 - Needs-assessment XLSX import from the official template (one file = one
   respondent) with preview-and-confirm modal, vocabulary auto-mapping to
@@ -110,33 +166,53 @@ Three fixed roles (admin, secretary, faculty) stored as a single role column.
 Separation of duties is enforced: no role can perform another role's
 approvals.
 
+    [v4.16 AMENDMENT] The hierarchy is College -> Program -> Project ->
+    Activity. Throughout this document "program" now means one of the six
+    BROAD CESO thrusts, and "project" is the narrow entity that used to be
+    called a program. See 6.4 / 6.4a / 6.4b / 6.4c and revisions.md.
+
 2.1 Admin (Director persona)
-- oversees all extension programs, communities, beneficiaries, and faculty work
-- manages faculty accounts (account provisioning is Admin-only)
+- oversees all extension projects, communities, beneficiaries, and faculty work
+- manages faculty accounts (account provisioning is Admin-only), plus the
+  Faculty Management module: the engagement board, the directory roster, and
+  each professor's profile (college, position, status, expertise) - R3
 - reviews pending proposals; approves or rejects with remarks; may attach the
   Special Order document during approval
 - creates availability requests for faculty (tied to activities); reviews
   faculty responses
-- defines and manages program objectives via the program hub's objective
-  manager; faculty view the results framework read-only
+- sets the annual UNIVERSITY target (training hours and budget) as a
+  consumption pool, and each PROJECT's annual targets. Performance is measured
+  at those two levels and nowhere else (D-R5). The per-program objective
+  manager and the results framework were REMOVED from the UI (D-R7) - see 8.6
+  and revisions.md sections 15 and 19.
 - approves or rejects rendered-hours submissions
 - generates, reviews, and approves/discards AI community assessment analyses
-- generates and views program narratives (executive summaries)
+- generates and views project narratives (executive summaries)
 - monitors system-wide performance; sees dashboards and print-ready reports
 - AI ACCESS RULE: only the Admin can generate, view, and approve AI outputs;
-  Secretary and Faculty have no AI access (see 8.5, D4)
+  Secretary and Faculty have no AI access (see 8.5, D4). AI output is
+  THREE-TIER (D-R8): Tier 1 = a CESO intervention, Tier 2 = an interagency
+  referral (citable agencies come ONLY from the interagency_agencies
+  catalogue), Tier 3 = prohibited as CESO work, shown as an audit note and
+  never as a CESO recommendation.
+
+    Navigation note [v4.16]: the admin sidebar collapses the whole hierarchy
+    into ONE entry - "Manage Extension Programs" - which opens the colleges
+    hub. Colleges, Programs and Projects are reached from inside that hub,
+    never as separate sidebar items (prototype PATTERNS v4.3; asserted by
+    CollegeProgramCrudTest).
 
 2.2 Secretary
 - reviews and validates needs-assessment submissions (review lifecycle)
 - imports needs-assessment records from the official XLSX template
 - validates (approves) or returns submissions with remarks
 - monitors compliance, pending documentation, and extension status updates
-- manages program-scoped beneficiaries (v4.12): enrolls from the global
+- manages project-scoped beneficiaries (v4.12): enrolls from the global
   registry, registers new (dedup-checked), imports from the beneficiary XLSX
   template, unenrolls, and imports per-activity attendance / evaluation
-  records from the official generated templates (v4.13) — via the "Manage
-  Beneficiaries" page (program list → program hub Beneficiaries/Activities
-  tabs). Program structure, objectives, activities, and budget remain
+  records from the official generated templates (v4.13) - via the "Manage
+  Beneficiaries" page (project list -> project hub Beneficiaries/Activities
+  tabs). Project structure, activities, targets and budget remain
   Director-only (scoped permission, 5.4)
 - has NO access to AI features
 
@@ -149,15 +225,16 @@ approvals.
   reason)
 - reviews, adjusts down, and submits rendered hours for completed activities
 - views per-activity attendance and evaluation records (recording is
-  import-only, performed by the Director's office or the Secretary — v4.13)
-- views assigned programs, activities, and schedules (program detail hub is
+  import-only, performed by the Director's office or the Secretary - v4.13)
+- views assigned projects, activities, and schedules (the project hub is
   read-only for faculty)
-- views the program results framework read-only; contributes evidence through
-  activity and attendance records
+- maintains their OWN contact details and expertise areas via "My Faculty
+  Profile" (R3); assignment fields (position, college, status) stay
+  Admin-controlled
 - monitors personal extension progress and rendered hours
 
 2.4 Default Accounts (provisioned by Phase 1 seeders)
-The system ships with six seeded accounts (one per role requirement; no
+The system ships with eight seeded accounts (one per role requirement; no
 self-registration exists in the system - accounts are provisioned by the
 Admin per 5.1):
 
@@ -165,11 +242,14 @@ Admin per 5.1):
     Dr. Lowell A. Quisumbing - admin@lnu.com
 - CESO Secretary:
     Jhoanna Ayles - secretary@lnu.com
-- Faculty (four accounts, one per faculty member):
+- Faculty (six accounts, one per faculty member; the last two are the
+  Graduate School roster added 2026-09-25):
     Carlo Sumile - faculty1@lnu.com
     Bianca Oledan - faculty2@lnu.com
     Nikko Villas - faculty3@lnu.com
     Kent Naputo - faculty4@lnu.com
+    Dr. Ramon L. Villamor - faculty5@lnu.com   [Graduate School]
+    Dr. Cristina P. Manalo - faculty6@lnu.com  [Graduate School]
 
 Rules for these accounts:
 - seeded with realistic Faculty profile records (department,
@@ -183,14 +263,18 @@ Rules for these accounts:
 ---------------------
 3.1 Core Objectives
 - centralize extension data in one system
-- improve transparency in program execution and monitoring
+- improve transparency in project execution and monitoring
 - reduce manual documentation and reporting burden
 - support efficient staff and faculty coordination
 - provide data-driven insights for decision making
 - improve accountability and auditability
 
 3.2 Monitoring & Evaluation Objectives
-- track program outputs, outcomes, and impact using the KPI definitions in 8.6
+- track project delivery against the TARGET MODEL: training hours rendered
+  (trainors x trainees x days), beneficiaries reached, and budget utilized,
+  measured against the annual university pool and each project's own targets
+  (D-R5). The former KPI dictionary (8.6) is retained in code but no longer
+  drives any UI surface (D-R7).
 - monitor budget use and resource allocation
 - track activity completion and attendance
 - evaluate community reach and beneficiary engagement
@@ -199,8 +283,10 @@ Rules for these accounts:
 3.3 Decision Support Objectives
 - provide dashboard summaries for director decisions
 - show pending approvals and risk areas
-- analyze program performance indicators
-- deliver human-approved AI-generated summaries for operational review
+- analyze project performance against targets, and rank projects, faculty and
+  colleges by contribution
+- deliver human-approved AI-generated summaries for operational review, with
+  every recommendation classified into the three-tier scope rule (8.5, D-R8)
 
 3.4 Study Objectives
 - design and implement a centralized extension database that records and
@@ -255,7 +341,7 @@ Style guidelines:
 Layout standards:
 - Left-side navigation; top header for page title, user profile, and
   notification bell
-- KPI panels as metric cards (large numbers, small trend indicators)
+- Metric panels as cards (large numbers, small trend indicators)
 - Tables with structured rows, hover states, subtle borders, action buttons
 - Dashboards and reports use clean card layouts, not dense text panels
 
@@ -269,25 +355,43 @@ Layout standards:
 - employee ID generation must be race-safe (dedicated sequence table or
   atomic DB-level increment); never read-max-then-write in application code
 - department, specialization, position, phone, address
+- college assignment (CAS | COE | CME | GRAD) and status (active | on_leave |
+  inactive) - added in R3
+- expertise areas, many-to-many, drawn from the controlled vocabulary (7)
 - account credentials managed by Admin only
+- THE MODULE IS REAL (R3). "Faculty Management" in the sidebar opens the
+  Faculty Engagement board - a chart plus ranked rows plus a college split,
+  driven by a metric switch. "Faculty Directory" is the roster where profiles
+  are managed, and each member has a full profile page showing their
+  contribution blocks. Faculty may edit their OWN contact details and
+  expertise areas; assignment fields (position, college, status) stay
+  Admin-only.
 
-5.2 Extension Program Management (Program Hub)
-- create and manage extension programs: description, narrative goals and
-  high-level objectives, planned dates, target beneficiaries, beneficiary
-  categories, allocated budget, program lead (existing Faculty), linked
-  communities and partners, attachments, status (draft | ongoing |
-  completed | cancelled)
-- THE PROGRAM DETAIL PAGE IS THE MANAGEMENT HUB: a tabbed page (Overview |
-  Activities | Beneficiaries | Budget) reached from the Programs list.
-  Admin manages it; Faculty view it read-only for programs they lead or are
+5.2 Project Management (Project Hub)
+- create and manage extension projects: title, description, planned dates,
+  target beneficiaries, beneficiary categories, allocated budget, project
+  lead (existing Faculty), linked communities and partners, status (draft |
+  ongoing | completed | cancelled)
+- every project belongs to ONE college (which decides its code prefix, R-Q4)
+  and ONE broad program (3 / 6.4b). The `programs` table has NO college_id:
+  a broad program spans colleges by design
+- annual target per project: target training HOURS. Budget has NO annual target
+  (v4.19) - a project's `allocated_budget` is its only budget figure, and it is
+  what utilization is measured against. Training-hours targets are one of only
+  TWO target levels in the system (D-R5); the other is the university pool (5.10)
+- THE PROJECT DETAIL PAGE IS THE MANAGEMENT HUB: a tabbed page (Overview |
+  Activities | Beneficiaries | Budget) reached from the Projects list.
+  Admin manages it; Faculty view it read-only for projects they lead or are
   assigned to. Standalone Beneficiaries/Activities/Budget pages do not
-  exist; aggregate cross-program views live in Analytics (5.13) and the
+  exist; aggregate cross-project views live on the admin dashboard and in the
+  print reports (the Analytics page was removed, v4.20 - see 5.13), and the
   Calendar (5.9)
-- Overview tab carries the results framework and objective manager:
-  Admin-only CRUD for ProgramObjectives (6.15) via modal; kpi_metric is
-  validated against the locked 8.6 vocabulary; numeric objectives
-  auto-compute actuals live per 8.6; qualitative objectives tracked manually
-  with evidence
+- The Overview tab carries the PERFORMANCE block, not a results framework:
+  training hours vs the annual HOURS target, budget vs the ALLOCATION (v4.19 -
+  budget has no annual target), and the trainors / trainees / training-hours / activities tiles.
+  The objective manager and the results framework were REMOVED from the UI
+  (D-R7); ProgramObjective and KpiService remain in the codebase but are unread
+  (R-Q2, 6.15)
 
 5.3 Community Management (Communities & Partner Schools)
 - Admin creates and manages community profiles: municipality, barangay,
@@ -303,10 +407,10 @@ Layout standards:
 - single global beneficiary registry; de-duplication is inherently global
 - demographics, income, occupation, educational attainment, household data
 - classification by type/category (controlled vocabulary)
-- PROGRAM-SCOPED UI: enrollment is managed from a program's Beneficiaries tab
+- PROJECT-SCOPED UI: enrollment is managed from a project's Beneficiaries tab
   - "enroll existing": search the global registry (including beneficiaries
-    not yet linked to any program)
-  - "register new": create a profile and auto-enroll it into the program
+    not yet linked to any project)
+  - "register new": create a profile and auto-enroll it into the project
   - "import XLSX" (v4.7): download an official authored template (fixed
     headers: First Name, Middle Name, Last Name, Age, Sex, Contact Number,
     Barangay, Municipality / City, Beneficiary Category; one row = one
@@ -320,9 +424,9 @@ Layout standards:
     never a whole-file reject. Admin and Secretary (v4.12 scoped
     beneficiary-manage permission; the Secretary reaches the hub through
     the "Manage Beneficiaries" page).
-  - "unenroll": detach from the program pivot
-- a beneficiary may belong to multiple programs
-  (extension_program_beneficiary pivot); track activity participation
+  - "unenroll": detach from the project pivot
+- a beneficiary may belong to multiple projects
+  (extension_project_beneficiary pivot); track activity participation
 - de-duplication check on create: if first_name + last_name + barangay match
   an existing beneficiary anywhere in the registry, show a warning and
   require confirmation; never silently merge
@@ -330,18 +434,18 @@ Layout standards:
   per-activity attendance / evaluation XLSX imports (v4.13) are granted to
   Admin AND Secretary
   (ProgramPolicy::manageBeneficiaries); the Secretary's entry point is the
-  "Manage Beneficiaries" page (program list with Beneficiaries/Attendance
-  deep links). Program edit, objectives, activity CRUD, and budget stay
+  "Manage Beneficiaries" page (project list with Beneficiaries/Attendance
+  deep links). Project edit, activity CRUD, targets and budget stay
   Admin-only (manage). Faculty view the hub read-only as before.
 
 5.5 Activity Management
-- activities are created and managed inside the parent program's Activities
-  tab (per-program table with create/edit modals; the program is preselected
+- activities are created and managed inside the parent PROJECT's Activities
+  tab (per-project table with create/edit modals; the project is preselected
   and locked in context); auto-created activities from approved proposals
   land here
 - schedules: planned start/end dates AND start/end times; venue; status
   (draft | ongoing | completed | cancelled); remarks and notes
-- activity planned dates MUST fall within the parent program's date range
+- activity planned dates MUST fall within the parent project's date range
   (8.8): date pickers constrained to the range, server-side validation as
   backstop
 - faculty assignment is HARD-BLOCKED if it overlaps the faculty's other
@@ -407,15 +511,18 @@ Layout standards:
   communities
 
 5.7 Budget & Resource Monitoring
-- allocated budget per program; optional allocated budget per activity
-- utilization is recorded on the program hub's Budget tab: entries attach to
-  the program (required) and optionally to an activity
-- expenditure exceeding allocation: entry is still saved, a persistent
-  warning badge shows on the program, and an activity log entry is written
+- allocated budget per PROJECT; optional allocated budget per activity
+- utilization is recorded on the project hub's Budget tab: entries attach to
+  the PROJECT (required) and optionally to an activity
+- expenditure exceeding the allocation: entry is still saved, a persistent
+  warning badge shows on the project, and an activity log entry is written
   (D7)
-- compute budget utilization percentages per 8.6; show cost per beneficiary
-  and program efficiency
-- aggregate cross-program budget views live in Analytics (5.13)
+- budget utilization is measured against each project's ALLOCATION (v4.19 -
+  a project has no annual budget target). The project hub's Budget tab also
+  shows cost per trainee. The 8.6 "cost per beneficiary" and "program
+  efficiency" measures are RETIRED (D-R7)
+- aggregate cross-PROJECT budget views live on the admin dashboard and in the
+  print reports (the Analytics page was removed, v4.20 - see 5.13)
 
 5.8 Availability Management (ADMIN-INITIATED)
 - Admin creates an availability request for ONE faculty member, tied to a
@@ -433,28 +540,41 @@ Layout standards:
   a "(You)" marker
 - custom month-grid calendar with a day-details side panel and a 60-day list
   view, built in the app's own design system (no external CDN dependency)
-- three feeds: activities, accepted availability requests, program/objective
+- three feeds: activities, accepted availability requests, project
   deadlines
 - event click-through to detail screens; month navigation with today
   ring/highlight
 - conflicting events (8.8 overlap) are marked red with a "conflict" indicator
 
-5.10 Monitoring, KPI & M&E Metrics
-- all KPIs are computed strictly per the formulas in 8.6 (single source of
-  truth): participation rate, activity completion rate, attendance
-  consistency, budget utilization, knowledge gain, cost per beneficiary,
-  community reach, rendered hours
-- program-level indicators for outputs, outcomes, and impact
-- comparison views across communities, programs, and quarters
-- objective tracking: each ProgramObjective shows baseline -> target ->
-  actual progress with auto-derived status (achieved / on_track / not_met /
-  not_started); numeric objectives live-compute per 8.6, qualitative
-  objectives use manual status + evidence
+5.10 Monitoring, M&E Metrics & the Target Model
+- THE TARGET MODEL (D-R5, amended v4.19) replaces the former KPI dictionary as
+  the primary M&E frame. Targets exist at exactly TWO levels:
+    * the UNIVERSITY annual pool: total training hours and total budget
+      (university_targets). It is a CONSUMPTION pool, not a ratio - the
+      projects draw from it.
+    * each PROJECT's annual training-HOURS target (6.4c). A project has NO
+      annual BUDGET target (v4.19): its `allocated_budget` is the only budget
+      figure it has, so budget utilization is measured against the allocation.
+  Broad programs and colleges carry NO target; every figure shown for them is
+  a derived roll-up of the projects beneath them.
+- the core delivered metrics are: training hours rendered
+  (trainors x trainees x days - see 2.2A; there is NO x 8 factor),
+  beneficiaries reached (a DISTINCT person count, never a sum of per-activity
+  attendances), budget utilized, activity completion, and rendered hours
+  (faculty service credit, 5.16 - a different concept from training hours,
+  and the two are named distinctly in the UI)
+- comparison views across communities, projects, colleges and periods
+- ranking views: most active projects, faculty and colleges by contribution
+- RETIRED: the 8.6 KPI dictionary (participation rate, knowledge gain, cost
+  per beneficiary, ...) and the ProgramObjective baseline -> target -> actual
+  tracking are RETAINED IN CODE BUT UNREAD (R-Q2) and drive no UI surface
+  (D-R7). See the notice at 8.6 and the retained model at 6.15.
 
 5.11 Assessment Summary & AI Analysis (flagship - output type 1)
 - ONE governed AI pipeline with TWO output types sharing the same
   job/retry/provenance backbone (8.5): community assessment insights (this
-  section) and program narratives (5.15)
+  section) and project narratives (5.15). Generation is SYNCHRONOUS, in
+  request - there is no queued job pipeline (v4.4).
 - aggregate assessment summaries are computed per community per quarter
   (AssessmentSummary, 6.10): gender, education, livelihood, health, and
   service patterns
@@ -469,31 +589,47 @@ Layout standards:
   approving officer
 - failure state ("analysis unavailable") is a first-class UI state, never a
   silent error
+- THREE-TIER SCOPE RULE (D-R8, v4.15): every recommendation the AI returns is
+  classified before it is shown - Tier 1 CESO can deliver it, Tier 2 it is an
+  interagency referral (the citable agency MUST come from the
+  interagency_agencies catalogue), Tier 3 it is prohibited as CESO work and
+  appears only as an audit note. A need CESO cannot serve is REFERRED, never
+  silently dropped.
 - ACCESS: Admin-only (generate, view, approve/discard)
 
 5.12 Activity Proposal Workflow
 - faculty submits an activity proposal with attachment(s); the proposal
-  specifies the target program and community
+  specifies the target project and community
 - Admin reviews and approves/rejects with remarks (rejection requires a
   reason)
 - Admin MAY attach a Special Order document (PDF) before final approval; its
   presence/absence is shown on the review screen
 - ON APPROVAL: the system auto-creates a linked Activity in "draft" status
-  under the chosen program/community, copying title and dates, and stamps
+  under the chosen project/community, copying title and dates, and stamps
   the proposal with created_activity_id
-- proposed start/end dates are validated against the target program's date
+- proposed start/end dates are validated against the target project's date
   range BEFORE approval; approval is blocked if they fall outside (8.8)
 - after approval the proposal enters the assessment stage; the Secretary
   validates resulting assessment submissions
 - full transition log for every state change
 
 5.13 Reporting & Dashboarding
-- six dashboards delivered as ONE Admin Analytics page with six tabs:
-  Overview, Program Performance, Budget Utilization, Community Reach, Faculty
-  Contribution, Pending Actions (Section 12)
-- program performance includes per-objective progress bars (baseline ->
-  target -> actual) and objective status breakdown
-- KPI cards, charts (Chart.js), recent activity feed, alerts
+- THE ADMIN ANALYTICS PAGE IS REMOVED (v4.20, owner decision 2026-09-27). The
+  six-tab page at /analytics no longer exists; see 12.1 for what replaced it.
+  Four of its six tabs duplicated the admin dashboard (Overview, Project
+  Performance, Budget Utilization, Pending Actions), Faculty Contribution was
+  superseded by the R3 Faculty module, and the two tabs with no substitute -
+  the aggregate Pending Actions list and the Community Reach chart - were
+  accepted as deliberate losses. The `community_reach` measure is retired with
+  it, consistently with D-R7's retirement of the 8.6 dictionary
+- cross-project aggregates therefore live on the ADMIN DASHBOARD (12.1) and in
+  the PRINT REPORTS (12.2), which report delivery against the TARGET MODEL:
+  training hours rendered vs the project's annual HOURS target, budget vs the
+  ALLOCATION (v4.19 - budget has no annual target), and beneficiaries reached.
+  Per-objective progress bars and the objective status breakdown were REMOVED
+  earlier (D-R7) - see 5.10
+- metric cards, charts (Chart.js), alerts (v4.18: the recent activity feed
+  became its own Audit Logs page - see 12.1)
 - PRINT-OPTIMIZED report views (@media print CSS) covering all institutional
   reports in Section 12
 - PDF/Excel generators are future work
@@ -505,29 +641,31 @@ Layout standards:
   requested (to faculty) / accepted or declined (to admin); assessment
   returned / validated; AI analysis ready for review (Admin); rendered hours
   submitted (to admin) / approved or rejected (to faculty)
-- DEADLINE SCHEDULER: a daily scheduled command notifies Admin of programs
-  ending within 14 days and on-track objectives approaching target dates,
-  with 7-day de-duplication
+- DEADLINE SCHEDULER: a daily scheduled command notifies Admin of projects
+  ending within 14 days and of projects past the midpoint of their window
+  whose training hours are behind their annual target, with 7-day
+  de-duplication. (The second alert was rebuilt on the target model in R5;
+  it previously fired on retired objective target dates - D-R7.)
 
-5.15 Program Narrative (executive summary - output type 2)
-- Admin (Director) only: generates and views program narratives
-- manual trigger: "Generate program narrative" on the program detail screen
-- input (all aggregate, no PII): program metadata (title, status, lead,
-  dates, communities), ProgramObjective statuses, 8.6 KPIs (budget
-  utilization, participation rate, activity completion, knowledge gain, cost
-  per beneficiary, community reach), activity completion counts, budget
-  overrun warnings, at-risk signals (objectives not_met / approaching
-  target_date, overdue activities)
-- LLM returns: overall program health statement, objective achievement
-  summary (X of Y met), budget + participation health, top 3 risks/red
-  flags, recommended next actions with brief rationale
+5.15 Project Narrative (executive summary - output type 2)
+- Admin (Director) only: generates and views project narratives
+- manual trigger: "Generate narrative" on the project hub
+- input (all aggregate, no PII): project metadata (title, status, lead,
+  dates, communities, college, broad program), the TARGET-MODEL figures
+  (training hours rendered vs annual target, budget utilized vs annual
+  target, trainors, trainees, activities completed), and at-risk signals
+  (a project past its midpoint with hours behind its target, overdue
+  activities)
+- LLM returns: overall project health statement, delivery summary against the
+  annual targets, budget and reach health, top 3 risks / red flags,
+  recommended next actions with brief rationale
 - result stored in ProgramNarrative (6.16) with full provenance (model,
   prompt version, generated_at, generated_by)
 - NO approval gate: narratives are Admin-internal decision support (contrast
   5.11, which requires Admin approval for institutional use); provenance is
   still recorded for audit
 - history retained: each generation creates a new row; the Director can
-  browse past versions per program
+  browse past versions per project
 - failure state ("narrative unavailable") is a first-class UI state
 
 5.16 Rendered Hours (faculty service hours)
@@ -541,7 +679,9 @@ Layout standards:
   approval
 - faculty dashboard shows "My Rendered Hours" (approved hours per semester);
   Admin sees an approval queue
-- rendered hours feed the 8.6 KPI and the faculty rendered-hours report
+- rendered hours feed the faculty rendered-hours report and the Faculty
+  Contribution roll-ups. They are SERVICE CREDIT and a different concept from
+  training hours delivered - 5.10; the two are named distinctly in the UI.
 
 
 6. DATA MODELS
@@ -563,7 +703,7 @@ Relationships: has one Faculty profile
 Fields: id, user_id, employee_id (unique, auto: LNU-{year}-{4-digit seq}),
 department, specialization, position, avatar, phone, address, notes,
 timestamps, soft deletes
-Relationships: belongs to User; has many ExtensionPrograms (as program lead);
+Relationships: belongs to User; has many ExtensionProjects (as project lead);
 belongs to many Activities (pivot activity_faculty); has many
 AvailabilityRequests; has many ActivityProposals
 
@@ -580,31 +720,79 @@ registry — one CRUD, one page, distinguished by `type`. School records
 are extension partners (program partners / activity venues), not
 beneficiary-enrollment targets; schools are always status=active.
 
-6.4 ExtensionProgram
-Fields: id, title, description, goals (narrative text), objectives (text;
-high-level narrative summary - the measurable objectives are structured per
-ProgramObjective, 6.15), planned_start_date, planned_end_date,
+6.4 ExtensionProject  [RENAMED in v4.15 — this section was "ExtensionProgram" through v4.14]
+
+  *** READ THIS BEFORE USING SECTION 6 ***
+  The revision (revisions.md R1-R2) inserted TWO levels above this entity and renamed
+  it. The hierarchy is now:
+
+      College (6.4a)  ->  Program (6.4b)  ->  ExtensionProject (6.4)  ->  Activity (6.5)
+
+  "Program" used to mean the entity in THIS section. It now means the broad CESO thrust
+  level in 6.4b. The table was renamed extension_programs -> extension_projects and the
+  class ExtensionProgram -> ExtensionProject. Legacy project codes (EXT-2026-00X) were
+  preserved; new projects get college-prefixed codes (e.g. CAS-2026-001).
+
+6.4a College  [NEW in v4.15]
+Fields: id, code (unique; CAS | COE | CME | GRAD), name, short_name, coordinator_id
+(FK faculties, nullable), color, status, timestamps, soft deletes
+Relationships: has many ExtensionProjects
+Note (v4.17): THE SET IS FIXED - CAS, COE, CME and the Graduate School (GRAD,
+added 2026-09-25; the unit that runs the master's and doctoral programmes).
+The UI has NO college CRUD: CollegeSeeder is the set's only owner, so a name,
+description or coordinator is corrected THERE. CollegePolicy keeps `manage` as
+the HUB-ACCESS ability only - it is no longer a write permission.
+Note: colleges carry NO training-hours target and NO budget target (D-R5). A college's
+figures are always rolled up from its projects.
+
+6.4b Program  [NEW in v4.15 - the BROAD level; this name previously meant 6.4]
+Fields: id, code (PROG-{year}-{seq}), title, pillar (social | economic | environmental),
+ceso_thrust, description, goals, status (active | inactive), annual_target_hours
+(nullable - PLANNING ONLY, not a target; see D-R5), annual_target_budget (nullable,
+planning only), created_by / updated_by (FK users), timestamps, soft deletes
+Relationships: has many ExtensionProjects
+Note: a Program has NO college_id - the six CESO thrusts are university-wide and span
+colleges. Targets live at UNIVERSITY and PROJECT level only (D-R5), so the two
+annual_target_* columns above exist purely for Director planning and default to NULL.
+
+6.4c ExtensionProject  (the entity formerly known as ExtensionProgram)
+Fields: id, college_id (FK colleges), program_id (FK programs), title, description,
+goals (narrative text), objectives (text; free-text narrative summary ONLY -
+the structured, measurable objectives were ProgramObjective, 6.15, which is
+retained in code but retired from the UI by D-R7), planned_start_date,
+planned_end_date,
 target_beneficiaries (integer), beneficiary_categories (JSON array,
-controlled vocabulary), allocated_budget (decimal 12,2), program_lead_id
+controlled vocabulary), allocated_budget (decimal 12,2 - THE budget basis,
+v4.19: the only project-level budget figure, and what utilization is measured
+against), annual_target_hours
+(decimal 10,2, nullable - the PROJECT-level annual HOURS target, D-R5),
+annual_target_budget (decimal 12,2, nullable - RETAINED BUT UNREAD, v4.19:
+nothing reads it and no new reader may be added), program_lead_id
 (FK faculties), partners (JSON array of strings), cover_image (path),
 gallery_images (JSON array of paths), attachments (JSON array of paths),
 status (draft | ongoing | completed | cancelled), notes, created_by /
 updated_by (FK users), timestamps, soft deletes
 Baseline rule: pre/post baseline is aggregated from activity-level scores
-(6.5); no program-level baseline columns exist.
-Relationships: belongs to Faculty (program lead); has many Activities; has
-many ProgramObjectives; belongs to many Communities (pivot); has many
-BudgetUtilizations; belongs to many Beneficiaries (pivot)
+(6.5); no project-level baseline columns exist.
+Relationships: belongs to College; belongs to Program; belongs to Faculty (project
+lead); has many Activities; has many ProgramObjectives (retained, UNREAD -
+6.15); belongs to many Communities
+(pivot); has many BudgetUtilizations; belongs to many Beneficiaries (pivot)
 
 6.5 Activity
-Fields: id, extension_program_id, activity_proposal_id (nullable FK; set when
+Fields: id, extension_project_id, activity_proposal_id (nullable FK; set when
 auto-created from an approved proposal), title, description,
 planned_start_date, planned_end_date, start_time, end_time,
 actual_start_date (nullable), actual_end_date (nullable), venue, status
 (draft | ongoing | completed | cancelled), notes, allocated_budget (nullable
 decimal 12,2), pre_assessment_score, post_assessment_score,
-satisfaction_rating, timestamps, soft deletes
-Relationships: belongs to ExtensionProgram; belongs to ActivityProposal
+satisfaction_rating, no_of_days (decimal 4,1, nullable - v4.15 / R4: the training
+duration; 0.5 = a half day, which is why it is decimal and not integer),
+participants (integer, nullable - v4.15 / R4: the MANUAL trainee count, used only
+as the R-Q1 fallback when no attendance was imported), trainors_snapshot (integer,
+nullable - v4.15 / R4: the trainor count frozen at delivery time),
+timestamps, soft deletes
+Relationships: belongs to ExtensionProject; belongs to ActivityProposal
 (optional); belongs to many Faculty (pivot); has many Attendances; has many
 BudgetUtilizations (via budget_utilizations.activity_id)
 Note: pre_assessment_score, post_assessment_score, and satisfaction_rating
@@ -723,13 +911,13 @@ belongs to User (approver)
 Access: Admin-only generate/view/approve-discard (D4).
 
 6.12 BudgetUtilization
-Fields: id, extension_program_id, activity_id (nullable FK; allows expense
+Fields: id, extension_project_id, activity_id (nullable FK; allows expense
 attribution to an activity), item_name, description, amount (decimal 12,2),
 date_used, receipt_reference, timestamps
-Relationships: belongs to ExtensionProgram; belongs to Activity (optional)
+Relationships: belongs to ExtensionProject; belongs to Activity (optional)
 
 6.13 ActivityProposal
-Fields: id, faculty_id, extension_program_id (FK; the proposal targets an
+Fields: id, faculty_id, extension_project_id (FK; the proposal targets an
 existing program), community_id (FK; the proposal targets a community),
 created_activity_id (nullable FK; stamped on approval when the linked
 Activity is auto-created), title, description, proposed_start_date,
@@ -744,9 +932,9 @@ Status machine:
   is null, the approval screen displays an informational notice
 - pending -> rejected: requires rejection_reason, rejected_by, rejected_at
 - ON APPROVAL: auto-create Activity (status = draft) under
-  extension_program_id/community_id copying title and proposed dates; stamp
+  extension_project_id/community_id copying title and proposed dates; stamp
   created_activity_id
-Relationships: belongs to Faculty; belongs to ExtensionProgram; belongs to
+Relationships: belongs to Faculty; belongs to ExtensionProject; belongs to
 Community; has one Activity (created on approval); has many
 ProposalDocuments; belongs to User (approved/rejected by)
 
@@ -755,37 +943,46 @@ Fields: id, activity_proposal_id, file_name, file_path, file_size, file_type,
 uploaded_at, timestamps, soft deletes
 Relationships: belongs to ActivityProposal
 
-6.15 ProgramObjective
-Fields: id, extension_program_id (FK), objective (text; measurable statement
-of the goal), kpi_metric (nullable; MUST be one of the locked keys in 8.6 -
+6.15 ProgramObjective  [RETAINED IN CODE, UNREAD - D-R7 / R-Q2]
+
+*** v4.15 STATUS: this model no longer drives ANY UI surface. The objective
+    manager was removed from the project hub and the results framework was
+    removed from the dashboards and reports (D-R7). The table and model are
+    kept so historical rows stay inspectable and the migrations stay
+    reversible. ProgramObjective is still exercised by ObjectiveStatusTest;
+    do NOT add new readers. ***
+
+Fields: id, extension_project_id (FK), objective (text; measurable statement
+of the goal), kpi_metric (nullable; one of the RETIRED keys in 8.6 -
 participation_rate, activity_completion_rate, attendance_consistency,
 budget_utilization, knowledge_gain, cost_per_beneficiary, community_reach;
 NULL = qualitative objective, tracked manually), baseline_value (nullable
 decimal; starting measurement for numeric objectives), target_value (nullable
-decimal; single target for the whole program, no per-quarter milestones),
-actual_value (nullable decimal; live-computed for kpi_metric objectives per
-8.6; manual entry for qualitative objectives), unit (nullable; %, count,
-points, etc.), target_date (nullable; when "met" is evaluated), status
-(not_started | on_track | achieved | not_met), evidence_notes (nullable
+decimal; single target for the whole project, no per-quarter milestones),
+actual_value (nullable decimal; formerly live-computed for kpi_metric
+objectives per 8.6; manual entry for qualitative objectives), unit (nullable;
+%, count, points, etc.), target_date (nullable; when "met" is evaluated),
+status (not_started | on_track | achieved | not_met), evidence_notes (nullable
 text; evidence/remarks for qualitative objectives and manual actuals),
 timestamps, soft deletes
-Relationships: belongs to ExtensionProgram. Activity-level linkage is
-deliberately NOT modeled - all program activities implicitly contribute to
-program objectives.
-Status derivation: see 8.6.
+Relationships: belongs to ExtensionProject. Activity-level linkage is
+deliberately NOT modeled - all project activities implicitly contribute to
+objectives.
+Status derivation: see 8.6 (itself retired from the UI).
 
 6.16 ProgramNarrative
-Fields: id, extension_program_id (FK), generated_by (FK users; admin/director
-only), status (pending | completed | failed), summary (text; overall program
-health statement and objective achievement summary), health_label (nullable;
+Fields: id, extension_project_id (FK), generated_by (FK users; admin/director
+only), status (pending | completed | failed), summary (text; overall PROJECT
+health statement and delivery summary against the annual targets), health_label (nullable;
 e.g. "on track", "at risk", "needs attention" - derived by the LLM), risks
 (JSON; top 3 risks/red flags), recommendations (JSON; recommended next
 actions with brief rationale), raw_extracted_data (JSON snapshot of the
-KPI/objective/activity aggregates actually sent to the LLM),
+TARGET-MODEL aggregates actually sent to the LLM - training hours, budget,
+reach, activities; NOT the retired 8.6 KPIs),
 confidence_score (decimal 3,2; DERIVED data-confidence, same heuristic as
 6.11 — v4.6; guidance only), error_message (nullable), metadata (JSON: model
 name, prompt version, token usage), generated_at, timestamps, soft deletes
-Relationships: belongs to ExtensionProgram; belongs to User (generator)
+Relationships: belongs to ExtensionProject; belongs to User (generator)
 Notes: NO approval gate (Admin-internal decision support); history kept -
 every generation creates a new row.
 
@@ -805,8 +1002,10 @@ Relationships: belongs to Faculty; belongs to Activity; belongs to User
 
 6.18 Status Enumerations Reference
 - users.role: admin | secretary | faculty
+- colleges.status: active | inactive
 - communities.status: active | prospecting
-- programs.status: draft | ongoing | completed | cancelled
+- programs.status: active | inactive               (the BROAD CESO thrusts)
+- extension_projects.status: draft | ongoing | completed | cancelled
 - activities.status: draft | ongoing | completed | cancelled
 - activity_proposals.status: pending | approved | rejected
 - availability_requests.status: pending | accepted | declined
@@ -818,6 +1017,11 @@ Relationships: belongs to Faculty; belongs to Activity; belongs to User
 - program_objectives.status: not_started | on_track | achieved | not_met
 - program_narratives.status: pending | completed | failed
 - rendered_hours.status: pending | approved | rejected
+
+  NOTE - a config naming leftover: `config('smartcemes.statuses.program')` holds
+  the PROJECT status list (draft | ongoing | completed | cancelled), because the
+  narrow entity was called "program" before R2. It is NOT the broad Program's
+  vocabulary, which is active | inactive.
 
 
 6.19 ActivityImport (v4.13)
@@ -953,10 +1157,10 @@ General rules for all dropdowns:
 
 8. CORE BUSINESS LOGIC
 -----------------------
-8.1 Program Tracking
-- each extension program is traceable from concept to completion
-- each program can have assigned communities, beneficiaries, activities, and
-  budget; progress is visible to administrators and faculty
+8.1 Project Tracking
+- each extension project is traceable from concept to completion
+- each project can have assigned communities, beneficiaries, activities,
+  targets, and budget; progress is visible to administrators and faculty
 - every status transition writes an activity log entry
 
 8.2 Participation Monitoring
@@ -968,10 +1172,10 @@ General rules for all dropdowns:
 - engagement is estimated through repeated interactions
 
 8.3 Budget Accountability
-- allocated vs actual expenditures compared at program level; activity
+- allocated vs actual expenditures compared at PROJECT level; activity
   attribution optional
 - entries exceeding allocation: the save succeeds, a warning badge persists
-  on the program, and a log entry is written (D7)
+  on the project, and a log entry is written (D7)
 - reports surface over- and under-utilization for director evaluation
 
 8.4 Approval Workflow
@@ -984,8 +1188,10 @@ General rules for all dropdowns:
 - separation of duties: no role can perform another role's approvals
 
 8.5 AI-Assisted Insights (single pipeline, two output types)
-- shared backbone: queued job, retry with backoff, terminal failure state
+- shared backbone: job with retry with backoff, terminal failure state
   persisted as failed with error_message; the UI shows a graceful fallback
+  (v4.4: generation is SYNCHRONOUS in-request, not queued - the jobs remain
+  ShouldQueue-compatible if ever flipped back to async)
 - ACCESS: BOTH output types are Admin (Director)-only. Only the Admin can
   generate, view, and approve AI outputs; Secretary and Faculty have NO AI
   access (D4). This is the single unified AI access rule for the whole system.
@@ -993,20 +1199,41 @@ General rules for all dropdowns:
   aggregates ONLY (D3 - no PII transmission); output is summary + prioritized
   interventions stored as an AssessmentAnalysis draft; Admin approval
   required before institutional use (D4)
-- Output type 2 - ProgramNarrative (program): input is aggregate
-  program-level data ONLY (ProgramObjective statuses, 8.6 KPIs, activity
-  completion, budget warnings; no PII); output is executive narrative +
-  risks + recommended next actions stored as ProgramNarrative; Admin-only
-  generate/view, NO approval gate (internal decision support); history kept
-  per program
+- Output type 2 - ProgramNarrative (project narrative): input is aggregate
+  project-level data ONLY (the target-model figures - training hours rendered
+  vs the project's annual HOURS target, budget utilized vs the ALLOCATION (v4.19 -
+  a project has no annual budget target), trainors, trainees,
+  activities completed - plus budget warnings; no PII). The retired
+  ProgramObjective statuses and 8.6 KPIs are NOT sent (D-R7 / R-Q2). Output is
+  an executive narrative + risks + recommended next actions stored as
+  ProgramNarrative; Admin-only generate/view, NO approval gate (internal
+  decision support); history kept per project
 - both output types record provenance metadata (model, prompt version,
   generated_at/by) for audit
-- NO mock/demo mode exists (D12): every generation calls the live OpenAI
+- THREE-TIER SCOPE GUARDRAIL (D-R8, v4.15): every recommendation is classified
+  before display. Tier 1 = CESO can deliver it. Tier 2 = an interagency
+  referral, and the citable agency MUST come from the interagency_agencies
+  catalogue (an admin-editable table) - the model may not invent one. Tier 3 =
+  prohibited as CESO work, surfaced as an audit note only. A need CESO cannot
+  serve is REFERRED, never silently dropped.
+- NO mock/demo mode exists (D12): every generation calls the live Google Gemini
   API; the persisted terminal failure state ("analysis unavailable" /
   "narrative unavailable" first-class UI states) is the only fallback. API
   key and quota are verified before any demo or defense run.
 
-8.6 KPI METRIC DICTIONARY (single source of truth for all dashboards/reports)
+8.6 KPI METRIC DICTIONARY [RETIRED FROM THE UI - RETAINED IN CODE ONLY]
+
+*** v4.15 STATUS: SUPERSEDED FOR THE UI. The dictionary below is retained in code but
+    UNREAD (D-R7 / R-Q2). Every 8.6 KPI surface was removed from the project hub,
+    dashboards and reports and replaced by the target model (section 2.2B / D-R5):
+    trainors, trainees, training hours and budget measured against the university pool
+    and each project's annual targets. KpiService, ProgramObjective, the
+    programObjectives relation, the program_objectives table and the
+    smartcemes.kpi_metrics config all still exist so historical rows stay inspectable
+    and the migrations stay reversible - but DO NOT ADD NEW READERS.
+    "Program" in the definitions below means the entity now called ExtensionProject
+    (see 6.4). The text is otherwise unrevised. ***
+
 - Participation Rate (%)
     = DISTINCT beneficiaries with >= 1 attendance in the program
       / beneficiaries linked to the program * 100
@@ -1080,10 +1307,10 @@ reports, NOT hard system rules):
 
 8.8 Scheduling Rules (HARD CONSTRAINTS)
 - Activity dates within program range: an Activity's planned dates MUST fall
-  within the parent ExtensionProgram's [planned_start_date,
+  within the parent ExtensionProject's [planned_start_date,
   planned_end_date]. Enforced on manual create/edit, rescheduling (5.5), and
   proposal approval/auto-create (5.12 validates proposed dates against the
-  target program before approval). UI constrains date pickers to the program
+  target program before approval). UI constrains date pickers to the project
   range; server-side validation is the backstop.
 - Faculty assignment hard-block: a Faculty member cannot be assigned to an
   activity whose schedule overlaps any other activity they are already
@@ -1113,8 +1340,10 @@ reports, NOT hard system rules):
   (Spatie); no edits after approval.
 - Uniqueness: one entry per faculty per activity (faculty_id, activity_id
   unique).
-- KPI: Rendered Hours = SUM(approved hours) per faculty per semester (8.6);
+- KPI: Rendered Hours = SUM(approved hours) per faculty per semester;
   surfaced on the faculty dashboard and the faculty rendered-hours report.
+  (Rendered hours are faculty SERVICE CREDIT and are a different concept from
+  TRAINING hours delivered - 5.10; the two are named distinctly in the UI.)
 
 
 9. TECHNICAL STACK
@@ -1131,7 +1360,6 @@ All choices locked:
   app's own design system (no external CDN)
 - maatwebsite/excel (PhpSpreadsheet) for official XLSX template import
 - Spatie Activity Log (REQUIRED - audit trail backbone)
-- Spatie Activity Log (REQUIRED - audit trail backbone)
 - Google Gemini API, flash-class model (free tier; e.g. gemini-3.6-flash
   class) generated synchronously in-request (immediate result; owner
   decision v4.4, supersedes the earlier queued-jobs spec) — supersedes the
@@ -1146,7 +1374,7 @@ All choices locked:
 ------------------------
 10.1 Presentation Layer
 - Blade views, Livewire components, Tailwind UI patterns
-- admin/secretary/faculty dashboards; program detail hub
+- admin/secretary/faculty dashboards; the project hub
 - print-optimized report layouts
 
 10.2 Application Layer
@@ -1161,12 +1389,14 @@ All choices locked:
 - soft deletes everywhere; unique constraint on AssessmentSummary
 - activity log tables (Spatie)
 
-10.4 AI/Analytics Layer
-- queued job pipeline with two output types: (1) gather AssessmentSummary
+10.4 AI Layer
+- job pipeline with two output types (v4.4: dispatched SYNCHRONOUSLY in-request,
+  not queued): (1) gather AssessmentSummary
   aggregates -> build anonymized prompt -> call LLM -> persist
-  AssessmentAnalysis; (2) gather program-level aggregates (objectives, KPIs,
-  activities, budget) -> build anonymized prompt -> call LLM -> persist
-  ProgramNarrative
+  AssessmentAnalysis; (2) gather project-level aggregates (the target-model
+  figures: training hours rendered vs annual target, budget utilized vs
+  annual target, beneficiaries reached, activities completed) -> build
+  anonymized prompt -> call LLM -> persist ProgramNarrative
 - retry with backoff; terminal failure state surfaced in UI
 - prompt template versioned in metadata for reproducibility
 - access control: both AI output types are Admin-only (D4)
@@ -1181,8 +1411,12 @@ All choices locked:
 
 11. IMPLEMENTATION PHASES
 --------------------------
-IMPLEMENTATION STATUS: ALL PHASES PENDING - the build starts from scratch.
-MVP = Phases 1-5; Phase 6 hardens and ships the system.
+IMPLEMENTATION STATUS (v4.21, 2026-09-28): Phases 1-5 are COMPLETE and the system is
+running (491 tests / 2894 assertions passing, 0 failures). The post-defence revision
+phases R1-R7 are ALSO complete except for the production deploy. See revisions.md for
+the authoritative tracker and the v4.21 revision entry at the end of this document.
+MVP = Phases 1-5; the hardening phase is now labelled R7 (the original "Phase 6" label
+is retired - R7 absorbed its remaining work).
 
 Phase 1: Foundation
 - set up Laravel app and database
@@ -1225,7 +1459,9 @@ Phase 3: Workflow Modules
 - database notifications
 
 Phase 4: Dashboard and Reporting
-- KPI cards per 8.6, charts, recent activity, action center
+- metric cards (rebuilt on the TARGET MODEL in R4/R5 - see revisions.md
+  sections 15-16; the original 8.6 KPI cards were removed by D-R7), charts,
+  alerts (v4.18: the recent activity panel became the Audit Logs page - 12.1)
 - custom month-grid calendar (three feeds, conflict markers)
 - print-optimized institutional reports
 
@@ -1246,37 +1482,41 @@ Phase 6: Hardening & Deployment
 12. DASHBOARDS & REPORTS
 -------------------------
 12.1 Dashboards
-- the six dashboards are delivered as ONE Admin Analytics page with six
-  tabs: Overview, Program Performance, Budget Utilization, Community Reach,
-  Faculty Contribution, Pending Actions
+- THE ADMIN ANALYTICS PAGE IS REMOVED (v4.20, owner decision 2026-09-27). The
+  six-tab page (Overview, Project Performance, Budget Utilization, Community
+  Reach, Faculty Contribution, Pending Actions) is deleted outright: its route,
+  component, six partials, nav entry, tests and prototype page are all gone.
+  Four of the six tabs duplicated the admin dashboard below, Faculty
+  Contribution was superseded by the R3 Faculty module, and the two tabs with
+  no substitute - the aggregate Pending Actions list and the Community Reach
+  chart - were accepted as deliberate losses. Do not restore it without an
+  owner decision: see 5.13 and revisions.md §21.
 - the three role dashboards (admin/secretary/faculty) are the daily-entry
-  pages; each program's detail hub carries its own KPI cards + results
-  framework plus a v4.14 KPI scorecard vs targets: 8.6 actuals auto-computed
-  live, dashed target markers ONLY from the program's results-framework
-  objective targets (no target = no marker), and cost per beneficiary,
-  knowledge gain and average satisfaction tiles; a per-activity attendance
-  & satisfaction card charts attendees (present/late) of completed
-  activities with each activity's satisfaction rating
-- Admin dashboard sections (v4.14): KPI summary cards (programs with a
-  status mini-seg; distinct beneficiaries served vs the combined program
-  target with a dashed target marker; budget used vs allocated with
-  over-allocation red (D7) and the objective target marker; objectives
-  achieved with a live status mini-seg + legend; pending approvals with a
-  proposals/availability/hours breakdown); program portfolio doughnut with
-  the program total in the center; budget utilization grouped bars
-  (allocated vs utilized, over-allocated bars red, ₱ axis, utilization-rate
-  tooltip per D7); community reach as a horizontal top-10 chart grouped by
-  municipality · barangay with the remainder collapsed into "Others";
-  recent activity panel; action center; AI panel
-- ACTION CENTER contents: proposals awaiting approval, availability requests
-  awaiting faculty response, rendered hours awaiting approval, programs
-  nearing deadline, AI analyses awaiting Admin approval, objectives at risk
-  (not_met / on_track approaching target_date)
+  pages. The project hub carries its own PERFORMANCE block rather than a
+  results framework: training hours vs the annual HOURS target, budget vs the
+  ALLOCATION (v4.19 - budget has no annual target), the trainors / trainees /
+  training-hours / activities tiles, and a per-activity attendance card. The v4.14 "KPI
+  scorecard" (8.6 actuals auto-computed, objective target markers, cost per
+  beneficiary, knowledge gain and satisfaction tiles) was REMOVED (D-R7) -
+  see 5.10.
+- Admin dashboard sections (v4.14; amended v4.18/v4.19): summary cards (projects
+  with a status mini-seg; distinct beneficiaries served; budget used vs allocated
+  with over-allocation red per D7); project portfolio doughnut; training hours
+  vs target; budget utilization as COMPACT BULLET ROWS (v4.18) - one row per
+  project, labelled with the project TITLE rather than its code, carrying a
+  utilization bar with a tick at 100%, over-allocation in red, and the amounts
+  inline; the Performance Leaders leaderboards, each row now carrying a
+  magnitude bar with that project's annual target as a marker; AI panel.
+- There is NO recent activity panel and NO action center on the dashboard.
+  v4.18 moved the panel to its own AUDIT LOGS page under Intelligence &
+  Reports: four rows could never answer "who changed this, and when". R5 had
+  already removed the action center; its contents survive as the Pending
+  Approvals KPI tile.
 - Admin dashboard adds an "AI" panel combining the community assessment
-  analyses queue (generate/approve/discard) and the Program Narratives panel
-  (latest health label per program), plus "Generate program narrative" on
-  each program detail screen. Only the Admin sees any AI surfaces.
-- Faculty dashboard: assigned programs/activities, personal participation
+  analyses queue (generate/approve/discard) and the Project Narratives panel
+  (latest health label per project), plus "Generate narrative" on each
+  project hub. Only the Admin sees any AI surfaces.
+- Faculty dashboard: assigned projects/activities, personal participation
   stats, own proposals status, pending availability requests to respond to,
   "My Rendered Hours" summary
 - Secretary dashboard: pending validations queue, compliance tracker (no AI
@@ -1286,16 +1526,21 @@ Phase 6: Hardening & Deployment
 and signatory blocks)
 Four report views:
 1. Annual Extension Performance Report (sections I-VII)
-2. Program Results Framework (per program: each objective's statement,
-   baseline, target, actual, status, evidence notes)
-3. Faculty Rendered Hours (per semester, by activity and program)
+2. Project Performance Report (per project: training hours rendered against
+   the project's annual HOURS target, budget utilized against its ALLOCATION
+   (v4.19 - budget has no annual target), and beneficiaries reached, with the
+   trainors x trainees x days breakdown). NOTE: the ROUTE is still
+   named `reports.results-framework` - a legacy name kept so bookmarks do not
+   break. The CONTENT is the target model (D-R7).
+3. Faculty Rendered Hours (per semester, by activity and project)
 4. Community Partner Impact Summary
-Additional report content: number of programs per year, total beneficiaries
-served (distinct), faculty participation by program, budget utilization by
-project, assessment outcomes and approved recommendations, program executive
-narrative (latest ProgramNarrative per program with generated_at provenance;
-placeholder until the AI phase).
-All figures MUST derive exclusively from the 8.6 metric dictionary.
+Additional report content: number of projects per year, total beneficiaries
+served (distinct), faculty participation per project, budget utilization by
+project, assessment outcomes and approved recommendations, and the project
+executive narrative (latest ProgramNarrative per project with generated_at
+provenance).
+All figures derive exclusively from the TARGET MODEL (5.10). The 8.6 metric
+dictionary is no longer read by any report (D-R7).
 
 
 13. SECURITY & PRIVACY
@@ -1329,9 +1574,11 @@ D1. Quarter convention: calendar quarters (Q1 = Jan-Mar ... Q4 = Oct-Dec).
 D2. Role model: three fixed roles (admin, secretary, faculty) in a single
     role column; no permission packages.
 D3. AI privacy policy - aggregation-before-send: only counts, percentages,
-    and distributions (from AssessmentSummary aggregates or program-level
-    aggregates such as objective statuses and 8.6 KPIs) are transmitted to
-    the LLM API. Raw respondent data never leaves the server.
+    and distributions (from AssessmentSummary aggregates, or project-level
+    aggregates such as training hours rendered, budget utilized and
+    beneficiaries reached) are transmitted to the LLM API. Raw respondent
+    data never leaves the server. The retired 8.6 KPIs and ProgramObjective
+    statuses are NOT transmitted (D-R7).
 D4. Human-in-the-loop, Admin-only AI: only the Admin can generate, view, and
     approve AI outputs. AssessmentAnalysis records are drafts with status
     "draft"; only the Admin moves them to "approved", and approved content
@@ -1343,7 +1590,7 @@ D5. Needs-assessment data enters via the manual structured form OR the
 D6. Reports are browser-printable views in the MVP; PDF/Excel generation is
     future work.
 D7. Budget entries exceeding allocation trigger a visible warning but never
-    hard-block (recorded against program notes and the activity log).
+    hard-block (recorded against project notes and the activity log).
 D8. Audit logging (Spatie Activity Log) is REQUIRED, not optional.
 D9. XLSX import validation: unknown or misspelled values auto-map to the
       "Other" option with the raw text preserved as companion free text in the
@@ -1384,6 +1631,78 @@ D13. Activity evaluation data is stored as single aggregate columns on
      averages them (MEAN) per metric; a metric with no values in the file
      keeps its existing value (per-metric merge).
 
+    ------------------------------------------------------------------
+    DECISIONS ADDED BY THE POST-DEFENCE ADVISER REVISION (v4.15/v4.16)
+    These SUPERSEDE anything earlier in this document that conflicts.
+    The full record is in revisions.md.
+    ------------------------------------------------------------------
+
+D14. FOUR-LEVEL HIERARCHY. The extension structure is
+     College -> Program -> Project -> Activity.
+     - College: the three official colleges plus the Graduate School
+       (CAS, COE, CME, GRAD). The set is FIXED and seeded - the UI has no
+       college CRUD (v4.17).
+     - Program: one of the six BROAD CESO thrusts. `programs` has NO
+       college_id - a thrust spans colleges by design; a program's college
+       membership is DERIVED from the projects beneath it.
+     - Project: the NARROW entity that this document previously called a
+       "program" (`extension_projects` / ExtensionProject). It carries the
+       activities and the annual targets.
+     - Activity: unchanged.
+     A project belongs to exactly ONE college (which decides its code prefix)
+     and exactly ONE broad program. Legacy project codes (EXT-2026-00X) are
+     kept for history; new codes are college-prefixed (CAS-2026-001).
+
+D15. TRAINING HOURS = trainors x trainees x days. THERE IS NO x 8 FACTOR.
+     `days` already carries the duration (1.0 = full day, 0.5 = half day), so
+     multiplying by 8 double-counted. TrainingHoursService is the SINGLE
+     implementation; a x 8 reappearing anywhere is a regression.
+
+D16. THE TARGET MODEL - targets exist at UNIVERSITY and PROJECT level ONLY.
+     - University: one annual pool of training hours and budget. It is a
+       CONSUMPTION pool, not a ratio: projects draw from it.
+     - Project: annual target training HOURS. A project has NO annual BUDGET
+       target (amended v4.19): its `allocated_budget` is its only budget
+       figure, so budget utilization is measured against the allocation, and
+       no budget surface may call the allocation a "target".
+     - Broad programs and colleges carry NO target. Any figure shown for them
+       is a DERIVED roll-up of their projects (count, hours delivered, reach,
+       budget consumed) and must never be presented as attainment.
+
+D17. THE 8.6 KPI DICTIONARY IS RETIRED FROM THE UI. Every 8.6 KPI surface was
+     removed from the project hub, the dashboards and the reports, and
+     replaced by the target model (D16). KpiService, ProgramObjective, the
+     program_objectives table and the smartcemes.kpi_metrics config are
+     RETAINED IN CODE BUT UNREAD (R-Q2) so historical rows stay inspectable
+     and the migrations stay reversible - but no new readers may be added.
+     The objective manager and the results framework are gone from the UI.
+
+D18. AI THREE-TIER SCOPE GUARDRAIL. The AI must never recommend work CESO
+     cannot do. Every recommendation is classified before display:
+       Tier 1 - CESO can deliver it; presented as a CESO intervention.
+       Tier 2 - not CESO's work; presented as an INTERAGENCY REFERRAL, and
+                the citable agency MUST come from the interagency_agencies
+                catalogue (an admin-editable table). The model may not invent
+                an agency.
+       Tier 3 - prohibited as CESO work; surfaced as an audit note only,
+                never as a recommendation.
+     A need CESO cannot serve is REFERRED, never silently dropped. AI remains
+     Admin-only (D4).
+
+D19. FACULTY PERFORMANCE IS CONTRIBUTION-BASED. The Director sees hours
+     rendered, projects led, activities handled and proposals; there is NO
+     per-professor target and therefore no attainment percentage anywhere on
+     a faculty surface. A percentage there would be invented.
+
+D20. THE HIERARCHY NAVIGATION IS COLLAPSED. The admin sidebar exposes exactly
+     ONE extension-structure entry - "Manage Extension Programs" - which
+     opens the colleges hub. Colleges, Programs and Projects are reached from
+     inside that hub, never as separate sidebar items. The hub is a TWO-VIEW
+     page: college cards, then the selected college's projects. The old
+     College -> Program -> Project -> Activity drill-down rail was removed.
+     `subs[]` in config/smartcemes.php keeps the single entry highlighted
+     across the whole chain; CollegeProgramCrudTest asserts the rule.
+
 
 15. SUCCESS CRITERIA
 ---------------------
@@ -1396,7 +1715,9 @@ The system is successful when:
   without manual database edits
 - AI analyses are always human-approved before institutional use, and their
   provenance (model, timestamp, approver) is traceable
-- all dashboard KPIs match the 8.6 metric dictionary exactly
+- every figure on every dashboard and report derives from the TARGET MODEL
+  (D16) - one implementation in TrainingHoursService, so no two surfaces can
+  disagree about the same project
 - data is accurate, accessible, and auditable
 - dashboards provide timely decision-ready insights
 - the system reduces manual effort in extension monitoring and evaluation
@@ -1405,7 +1726,7 @@ The system is successful when:
 16. PROJECT SUMMARY
 --------------------
 SmartCEMES is a university extension management system designed to improve
-how Leyte Normal University monitors community extension programs and
+how Leyte Normal University monitors community extension projects and
 evaluates their impact. It combines data management, faculty workflows,
 financial tracking, approval processes, and one well-governed AI-assisted
 analysis pipeline into a single integrated platform.
@@ -1518,7 +1839,7 @@ REVISION HISTORY
   ("Manage Beneficiaries") lists programs with Beneficiaries/Attendance
   deep links (hub tab is now URL-bound). Secretary nav gains the Management
   section (the phantom never-built "Compliance Tracker" config entry was
-  removed). Director-only powers unchanged: program edit, objectives,
+  removed). Director-only powers unchanged: project edit, targets,
   activity CRUD, budget, AI. Form-opener actions (newObjective,
   editObjective) gained admin guards for defense-in-depth (§11 rule 4).
    Blueprint 2.2 and 5.4 updated.
@@ -1559,4 +1880,255 @@ REVISION HISTORY
   analytics overview and performance table). No new persisted data; the
   Program Health Snapshot and quarter filter shown in the mockups are
   intentionally deferred.
-END OF BLUEPRINT v4.14
+- v4.15: POST-DEFENCE ADVISER REVISION (phases R1-R7 in revisions.md; 2026-09-24).
+  The largest structural change since v4.0. Owner-driven, after an adviser review.
+  The authoritative record is revisions.md; this entry is the summary.
+
+  HIERARCHY. Program -> Activity becomes College -> Program -> Project -> Activity.
+  * NEW colleges (CAS/COE/CME), NEW broad programs (the six verbatim CESO thrusts).
+  * The former extension_programs/ExtensionProgram entity was RENAMED to
+    extension_projects/ExtensionProject and gained college_id, program_id,
+    annual_target_hours and annual_target_budget. Section 6.4 is rewritten as
+    6.4/6.4a/6.4b/6.4c; every extension_program_id FK is now extension_project_id
+    (7 tables + 2 pivots). Legacy codes EXT-2026-00X preserved; new codes are
+    college-prefixed (CAS-2026-001).
+  * A Program carries NO college_id (a CESO thrust spans colleges).
+
+  TRAINING HOURS. The formula is trainors x trainees x days. THE TRAILING "x 8" IS
+  REMOVED (section 2.2A). days already carries duration, so x8 double-counted it;
+  an arithmetic audit found the stored figures already satisfied the amended form.
+  NEW activities.no_of_days (decimal 4,1 - a half day is 0.5, which is why it is not
+  an integer), activities.participants (the manual fallback), activities.trainors_snapshot.
+  Trainee resolution order is attendance (present|late) -> participants (manual) -> 0,
+  and every figure carries a source tag the Director can see. TrainingHoursService is
+  the single implementation.
+
+  TARGETS. Replaces the results framework with a consumption model (section 2.2B).
+  Targets exist at UNIVERSITY and PROJECT level ONLY (D-R5) - never per program and
+  never per college. NEW university_targets: ONE annual pool per AY, which projects
+  draw down; remaining = max(target - sum of actuals, 0). Project targets are NEVER
+  summed into the pool.
+
+  KPI DICTIONARY REMOVED FROM THE UI (D-R7). Every 8.6 KPI surface was removed from
+  the project hub, dashboards and reports. KpiService, ProgramObjective, the
+  programObjectives relation, the program_objectives table and the smartcemes.kpi_metrics
+  config are RETAINED BUT UNREAD (R-Q2) so historical rows stay inspectable and the
+  migrations stay reversible. Section 8.6 is therefore no longer a live contract for
+  those surfaces - see the v4.15 note at 8.6.
+
+  AI GUARDRAIL (section 7.1). AI output is classified into three tiers: Tier 1 = a
+  CESO training intervention (recommendations[]); Tier 2 = a real need outside CESO's
+  training mandate, referred to another agency (interagency_referrals[]); Tier 3 =
+  prohibited as CESO work, which may appear ONLY as Tier 2. NEW interagency_agencies
+  catalogue: the CLOSED vocabulary the model may cite, resolved by agency_code. An
+  unresolvable code is dropped and counted, never laundered. PromptV2 supersedes
+  PromptV1 (PromptV1 is retained untouched so pre-R6 analyses stay reproducible).
+  Needs are RECLASSIFIED, not suppressed.
+
+  FACULTY. NEW faculties.college_id and faculties.status (active|on_leave|inactive);
+  NEW faculty_expertise table. The Faculty Management module is now real - it was a
+  phantom nav entry whose route did not exist. Three surfaces: the engagement board
+  (/faculty), the directory (/faculty/directory), and a per-person profile
+  (/faculty/{faculty}).
+
+  OTHER. NEW university targets page, NEW interagency catalogue CRUD, NEW
+  RankingService, filters across list surfaces, four print reports rebuilt on the
+  target model, and a 3-tier AI surface. activity_imports (6.19) is unchanged.
+
+  VERIFICATION. 444 tests / 1960 assertions passing, 0 failures. All six prototype
+  harnesses green. The system runs; no feature work is outstanding.
+
+- v4.16: STALE-SECTION REWRITE. The prose sections that still described the
+  pre-revision model were rewritten so this document describes the system that
+  exists. Sections 2, 3, 5.1/5.2/5.4/5.5/5.10/5.11/5.13/5.15, 6.15, 8.1/8.3/8.5,
+  8.6, 12, 15 and 16 are affected; the v4.1-v4.15 revision entries below are
+  HISTORICAL RECORDS and are deliberately left as written.
+
+  In summary: "program" now means the BROAD level and "project" the narrow one
+  throughout; the objective manager, the results framework and the 8.6 KPI
+  scorecard are described as RETIRED rather than live; the target model, the
+  collapsed hierarchy navigation and the three-tier AI guardrail are described
+  as the current design. Section 14 gains D14-D20 recording the revision's
+  decisions as first-class design decisions.
+
+  Two naming leftovers were also corrected: the analytics tab and the report
+  route are named for the TARGET MODEL, not the retired one. The report ROUTE
+  name `reports.results-framework` is deliberately kept (bookmarks) and is
+  flagged as legacy in section 12.2.
+
+  VERIFICATION. 469 tests / 2102 assertions passing, 0 failures.
+
+- v4.17: THE COLLEGE SET IS FIXED AT FOUR, AND READ-ONLY (owner request 2026-09-25).
+
+  FOURTH COLLEGE. The Graduate School (code GRAD) joins CAS / COE / CME at the
+  College level. It is not a college in the institutional sense - it is the unit that
+  runs the master's and doctoral programmes - but it delivers extension work, so it
+  sits at the same level. Brand colour violet (#7c3aed), distinct from CAS blue, COE
+  gold and CME emerald. No seal is on file yet, so its card falls back to the code
+  crest. Its Extension Coordinator is NULL until its faculty are seeded and the card
+  renders "unassigned". Sections 5.1, 6.4a, D14 and the hierarchy diagrams updated.
+
+  GRADUATE STARTER SET. So the fourth card is not an empty shell: two Graduate School
+  faculty accounts (Dr. Ramon L. Villamor - faculty5, Dr. Cristina P. Manalo -
+  faculty6, both seeded with graduate-appropriate expertise), Villamor as the
+  college's Extension Coordinator, and one project - PANDAY (GRAD-2026-001), a
+  community research and documentation capability-building programme filed under the
+  Information, Communication & Education thrust. Section 2.4 therefore ships EIGHT
+  seeded accounts, not six. The project sits under ICE deliberately: a thrust is
+  university-wide and SPANS colleges, and this restores the only visible example of
+  that span in the demo data.
+
+  NO COLLEGE CRUD. The create / edit / delete surface was REMOVED: the component
+  actions, the view's New College button, its hero Edit button and its form modal, and
+  the policy's write abilities. The set is FIXED and CollegeSeeder is its ONLY owner,
+  so a name, description or coordinator is corrected in the seeder, not in the UI.
+  CollegePolicy keeps `manage`, but its meaning changed - it is the HUB-ACCESS ability
+  (the /colleges page is the Director's entry point to the whole hierarchy), not a
+  write permission. The Extension Coordinator is therefore a seeder concern.
+
+  VERIFICATION. 467 tests / 2114 assertions passing, 0 failures. All six prototype
+  harnesses green. Dev DB re-seeded; the four colleges and the violet accent verified
+  by query.
+
+- v4.18: ADMIN DASHBOARD - AUDIT LOGS, BULLET ROWS, LEADER BARS, NO EMOJI
+  (owner request 2026-09-25).
+
+  AUDIT LOGS. The dashboard's four-row "Recent Activity" panel became its own
+  ADMIN-ONLY page at /audit-logs, under Intelligence & Reports: a plain
+  reverse-chronological list, 25 per page, using the shared design-system
+  paginator. It is READ-ONLY by design and pinned by a test asserting the
+  component exposes no write action. The panel, its payload and the now-unused
+  ActivityLog import left the dashboard; the panel's grid slot was exactly
+  filled by the hours and budget charts, so no layout changed.
+
+  BUDGET BULLET ROWS. The grouped bar chart could only label its axis with
+  project CODES - a vertical axis has no room for a title. It is now one row per
+  project: the full TITLE, a utilization bar with a tick at 100%, over-target in
+  red, and the amounts inline.
+
+  LEADER BARS. Each Performance Leaders row keeps its rank, college stripe, meta
+  and figures and gains a magnitude bar. ONE scale serves both lists so a row's
+  target marker shares the axis with its bar. Faculty carry a bar and NO marker:
+  D-R19 says contribution, never attainment.
+
+  NO EMOJI. The medal array was the only true emoji in the codebase and lived in
+  BOTH Laravel and the prototype; it is replaced by a `#N` rank. The typographic
+  glyphs for close, check and warning are now SVG icons, with two sites
+  restructured because the glyph sat inside a PHP string and an Alpine
+  expression. `alert` was a MISSING icon name - the component falls back to
+  `doc` silently, so the warning glyph would have drawn a DOCUMENT; the path was
+  added.
+
+  STAGE 1 WAS WITHDRAWN. The planned training-hours back-fill proved the wrong
+  diagnosis: a NULL `no_of_days` already means 1.0 day, and the lopsided ranking
+  is caused by BENEFICIARY ENROLLMENT (five projects have 2 beneficiaries each;
+  BATANG MATINIK has none and no activities). Owner decision: skip the data, so
+  the demo ranking stays lopsided BY DECISION rather than by oversight.
+
+  VERIFICATION. 472 tests / 2161 assertions passing, 0 failures. All six
+  prototype harnesses green. Zero close/check/warning glyphs left in
+  resources/views.
+
+  THE PROTOTYPE WAS ALIGNED IN THE SAME PASS. dashboard-admin.html lost the panel,
+  gained the bullet rows and the leader bars, and lost the medal emoji; a new
+  pages/audit-logs.html was added with its own demo rows; layout.js gained the nav
+  entry (icon `list`); smartcemes.css gained the bullet/leader rules. Two harnesses
+  encoded the OLD design and moved with it - `_dashtest.cjs` (chart count 2 to 1,
+  six budget-chart assertions became bullet-row assertions, dash-head-title floor
+  7 to 6, now 41 assertions) and `_check.cjs` (which required #chBudget and
+  required the activity panel to EXIST - both inverted).
+
+- v4.20: THE ADMIN ANALYTICS PAGE IS REMOVED (owner decision 2026-09-27).
+
+  THE DECISION. The six-tab Admin page at /analytics (5.13 / 12.1) is deleted
+  outright - route, component, six partials, the sidebar entry, its five tests
+  and its prototype page. Four of the six tabs duplicated the admin dashboard
+  (Overview, Project Performance, Budget Utilization, Pending Actions), Faculty
+  Contribution was superseded by the R3 Faculty module, and the two tabs with
+  no substitute were ACCEPTED AS LOSSES by the owner: the aggregate Pending
+  Actions list (the five queues keep their own pages - /proposals,
+  /availability, /rendered-hours, /ai-analysis - but nothing lists them
+  together) and the Community Reach barangay chart. The `community_reach`
+  measure goes with it, consistently with D-R7's retirement of the 8.6
+  dictionary; the dashboard's own reach chart had already been removed by the
+  P0m prototype pass, which `_dashtest.cjs` asserts.
+
+  WHAT WAS TOUCHED. Laravel: app/Livewire/Analytics.php, analytics.blade.php,
+  the six analytics/partials/*.blade.php, tests/Feature/AnalyticsFixesTest.php
+  (all deleted); routes/web.php (the route and its import), config/smartcemes.php
+  (the nav entry), Phase4Test.php (2 tests) and ObjectiveStatusTest.php (1 test)
+  edited. Two dangling docblock references to the deleted page were repaired
+  (Faculty/Profile.php, KpiService::objectivesAtRisk), and the KpiService method
+  is now annotated RETAINED BUT UNREAD - it has no production caller at all.
+  Prototype: pages/analytics.html deleted, with its four references
+  (index.html, assets/js/layout.js, and the "Go to Analytics" stubs in
+  budget.html / activities.html) and the page list in PATTERNS.md.
+
+  VERIFICATION. 467 tests / 2139 assertions passing, 0 failures (was 472 /
+  2165 - exactly the 5 tests that covered the page). All six prototype
+  harnesses green. Sections 5.2, 5.4, 5.13, 10.4, 12.1 and the banner updated;
+  the v4.10/v4.14/v4.19 revision entries that mention the page are HISTORICAL
+  and left as written on purpose.
+
+- v4.19: BUDGET HAS NO ANNUAL TARGET (owner request 2026-09-26).
+
+  THE DEFECT. The dashboard panel "Budget Utilized vs Annual Target" read
+  `annual_target_budget ?? allocated_budget` - a silent fallback, so for the 6 of 8
+  projects with no annual target the tile printed the ALLOCATION while calling it a
+  target. Querying the live DB showed the 2 projects that did carry a target had it
+  seeded exactly equal to their allocation, so the denominator was already the
+  allocation and NO FIGURE CHANGED. The label was the only thing wrong.
+
+  THE DECISION. A project has ONE budget figure - its ALLOCATION. `allocated_budget`
+  is the basis for utilization on every surface; the per-project `annual_target_budget`
+  is RETAINED BUT UNREAD (the treatment D-R7 gives the 8.6 KPIs), and the project form
+  and R4TargetsSeeder no longer write one. `ExtensionProject::budgetAllocated()` is the
+  single accessor and `budgetTarget()` is gone; `TrainingHoursService::forProject()`
+  returns `allocated_budget` (was `target_budget`); the hub payload is
+  `budgetVsAllocation` (was `budgetVsTarget`). Every budget surface now reads
+  "Allocated Budget", never "Annual Target".
+
+  UNTOUCHED. The UNIVERSITY annual budget pool (university_targets) is a real
+  commitment, and the broad-program `annual_target_*` columns stay planning-only
+  (6.4b). Training HOURS keep their project-level annual target and the university
+  pool above them. PromptV1 is left frozen; only PromptV2's wording changed, so the
+  AI narrative no longer calls an allocation a target.
+
+  THE PROTOTYPE WAS ALIGNED: its `budgetTarget` demo field is deleted, `budgetAllocated`
+  is the basis, and its dashboard KPI was recomputed from the data (allocation sum
+  PHP 290,500, utilization 57%, over-allocation count 1). Two pre-existing prototype
+  defects were fixed in passing - a stale `x 8` in the training-hours comment and a
+  `0.5-day = 4 hrs` caption.
+
+  VERIFICATION. 472 tests / 2165 assertions passing, 0 failures. All six prototype
+  harnesses green. Sections 5.2, 5.10, 6.4c, 12.2, D16 and the v4.19 banner updated.
+
+- v4.21: EIGHT POST-v4.20 AMENDMENTS FOLDED IN (revisions.md §22-§29).
+
+  WHAT LANDED. §22 widened the faculty self-edit to expertise and academic details, and
+  gave that page its first entry point (/my-profile). §23 added a PROGRAM level to the
+  college hub, so the structure is browsed College > Program > Projects > Activities.
+  §24 redesigned the hub's college-selected view. §25 moved ALL program/project
+  create-and-edit INTO the hub as server-side modals, leaving /programs and /projects as
+  read-only lists. §26 collapsed the project hub's THREE budget surfaces to one doughnut
+  and made annual_target_hours settable from the Edit modal. §27 removed three blocks
+  from the university targets page (the year chart, the D-R5 guardrail card and the
+  Training Hours Formula card) and fixed a Project-targets sort that had never worked.
+  §28 swept retired vocabulary out of the prototype and closed a D-R7 leak on the faculty
+  rendered-hours page. §29 widened the Secretary's beneficiary import-template route and
+  fixed three links a role could see but could not reach.
+
+  NO MODEL CHANGE. The hierarchy, the target model (D-R5), the training-hours formula
+  (D-R3, no x 8) and the budget basis (v4.19 - the allocation is the denominator) are
+  UNCHANGED by v4.21. This entry records UI, access-control and demo-data corrections,
+  not a redesign, and NO normative section above required an amendment because of it.
+
+  WHY THIS ENTRY EXISTS. §22-§29 landed without bumping this document, so the
+  IMPLEMENTATION STATUS lines were left reading 467 tests / 2139 assertions - four
+  revisions stale. They are now current. The pattern to keep: a revision that changes
+  what a user can DO belongs here; one that only fixes wording does not.
+
+  VERIFICATION. 491 tests / 2894 assertions passing, 0 failures. All six prototype
+  harnesses green.
+
+END OF BLUEPRINT v4.21

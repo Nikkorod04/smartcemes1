@@ -6,7 +6,7 @@ use App\Models\ProgramNarrative;
 use App\Services\Ai\ConfidenceScore;
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\ProgramAggregates;
-use App\Services\Ai\Prompts\PromptV1;
+use App\Services\Ai\Prompts\PromptV2;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,7 +33,7 @@ class GenerateProgramNarrative implements ShouldQueue
 
         $narrative->update(['raw_extracted_data' => $aggregates]);
 
-        $result = $client->generate(PromptV1::programNarrative($aggregates));
+        $result = $client->generate(PromptV2::programNarrative($aggregates));
 
         $narrative->update([
             'summary' => $result['data']['summary'] ?? null,

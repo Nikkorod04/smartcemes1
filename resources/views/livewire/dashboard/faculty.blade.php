@@ -29,7 +29,7 @@
     <div class="reveal-item sc-card p-0 overflow-hidden col-span-2">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2"><x-sc.icon name="calendar" class="w-[18px] h-[18px] text-lnu-700" /> My Activities</h3>
-            <a href="{{ route('programs.my') }}" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">My Programs →</a>
+            <a href="{{ route('projects.my') }}" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">My Projects →</a>
         </div>
         <table class="sc-table">
             <thead><tr><th>Activity</th><th>Program</th><th>Date</th><th>Status</th></tr></thead>

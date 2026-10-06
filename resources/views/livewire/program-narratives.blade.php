@@ -10,7 +10,7 @@
         <div class="min-w-0">
             <span class="ai-chip"><x-sc.icon name="sparkles" class="w-3.5 h-3.5" /> Executive Program Narratives</span>
             <h1 class="mt-3 text-white font-extrabold text-xl tracking-tight leading-snug">Program Status at a Glance</h1>
-            <p class="mt-2 text-[12.5px] text-blue-100/75 leading-relaxed max-w-2xl">AI-generated executive summaries of each extension program — objectives, KPIs, budget, risks, and recommended next actions. Director-only; full provenance is recorded for audit.</p>
+            <p class="mt-2 text-[12.5px] text-blue-100/75 leading-relaxed max-w-2xl">AI-generated executive summaries of each extension project — training hours, trainees, activities, budget against target, risks, and recommended next actions. Director-only; full provenance is recorded for audit.</p>
         </div>
         <div class="text-right shrink-0 space-y-2">
             <span class="badge badge-blue !bg-white/10 !text-blue-100 !border-white/20">Aggregated data only · no PII</span>
@@ -53,7 +53,7 @@
                         @elseif ($row->latest && $row->latest->status === 'failed')
                             <span class="narrative-health needs-attention">Narrative unavailable</span>
                         @endif
-                        <button wire:click="generate({{ $p->id }})" class="btn btn-primary !px-3 !py-1.5 !text-[11.5px]">
+                        <button wire:click="generate({{ $p->id }})" wire:loading.attr="disabled" wire:target="generate" class="btn btn-primary !px-3 !py-1.5 !text-[11.5px]">
                             <x-sc.icon name="sparkles" class="w-3.5 h-3.5" />Generate
                         </button>
                     </div>
@@ -67,10 +67,13 @@
                                 <p class="text-[12.5px] font-bold text-gray-600">Narrative unavailable</p>
                                 <p class="text-[12px] text-gray-500 mt-0.5 leading-relaxed">No narrative has been generated for this program yet. Generation is Director-only and uses aggregate program data (no PII).</p>
                                 <div class="flex items-center gap-2 mt-2.5">
-                                    @if ($row->objectivesTotal)
-                                        <span @class(['badge !text-[10.5px]', $row->objectivesAchieved === $row->objectivesTotal ? 'badge-green' : 'badge-blue'])>Objectives met: {{ $row->objectivesAchieved }}/{{ $row->objectivesTotal }}</span>
+                                    {{-- R5 / D-R7: the objectives-met badge was an 8.6 surface.
+                                         Replaced by training-hours attainment against the
+                                         project's annual target. --}}
+                                    @if ($row->hours_pct !== null)
+                                        <span @class(['badge !text-[10.5px]', $row->hours_pct >= 100 ? 'badge-green' : 'badge-blue'])>Training hours: {{ number_format($row->training_hours, 1) }} / {{ number_format($row->target_hours) }} ({{ round($row->hours_pct) }}%)</span>
                                     @else
-                                        <span class="badge badge-gray !text-[10.5px]">No objectives yet</span>
+                                        <span class="badge badge-gray !text-[10.5px]">{{ number_format($row->training_hours, 1) }} hrs · no target set</span>
                                     @endif
                                 </div>
                             </div>
@@ -83,7 +86,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="text-[12.5px] font-bold text-gray-700">Narrative unavailable</p>
                                 <p class="text-[12px] text-red-600 mt-0.5 leading-relaxed">{{ $row->latest->error_message }}</p>
-                                <button wire:click="generate({{ $p->id }})" class="btn btn-danger-soft !px-3 !py-1.5 !text-[11.5px] mt-3">⟳ Regenerate</button>
+                                <button wire:click="generate({{ $p->id }})" wire:loading.attr="disabled" wire:target="generate" class="btn btn-danger-soft !px-3 !py-1.5 !text-[11.5px] mt-3">⟳ Regenerate</button>
                             </div>
                         </div>
                     </div>
@@ -102,10 +105,10 @@
                         <div class="rounded-xl border border-gray-100 bg-gray-50/70 p-4">
                             <div class="flex items-center justify-between gap-2">
                                 <p class="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wide text-gray-400"><x-sc.icon name="doc" class="w-3.5 h-3.5" /> Executive Summary</p>
-                                @if ($row->objectivesTotal)
-                                    <span @class(['badge !text-[10.5px] shrink-0', $row->objectivesAchieved === $row->objectivesTotal ? 'badge-green' : 'badge-blue'])>Objectives met: {{ $row->objectivesAchieved }}/{{ $row->objectivesTotal }}</span>
+                                @if ($row->hours_pct !== null)
+                                    <span @class(['badge !text-[10.5px] shrink-0', $row->hours_pct >= 100 ? 'badge-green' : 'badge-blue'])>Training hours: {{ number_format($row->training_hours, 1) }} / {{ number_format($row->target_hours) }} ({{ round($row->hours_pct) }}%)</span>
                                 @else
-                                    <span class="badge badge-gray !text-[10.5px] shrink-0">No objectives yet</span>
+                                    <span class="badge badge-gray !text-[10.5px] shrink-0">{{ number_format($row->training_hours, 1) }} hrs · no target set</span>
                                 @endif
                             </div>
                             <p class="text-[12.5px] text-gray-600 leading-relaxed mt-2.5">{{ $row->latest->summary }}</p>
@@ -197,4 +200,24 @@
 <footer class="mt-10 text-center text-[11px] text-gray-300 font-medium no-print">
     SmartCEMES · Community Extension Services Office · Leyte Normal University
 </footer>
+
+{{-- GENERATING OVERLAY — centered while the synchronous generation runs --}}
+<div wire:loading.flex wire:target="generate"
+     class="fixed inset-0 z-[70] items-center justify-center bg-charcoal/50 backdrop-blur-[2px] no-print">
+    <div class="sc-card sc-modal px-10 py-8 text-center shadow-pop max-w-sm mx-4">
+        <span class="relative w-16 h-16 mx-auto rounded-2xl bg-lnu-50 text-lnu-700 flex items-center justify-center">
+            <x-sc.icon name="sparkles" class="w-7 h-7" />
+            <span class="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-xl bg-gold-500 text-white flex items-center justify-center ring-2 ring-white shadow-sm">
+                <x-sc.icon name="loader" class="w-4 h-4 animate-spin" />
+            </span>
+        </span>
+        <p class="mt-4 font-extrabold text-[14px] tracking-tight">Generating executive narrative<span class="pulse-dot">…</span></p>
+        <p class="text-[12px] text-gray-400 mt-1 leading-relaxed">Summarizing training hours, trainees, activities, budget and annual targets. Aggregates only — no PII leaves the system.</p>
+        <div class="mt-4 flex justify-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-lnu-700 animate-bounce"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-lnu-500 animate-bounce" style="animation-delay:150ms"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-gold-500 animate-bounce" style="animation-delay:300ms"></span>
+        </div>
+    </div>
+</div>
 </div>

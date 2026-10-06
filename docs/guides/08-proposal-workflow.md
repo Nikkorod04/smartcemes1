@@ -13,11 +13,11 @@ Log in as **faculty1@lnu.com** (Carlo Sumile) → sidebar **Submit Proposal**.
 
 | Field | Value |
 |---|---|
-| Program | **e-LITERACY: Digital Literacy for Parents & Senior Citizens** (EXT-2026-004, runs Jun 8 – Nov 28, 2026) |
+| Project | **e-LITERACY: Digital Literacy for Parents & Senior Citizens** (EXT-2026-004, runs Jun 8 – Nov 28, 2026) |
 | Community | **Brgy. Sagkahan · Tacloban City** |
 | Title | `CHAT & CLICK: Weekend Digital Mentoring for Sagkahan Parents` |
 | Description | `Weekend one-on-one mentoring sessions pairing LNU student volunteers with parents for smartphones, e-gov apps, and online safety.` |
-| Proposed start date | `2026-10-04` *(inside the program range)* |
+| Proposed start date | `2026-10-04` *(inside the project range)* |
 | Proposed end date | `2026-11-15` |
 | Budget estimate | `18000` |
 | Attachments | any PDF/DOCX/XLSX/JPG/PNG (max 5 files, 10 MB each) — e.g. a one-page concept paper |
@@ -36,7 +36,7 @@ Log in as **admin@lnu.com** in the second window → **Proposals**.
 
 1. Open **CHAT & CLICK** (Pending, Carlo).
 
-**Expected:** the detail modal shows the program, community, dates, budget,
+**Expected:** the detail modal shows the project, community, dates, budget,
 and your attachment as a **downloadable row** (click it — the real file
 downloads).
 
@@ -56,10 +56,10 @@ downloads).
 
 | Field | Value |
 |---|---|
-| Program | **e-LITERACY … (EXT-2026-004)** — same program (range Jun 8 – Nov 28, 2026) |
+| Project | **e-LITERACY … (EXT-2026-004)** — same project (range Jun 8 – Nov 28, 2026) |
 | Community | **Brgy. Sagkahan · Tacloban City** |
 | Title | `CODE NIGHT: Holiday Coding Camp for Kids` |
-| Proposed start date | `2026-12-01` ← **after the program ends** |
+| Proposed start date | `2026-12-01` ← **after the project ends** |
 | Proposed end date | `2027-01-15` |
 | Budget estimate | `15000` |
 
@@ -71,7 +71,7 @@ Submit it. **Expected:** it saves fine — submission does not range-check
 Open **CODE NIGHT** → **Approve** → confirm.
 
 **Expected:** **BLOCKED** with an error toast: *"Approval blocked: proposed
-dates (Dec 1, 2026 – Jan 15, 2027) fall outside the program range (8.8)."*
+dates (Dec 1, 2026 – Jan 15, 2027) fall outside the project range (8.8)."*
 The proposal stays Pending. (The seeded **SIKAD BUHAY** proposal is the same
 demo — after the owner re-seeds, its dates are Dec 15 – Jan 10, outside
 EXT-2026-005's range.)
@@ -83,7 +83,7 @@ EXT-2026-005's range.)
 
 **Expected:** blocked — the reason is **required (minimum 10 characters)**.
 
-3. Type a realistic reason — e.g. `Budget estimate exceeds the FY ceiling for this program; please revise costing or split into two phases.` — and confirm.
+3. Type a realistic reason — e.g. `Budget estimate exceeds the FY ceiling for this project; please revise costing or split into two phases.` — and confirm.
 
 **Expected:**
 - Toast: "Proposal rejected with remarks"; the proposal shows **Rejected**

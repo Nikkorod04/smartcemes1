@@ -55,7 +55,7 @@ class Community extends Model
 
     public function extensionPrograms()
     {
-        return $this->belongsToMany(ExtensionProgram::class, 'community_extension_program');
+        return $this->belongsToMany(ExtensionProject::class, 'community_extension_project');
     }
 
     public function beneficiaries()

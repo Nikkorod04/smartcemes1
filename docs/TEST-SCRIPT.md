@@ -1,105 +1,180 @@
-# SmartCEMES — Manual Test Script
+# SmartCEMES — Manual Test Script (defence walkthrough)
 
-_A complete walkthrough that exercises the program → objectives → activities →
-beneficiaries → attendance → budget pipeline, with the expected result at every
-step. Anchored to **today's date** so deadline features (scheduler, at-risk
-lists) are demonstrable. Written 2026-09-15 against blueprint v4.11._
+_Written 2026-09-24 against **blueprint v4.15** and the post-revision architecture (phases P0 + R1–R7,
+recorded in **`revisions.md`**). Supersedes the 2026-09-15 script, which described the pre-revision
+hierarchy. Suite at the time of writing: **465 tests / 2057 assertions, 0 failures**._
+
+> **Read this first.** The hierarchy is four levels, not three:
+>
+> ```
+> College  →  Program  →  Project  →  Activity
+> CAS/COE/CME   6 CESO      (was "ExtensionProgram")   (unchanged)
+>                 thrusts
+> ```
+>
+> **"Program" in any older note means what is now a "Project".** The name `Program` now means one of
+> the six broad CESO thrusts. Getting this backwards is the single most common mistake.
+
+---
 
 ## 0. Start the app
 
-```
+```bash
 php artisan serve
 ```
 
-Optional (only for step 9, deadline notifications):
+Optional — only needed for step 11 (deadline notifications) and the nightly backup:
 
-```
+```bash
 php artisan schedule:work
 ```
 
-Login as the Director (the only role that can manage programs):
+### Accounts
 
 | Role | Email | Password |
 |---|---|---|
-| Admin (Director) | admin@lnu.com | password |
-| Secretary | secretary@lnu.com | password |
-| Faculty | faculty1–4@lnu.com | password |
+| Admin (Director) | `admin@lnu.com` | `password` |
+| Secretary | `secretary@lnu.com` | `password` |
+| Faculty | `faculty1@lnu.com` … `faculty4@lnu.com` | `password` |
 
-All six seeded accounts use `password`. Faculty accounts: Carlo Sumile,
-Bianca Oledan, Nikko Villas, Kent Naputo.
+Faculty accounts: Carlo Sumile (CAS) · Bianca Oledan (COE) · Nikko Villas (CAS) · Kent Naputo (CME).
+
+### Where things live in the sidebar
+
+The admin nav **collapses the whole hierarchy into ONE entry** — this is deliberate
+(prototype PATTERNS v4.3), so do not go looking for separate *Colleges* / *Extension Programs* /
+*Extension Projects* items:
+
+| Section | Items |
+|---|---|
+| Overview | Dashboard · **University Targets** · Calendar |
+| Extension Programs | **Manage Extension Programs** ← the hub: the whole College → Program → Project chain |
+| Management | Faculty Management · Communities & Partner Schools |
+| Approvals | Proposals · Availability Requests · Rendered Hours |
+| Intelligence & Reports | AI Analysis Review · Project Narratives · Interagency Catalogue · Reports |
+
+**The hub is a three-view page.** It opens on the four college cards; clicking a card (or
+`/colleges?college=CAS`) swaps in that college's KPIs and **the programs it delivers**; clicking a
+program (or `/colleges?college=CAS&program=N`) swaps in that program's projects and their toolbar.
+**All colleges** and the college code both go back up a level.
+
+**There is no cross-college program or project list in the flow.** Programs are DERIVED from a
+college's projects (`programs` has no college_id), and the drill-down is College → Program → Projects
+→ Activities — see `revisions.md` §23.
+
+**There is no drill-down rail** — it was removed by an owner decision (`revisions.md` §11.6). Do not
+expect one.
 
 ---
 
-## 1. Create the program — Programs → New Program
+## 1. Orientation — look at what already exists
+
+Before creating anything, walk the seeded data. This is also the fastest way to show the hierarchy.
+
+1. **Manage Extension Programs** → the four college cards. Each shows only **derived roll-ups** of
+   its projects: Projects / Programs / Faculty, plus beneficiaries reached and budget utilized.
+   **There is deliberately no per-college training-hours figure** — a college has no target (§2.2B /
+   D-R5). The same rule explains why the cards carry no "% of target".
+2. Click **CME** → view 2: the college hero, 4 derived KPIs, its projects, and its faculty.
+3. **View all programs →** → `/programs`, the **broad** level. Six CESO thrusts. Note the **D-R5**
+   notice: programs are a grouping level and carry no training-hours target. Every number on the page
+   is a roll-up of the projects beneath the program.
+4. **View all projects →** → `/projects`, the **narrow** level. Seven seeded projects. Codes are
+   college-prefixed for new projects (`CAS-2026-001`) while the six inherited ones keep their legacy
+   `EXT-2026-00X` codes.
+5. Open **CAS-2026-001**. Tabs: **Overview · Activities · Beneficiaries · Budget**.
+
+**Expected on CAS-2026-001** (seeded):
+
+| Figure | Value |
+|---|---|
+| Training hours rendered | **134.5** of an annual target of **150** → **89.7 %** |
+| Trainors / Trainees | 1 / 30 |
+| Activities | 3 |
+| Budget utilized | **₱78,000** of **₱85,000** |
+
+**What must NOT be here:** any objectives list, KPI dictionary, or results-framework panel. Every 8.6
+KPI surface was removed from the project hub and the dashboards (D-R7). If you see one, that is a
+regression.
+
+---
+
+## 2. Create a project — `/projects` → **New Project**
 
 | Field | Value |
 |---|---|
-| Program title | SIKAD-DIGITAL: Digital Literacy for Parents & OSY |
-| Description | Basic computer, e-gov, and online-safety training for Sagkahan parents and out-of-school youth. |
+| College * | **CME** |
+| Program * (the broad level) | Livelihood, Technical & Business Management |
+| Project title | `PANADERO: Barangay Bread & Pastry Livelihood Training` |
+| Description | Hands-on bakery training for out-of-work mothers in Sagkahan. |
 | Planned start / end | 2026-09-01 / 2026-12-31 |
-| Target beneficiaries | 20 |
-| Allocated budget | 20000 |
-| Program lead | Kent Naputo |
+| Target beneficiaries | 5 |
+| Allocated budget | 30000 |
+| Target training hours | 40 |
+| Target budget (₱) | 30000 |
+| Project lead | Kent Naputo |
 | Status | Ongoing |
 | Linked communities | Brgy. Sagkahan · Tacloban City |
-| Beneficiary categories | Parent, Out-of-School Youth |
+| Beneficiary categories | Parent |
 
-**Expected:** success toast showing the auto-generated code — `EXT-2026-007`
-on a fresh `migrate:fresh --seed` DB (sequence self-heals past the six seeded
-programs; see blueprint v4.11). The program appears in the grid with an
-Ongoing badge.
+> Use a title that is **not** already seeded (`KABUHIAN:`, `BUSOG:`, `LITRAWIYA:`, `HANDA:`,
+> `e-LITERACY:`, `SENIOR CARE:` and `BATANG MATINIK:` are taken). A name that collides makes the
+> demo confusing — two rows with the same prefix.
+
+**Expected:** a success toast with the auto-generated code **`CME-2026-001`** — the prefix comes from
+the college you picked (R-Q4), which is why the college is the *first* field. The project appears in
+the grid with an **Ongoing** badge.
+
+> The code is generated **after** the college is known. Picking a different college gives a different
+> prefix; the sequence is per college per year.
 
 ---
 
-## 2. Add 5 objectives — hub → Overview → Results Framework → Manage
+## 3. Add 2 activities — hub → **Add Activity**
 
-Before any data exists, every reach/budget objective shows **Not started** —
-that is the 8.6 live derivation working (nothing to compute yet).
+The activity form is where the training-hours model lives. **`Days` carries the duration** — `0.5` is a
+half day — and there is **no `× 8`**: the formula is `trainors × trainees × days` and `days` already
+expresses the time.
 
-Add via **+ Add objective**:
-
-| # | Objective statement | KPI metric | Unit | Baseline | Target | Target date | Manual actual |
+| Activity | Date | Time | Days | Participants | Assigned faculty | Alloc. budget | Status |
 |---|---|---|---|---|---|---|---|
-| O1 | Enroll parents & OSY in digital literacy sessions | Community Reach (count) | persons | 0 | 5 | 2026-12-31 | — |
-| O2 | Reach 20 community members across the program | Community Reach (count) | persons | 0 | 20 | 2026-09-25 | — |
-| O3 | Form a barangay digital-literacy volunteer pool | Qualitative (manual tracking) | groups | — | 1 | 2026-09-10 | 0 |
-| O4 | Secure a MOA with the Sagkahan Learning Hub | Qualitative (manual tracking) | MOA | — | 1 | 2026-12-31 | 1 |
-| O5 | Utilize at least 80% of the program budget | Budget Utilization (%) | % | 0 | 80 | 2026-12-31 | — |
+| A1 · Dough Basics & Food Safety Orientation | 2026-10-20 | 08:00–12:00 | **1** | 5 | Kent Naputo **+** Nikko Villas | 6000 | Ongoing |
+| A2 · Baking Practicum: Pan de Sal & Ensaymada | 2026-10-27 | 08:00–12:00 | **0.5** | 5 | Kent Naputo **+** Nikko Villas | 9000 | Ongoing |
 
-**While adding, observe the new manager features (v4.10):**
+> **Why these dates.** The seeded demo data already books the faculty, and the 8.8 guard is a **hard
+> block** — it will refuse an assignment that overlaps an existing one. Nikko Villas is committed to
+> *Feeding Cycle 2* from **2026-09-08 to 2026-10-16**, so a September activity would be refused.
+> October 20 and 27 are clear for both facilitators. If you pick your own dates, expect the guard to
+> name the clashing activity — that is the feature working, not a bug.
 
-- Selecting a KPI metric **hides the "Manual actual" field** (a manual actual
-  is never stored for numeric objectives — switching modes clears it) and
-  shows a **"Currently computed · live"** box instead:
-  - O1/O2 → "No data yet" (no attendance exists yet)
-  - O5 → "0.0 %" (allocated budget exists, no utilization yet)
-- The manager list shows each objective with a **status badge**, **progress
-  bar**, baseline → target → actual line, and an **actual-source tag**
-  (`auto (live)` / `manual`).
-- The ? tooltip next to the form title explains how every KPI is calculated.
+**Expected training hours, derived live:**
 
----
+| Activity | Arithmetic | Hours |
+|---|---|---|
+| A1 | 2 trainors × 5 trainees × 1 day | **10** |
+| A2 | 2 trainors × 5 trainees × 0.5 days | **5** |
+| **Project total** | | **15** of 40 → **37.5 %** |
 
-## 3. Add 3 activities — hub → Add Activity
+**Also check:**
+- The date pickers are constrained to the project window (2026-09-01 → 2026-12-31, §8.8). Typing a
+  date outside it is blocked.
+- `Days` rejects anything below a half day, and rejects values that are not half-day increments.
+- Clearing **Participants** writes NULL, not 0 — an absent number is not the same as zero.
 
-Assign **Kent Naputo** to each (click his chip under Assign faculty).
-
-| Activity | Start = End | Times | Venue | Alloc. budget | Status |
-|---|---|---|---|---|---|
-| A1 · Digital Skills Pre-Assessment & Orientation | 2026-09-05 | 09:00–12:00 | Sagkahan Learning Hub | 3000 | Ongoing |
-| A2 · Hands-on Workshop: e-Gov Services & Online Safety | 2026-09-12 | 13:00–17:00 | Sagkahan Learning Hub | 5000 | Ongoing |
-| A3 · Digital Bayanihan: Community Tech Helpdesk | 2026-10-03 | 08:00–12:00 | Sagkahan Barangay Hall | 2000 | Draft |
-
-**Expected:** all three save cleanly. Date pickers are constrained to the
-program range (8.8) — try typing a date outside 2026-09-01 → 2026-12-31 and
-watch the validation block it.
+> **Two things that surprise people here, both by design.**
+>
+> 1. **`Participants` is the trainee fallback, not the reach.** Until attendance is imported (step 5)
+>    the hours use `Participants` (R-Q1). The project's **Trainees** *tile* is a different number — a
+>    **distinct beneficiary count** from attendance — so it reads **0** until step 5.
+> 2. **Imported attendance REPLACES the fallback.** That is why `Participants` is set to **5** here,
+>    matching the five beneficiaries registered in step 4: the hours then stay at 15 before *and*
+>    after the import, instead of silently changing when attendance lands.
 
 ---
 
-## 4. Register 5 beneficiaries — Beneficiaries tab → Register new (×5)
+## 4. Register 5 beneficiaries — hub → **Beneficiaries** tab → Register new (×5)
 
-All with Barangay **Sagkahan**, Municipality **Tacloban City**,
-Category **Parent** (contact number may stay at the 09123456789 default):
+All with Barangay **Sagkahan**, Municipality **Tacloban City**, Category **Parent**:
 
 | Name | Age | Sex |
 |---|---|---|
@@ -109,131 +184,251 @@ Category **Parent** (contact number may stay at the 09123456789 default):
 | Analyn Custodio | 29 | Female |
 | Eduardo Navarro | 51 | Male |
 
-**Expected:** each row is created and auto-enrolled into the program; the
-Beneficiaries tab shows "5 enrolled".
+**Expected:** each row is created and auto-enrolled into the project; the tab shows **5 enrolled**.
 
 ---
 
-## 5. Import attendance — Activities tab → Records → Attendance
+## 5. Import attendance — **Activities** tab → **Records** → Attendance
 
-Attendance is import-only (v4.13) via the official template. For each
-activity, click **Records** → **Attendance** tab, then:
+Attendance is **import-only** (v4.13) through the official template — there is no manual grid.
 
-1. **Download official template** — the enrolled roster is pre-filled with
-   Beneficiary ID, last/first name, and barangay.
+1. **Download official template.** The enrolled roster is pre-filled with Beneficiary ID, last/first
+   name and barangay.
 2. Fill the **Status** column (Present / Absent / Excused / Late):
-   - **A1**: all 5 beneficiaries → **Present**
-   - **A2**: Maria, Josefina, Rogelio, Eduardo → **Present**; Analyn →
-     **Late** (late still counts as served — 8.6 counts present+late)
-   - Leave a cell blank to leave that beneficiary unrecorded.
-3. Upload the file → **Parse file →** → review the per-row preview (Apply /
-   Blank / Skip states, per-row errors) → **Confirm & import attendance**.
+   - **A1** — all 5 → **Present**
+   - **A2** — Maria, Josefina, Rogelio, Eduardo → **Present**; Analyn → **Late**
+     *(late still counts as served — the trainee count is present + late)*
+   - Leave a cell **blank** to leave that beneficiary unrecorded.
+3. **Upload** the file → **Parse file →** → review the per-row preview (Apply / Blank / Skip, with
+   per-row errors) → **Confirm & import attendance**.
 
-**Expected:** confirmation toast with the applied/blank/error counts;
-attendance counts appear under each activity row. Repeat for A2. (The
-**Evaluation** tab in the same modal imports pre/post/satisfaction rows and
-averages them into the activity's aggregate columns — optional here.)
+**Expected:** a confirmation toast with applied / blank / error counts, and attendance counts under
+each activity row. Re-importing the same file **updates** rather than duplicating.
+
+> The **Evaluation** tab in the same modal imports pre/post/satisfaction rows and averages them into
+> the activity's aggregate columns. Optional here.
+
+**Important:** a beneficiary who attends three sessions is still **one** person reached.
+`trainees_reached` is `COUNT(DISTINCT beneficiary_id)`, never a sum of per-activity counts.
 
 ---
 
-## 6. Add 3 budget entries — Budget tab
+## 6. Add 3 budget entries — **Budget** tab
 
 | Item | Amount | Date used | Charge against |
 |---|---|---|---|
-| Internet & venue allowance | 3500 | 2026-09-05 | A1 |
-| Training kits & handouts | 8500 | 2026-09-12 | A2 |
-| Facilitator meals & transport | 2000 | 2026-09-12 | A2 |
+| Ingredients & baking supplies | 6000 | 2026-10-20 | A1 |
+| Oven rental & utilities | 5000 | 2026-10-27 | A2 |
+| Packaging & labelling materials | 2500 | 2026-10-27 | A2 |
 
-**Expected:** Utilized = ₱14,000 · 70% progress bar · no warnings (under the
-₱20,000 allocation).
+**Expected:** utilized **₱13,500** of the **₱30,000** annual target (45 %). No warnings — comfortably
+under the allocation.
 
 ---
 
-## 7. Complete A1 and A2 — Activities tab → Complete
-
-Click **Complete** on A1 and A2 (confirm the dialog).
+## 7. Complete A1 and A2 — **Activities** tab → **Complete**
 
 **Expected per completion:**
-- Status badge flips to Completed
-- An activity-log entry is written (check the admin dashboard recent activity)
-- Rendered-hours drafts are auto-created for Kent (3 hrs for A1, 4 hrs for A2 —
-  hours = end − start, source = auto). Login as faculty4@lnu.com → header bell
-  shows "Rendered hours drafted" notifications; Rendered Hours → My shows two
-  pending drafts he can adjust down and submit.
+- The status badge flips to **Completed**, and an **activity-log** entry is written (visible in the
+  admin dashboard's recent activity).
+- **Rendered-hours drafts are auto-created for each assigned faculty member.** The draft is
+  `end_time − start_time` (A1 → 4 hrs, A2 → 4 hrs), source = `auto`.
+- Log in as `faculty4@lnu.com` (Kent) → the bell shows *"Rendered hours drafted"* → **Rendered Hours →
+  My** lists two pending drafts.
+
+**The lifecycle, which is the point of this step:** a faculty member may adjust a draft **down only**,
+then submit. The Admin approves, and the entry **locks** — a later edit attempt is refused. Hours are
+never editable upward, because that would let service credit be invented.
 
 ---
 
-## 8. What you should now see
+## 8. Targets — two levels only
+
+### 8a. The project's own target — hub → **Overview**
+
+| Figure | Expected |
+|---|---|
+| Training hours vs annual target | **15 / 40 → 37.5 %** |
+| Budget vs allocated budget | **₱13,500 / ₱30,000 → 45 %** |
+| Trainors / Trainees / Activities | **2 / 5 / 2** |
+
+The **Trainees** figure is now **5** — it was 0 before step 5, and the imported attendance is what
+made it real. Note that it counts **people**, not attendances: the same five beneficiaries attended
+both activities, and they are still five.
+
+### 8b. The university pool — **University Targets**
+
+The university target is a **consumption pool**, not a ratio: the projects draw from it.
+
+**Expected:** the seeded pool is **2,500 hours / ₱668,000** for the academic year, with the year's
+projects consuming a small share of the hours and a larger share of the budget. The page also lists
+each project's own attainment and the "Training Hours Formula" panel spelling out
+`trainors × trainees × days`.
+
+**The rule to state out loud:** targets exist at **University** and **Project** level **only**.
+Broad programs and colleges carry none — that is D-R5, and it is why `/programs` and the college cards
+show roll-ups but never a percentage of target.
+
+---
+
+## 9. What you should now see
 
 | Where | Expected |
 |---|---|
-| **Hub → Overview** | O1 **Achieved** (5/5 · `auto (live)`) · O2 **On track** 25% (`auto (live)`) · O3 **Not met** gold bar (`manual` — target date 2026-09-10 passed with actual 0) · O4 **Achieved** (`manual` — 1/1) · O5 **On track** 70% |
-| **Manage modal** | Same badges, progress bars, and source tags per objective |
-| **Admin dashboard** | Action center → "Objectives at risk" = **2** (O3 not met + O2 due within 14 days) |
-| **Analytics → Overview** | Objective chart: 2 achieved · 2 on track · 1 not met; Program Performance tab: reach 5, participation 100%, consistency ~67% |
-| **/program-narratives** | Chip **"Objectives met: 2/5"** (no AI generation needed — the chip derives from 8.6) |
-| **Objective form** | Edit O1 → "Currently computed · live: 5.0 persons" |
+| Hub → view 2 (CME) | The new project in the card grid; CME's roll-ups have risen by its figures |
+| `/projects` | 8 projects; the new one shows `CME-2026-001`, Ongoing |
+| `/programs` | The Livelihood program's project count and rendered hours have risen — **but its target column does not exist** |
+| Project hub → Overview | 15 / 40 hrs · ₱13,500 / ₱30,000 · 2 trainors · 5 trainees |
+| `/targets` | The university pool's consumption includes the new project's hours |
+| `/faculty` | Kent's and Nikko's activity counts have risen by 2 |
 
-All of these derive live from the effective actual (§8.6) — the stored
-`status` column is never consulted.
+Everything derives **live** from the recorded activities on every render. Nothing was "saved" into a
+status column.
 
 ---
 
-## 9. Deadline notification — scheduler
+## 10. The AI surfaces — admin only, and now guarded
 
-```
+**Prerequisite:** `GEMINI_API_KEY` must be set in `.env`. Without it the AI calls fail; nothing else
+on this page depends on it.
+
+- **AI Analysis Review** — one AI-assisted analysis per community summary, subject to Admin approval.
+- **Project Narratives** — the Admin-only executive summary per project.
+- **Interagency Catalogue** — the citable agencies (8 seeded). This is the *only* source of agency
+  names the AI may cite.
+
+**The three-tier rule (§7.1) — the thing the adviser asked for:**
+
+| Tier | Meaning |
+|---|---|
+| **1** | CESO can deliver this itself → recommended as CESO intervention |
+| **2** | Not CESO's work → **referred** to a named agency from the catalogue (malnutrition, roads, water potability, …) |
+| **3** | Prohibited → shown as an audit note only, never as a CESO recommendation |
+
+**The point:** the AI no longer silently drops a need it cannot serve. It reclassifies it as a Tier-2
+referral with a named agency. Check that a Tier-2 card carries a *"Refer to <agency>"* note and that a
+Tier-3 item never appears as a recommendation.
+
+**Secretary and faculty have zero AI surfaces** (D4). Log in as either and confirm the AI items are
+absent from the sidebar entirely — not merely disabled.
+
+---
+
+## 11. Deadline notifications — the scheduler
+
+```bash
 php artisan smartcemes:notify-deadlines
 ```
 
-**Expected:** output `Deadline notifications sent: 1.` and the admin bell
-shows *"Objective target date approaching — 'EXT-2026-007' objective 'Reach
-20 community members across the program' is due Sep 25, 2026 (10 days)."*
+**Expected:** the Admin's bell receives notifications for projects ending within 14 days, and for
+projects past their midpoint whose rendered hours are behind their annual target.
 
-Re-run the command → `0.` notifications sent (7-day dedup, 5.14).
+Re-run it → **no new notifications** (7-day de-duplication).
 
-> Note: on the seeded demo data this count also includes seeded programs
-> ending within 14 days — run once on a fresh DB first if you want the
-> objective notification isolated.
+> The count depends on the seeded projects' end dates, so treat the exact number as environment
+> dependent; what matters is that the second run is a no-op.
 
----
+The nightly database backup runs on the same scheduler at **02:00**:
 
-## 10. Live-derivation flip — the payoff demo
-
-Budget tab → add a 4th entry: **"Printing of certificates" · 3000 ·
-2026-10-03 · A3**. Utilization jumps to 85%.
-
-**Expected immediately (refresh the hub):**
-- **O5 flips On track → Achieved** (85 ≥ 80)
-- Analytics objective chart becomes 3 achieved · 1 on track · 1 not met
-- Narratives chip becomes **3/5**
-- No status field was ever written anywhere — it is all derived from program
-  data on every render.
-
----
-
-## 11. Optional bonus tests
-
-- **8.8 conflict hard-block**: Add Activity on **2026-10-03, 10:00–14:00**
-  and try to assign Kent → save is refused: *"Assignment refused: Kent Naputo
-  is already assigned to 'Digital Bayanihan…' which overlaps this schedule."*
-- **D7 over-allocation**: add a budget entry of ₱10,000 → the entry SAVES
-  with an over-allocation warning banner + activity-log entry (never blocks).
-- **Faculty read-only**: login as faculty4@lnu.com → My Programs → the hub
-  renders read-only (banner, no Manage/Edit buttons).
-- **Rendered-hours lifecycle**: as Kent, adjust a draft DOWN (e.g. 3 → 2.5
-  hrs with a note), submit; as admin, approve it → entry locks; try editing
-  as Kent → refused.
-- **Duplicate code self-heal (v4.11)**: create another program → it gets
-  `EXT-2026-008` even though the seeded programs never touched the sequence.
-
----
-
-## Reset between runs
-
+```bash
+php artisan smartcemes:backup-database
 ```
+
+**Expected:** `Backup written: …storage/app/backups/smartcemes_<db>_<timestamp>.sql (… KB)`, and older
+dumps pruned beyond the retention count. If it fails with *"'mysqldump' is not recognized"*, set
+`DB_DUMP_BINARY` in `.env` (on this machine: `C:/xampp/mysql/bin/mysqldump.exe`).
+
+---
+
+## 12. Optional bonus tests
+
+- **8.8 conflict hard-block** — add an activity dated **2026-09-15** (inside Nikko's *Feeding Cycle 2*
+  block, which runs 2026-09-08 → 2026-10-16) and assign **Nikko Villas** → the save is **refused**
+  with a message naming the clashing activity and its date range. This is a hard block, not a warning.
+- **D7 over-allocation** — add a budget entry of ₱40,000 → the entry **saves** with an
+  over-allocation warning banner plus an activity-log entry. It never blocks.
+- **Faculty read-only** — log in as `faculty1@lnu.com` → **My Projects** → the hub renders read-only
+  (no Manage/Edit/Add Activity buttons). Faculty see their own projects, not the whole registry.
+- **Rendered-hours lock** — as Kent, adjust a draft **down** (e.g. 4 → 3 hrs with a note) and submit;
+  as Admin, approve it; try editing again as Kent → refused.
+- **Secretary scope** — log in as `secretary@lnu.com` → no AI surfaces, no college/program/project
+  management, no Faculty Management. Secretary validates and manages beneficiaries.
+- **Nav collapse** — as Admin, confirm the sidebar shows **one** extension entry
+  (*Manage Extension Programs*) and that it stays highlighted on `/colleges`, `/programs`,
+  `/projects` and a project hub. The topbar keeps reading *Manage Extension Programs* throughout.
+- **The prototype harnesses** (if you are reviewing the frontend contract, not the app):
+  `node docs/prototype/_check.cjs` and `node docs/prototype/_smoke.cjs`.
+
+---
+
+## 13. Reset between runs
+
+```bash
 php artisan migrate:fresh --seed
 ```
 
-Reproducible: 58 communities/schools, 6 programs, proposals + demo attachment
-files, 6 accounts (password `password`). The public storage link persists
-across resets on Windows.
+Reproducible: 58 communities/schools, 4 colleges, 6 broad programs, 8 projects, 15 activities,
+6 faculty, 57 beneficiaries, 130 attendance rows, 23 budget rows, 8 interagency agencies, 1 university
+target. Eight accounts, all with password `password`.
+
+> **Use this, not a plain `migrate`.** A plain `migrate` on a populated database leaves the hierarchy
+> **orphaned without erroring** — the backfill needs `colleges`/`programs` *rows*, but `migrate` only
+> creates those tables empty. See `AI_HANDOFF.md` §14.
+
+---
+
+## Appendix A — the seeded demo data
+
+Handy when you want to demo without creating anything.
+
+| Code | College | Broad program | Status | Hours target |
+|---|---|---|---|---|
+| `CAS-2026-001` | CAS | Information, Communication & Education | ongoing | 150 hrs / ₱85,000 |
+| `EXT-2026-001` | COE | Literacy, Numeracy & Language | ongoing | — |
+| `EXT-2026-002` | CAS | Environmental Conservation & Disaster Preparedness | ongoing | — |
+| `EXT-2026-003` | CME | Livelihood, Technical & Business Management | completed | — |
+| `EXT-2026-004` | CAS | Information, Communication & Education | ongoing | — |
+| `EXT-2026-005` | COE | Information, Communication & Education | ongoing | — |
+| `EXT-2026-006` | CME | Physical Fitness & Sports Development | draft | — |
+
+`CAS-2026-001` is the only seeded project carrying annual targets, which makes it the best one to
+open when you want to show attainment immediately. Only its activities carry `no_of_days`; the
+inherited ones predate the R4 model and legitimately show no training-hours figure.
+
+---
+
+## Appendix B — how this script was verified
+
+- **`tests/Feature/DefenceWalkthroughTest.php` executes the write flow** (steps 2, 3, 6, 7, 8) through
+  the real Livewire components and asserts every figure printed above: the `CME-2026-001` code, the
+  `2 × 5 × days` arithmetic, 15 / 40 → 37.5 %, ₱13,500 / ₱30,000 → 45 %, the 4-hour rendered-hours
+  drafts, and the `trainees` count moving 0 → 5 only once attendance exists. If a model change breaks
+  a number in this document, that test fails.
+- **Read-only observations (§1, §8b)** were executed against the seeded MariaDB on 2026-09-24 through
+  a real admin login — the figures quoted are the values the pages actually rendered.
+- **Rule-level behaviour** the walkthrough depends on but does not itself drive is covered elsewhere:
+  `ActivityAttendanceImportTest` (the import UI), `TrainingHoursTest` (the formula, half days, the
+  trainee fallback, distinct counting), `ProgramHubTest` (the hub, budget, completion),
+  `CollegeProgramCrudTest` (project codes + the collapsed nav), `ExtensionHubTest` (the hub and the
+  D-R5 rules), `DatabaseBackupTest` (the backup), `RankingServiceTest` (the roll-ups).
+- **The backup (§11)** was run for real and its dump restored into a scratch database with row counts
+  identical to live.
+- `docs/guides/*` and the role guides (`adminguide.md`, `secretaryguide.md`, `facultyguide.md`,
+  `features.md`) are **still bannered as pre-revision** — this script replaces them for walkthrough
+  purposes, but a full refresh of those documents remains outstanding R7 work.
+
+### Bugs this walkthrough re-run found
+
+Worth knowing, because they were invisible to a green test suite and would have surfaced live:
+
+1. **The 8.8 faculty-conflict hard-block was broken twice over.**
+   - `Hub::findScheduleConflict()` filtered `->where('id', '!=', …)` on a relation that joins
+     `activities` to `activity_faculty` — and the pivot has its own `id`, so the column was
+     **ambiguous** and the query errored on every driver. Qualifying it (`activities.id`) fixed it.
+   - The refusal message had **four `%s` placeholders and three arguments**, so the guard raised
+     `ArgumentCountError` instead of refusing. It now names the clash and its date range.
+   - Net effect before the fix: assigning faculty to an activity crashed rather than saving. Neither
+     bug was reachable from the existing tests, because they all used faculty with no prior
+     activities.
+2. **The `/projects` create button still said "New Program"** (plus the list header and the submit
+   button) — an R2 rename leftover, and exactly the naming confusion the handoff warns about.

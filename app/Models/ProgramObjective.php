@@ -11,7 +11,7 @@ class ProgramObjective extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'extension_program_id',
+        'extension_project_id',
         'objective',
         'kpi_metric',
         'baseline_value',
@@ -42,7 +42,7 @@ class ProgramObjective extends Model
 
     public function program()
     {
-        return $this->belongsTo(ExtensionProgram::class, 'extension_program_id');
+        return $this->belongsTo(ExtensionProject::class, 'extension_project_id');
     }
 
     public function isQualitative(): bool

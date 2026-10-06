@@ -1,6 +1,6 @@
 <x-app-layout>
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">Print-optimized institutional reports · figures derive exclusively from the 8.6 KPI dictionary · letterhead + signatory blocks included</p>
+    <p class="text-[13px] text-gray-400 font-medium mb-3">Print-optimized institutional reports · figures derive from the R4 metric dictionary (training hours, budget, trainees, trainors, activities) · letterhead + signatory blocks included</p>
 </section>
 
 <section class="mt-2 grid grid-cols-2 gap-4">
@@ -13,8 +13,8 @@
     </div>
     <div class="reveal-item sc-card p-5 flex flex-col justify-between">
         <div>
-            <h3 class="font-bold text-[14px]">Program Results Framework</h3>
-            <p class="text-[12px] text-gray-400 mt-1">Per program: objective statement, baseline → target → actual, status, evidence notes.</p>
+            <h3 class="font-bold text-[14px]">Project Performance Report</h3>
+            <p class="text-[12px] text-gray-400 mt-1">Per project: trainors, trainees, training hours rendered against the annual hours target, and budget against the allocation, plus per-activity training-hours detail.</p>
         </div>
         <div class="mt-3 space-y-1.5 max-h-40 overflow-y-auto pr-1">
             @forelse ($programs as $p)

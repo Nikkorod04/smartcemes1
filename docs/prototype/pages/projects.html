@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extension Projects · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="projects">
+
+<script>const R=(new URLSearchParams(location.search).get('role'))||document.body.dataset.role||'admin';document.body.dataset.role=R;</script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ===================== HEADER ===================== -->
+  <section class="pt-6 reveal-item">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+      <div>
+        <h2 id="heading" class="text-[20px] font-extrabold tracking-tight leading-tight">Extension Projects</h2>
+        <p id="subheading" class="text-[12.5px] text-gray-400 font-medium mt-0.5">
+          Every project tracks trainors, trainees, training hours rendered, budget, and activities
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnExport" class="btn btn-outline">[[download]] <span class="ml-1">Export</span></button>
+        <a href="programs.html?role=admin" class="btn btn-outline">← Programs</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HIERARCHY BREADCRUMB ===================== -->
+    <!-- ===================== ACTIVE FILTER BANNER (deep-link) ===================== -->
+  <div id="filterBanner" class="hidden mt-4"></div>
+
+  <!-- ===================== TILES ===================== -->
+  <section id="tiles" class="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-4"></section>
+
+  <!-- ===================== TOOLBAR ===================== -->
+  <section class="mt-5" x-data="{v:'grid'}">
+
+    <div class="sc-card p-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="relative flex-1 min-w-[220px]">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex">[[search]]</span>
+          <input id="q" class="input !pl-9" placeholder="Search project, code, lead, or community…">
+        </label>
+
+        <div id="statusChips" class="flex flex-wrap items-center gap-2">
+          <button class="chip on" data-status="All">All</button>
+          <button class="chip" data-status="Ongoing">Ongoing</button>
+          <button class="chip" data-status="Completed">Completed</button>
+          <button class="chip" data-status="Draft">Draft</button>
+        </div>
+
+        <div class="ml-auto flex items-center gap-2">
+          <div class="flex bg-gray-100 rounded-xl p-1">
+            <button @click="v='grid'" title="Grid view"
+              :class="v==='grid' ? 'bg-white shadow-sm text-lnu-800' : 'text-gray-400 hover:text-gray-600'"
+              class="w-9 h-8 rounded-lg flex items-center justify-center transition">[[grid]]</button>
+            <button @click="v='list'" title="List view"
+              :class="v==='list' ? 'bg-white shadow-sm text-lnu-800' : 'text-gray-400 hover:text-gray-600'"
+              class="w-9 h-8 rounded-lg flex items-center justify-center transition">
+              <span class="w-[18px] h-[18px] inline-flex"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></span>
+            </button>
+            <button @click="v='rank'" title="Most active ranking"
+              :class="v==='rank' ? 'bg-white shadow-sm text-lnu-800' : 'text-gray-400 hover:text-gray-600'"
+              class="w-9 h-8 rounded-lg flex items-center justify-center transition">[[chart]]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- secondary filter row -->
+      <div class="mt-3 pt-3 border-t border-gray-50 flex flex-wrap items-center gap-2">
+        <span class="text-[10.5px] font-bold uppercase tracking-[.1em] text-gray-400 mr-1">Filters</span>
+
+        <select id="collegeSel" class="input !w-[160px] !py-1.5 text-[11.5px]">
+          <option value="All">All colleges</option>
+          <option value="CAS">CAS — Arts &amp; Sciences</option>
+          <option value="COE">COE — Education</option>
+          <option value="CME">CME — Management</option>
+        </select>
+
+        <select id="programSel" class="input !w-[230px] !py-1.5 text-[11.5px]">
+          <option value="All">All programs</option>
+        </select>
+
+        <select id="leadSel" class="input !w-[190px] !py-1.5 text-[11.5px]">
+          <option value="All">All faculty leads</option>
+        </select>
+
+        <select id="sortSel" class="input !w-[210px] !py-1.5 text-[11.5px]">
+          <option value="rank">Sort: most active</option>
+          <option value="hours">Sort: training hours</option>
+          <option value="budget">Sort: budget utilized</option>
+          <option value="reached">Sort: beneficiaries reached</option>
+          <option value="title">Sort: A–Z</option>
+        </select>
+
+        <button id="clearBtn" class="btn btn-ghost !px-2.5 !py-1.5 text-[11px]">Clear filters</button>
+      </div>
+    </div>
+
+    <p id="countLine" class="mt-3 text-[11.5px] text-gray-400 font-medium"></p>
+
+    <div id="gridView" x-show="v==='grid'" class="mt-3 grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+    <!-- RANK VIEW -->
+    <div id="rankView" x-cloak x-show="v==='rank'" class="mt-3 sc-card p-0 overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
+        <span class="w-8 h-8 rounded-lg bg-gold-50 text-gold-700 flex items-center justify-center">[[chart]]</span>
+        <div>
+          <p class="font-bold text-[13.5px]">Most Active Projects</p>
+          <p class="text-[11px] text-gray-400 font-medium">Ranked by training hours rendered plus beneficiaries reached (CESO engagement score)</p>
+        </div>
+      </div>
+      <table class="sc-table">
+        <thead>
+          <tr>
+            <th class="!w-14">Rank</th>
+            <th>Project</th>
+            <th>College</th>
+            <th class="!text-right">Trainors</th>
+            <th class="!text-right">Trainees</th>
+            <th class="!text-right">Training Hrs</th>
+            <th class="!text-right">Activities</th>
+            <th class="!text-right">Engagement</th>
+          </tr>
+        </thead>
+        <tbody id="rankBody"></tbody>
+      </table>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div x-cloak x-show="v==='list'" class="mt-3 sc-card p-0 overflow-hidden">
+      <table class="sc-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Project</th>
+            <th>College / Program</th>
+            <th>Lead</th>
+            <th class="!text-right">Trainors</th>
+            <th class="!text-right">Trainees</th>
+            <th>Training Hours vs Target</th>
+            <th>Budget vs Allocation</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="listView"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const D = window.DATA;
+  const ico = (n,c) => `<span class="${c} inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${SC.icons[n]}</span>`;
+  const BADGE = { Ongoing:'badge-blue', Completed:'badge-green', Draft:'badge-yellow', Cancelled:'badge-red' };
+  const qp = new URLSearchParams(location.search);
+  const deepProgram = qp.get('program');
+
+  let PROJECTS = D.projects;
+
+  /* ---------------- Deep-link: ?program=PROG-xx ---------------- */
+  let program = 'All';
+  if (deepProgram) {
+    const pg = D.programs.find(p => p.id === deepProgram || p.code === deepProgram);
+    if (pg) {
+      program = pg.id;
+      PROJECTS = D.projects.filter(p => p.program === pg.id);
+      heading.textContent = pg.title;
+      subheading.textContent = `${pg.projectCount} project${pg.projectCount === 1 ? '' : 's'} under this program · ${pg.pillar} pillar · lead college ${pg.college}`;
+
+      filterBanner.classList.remove('hidden');
+      filterBanner.innerHTML = `
+        <div class="sc-card p-4 flex items-center gap-3 flex-wrap">
+          <span class="w-9 h-9 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">${ico('folder','w-5 h-5')}</span>
+          <div class="min-w-0">
+            <p class="text-[11px] font-bold uppercase tracking-[.1em] text-gray-400">Filtered to program</p>
+            <p class="font-bold text-[14px] text-charcoal">${pg.title}</p>
+          </div>
+          ${SC.pillarChip(pg.pillar)}
+          ${SC.collegePill(pg.college)}
+          <span class="text-[11.5px] text-gray-400 font-medium">${pg.thrust}</span>
+          <a href="projects.html?role=admin" class="ml-auto btn btn-outline !px-2.5 !py-1.5 text-[11px]">Show all projects</a>
+        </div>`;
+    }
+  }
+
+  /* ---------------- Tiles ---------------- */
+  const sum = (k) => PROJECTS.reduce((s,p) => s + (Number(p[k]) || 0), 0);
+  const tHours = sum('renderedTrainingHours'), tHoursTarget = sum('trainingHoursTarget');
+  const tUtil = sum('utilized'), tAllocated = sum('budgetAllocated');
+  const tTrainees = sum('trainees'), tTrainors = sum('trainors');
+  const tActs = sum('activityCount');
+
+  function tile(icon, tone, value, label, cap, badge) {
+    return `<div class="sc-card p-4 reveal-item">
+      <div class="flex items-center justify-between">
+        <span class="w-9 h-9 rounded-xl ${tone.bg} ${tone.fg} flex items-center justify-center">${ico(icon,'w-4.5 h-4.5')}</span>
+        ${badge || ''}
+      </div>
+      <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">${value}</p>
+      <p class="text-[12px] text-gray-500 font-medium mt-1.5">${label}</p>
+      <p class="text-[10.5px] text-gray-400 font-medium mt-1.5">${cap}</p>
+    </div>`;
+  }
+
+  tiles.innerHTML = [
+    tile('folder', { bg:'bg-lnu-50', fg:'text-lnu-800' }, PROJECTS.length, 'Projects', 'In the current selection'),
+    tile('clock', { bg:'bg-emerald-50', fg:'text-emerald-600' }, SC.hours(tHours), 'Training Hours Rendered',
+         `of ${SC.num(tHoursTarget)} target`,
+         `<span class="badge ${SC.attainBadge(SC.pct(tHours,tHoursTarget))}">${SC.pct(tHours,tHoursTarget)}%</span>`),
+    tile('people', { bg:'bg-blue-50', fg:'text-blue-700' }, SC.num(tTrainees), 'Trainees Reached', `${tTrainors} trainors assigned`),
+    tile('wallet', { bg:'bg-gold-50', fg:'text-gold-700' }, '₱' + SC.num(tUtil), 'Budget Utilized',
+         `of ₱${SC.num(tAllocated)} allocated`,
+         `<span class="badge ${SC.attainBadge(SC.pct(tUtil,tAllocated))}">${SC.pct(tUtil,tAllocated)}%</span>`),
+    tile('clipboard', { bg:'bg-violet-50', fg:'text-violet-700' }, tActs, 'Activities', 'Across these projects')
+  ].join('');
+
+  /* ---------------- Filter options ---------------- */
+  programSel.innerHTML = '<option value="All">All programs</option>' +
+    D.programs.map(p => `<option value="${p.id}"${p.id === program ? ' selected' : ''}>${p.title}</option>`).join('');
+
+  const leads = [...new Set(D.projects.map(p => p.lead.name))].sort();
+  leadSel.innerHTML = '<option value="All">All faculty leads</option>' +
+    leads.map(n => `<option value="${n}">${n}</option>`).join('');
+
+  /* ---------------- State ---------------- */
+  let status = 'All', college = 'All', lead = 'All', query = '', sort = 'rank';
+  const base = () => PROJECTS;
+
+  function engagement(p) { return p.renderedTrainingHours + p.reached; }
+
+  function sortFn(a, b) {
+    if (sort === 'hours')   return b.renderedTrainingHours - a.renderedTrainingHours;
+    if (sort === 'budget')  return b.utilized - a.utilized;
+    if (sort === 'reached') return b.reached - a.reached;
+    if (sort === 'title')   return a.title.localeCompare(b.title);
+    return engagement(b) - engagement(a);
+  }
+
+  const filtered = () => base().filter(p =>
+    (status === 'All' || p.status === status) &&
+    (college === 'All' || p.college === college) &&
+    (lead === 'All' || p.lead.name === lead) &&
+    (!query || `${p.code} ${p.title} ${p.acr} ${p.lead.name} ${p.community.name} ${p.college} ${p.programTitle}`.toLowerCase().includes(query))
+  ).sort(sortFn);
+
+  /* ---------------- Card ---------------- */
+  function cardHTML(p) {
+    const hp = p.hoursPct, bp = p.budgetPct;
+    return `
+    <article class="sc-card sc-card-hover overflow-hidden flex flex-col">
+      <div class="p-5 flex flex-col flex-1">
+        <div class="flex items-start justify-between gap-2">
+          <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide font-mono">${p.code}</span>
+          <span class="badge ${BADGE[p.status] || 'badge-gray'}">${p.status}</span>
+        </div>
+
+        <h3 class="mt-2.5 font-bold text-[14px] leading-snug line-clamp-2 min-h-[38px]">${p.title}</h3>
+
+        <div class="mt-2 flex items-center gap-2 flex-wrap">
+          ${SC.collegePill(p.college)}
+          ${SC.pillarChip(p.pillar)}
+        </div>
+        <p class="mt-2 text-[10.5px] text-gray-400 font-medium truncate" title="${p.programTitle}">${p.programTitle}</p>
+
+        <div class="mt-2.5 flex items-center gap-2 min-w-0">
+          <span class="avatar w-6 h-6 text-[8.5px]">${p.lead.initials}</span>
+          <span class="text-[11.5px] text-gray-600 font-medium truncate">${p.lead.name}</span>
+        </div>
+        <p class="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-400">${ico('pin','w-3.5 h-3.5')} ${p.community.name} · ${p.community.municipality}</p>
+
+        <!-- performance grid: trainors / trainees / hours -->
+        <div class="mt-4 pt-3.5 border-t border-gray-50 mt-auto">
+          <div class="grid grid-cols-3 gap-2 mb-3.5">
+            <div class="text-center">
+              <p class="text-[17px] font-extrabold tracking-tight leading-none">${p.trainors}</p>
+              <p class="text-[9.5px] text-gray-400 font-bold uppercase tracking-wide mt-1">Trainors</p>
+            </div>
+            <div class="text-center border-x border-gray-50">
+              <p class="text-[17px] font-extrabold tracking-tight leading-none">${p.trainees}</p>
+              <p class="text-[9.5px] text-gray-400 font-bold uppercase tracking-wide mt-1">Trainees</p>
+            </div>
+            <div class="text-center">
+              <p class="text-[17px] font-extrabold tracking-tight leading-none">${SC.hours(p.renderedTrainingHours)}</p>
+              <p class="text-[9.5px] text-gray-400 font-bold uppercase tracking-wide mt-1">Hours</p>
+            </div>
+          </div>
+
+          <div class="space-y-2.5">
+            <div>
+              <div class="flex items-center justify-between text-[10.5px] mb-1">
+                <span class="text-gray-400 font-semibold">Training hours vs ${SC.num(p.trainingHoursTarget)} target</span>
+                <span class="font-bold ${hp >= 100 ? 'text-emerald-600' : 'text-charcoal'}">${hp}%</span>
+              </div>
+              <div class="progress"><span style="width:${Math.min(hp,100)}%" class="${SC.attainTone(hp)}"></span></div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between text-[10.5px] mb-1">
+                <span class="text-gray-400 font-semibold">Budget vs ₱${SC.num(p.budgetAllocated)} allocated</span>
+                <span class="font-bold ${bp > 100 ? 'text-red-600' : 'text-charcoal'}">${bp}%</span>
+              </div>
+              <div class="progress"><span style="width:${Math.min(bp,100)}%" class="${bp > 100 ? 'bg-red-500' : SC.attainTone(bp)}"></span></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mt-3.5">
+            <p class="text-[10.5px] text-gray-400 font-medium">${ico('people','w-3 h-3')} ${p.reached}/${p.target} reached · ${p.activityCount} activit${p.activityCount === 1 ? 'y' : 'ies'}</p>
+            <a href="program-detail.html?role=admin&program=${p.code}" onclick="event.stopPropagation()"
+               class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">Details</a>
+          </div>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  /* ---------------- Row ---------------- */
+  function rowHTML(p) {
+    const hp = p.hoursPct, bp = p.budgetPct;
+    return `
+    <tr class="cursor-pointer" onclick="location.href='program-detail.html?role=admin&program=${p.code}'">
+      <td class="font-mono text-[11.5px] text-gray-500 whitespace-nowrap">${p.code}</td>
+      <td class="max-w-[240px]">
+        <p class="font-semibold text-[12.5px] truncate">${p.title}</p>
+        <p class="text-[10px] text-gray-400 font-medium truncate">${p.activityCount} activities</p>
+      </td>
+      <td>
+        <div class="flex flex-col gap-1 items-start">
+          ${SC.collegePill(p.college)}
+          <span class="text-[10px] text-gray-400 font-medium truncate max-w-[150px]" title="${p.programTitle}">${p.programTitle}</span>
+        </div>
+      </td>
+      <td><span class="inline-flex items-center gap-2"><span class="avatar w-6 h-6 text-[8.5px]">${p.lead.initials}</span><span class="text-[12px] whitespace-nowrap">${p.lead.name.replace('Prof. ','').replace('Dr. ','')}</span></span></td>
+      <td class="!text-right font-semibold">${p.trainors}</td>
+      <td class="!text-right font-semibold">${p.trainees}</td>
+      <td class="w-[140px]">
+        <div class="flex items-center gap-2">
+          <div class="progress flex-1"><span style="width:${Math.min(hp,100)}%" class="${SC.attainTone(hp)}"></span></div>
+          <span class="text-[11px] font-bold w-14 text-right">${SC.hours(p.renderedTrainingHours)}<span class="font-normal text-gray-400">/${SC.num(p.trainingHoursTarget)}</span></span>
+        </div>
+      </td>
+      <td class="w-[140px]">
+        <div class="flex items-center gap-2">
+          <div class="progress flex-1"><span style="width:${Math.min(bp,100)}%" class="${bp > 100 ? 'bg-red-500' : SC.attainTone(bp)}"></span></div>
+          <span class="text-[11px] font-bold w-9 text-right">${bp}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${BADGE[p.status] || 'badge-gray'}">${p.status}</span></td>
+      <td class="text-right"><a href="program-detail.html?role=admin&program=${p.code}" onclick="event.stopPropagation()" class="text-[12px] font-bold text-lnu-800 hover:text-lnu-600 transition">Details →</a></td>
+    </tr>`;
+  }
+
+  /* ---------------- Rank view ---------------- */
+  function renderRank() {
+    const ranked = [...PROJECTS].sort((a, b) => engagement(b) - engagement(a));
+    const maxE = Math.max(...ranked.map(engagement), 1);
+    rankBody.innerHTML = ranked.map((p, i) => {
+      const medal = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+      return `
+      <tr class="cursor-pointer" onclick="location.href='program-detail.html?role=admin&program=${p.code}'">
+        <td><span class="rank-medal ${medal}">${i + 1}</span></td>
+        <td class="max-w-[280px]">
+          <p class="font-semibold text-[12.5px] truncate">${p.title}</p>
+          <p class="text-[10px] text-gray-400 font-mono">${p.code} · ${SC.num(p.reached)}/${SC.num(p.target)} reached</p>
+        </td>
+        <td>${SC.collegePill(p.college)}</td>
+        <td class="!text-right font-semibold">${p.trainors}</td>
+        <td class="!text-right font-semibold">${p.trainees}</td>
+        <td class="!text-right font-bold">${SC.hours(p.renderedTrainingHours)}</td>
+        <td class="!text-right font-semibold">${p.activityCount}</td>
+        <td class="w-[180px]">
+          <div class="flex items-center gap-2 justify-end">
+            <div class="progress w-[100px]"><span style="width:${Math.round(engagement(p)/maxE*100)}%" class="bg-gold-500"></span></div>
+            <span class="text-[11.5px] font-bold w-14 text-right">${SC.num(engagement(p))}</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* ---------------- Render ---------------- */
+  function render() {
+    const list = filtered();
+    countLine.textContent = `Showing ${list.length} of ${PROJECTS.length} projects`
+      + (status !== 'All' ? ` · ${status}` : '')
+      + (college !== 'All' ? ` · ${college}` : '')
+      + (lead !== 'All' ? ` · ${lead.replace(/^(Prof\.|Dr\.)\s/,'')}` : '')
+      + (query ? ` for “${query}”` : '');
+
+    gridView.innerHTML = list.length ? list.map(cardHTML).join('') : `
+      <div class="col-span-full sc-card p-10 text-center">
+        <span class="mx-auto w-12 h-12 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center">${ico('clipboard','w-6 h-6')}</span>
+        <p class="mt-3 font-bold text-[13.5px]">No projects match your filters</p>
+        <p class="text-[12px] text-gray-400 mt-1">Try a different keyword or reset the filters.</p>
+      </div>`;
+
+    listView.innerHTML = list.length ? list.map(rowHTML).join('')
+      : '<tr><td colspan="10" class="text-center py-10 text-[12.5px] text-gray-400">Nothing to show — adjust your filters.</td></tr>';
+  }
+
+  /* ---------------- Wiring ---------------- */
+  q.addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+  collegeSel.addEventListener('change', e => { college = e.target.value; render(); });
+  leadSel.addEventListener('change', e => { lead = e.target.value; render(); });
+  sortSel.addEventListener('change', e => { sort = e.target.value; render(); });
+  programSel.addEventListener('change', e => {
+    program = e.target.value;
+    const url = new URL(location.href);
+    if (program === 'All') url.searchParams.delete('program'); else url.searchParams.set('program', program);
+    location.href = url.toString();
+  });
+  statusChips.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
+    statusChips.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    ch.classList.add('on'); status = ch.dataset.status; render();
+  }));
+  clearBtn.onclick = () => {
+    status = 'All'; college = 'All'; lead = 'All'; query = ''; sort = 'rank';
+    q.value = ''; collegeSel.value = 'All'; leadSel.value = 'All'; sortSel.value = 'rank';
+    statusChips.querySelectorAll('.chip').forEach((c, i) => c.classList.toggle('on', i === 0));
+    if (program !== 'All') { location.href = 'projects.html?role=admin'; return; }
+    render();
+  };
+  btnExport.onclick = () => SC.toast('Project portfolio exported (demo)','success');
+
+  render();
+  renderRank();
+});
+</script>
+</body>
+</html>

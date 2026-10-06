@@ -1,4 +1,4 @@
-@extends('layouts.report', ['reportTitle' => 'Annual Extension Performance Report', 'subtitle' => 'AY '.$year.' · Sections I–VII'])
+@extends('layouts.report', ['reportTitle' => 'Annual Extension Performance Report', 'subtitle' => 'AY '.$year.' · Sections I–VIII'])
 
 @section('content')
 {{-- I. Program Portfolio --}}
@@ -23,16 +23,50 @@
     </table>
 </section>
 
-{{-- II. Beneficiaries served --}}
+{{-- II. Training delivery — the R4/R5 headline metric --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-2">II · Community Reach (8.6)</h2>
-    <p class="text-[13px]">Total distinct beneficiaries served this reporting period: <b>{{ number_format($totalServed) }}</b></p>
-    <p class="text-[12px] text-gray-500">Reach = distinct beneficiaries with at least one present/late attendance across non-cancelled activities.</p>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">II · Training Delivery by Project</h2>
+    <table class="sc-table">
+        <thead><tr>
+            <th>Project</th>
+            <th class="!text-right">Trainors</th>
+            <th class="!text-right">Trainees</th>
+            <th class="!text-right">Training hours</th>
+            <th class="!text-right">Annual target</th>
+            <th class="!text-right">Attainment</th>
+        </tr></thead>
+        <tbody>
+            @forelse ($trainingDelivery as $t)
+                <tr>
+                    <td>{{ $t['code'] }} · {{ $t['title'] }}</td>
+                    <td class="!text-right">{{ $t['trainors'] }}</td>
+                    <td class="!text-right">{{ number_format($t['trainees']) }}</td>
+                    <td class="!text-right font-bold">{{ number_format($t['training_hours'], 1) }}</td>
+                    <td class="!text-right">{{ $t['target_hours'] === null ? '—' : number_format($t['target_hours']) }}</td>
+                    {{-- NULL over 0: no target is "no target set", never "0%". --}}
+                    <td class="!text-right">{{ $t['hours_pct'] === null ? 'no target set' : round($t['hours_pct']).'%' }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="6" class="text-center text-gray-400 py-6">No projects for this year.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+    <p class="text-[12px] text-gray-500 mt-2">
+        Training hours = <b>trainors × trainees × days</b>, with no hourly factor (days carries the duration; a half day is 0.5).
+        Trainees are distinct beneficiaries with present/late attendance where those records exist, otherwise the recorded participant count.
+    </p>
 </section>
 
-{{-- III. Faculty participation --}}
+{{-- III. Beneficiaries served --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">III · Faculty Participation by Program</h2>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-2">III · Trainees Reached</h2>
+    <p class="text-[13px]">Total distinct trainees reached this reporting period: <b>{{ number_format($totalServed) }}</b></p>
+    <p class="text-[12px] text-gray-500">A distinct-person count: a beneficiary who attended three sessions was reached once. Draws on the same resolution order as every other reach figure in the system.</p>
+</section>
+
+{{-- IV. Faculty participation --}}
+<section class="mb-6">
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">IV · Faculty Participation by Program</h2>
     <table class="sc-table">
         <thead><tr><th>Faculty</th><th class="!text-right">Programs Led</th><th class="!text-right">Approved Rendered Hours</th></tr></thead>
         <tbody>
@@ -43,27 +77,29 @@
     </table>
 </section>
 
-{{-- IV. Budget utilization by project --}}
+{{-- V. Budget utilization by project --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">IV · Budget Utilization by Project (8.6)</h2>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">V · Budget Utilization by Project</h2>
     <table class="sc-table">
-        <thead><tr><th>Program</th><th class="!text-right">Allocated</th><th class="!text-right">Utilized</th><th class="!text-right">Utilization %</th></tr></thead>
+        <thead><tr><th>Project</th><th class="!text-right">Allocated budget</th><th class="!text-right">Utilized</th><th class="!text-right">Utilization</th></tr></thead>
         <tbody>
-            @foreach ($budgetUtilization as $b)
+            @forelse ($budgetUtilization as $b)
                 <tr>
                     <td>{{ $b['code'] }} · {{ $b['title'] }}</td>
-                    <td class="!text-right">₱{{ number_format($b['allocated']) }}</td>
+                    <td class="!text-right">₱{{ number_format($b['allocation']) }}</td>
                     <td class="!text-right">₱{{ number_format($b['utilized']) }}</td>
-                    <td class="!text-right {{ $b['pct'] !== null && $b['allocated'] > 0 && $b['utilized'] > $b['allocated'] ? 'text-red-600 font-bold' : '' }}">{{ $b['pct'] === null ? '—' : round($b['pct']).'%' }}</td>
+                    <td class="!text-right {{ $b['over'] ? 'text-red-600 font-bold' : '' }}">{{ $b['pct'] === null ? 'no allocation set' : round($b['pct']).'%' }}@if ($b['over']) <span class="badge badge-red !text-[10px]"><x-sc.icon name="alert" class="w-3 h-3" /> over</span>@endif</td>
                 </tr>
-            @endforeach
+            @empty
+                <tr><td colspan="4" class="text-center text-gray-400 py-4">No projects for this year.</td></tr>
+            @endforelse
         </tbody>
     </table>
 </section>
 
-{{-- V. Assessment outcomes --}}
+{{-- VI. Assessment outcomes --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">V · Assessment Outcomes &amp; Approved Recommendations</h2>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">VI · Assessment Outcomes &amp; Approved Recommendations</h2>
     <table class="sc-table">
         <thead><tr><th>Community</th><th>Period</th><th class="!text-right">Responses</th><th class="!text-right">Training Availability</th><th>Avg Satisfaction</th></tr></thead>
         <tbody>
@@ -82,15 +118,15 @@
     </table>
 </section>
 
-{{-- VI. Executive narratives (placeholder until AI phase) --}}
+{{-- VII. Executive narratives --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">VI · Program Executive Narratives</h2>
-    <p class="text-[12.5px] text-gray-500 italic">Placeholder until the AI phase — the latest approved ProgramNarrative per program with generated_at provenance will appear here.</p>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">VII · Program Executive Narratives</h2>
+    <p class="text-[12.5px] text-gray-500 italic">The latest approved ProgramNarrative per project, with generated_at provenance, appears here.</p>
 </section>
 
-{{-- VII. Preparedness statement --}}
+{{-- VIII. Preparedness statement --}}
 <section class="mb-2">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-2">VII · Compliance Statement</h2>
-    <p class="text-[12.5px] text-gray-600 leading-relaxed">All figures in this report derive exclusively from the SmartCEMES KPI dictionary (blueprint 8.6). Over-allocated budget entries are flagged rather than hidden (D7). Assessment summaries reflect Secretary-validated submissions only.</p>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-2">VIII · Compliance Statement</h2>
+    <p class="text-[12.5px] text-gray-600 leading-relaxed">All figures in this report derive from the training-hours and target model: trainors, trainees and training days per activity, measured against each project's annual HOURS target and the University annual pool. Budget has no annual target — it is measured against each project's allocation. A blank attainment means no target has been set — it is never rendered as 0%. Over-allocated budget entries are flagged rather than hidden (D7). Assessment summaries reflect Secretary-validated submissions only.</p>
 </section>
 @endsection

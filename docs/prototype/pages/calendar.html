@@ -69,7 +69,7 @@
     <div id="listHost" class="space-y-3"></div>
   </section>
 
-  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
 </main>
 
 <script src="../assets/vendor/alpine.min.js" defer></script>
@@ -116,7 +116,7 @@
   Object.entries(D.programObjectives).forEach(([code, objs]) => {
     objs.forEach(o => {
       if (!o.target_date) return;
-      const prog = D.programs.find(p => p.code === code);
+      const prog = D.projects.find(p => p.code === code || p.legacyCode === code);
       const k = isoOf(o.target_date); if (!k) return;
       DEADLINES[code] = DEADLINES[code] || {};
       DEADLINES[code][k] = DEADLINES[code][k] || { count: 0 };

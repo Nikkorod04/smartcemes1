@@ -1,30 +1,33 @@
 <div class="mt-4 space-y-4">
     @php
-        $alloc = (float) $program->allocated_budget;
-        $pct = $alloc > 0 ? round($utilized / $alloc * 100) : 0;
-        $served = max($kpi->communityReach($program), 1);
+        // Owner decision 2026-09-26: budget has NO annual target — the project's
+        // ALLOCATION is the only budget figure, so it is the denominator. Same
+        // denominator as the Overview tab, so the two can never disagree.
+        $alloc = $budgetVsAllocation['allocated'];
+        $pct = $budgetVsAllocation['pct'] ?? 0;
+        $served = max((int) $performance['trainees'], 1);
     @endphp
     <section class="grid grid-cols-4 gap-4">
         <div class="sc-card p-5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Allocated</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Allocated budget</p>
             <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱{{ number_format($alloc) }}</p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">FY {{ now()->format('Y') }} allocation</p>
+            <p class="text-[11px] text-gray-400 font-medium mt-1 mb-3">the project's allocation — budget carries no annual target</p>
         </div>
         <div class="sc-card p-5">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Utilized</p>
-            <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none {{ $utilized > $alloc ? 'text-red-600' : '' }}">₱{{ number_format($utilized) }}</p>
-            <div class="progress mt-3"><span style="width:{{ min($pct, 130) }}%" class="{{ $utilized > $alloc ? 'bg-red-500' : 'bg-lnu-800' }}"></span></div>
-            <p class="text-[11px] text-gray-500 font-semibold mt-2">{{ $pct }}%</p>
+            <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none {{ $over ? 'text-red-600' : '' }}">₱{{ number_format($utilized) }}</p>
+            <div class="progress mt-3"><span style="width:{{ min($pct, 130) }}%" class="{{ $over ? 'bg-red-500' : 'bg-lnu-800' }}"></span></div>
+            <p class="text-[11px] text-gray-500 font-semibold mt-2">{{ $pct }}% @if ($over)<span class="badge badge-red !text-[10px]"><x-sc.icon name="alert" class="w-3 h-3" /> over</span>@endif</p>
         </div>
         <div class="sc-card p-5">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Remaining</p>
             <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none {{ $remaining < 0 ? 'text-red-600' : '' }}">₱{{ number_format($remaining) }}</p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">unspent balance</p>
+            <p class="text-[11px] text-gray-400 font-medium mt-1">unspent against the allocation</p>
         </div>
         <div class="sc-card p-5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Cost per Beneficiary</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Cost per Trainee</p>
             <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">₱{{ number_format($utilized / $served, 2) }}</p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">utilized ÷ distinct enrolled served</p>
+            <p class="text-[11px] text-gray-400 font-medium mt-1">utilized ÷ distinct trainees served</p>
         </div>
     </section>
     <div class="sc-card p-0 overflow-hidden">

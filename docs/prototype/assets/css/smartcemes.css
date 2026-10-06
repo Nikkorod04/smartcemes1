@@ -99,6 +99,16 @@ html { scroll-behavior: smooth; }
   background: #F6B800; color: #1f2937;
   font-size: 10.5px; font-weight: 700;
 }
+/* Parent entry of a collapsed hub (e.g. "Manage Extension Programs").
+   The chevron sits after the label + badge and hints that the page drills down. */
+.nav-chevron {
+  margin-left: 2px;
+  color: #c3c8d2;
+  transition: color .18s ease, transform .18s ease;
+}
+.sc-nav-link:hover .nav-chevron { color: #003599; transform: translateX(2px); }
+.sc-nav-link.active .nav-chevron { color: #003599; }
+.sc-nav-badge + .nav-chevron { margin-left: 4px; }
 
 /* ---------- Cards / KPI ---------- */
 .sc-card {
@@ -319,6 +329,602 @@ tr:hover .row-actions { opacity:1; }
 .narrative-health.on-track        { background:#ecfdf5; color:#047857; border:1px solid #d1fae5; }
 .narrative-health.at-risk         { background:#fef2f2; color:#b91c1c; border:1px solid #fee2e2; }
 .narrative-health.needs-attention { background:#fffbeb; color:#b45309; border:1px solid #fef3c7; }
+
+/* ============================================================
+   COLLEGE / PROGRAM / PROJECT additions (adviser revision)
+   ============================================================ */
+
+/* ---- College pills — one visual identity per college ---- */
+.college-pill {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:3px 10px; border-radius:8px;
+  font-size:10.5px; font-weight:800; letter-spacing:.02em;
+}
+.college-pill::before {
+  content:''; width:7px; height:7px; border-radius:999px; background:currentColor; opacity:.85;
+}
+.college-CAS { background:#eef4ff; color:#003599; border:1px solid #dbeafe; }
+.college-COE { background:#fffbeb; color:#955c0c; border:1px solid #fee285; }
+.college-CME { background:#ecfdf5; color:#047857; border:1px solid #d1fae5; }
+
+/* ---- Pillar chips (social / economic / environmental) ---- */
+.pillar {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 9px; border-radius:999px;
+  font-size:10.5px; font-weight:700;
+}
+.pillar-Social        { background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe; }
+.pillar-Economic      { background:#ecfdf5; color:#047857; border:1px solid #d1fae5; }
+.pillar-Environmental { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+
+/* ---- AI guardrail tier badges (Tier 1 / 2 / 3) ---- */
+.tier-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 9px; border-radius:7px;
+  font-size:10px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+  white-space:nowrap;
+}
+.tier-1 { background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
+.tier-2 { background:#fff7ed; color:#b45309; border:1px solid #fed7aa; }
+.tier-3 { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+
+/* Tier-coloured left rail on a recommendation card */
+.tier-card { border-left-width:3px !important; }
+.tier-card.tier-1 { border-left-color:#10b981 !important; }
+.tier-card.tier-2 { border-left-color:#f59e0b !important; }
+.tier-card.tier-3 { border-left-color:#ef4444 !important; }
+
+/* ---- Target vs actual stat tile ---- */
+.stat-tile {
+  background:#fff; border:1px solid #f0f1f4; border-radius:14px;
+  padding:14px 16px;
+}
+.stat-tile .stat-num {
+  font-size:24px; font-weight:800; letter-spacing:-.02em; line-height:1.05; color:#1f2937;
+}
+.stat-tile .stat-lbl { font-size:11px; color:#9ca3af; font-weight:600; margin-top:4px; }
+.stat-tile .stat-cap { font-size:10.5px; color:#9ca3af; font-weight:500; margin-top:7px; }
+
+/* ---- Activity / hierarchy rail ---- */
+.hier-rail { position:relative; padding-left:22px; }
+.hier-rail::before {
+  content:''; position:absolute; left:6px; top:6px; bottom:6px;
+  width:2px; background:#e8ecf4; border-radius:999px;
+}
+.hier-node { position:relative; }
+.hier-node::before {
+  content:''; position:absolute; left:-20px; top:5px;
+  width:9px; height:9px; border-radius:999px; background:#fff; border:2px solid #003599;
+}
+
+/* ---- Drill-down rail: College → Program → Project → Activity ---- */
+/* Reuses .hier-node as a pill-shaped step; the ::before dot is suppressed. */
+a.hier-node {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 13px; border-radius:10px;
+  border:1px solid #e8ecf4; background:#fff;
+  font-size:12px; font-weight:600; color:#4b5563; text-decoration:none;
+  transition:background .18s ease, border-color .18s ease, color .18s ease;
+}
+a.hier-node::before { display:none; }
+a.hier-node:hover { background:#f4f6fa; border-color:#d6dded; color:#003599; }
+a.hier-node.on { background:#eef4ff; border-color:#c7d9f7; color:#003599; }
+.hier-step {
+  width:18px; height:18px; border-radius:6px; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#f4f5f7; color:#9ca3af;
+  font-size:10px; font-weight:800;
+}
+a.hier-node.on .hier-step { background:#003599; color:#fff; }
+
+/* ---- Faculty performance bar (hours rendered vs target) ---- */
+.hours-bar { height:6px; border-radius:999px; background:#eef0f4; overflow:hidden; }
+.hours-bar > span { display:block; height:100%; border-radius:999px; }
+
+/* ---- "Most active" rank medallion ---- */
+.rank-medal {
+  width:26px; height:26px; border-radius:9px; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11.5px; font-weight:800;
+}
+.rank-1 { background:linear-gradient(135deg,#d99a06,#F6B800); color:#fff; }
+.rank-2 { background:#e8ecf4; color:#4b5563; }
+.rank-3 { background:#f6ece0; color:#955c0c; }
+.rank-n { background:#f4f5f7; color:#9ca3af; }
+
+/* ---- Expertise tag ---- */
+.expertise-tag {
+  display:inline-flex; align-items:center;
+  padding:2.5px 8px; border-radius:7px;
+  font-size:10.5px; font-weight:600;
+  background:#f4f6fa; color:#4b5563; border:1px solid #eceef1;
+}
+
+/* ---- Interagency referral callout ---- */
+.interagency-note {
+  background:#fff7ed; border:1px solid #fed7aa; border-radius:12px;
+  padding:12px 14px;
+}
+
+/* ============================================================
+   MANAGE EXTENSION PROGRAMS — hub
+   View 1 shows only the four college cards.
+   View 2 shows the selected college's projects.
+   ============================================================ */
+
+/* ---- College card (view 1) ----
+   Balanced, uniform cards: a fixed-height logo/media area, then a text
+   block, then an aligned metric row. Every card is the same height because
+   the media area and the metric row are fixed and the text block flexes. */
+.college-card {
+  position:relative; display:flex; flex-direction:column;
+  background:#fff; border:1px solid #eef0f4; border-radius:20px;
+  overflow:hidden; cursor:pointer; text-align:left;
+  box-shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px -18px rgba(16,24,40,.18);
+  transition:transform .22s cubic-bezier(.4,0,.2,1), box-shadow .22s ease, border-color .22s ease;
+}
+.college-card:hover {
+  transform:translateY(-4px);
+  border-color:#dbe3f0;
+  box-shadow:0 2px 4px rgba(16,24,40,.04), 0 20px 40px -16px rgba(10,42,102,.24);
+}
+.college-card:hover .college-card-cta { gap:10px; }
+.college-card:hover .college-card-cta svg { transform:translateX(3px); }
+.college-card:focus-visible { outline:3px solid #F6B800; outline-offset:3px; }
+
+/* ---- Logo / media area (placeholder for a real college logo) ---- */
+.college-media {
+  position:relative; height:116px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+/* soft diagonal sheen so the flat brand fill does not read as a plain block */
+.college-media::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 46%),
+             radial-gradient(120% 100% at 82% 8%, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 60%);
+}
+.college-media .college-crest { position:relative; z-index:1; }
+/* placeholder marker — swapped for a real <img> once logos are supplied */
+.college-logo-ph {
+  position:absolute; top:10px; right:11px; z-index:2;
+  font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.1em;
+  color:rgba(255,255,255,.72); background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.22); border-radius:7px; padding:3px 7px;
+}
+
+/* crest sits on a translucent disc so it reads against any brand colour */
+.college-crest {
+  width:58px; height:58px; border-radius:18px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:16px; letter-spacing:-.02em; color:#fff;
+  background:rgba(255,255,255,.18) !important;
+  border:1px solid rgba(255,255,255,.32);
+  backdrop-filter:blur(2px);
+}
+.college-card-cta {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:700; color:#003599;
+  transition:gap .2s ease;
+}
+.college-card-cta svg { width:14px; height:14px; transition:transform .2s ease; }
+
+/* ---- Budget bullet row (owner request 2026-09-25) -----------------------
+   Utilization against each project's allocated budget, with a tick at 100%.
+   Replaces the grouped bar chart, whose x-axis could only carry project CODES —
+   there was no room for a title. Mirrored in resources/css/app.css. */
+.bullet-track {
+  position:relative; display:block; height:10px; border-radius:5px;
+  background:#dbe6fe;
+}
+.bullet-fill {
+  position:absolute; left:0; top:0; height:10px; border-radius:5px;
+  background:#F6B800;
+}
+.bullet-fill.is-over { background:#ef4444; }
+/* the 100% reference — always at the end of the track, since the track IS the target */
+.bullet-tick {
+  position:absolute; right:0; top:-2px; width:1px; height:14px;
+  background:#94a3b8;
+}
+
+/* ---- Leader bar (owner request 2026-09-25) ------------------------------
+   One magnitude bar per leaderboard row, scaled to the largest target in the
+   set so a row's target marker shares the axis with its bar. */
+.leader-bar {
+  position:relative; display:block; height:6px; border-radius:3px;
+  background:#f1f5f9; margin-top:5px;
+}
+.leader-bar-fill {
+  position:absolute; left:0; top:0; height:6px; border-radius:3px;
+  background:#F6B800;
+}
+.leader-bar-tick {
+  position:absolute; top:-2px; width:1px; height:10px;
+  background:#94a3b8;
+}
+
+/* Metric row inside a college card — fixed height keeps cards aligned */
+.college-metrics {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  border:1px solid #f1f2f5; border-radius:14px; overflow:hidden; background:#fcfcfd;
+}
+.college-metrics > div { padding:11px 8px; text-align:center; }
+.college-metrics > div + div { border-left:1px solid #f1f2f5; }
+.college-metrics .m-val {
+  font-size:19px; font-weight:800; letter-spacing:-.02em; line-height:1;
+  color:#1f2937; font-variant-numeric:tabular-nums;
+}
+.college-metrics .m-cap {
+  font-size:9.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:#9ca3af; margin-top:6px;
+}
+
+/* Accent-tinted footer strip */
+.college-foot {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; flex-wrap:wrap;
+  padding:13px 22px; background:#fafbfc; border-top:1px solid #f1f2f5;
+}
+
+/* ---- View switcher (back bar) ---- */
+.hub-back {
+  display:inline-flex; align-items:center; gap:7px;
+  font-size:12.5px; font-weight:700; color:#003599;
+  padding:7px 13px 7px 10px; border-radius:10px;
+  background:#eef4ff; border:1px solid #dbe7fb;
+  transition:background .18s ease, transform .18s ease;
+}
+.hub-back:hover { background:#e2ecfd; transform:translateX(-2px); }
+.hub-back svg { width:14px; height:14px; }
+
+/* ---- Project card (view 2) ---- */
+.proj-card {
+  position:relative; display:flex; flex-direction:column;
+  background:#fff; border:1px solid #eef0f4; border-radius:16px;
+  overflow:hidden; cursor:pointer; text-align:left;
+  transition:transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s ease, border-color .2s ease;
+}
+.proj-card:hover {
+  transform:translateY(-3px); border-color:#dbe3f0;
+  box-shadow:0 12px 28px -12px rgba(10,42,102,.2);
+}
+.proj-card:focus-visible { outline:3px solid #F6B800; outline-offset:3px; }
+.proj-card-stripe { height:4px; width:100%; flex-shrink:0; }
+.proj-stat {
+  border-radius:11px; padding:9px 10px; background:#fafbfc; border:1px solid #f1f2f5;
+}
+.proj-stat .s-val {
+  font-size:15px; font-weight:800; letter-spacing:-.01em; line-height:1;
+  color:#1f2937; font-variant-numeric:tabular-nums;
+}
+.proj-stat .s-cap {
+  font-size:9px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.07em; color:#9ca3af; margin-top:5px;
+}
+
+/* ---- Empty state ---- */
+.hub-empty {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:52px 24px;
+  border:1.5px dashed #e2e5ec; border-radius:16px; background:#fcfcfd;
+}
+.hub-empty-badge {
+  width:56px; height:56px; border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  background:#f1f4f9; color:#9ca3af; margin-bottom:14px;
+}
+
+/* Section eyebrow used across the hub */
+.hub-eyebrow {
+  font-size:10.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.13em; color:#9ca3af;
+}
+
+/* ---- Faculty mini-card (college view of the hub) ----
+   Contribution is total hours rendered + project involvement.
+   There is NO per-professor training target, so no progress bar
+   and no attainment tone is rendered here. */
+.fac-mini { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease, border-color .18s ease; }
+.fac-mini:hover { box-shadow:0 8px 22px rgba(15,23,42,.09); transform:translateY(-2px); border-color:#dbe0ea; }
+.fac-mini:focus-visible { outline:3px solid #F6B800; outline-offset:3px; }
+.fac-mini-stat {
+  padding:9px 10px; border-radius:10px; background:#f7f8fa; border:1px solid #eef0f4;
+}
+.fac-mini-val { font-size:15px; font-weight:800; letter-spacing:-.02em; color:#1f2430; line-height:1.1; }
+.fac-mini-lbl {
+  font-size:9.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.07em; color:#9ca3af; margin-top:3px;
+}
+
+/* ============================================================
+   FACULTY ENGAGEMENT BOARD  (faculty-management.html)
+   Replaces the former "Most Active Faculty" table with a
+   chart + ranked rows + college split.
+   ============================================================ */
+
+/* -- metric switcher (segmented control) -- */
+.eng-switch {
+  display:inline-flex; gap:2px; padding:3px;
+  background:#f4f5f7; border:1px solid #eceef1; border-radius:11px;
+}
+.eng-switch button {
+  padding:5px 12px; border-radius:8px; border:0; cursor:pointer;
+  font-size:11.5px; font-weight:700; color:#6b7280;
+  background:transparent; transition:all .15s ease;
+}
+.eng-switch button:hover { color:#003599; }
+.eng-switch button.on {
+  background:#fff; color:#003599;
+  box-shadow:0 1px 3px rgba(16,24,40,.10);
+}
+
+/* -- leaderboard rows -- */
+.eng-row {
+  position:relative; display:block; width:100%; text-align:left;
+  padding:10px 12px; border-radius:13px; cursor:pointer;
+  border:1px solid #eef0f4; background:#fff;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.eng-row:hover {
+  border-color:#c7d7fb; box-shadow:0 4px 14px rgba(0,53,153,.07);
+  transform:translateX(2px);
+}
+.eng-row.on { border-color:#003599; box-shadow:0 0 0 2px rgba(0,53,153,.10); }
+
+/* subtle bar track painted behind each row */
+.eng-row-fill {
+  position:absolute; left:0; top:0; bottom:0;
+  border-radius:13px 0 0 13px; opacity:.07; pointer-events:none;
+  transition:width .45s cubic-bezier(.22,.8,.28,1);
+}
+.eng-row-inner { position:relative; display:flex; align-items:center; gap:11px; }
+
+.eng-rank {
+  width:24px; height:24px; border-radius:8px; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; background:#f4f5f7; color:#9ca3af;
+}
+.eng-rank.top1 { background:linear-gradient(135deg,#d99a06,#F6B800); color:#fff; }
+.eng-rank.top2 { background:#e8ecf4; color:#4b5563; }
+.eng-rank.top3 { background:#f6ece0; color:#955c0c; }
+
+.eng-val {
+  font-size:13px; font-weight:800; color:#111827;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.eng-val small { font-size:10px; font-weight:600; color:#9ca3af; }
+.eng-sub { font-size:10.5px; color:#9ca3af; font-weight:600; }
+
+/* thin attainment rail under a row */
+.eng-rail { height:4px; border-radius:999px; background:#eef0f4; overflow:hidden; margin-top:7px; }
+.eng-rail > span { display:block; height:100%; border-radius:999px; transition:width .5s cubic-bezier(.22,.8,.28,1); }
+
+/* -- college split strip -- */
+.eng-split { display:flex; height:8px; border-radius:999px; overflow:hidden; background:#eef0f4; }
+.eng-split > span { display:block; height:100%; transition:width .5s cubic-bezier(.22,.8,.28,1); }
+.eng-split-legend { display:flex; flex-wrap:wrap; gap:10px; }
+.eng-split-legend > span { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:#6b7280; }
+.eng-dot { width:7px; height:7px; border-radius:3px; flex-shrink:0; }
+
+/* -- chart frame -- */
+.eng-chart-wrap { position:relative; height:290px; }
+
+/* -- insight chips -- */
+.eng-note {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:9px 11px; border-radius:11px;
+  background:#f8fafc; border:1px solid #eef0f4;
+  font-size:11px; color:#4b5563; font-weight:600; line-height:1.45;
+}
+.eng-note b { color:#111827; font-weight:800; }
+
+/* ============================================================
+   FORM FIELD EXTRAS + EXPERTISE MULTI-SELECT
+   Used by the New Faculty Profile modal and the faculty-side
+   self-edit view. Expertise is a chip multi-select fed by the
+   canonical DATA.expertiseOptions list, so project matching
+   stays consistent (it used to be a free-text input).
+   ============================================================ */
+
+.req { color:#e11d48; font-weight:800; }
+
+/* section header inside a modal form */
+.modal-legend {
+  font-size:10.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.13em; color:#9ca3af;
+  padding-bottom:7px; border-bottom:1px solid #f1f3f7; width:100%;
+  display:block;
+}
+
+/* ---------- multi-select control ---------- */
+.ms {
+  border:1px solid #e5e8ee; border-radius:12px; background:#fff;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.ms:focus-within { border-color:#93b4fd; box-shadow:0 0 0 3px rgba(0,53,153,.08); }
+
+.ms-chips {
+  display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+  padding:9px 11px 0; min-height:34px;
+}
+.ms-placeholder {
+  font-size:12px; color:#b6bcc7; font-weight:500; padding-bottom:9px;
+}
+
+.ms-picker {
+  display:flex; align-items:center; gap:7px;
+  padding:7px 11px 9px;
+}
+.ms-icon { width:14px; height:14px; color:#b6bcc7; display:inline-flex; flex-shrink:0; }
+.ms-input {
+  flex:1; min-width:0; border:0; outline:0; background:transparent;
+  font-size:12.5px; font-weight:500; color:#1f2430; padding:3px 0;
+}
+.ms-input::placeholder { color:#b6bcc7; font-weight:400; }
+.ms-toggle {
+  border:0; background:#f4f5f7; color:#6b7280; cursor:pointer;
+  width:22px; height:22px; border-radius:7px; font-size:10px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:background .15s ease, transform .15s ease;
+}
+.ms-toggle:hover { background:#e8eaef; color:#003599; }
+.ms.open .ms-toggle { transform:rotate(180deg); }
+
+.ms-options {
+  display:none; flex-wrap:wrap; gap:6px;
+  max-height:168px; overflow-y:auto;
+  padding:10px 11px; border-top:1px solid #f1f3f7;
+  background:#fcfcfd;
+}
+.ms.open .ms-options { display:flex; }
+.ms-option {
+  border:1px solid #e5e8ee; background:#fff; cursor:pointer;
+  padding:4px 10px; border-radius:999px;
+  font-size:11.5px; font-weight:600; color:#4b5563;
+  transition:all .14s ease;
+}
+.ms-option:hover { border-color:#003599; color:#003599; background:#f4f7ff; }
+.ms-none {
+  width:100%; font-size:11.5px; color:#9ca3af; font-weight:500; padding:4px 0;
+}
+
+.ms-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 5px 3px 10px; border-radius:999px;
+  background:#eef3ff; border:1px solid #d6e2ff; color:#003599;
+  font-size:11.5px; font-weight:700;
+}
+.ms-chip .ms-x {
+  border:0; background:transparent; cursor:pointer; color:#7d9ddd;
+  font-size:9px; line-height:1; padding:3px; border-radius:999px;
+  transition:background .12s ease, color .12s ease;
+}
+.ms-chip .ms-x:hover { background:#d6e2ff; color:#003599; }
+
+.ms-hint {
+  font-size:10.5px; color:#9ca3af; font-weight:500;
+  padding:6px 11px 8px; border-top:1px solid #f1f3f7;
+}
+.ms-hint.warn { color:#b45309; font-weight:700; }
+
+/* read-only-ish inputs (auto-computed) */
+.input[readonly] { background:#f7f8fa; color:#6b7280; cursor:default; }
+
+/* ============================================================
+   FACULTY SELF-EDIT VIEW  (faculty-directory.html)
+   Faculty members maintain their own contact + expertise details;
+   the fields they may NOT touch are rendered locked with a reason.
+   ============================================================ */
+.self-banner {
+  display:flex; align-items:flex-start; gap:11px;
+  padding:13px 15px; border-radius:14px;
+  border:1px solid #d6e2ff; background:linear-gradient(90deg,#f4f7ff,#fff);
+}
+.locked-field { position:relative; }
+.locked-field .input {
+  background:#f7f8fa; color:#8b93a1; cursor:not-allowed;
+  border-style:dashed; padding-right:78px;
+}
+.locked-field::after {
+  content:'Admin only';
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.07em;
+  color:#b6bcc7; pointer-events:none;
+}
+.locked-field .label { color:#9ca3af; }
+
+/* profile completeness ring in the self-edit header */
+.self-meter {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 13px; border-radius:12px;
+  background:#f7f8fa; border:1px solid #eef0f4;
+}
+.self-meter-bar {
+  width:96px; height:6px; border-radius:999px; background:#e6e9ef; overflow:hidden;
+}
+.self-meter-bar > span { display:block; height:100%; border-radius:999px; background:#10b981; }
+.self-meter-lbl { font-size:10.5px; font-weight:800; color:#6b7280; letter-spacing:.03em; }
+
+/* ============================================================
+   ADMIN DASHBOARD — layout primitives (v4.11)
+   A single section-header rhythm + a uniform card head, so every
+   panel on the dashboard shares one type scale and one spacing step.
+   ============================================================ */
+
+/* ---- Section rhythm ---------------------------------------------------
+   One step for "space above a section", one for the header→content gap.
+   Every section on the dashboard uses these, so vertical rhythm is even. */
+.dash-section { margin-top: 30px; }
+.dash-section:first-of-type { margin-top: 0; }
+
+.dash-sec-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.dash-sec-eyebrow {
+  font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .13em; color: #9ca3af;
+}
+.dash-sec-title {
+  font-size: 15px; font-weight: 800; letter-spacing: -.015em;
+  line-height: 1.25; margin-top: 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.dash-sec-note { font-size: 11.5px; font-weight: 500; color: #9ca3af; }
+
+/* ---- Card head --------------------------------------------------------
+   Uniform title row inside a panel: same size, same gap, same baseline
+   whether the right-hand side is a link, a badge, or a legend. */
+.dash-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.dash-head-title {
+  font-size: 13.5px; font-weight: 700; letter-spacing: -.01em;
+  color: #1f2937; display: flex; align-items: center; gap: 8px;
+}
+.dash-head-link {
+  font-size: 12px; font-weight: 700; color: #003599; white-space: nowrap;
+  transition: color .18s ease;
+}
+.dash-head-link:hover { color: #2547eb; }
+.dash-note { font-size: 11px; font-weight: 500; color: #9ca3af; line-height: 1.5; }
+
+/* ---- KPI tile ---------------------------------------------------------
+   Fixed internal rhythm so the four tiles line up across the row even
+   when a caption wraps to two lines. */
+.dash-kpi { display: flex; flex-direction: column; }
+.dash-kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.dash-kpi-icon {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.dash-kpi-value {
+  font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1;
+  margin-top: 16px; font-variant-numeric: tabular-nums;
+}
+.dash-kpi-value.is-money { font-size: 24px; }
+.dash-kpi-label {
+  font-size: 12.5px; font-weight: 600; color: #4b5563; margin-top: 8px;
+}
+.dash-kpi-foot { margin-top: auto; padding-top: 12px; }
+
+/* ---- Dashboard panel (chart / list container) ------------------------- */
+.dash-panel {
+  background: #fff; border: 1px solid #eef0f4; border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px -20px rgba(16,24,40,.22);
+  transition: box-shadow .22s ease, border-color .22s ease;
+}
+.dash-panel:hover { border-color: #e3e8f0; box-shadow: 0 2px 4px rgba(16,24,40,.04), 0 14px 32px -20px rgba(16,24,40,.26); }
+
+/* chart canvas wells get a consistent height + no stray margin */
+.dash-chart { position: relative; width: 100%; }
+
+/* ---- KPI / panel spans reset on narrow viewports ---------------------- */
+@media (max-width: 1023px) {
+  .dash-section { margin-top: 26px; }
+}
 
 /* ============================================================
    PRINT — reports.html uses these to produce clean hard copies

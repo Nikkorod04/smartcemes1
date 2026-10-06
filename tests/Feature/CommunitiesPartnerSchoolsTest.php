@@ -133,4 +133,79 @@ class CommunitiesPartnerSchoolsTest extends TestCase
         $this->assertFalse($community->isSchool());
         $this->assertNull($community->school_level);
     }
+
+    public function test_archiving_a_community_hides_it_from_the_default_list(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'admin@lnu.com')->first();
+        $community = Community::where('name', 'Brgy. Suhi')->first();
+
+        Livewire::actingAs($admin)
+            ->test(CommunitiesIndex::class)
+            ->call('confirmDelete', $community->id)
+            ->assertDontSee('Brgy. Suhi');
+
+        $this->assertTrue(Community::withTrashed()->findOrFail($community->id)->trashed());
+    }
+
+    public function test_archived_status_filter_lists_only_trashed_records(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'admin@lnu.com')->first();
+        $community = Community::where('name', 'Brgy. Suhi')->first();
+        $community->delete();
+
+        Livewire::actingAs($admin)
+            ->test(CommunitiesIndex::class)
+            ->set('status', 'archived')
+            ->assertSee('Brgy. Suhi')
+            ->assertDontSee('Brgy. El Reposo');
+    }
+
+    public function test_archived_community_detail_offers_restore_and_no_edit(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'admin@lnu.com')->first();
+        $community = Community::where('name', 'Brgy. Suhi')->first();
+        $community->delete();
+
+        Livewire::actingAs($admin)
+            ->test(CommunitiesIndex::class)
+            ->set('status', 'archived')
+            ->call('viewDetail', $community->id)
+            ->assertSee('Archived')
+            ->assertSee('Restore')
+            ->assertDontSeeHtml('wire:click="edit(');
+    }
+
+    public function test_restoring_an_archived_community_returns_it_to_the_default_list(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'admin@lnu.com')->first();
+        $community = Community::where('name', 'Brgy. Suhi')->first();
+        $community->delete();
+
+        Livewire::actingAs($admin)
+            ->test(CommunitiesIndex::class)
+            ->call('restore', $community->id)
+            ->assertSee('Brgy. Suhi');
+
+        $this->assertFalse(Community::withTrashed()->findOrFail($community->id)->trashed());
+    }
+
+    public function test_restoring_an_archived_partner_school(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'admin@lnu.com')->first();
+        $school = Community::where('name', 'Caibaan Elementary School')->first();
+        $school->delete();
+
+        Livewire::actingAs($admin)
+            ->test(CommunitiesIndex::class)
+            ->set('status', 'archived')
+            ->assertSee('Caibaan Elementary School')
+            ->call('restore', $school->id);
+
+        $this->assertFalse(Community::withTrashed()->findOrFail($school->id)->trashed());
+    }
 }

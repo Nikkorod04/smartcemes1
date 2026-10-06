@@ -1,383 +1,749 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Faculty Management Â· SmartCEMES</title>
+<title>Faculty Management · SmartCEMES</title>
 <script src="../assets/vendor/tailwind.js"></script>
 <script src="../assets/js/tw-config.js"></script>
 <link rel="stylesheet" href="../assets/css/smartcemes.css">
 </head>
 <body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="faculty-management">
 
+<script>const R=(new URLSearchParams(location.search).get('role'))||document.body.dataset.role||'admin';document.body.dataset.role=R;</script>
+
 <div id="sc-topbar"></div>
 <div id="sc-sidebar"></div>
 
 <main class="pl-72 pr-6 pb-12">
 
-  <!-- ===================== KPI ROW ===================== -->
-  <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">Semester 1, AY 2026â€“2027 Â· Roster as of Aug 24, 2026</p>
-    <div class="reveal-item grid grid-cols-4 gap-4">
+  <!-- The page IS the engagement dashboard. The roster table, KPI cards and
+       toolbar live in Faculty Directory (faculty-directory.html), reached via
+       the action in the board header. There is no page-level action row. -->
 
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[users]]</span>
-          <span class="badge badge-gray">AY 2026â€“27</span>
-        </div>
-        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="8">0</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Total Faculty</p>
-      </div>
+  <div id="banner" class="hidden mt-6"></div>
 
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">[[check]]</span>
-          <span class="badge badge-green">87.5% of roster</span>
-        </div>
-        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-emerald-700"><span data-count="7">0</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Active</p>
-      </div>
+  <!-- ===================== FACULTY ENGAGEMENT BOARD ===================== -->
+  <section class="mt-6 reveal-item">
+    <div class="sc-card p-0 overflow-hidden">
 
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[clock]]</span>
-          <span class="badge badge-yellow">1 study leave</span>
-        </div>
-        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-gold-700"><span data-count="1">0</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">On Leave</p>
-      </div>
-
-      <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between">
-          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[folder]]</span>
-          <span class="badge badge-blue">target â‰¥ 1.0</span>
-        </div>
-        <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none"><span data-count="1.4" data-decimals="1">0</span></p>
-        <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Avg Programs / Faculty</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== TOOLBAR ===================== -->
-  <section class="reveal-item mt-5 flex flex-wrap items-center gap-3">
-    <label class="relative flex-1 min-w-[230px] max-w-xs">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 [&>span]:w-4 [&>span]:h-4">[[search]]</span>
-      <input id="facSearch" oninput="applyFacFilters()" class="input !pl-9 bg-white" placeholder="Search name, specialization, emailâ€¦">
-    </label>
-
-    <div id="deptTabs" class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1">
-      <button class="tab on" data-dept="" onclick="setDeptTab(this)">All</button>
-      <button class="tab" data-dept="COEd" onclick="setDeptTab(this)">COEd</button>
-      <button class="tab" data-dept="CAS" onclick="setDeptTab(this)">CAS</button>
-      <button class="tab" data-dept="CBA" onclick="setDeptTab(this)">CBA</button>
-      <button class="tab" data-dept="CCJ" onclick="setDeptTab(this)">CCJ</button>
-      <button class="tab" data-dept="CON" onclick="setDeptTab(this)">CON</button>
-    </div>
-
-    <div class="ml-auto" x-data="{open:false}">
-      <button @click="open=true" class="btn btn-primary">
-        <span class="[&>span]:w-4 [&>span]:h-4">[[users]]</span>Add Faculty
-      </button>
-
-      <div x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:none">
-        <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="open=false"></div>
-        <form @submit.prevent="SC.toast('Faculty profile created â€” LNU-2026-0009 assigned','success'); open=false"
-              class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
-          <div class="flex items-start justify-between mb-5">
-            <div>
-              <h3 class="font-extrabold text-[16px] tracking-tight">New Faculty Profile</h3>
-              <p class="text-[12px] text-gray-400 mt-0.5">Employee ID LNU-2026-0009 will be assigned automatically.</p>
-            </div>
-            <button type="button" @click="open=false" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition">âœ•</button>
+      <!-- header -->
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center">[[chart]]</span>
+          <div>
+            <h2 id="heading" class="font-extrabold text-[15px] tracking-tight leading-tight">Faculty Engagement</h2>
+            <p class="text-[11px] text-gray-400 font-medium">How the extension load is actually distributed across the roster</p>
           </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              <label class="label">Full Name</label>
-              <input required class="input" placeholder="Prof. Juan P. Dela Cruz">
-            </div>
-            <div>
-              <label class="label">Department</label>
-              <select class="input">
-                <option>College of Education</option>
-                <option>College of Arts and Sciences</option>
-                <option>College of Business Administration</option>
-                <option>College of Criminal Justice</option>
-                <option>College of Nursing</option>
-              </select>
-            </div>
-            <div>
-              <label class="label">Position</label>
-              <select class="input">
-                <option>Instructor I</option>
-                <option>Instructor II</option>
-                <option>Instructor III</option>
-                <option>Assistant Professor I</option>
-                <option>Assistant Professor II</option>
-                <option>Assistant Professor III</option>
-                <option>Associate Professor</option>
-                <option>Professor I</option>
-              </select>
-            </div>
-            <div>
-              <label class="label">Specialization</label>
-              <input class="input" placeholder="e.g. Environmental Science">
-            </div>
-            <div>
-              <label class="label">Phone</label>
-              <input class="input" placeholder="09XX XXX XXXX">
-            </div>
-            <div class="col-span-2">
-              <label class="label">Address</label>
-              <input class="input" placeholder="Street, Barangay, City">
-            </div>
-            <div>
-              <label class="label">Email (account username) <span class="text-red-500">*</span></label>
-              <input required type="email" class="input" placeholder="jpdelacruz@lnu.edu.ph">
-            </div>
-            <div>
-              <label class="label">Temporary Password <span class="text-red-500">*</span></label>
-              <input required type="text" class="input" value="lnu-temp-2026" readonly>
-            </div>
-            <div class="col-span-2 flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50 p-3">
-              <span class="[&>span]:w-4 [&>span]:h-4 text-lnu-600 shrink-0">[[shield]]</span>
-              <p class="text-[11.5px] text-gray-600 leading-snug">Account provisioning is <b>Admin-only</b> â€” there is no self-registration. A temporary password is auto-generated; the faculty member changes it at first login. Credentials are never handled outside this screen.</p>
-            </div>
+        </div>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="eng-switch" id="engSwitch">
+            <button class="on" data-metric="hours">Hours rendered</button>
+            <button data-metric="projects">Projects</button>
+            <button data-metric="leads">Leads</button>
           </div>
+          <span class="badge badge-gold">AY 2026–2027</span>
+          <button id="btnAdd" class="btn btn-primary !px-3 !py-2 text-[12px]">[[users]] <span class="ml-1">Faculty Directory</span></button>
+        </div>
+      </div>
 
-          <div class="flex justify-end gap-2 mt-6">
-            <button type="button" @click="open=false" class="btn btn-ghost">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Profile</button>
+      <div class="p-5 grid grid-cols-5 gap-5">
+
+        <!-- LEFT: chart -->
+        <div class="col-span-3">
+          <div class="flex items-baseline justify-between mb-3">
+            <div>
+              <p id="engChartTitle" class="font-extrabold text-[14px] tracking-tight">Training hours rendered</p>
+              <p id="engChartSub" class="text-[11px] text-gray-400 font-medium mt-0.5">Total hours each faculty member has rendered this academic year</p>
+            </div>
+            <span id="engChartMeta" class="text-[10.5px] text-gray-400 font-semibold whitespace-nowrap"></span>
           </div>
-        </form>
-      </div>
-    </div>
-  </section>
+          <div class="eng-chart-wrap"><canvas id="engChart"></canvas></div>
 
-  <!-- ===================== FACULTY TABLE ===================== -->
-  <section class="reveal-item mt-4">
-    <div class="sc-card overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h3 class="font-bold text-[14px]">Extension Faculty Directory</h3>
-        <span id="facCount" class="badge badge-gray">Showing 8 of 8</span>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="sc-table">
-          <thead>
-            <tr>
-              <th>Employee ID</th><th>Faculty</th><th>Dept</th><th>Position</th><th>Specialization</th><th>Programs</th><th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="facultyBody"></tbody>
-        </table>
-      </div>
-      <div id="facEmpty" class="hidden px-5 py-12 text-center">
-        <p class="text-[13.5px] font-semibold text-gray-500">No faculty match your filters</p>
-        <p class="text-[12px] text-gray-400 mt-1">Try a different keyword or department tab.</p>
+          <!-- college split -->
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <div class="flex items-center justify-between mb-2.5">
+              <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">Load by college</p>
+              <div class="eng-split-legend" id="engSplitLegend"></div>
+            </div>
+            <div class="eng-split" id="engSplit"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: ranked rows -->
+        <div class="col-span-2">
+          <div class="flex items-baseline justify-between mb-3">
+            <p class="font-extrabold text-[14px] tracking-tight">Leaderboard</p>
+            <span class="text-[10.5px] text-gray-400 font-semibold">select to open profile</span>
+          </div>
+          <div id="engRows" class="space-y-2 max-h-[400px] overflow-y-auto pr-0.5"></div>
+
+          <div class="mt-4 pt-4 border-t border-gray-100" id="engInsights"></div>
+        </div>
       </div>
     </div>
   </section>
 
   <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
-    SmartCEMES v4.1 Prototype Â· Community Extension Services Office Â· Leyte Normal University
+    SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University
   </footer>
 </main>
 
 <!-- ===================== FACULTY DRAWER ===================== -->
 <div id="facOverlay" class="fixed inset-0 z-[60] bg-charcoal/45 backdrop-blur-[2px] no-print" style="display:none" onclick="closeFaculty()"></div>
-<aside id="facDrawer" class="sc-drawer fixed inset-y-0 right-0 z-[70] w-[420px] bg-white shadow-pop overflow-hidden no-print" style="display:none">
+<aside id="facDrawer" class="sc-drawer fixed inset-y-0 right-0 z-[70] w-[460px] bg-white shadow-pop overflow-hidden no-print" style="display:none">
   <div id="facDrawerBody" class="min-h-full flex flex-col"></div>
 </aside>
 
-<script src="../assets/vendor/alpine.min.js" defer></script>
-<script src="../assets/js/seed-data.js"></script>
-<script src="../assets/js/layout.js"></script>
-<script>
-const D = window.DATA;
-const DEPTS = {
-  'College of Education':'COEd',
-  'College of Arts and Sciences':'CAS',
-  'College of Business Administration':'CBA',
-  'College of Criminal Justice':'CCJ',
-  'College of Nursing':'CON'
-};
+<!-- ===================== NEW FACULTY PROFILE MODAL ===================== -->
+<div id="addModal" class="hidden fixed inset-0 z-50 p-6 overflow-auto no-print">
+  <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" onclick="closeAdd()"></div>
+  <div class="sc-modal relative max-w-2xl mx-auto mt-10 sc-card p-0 shadow-pop overflow-hidden">
 
-function initialsOf(n){
-  const p = n.replace(/^(Prof\.|Dr\.)\s*/,'').replace(/\s+(Jr\.|Sr\.)$/,'').trim().split(/\s+/);
-  return ((p[0][0]||'') + (p[p.length-1][0]||'')).toUpperCase();
-}
-function trunc(s,n){ return s.length>n ? s.slice(0,n-1)+'â€¦' : s; }
-function progBadge(s){ return s==='Draft' ? 'badge-yellow' : 'badge-green'; }
+    <!-- modal header -->
+    <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between gap-3 bg-gradient-to-r from-lnu-50/70 to-white">
+      <div class="flex items-start gap-3">
+        <span class="w-10 h-10 rounded-xl bg-lnu-800 text-white flex items-center justify-center shrink-0">[[users]]</span>
+        <div>
+          <h3 class="font-extrabold text-[16px] tracking-tight leading-tight">New Faculty Profile</h3>
+          <p class="text-[12px] text-gray-400 mt-0.5">
+            Employee ID <span class="font-mono font-semibold text-gray-500">LNU-2026-0009</span> will be assigned automatically.
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeAdd()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition shrink-0">✕</button>
+    </div>
 
-/* ---------- Table ---------- */
-(function renderFaculty(){
-  document.getElementById('facultyBody').innerHTML = D.faculty.map(f => `
-    <tr class="cursor-pointer" data-dept="${DEPTS[f.dept]}"
-        data-hay="${(f.name+' '+f.email+' '+f.spec+' '+f.position+' '+f.dept+' '+DEPTS[f.dept]).toLowerCase()}"
-        onclick="openFaculty(${f.id})">
-      <td><span class="badge badge-gray">${f.employeeId}</span></td>
-      <td>
-        <div class="flex items-center gap-3">
-          <span class="avatar w-9 h-9 text-[11px]">${initialsOf(f.name)}</span>
-          <div class="min-w-0">
-            <p class="font-semibold text-[13px] text-charcoal truncate max-w-[200px]">${f.name}</p>
-            <p class="text-[11px] text-gray-400 truncate">${f.email}</p>
+    <form id="addForm" class="px-6 py-5 space-y-5" onsubmit="return false">
+
+      <!-- ---------- Section: Identity ---------- -->
+      <fieldset>
+        <legend class="modal-legend">Identity</legend>
+        <div class="grid grid-cols-2 gap-4 mt-3">
+          <div class="col-span-2">
+            <label class="label" for="afName">Full name <span class="req">*</span></label>
+            <input id="afName" class="input" placeholder="Prof. Juan P. Dela Cruz" required>
+          </div>
+          <div>
+            <label class="label" for="afEmployeeId">Employee ID</label>
+            <input id="afEmployeeId" class="input font-mono" value="LNU-2026-0009" readonly>
+          </div>
+          <div>
+            <label class="label" for="afBirthdate">Birthdate</label>
+            <input id="afBirthdate" type="date" class="input">
+          </div>
+          <div>
+            <label class="label" for="afSex">Sex</label>
+            <select id="afSex" class="input">
+              <option value="">— Select —</option>
+              <option>Female</option>
+              <option>Male</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="afCivil">Civil status</label>
+            <select id="afCivil" class="input">
+              <option value="">— Select —</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Widowed</option>
+              <option>Separated</option>
+            </select>
           </div>
         </div>
-      </td>
-      <td><span class="font-semibold text-[12.5px]" title="${f.dept}">${DEPTS[f.dept]}</span></td>
-      <td class="text-[12.5px]">${f.position}</td>
-      <td class="text-[12.5px] text-gray-500">${f.spec}</td>
-      <td><span class="badge badge-blue">${f.programs} ${f.programs===1?'program':'programs'}</span></td>
-      <td><span class="badge ${f.status==='Active'?'badge-green':'badge-yellow'}">${f.status}</span></td>
-    </tr>`).join('');
-})();
+      </fieldset>
 
-let facDept = '', facQ = '';
-function setDeptTab(btn){
-  [...btn.parentNode.children].forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  facDept = btn.dataset.dept;
-  applyFacFilters();
-}
-function applyFacFilters(){
-  facQ = document.getElementById('facSearch').value.trim().toLowerCase();
-  let shown = 0;
-  document.querySelectorAll('#facultyBody tr').forEach(tr => {
-    const ok = (facDept==='' || tr.dataset.dept===facDept) && tr.dataset.hay.includes(facQ);
-    tr.style.display = ok ? '' : 'none';
-    if (ok) shown++;
-  });
-  document.getElementById('facCount').textContent = `Showing ${shown} of ${D.faculty.length}`;
-  document.getElementById('facEmpty').classList.toggle('hidden', shown>0);
-}
-applyFacFilters();
+      <!-- ---------- Section: Assignment ---------- -->
+      <fieldset>
+        <legend class="modal-legend">Assignment</legend>
+        <div class="grid grid-cols-2 gap-4 mt-3">
+          <div>
+            <label class="label" for="afCollege">College <span class="req">*</span></label>
+            <select id="afCollege" class="input" required>
+              <option value="CAS">CAS — College of Arts and Sciences</option>
+              <option value="COE">COE — College of Education</option>
+              <option value="CME">CME — College of Management and Entrepreneurship</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="afPosition">Position <span class="req">*</span></label>
+            <select id="afPosition" class="input" required></select>
+          </div>
+          <div class="col-span-2">
+            <label class="label" for="afExpertiseInput">
+              Expertise areas <span class="text-gray-400 font-normal">(select all that apply — used to match faculty to projects)</span>
+            </label>
 
-/* ---------- Drawer ---------- */
-function buildLog(f){
-  const out = [];
-  D.activities.forEach(a => { if (a.program.lead.name===f.name)
-    out.push({ c:a.status==='Completed' ? 'bg-emerald-500 ring-emerald-50' : 'bg-lnu ring-lnu-50',
-               t:a.title, m:`${a.date} Â· ${a.venue}` }); });
-  D.availabilityRequests.forEach(v => { if (v.faculty.name===f.name)
-    out.push({ c:v.status==='accepted' ? 'bg-gold ring-gold-50' : (v.status==='declined' ? 'bg-red-400 ring-red-50' : 'bg-blue-400 ring-blue-50'),
-               t:`Availability ${v.status} â€” ${v.activity.title}`, m:`${v.date} Â· ${v.start} â€“ ${v.end}` }); });
-  D.proposals.forEach(p => { if (p.faculty.name===f.name)
-    out.push({ c:'bg-gold ring-gold-50', t:`Proposal ${p.status.toLowerCase()}: ${trunc(p.title,32)}`, m:p.submitted }); });
-  D.assessmentQueue.forEach(q => { if (q.submittedBy.name===f.name)
-    out.push({ c:'bg-emerald-500 ring-emerald-50', t:`Assessment encoded â€” ${q.community.name} ${q.quarter}`, m:q.submitted }); });
-  return out.slice(0,3);
-}
-
-function openFaculty(id){
-  const f = D.faculty.find(x => x.id===id);
-  const progs = D.programs.filter(p => p.lead && p.lead.name===f.name);
-  const log = buildLog(f);
-  document.getElementById('facDrawerBody').innerHTML = `
-    <div class="p-6 border-b border-gray-100 bg-gradient-to-br from-lnu-50/70 to-white">
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex items-center gap-4 min-w-0">
-          <span class="avatar ${f.status==='On Leave'?'gold':''} w-16 h-16 text-lg">${initialsOf(f.name)}</span>
-          <div class="min-w-0">
-            <p class="font-extrabold text-[16px] tracking-tight leading-tight">${f.name}</p>
-            <p class="text-[12px] text-gray-500 mt-0.5 truncate">${f.position} Â· ${DEPTS[f.dept]}</p>
-            <div class="flex items-center gap-1.5 mt-2">
-              <span class="badge badge-gray">${f.employeeId}</span>
-              <span class="badge ${f.status==='Active'?'badge-green':'badge-yellow'}">${f.status}</span>
+            <!-- multi-select: chips + type-to-filter picker -->
+            <div class="ms" id="msExpertise">
+              <div class="ms-chips" id="msChips">
+                <span class="ms-placeholder" id="msPlaceholder">No expertise selected yet</span>
+              </div>
+              <div class="ms-picker">
+                <span class="ms-icon">[[search]]</span>
+                <input id="afExpertiseInput" class="ms-input" placeholder="Type to filter, then pick from the list…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="msOptions">
+                <button type="button" class="ms-toggle" id="msToggle" aria-label="Show expertise options">▾</button>
+              </div>
+              <div class="ms-options" id="msOptions" role="listbox"></div>
+              <p class="ms-hint" id="msHint">Choose from the canonical list so project matching stays consistent.</p>
             </div>
           </div>
         </div>
-        <button onclick="closeFaculty()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition shrink-0">âœ•</button>
-      </div>
-    </div>
+      </fieldset>
 
-    <div class="px-6 py-5 grid grid-cols-2 gap-4 border-b border-gray-100">
-      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Email</p><p class="text-[12.5px] font-semibold mt-1 break-all">${f.email}</p></div>
-      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</p><p class="text-[12.5px] font-semibold mt-1">${f.phone}</p></div>
-      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Department</p><p class="text-[12.5px] font-semibold mt-1">${f.dept}</p></div>
-      <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Specialization</p><p class="text-[12.5px] font-semibold mt-1">${f.spec}</p></div>
-    </div>
-
-    <div class="px-6 py-5 border-b border-gray-100">
-      <div class="flex items-center justify-between mb-3">
-        <p class="font-bold text-[13.5px] flex items-center gap-2">${SC.svg('folder','w-4 h-4 text-lnu-800')}Assigned Programs</p>
-        <span class="badge badge-blue">${progs.length}</span>
-      </div>
-      ${progs.length ? progs.map(p => `
-        <div class="flex items-center gap-2.5 p-3 rounded-xl border border-gray-100 mb-2 last:mb-0">
-          <span class="badge badge-gray shrink-0">${p.code}</span>
-          <p class="text-[12px] font-semibold truncate flex-1 min-w-0">${p.title}</p>
-          <span class="badge ${progBadge(p.status)} shrink-0">${p.status}</span>
-        </div>`).join('')
-        : '<p class="text-[12.5px] text-gray-400 italic">No programs assigned yet.</p>'}
-    </div>
-
-    <div class="px-6 py-5 flex-1">
-      <p class="font-bold text-[13.5px] mb-3 flex items-center gap-2">${SC.svg('clock','w-4 h-4 text-lnu-800')}Recent Activity</p>
-      <ol class="relative border-l border-gray-100 ml-2 space-y-4">
-        ${log.map(e => `
-          <li class="ml-4">
-            <span class="absolute -left-[7px] w-3.5 h-3.5 rounded-full ${e.c} ring-4"></span>
-            <p class="text-[12.5px] font-semibold leading-snug">${e.t}</p>
-            <p class="text-[11px] text-gray-400">${e.m}</p>
-          </li>`).join('')}
-      </ol>
-    </div>
-
-    <footer class="sticky bottom-0 mt-auto bg-white/95 backdrop-blur border-t border-gray-100 p-4 flex flex-wrap gap-2">
-      <button onclick="SC.toast('Credentials managed â€” temporary password re-issued Â· faculty must change at next login','info')" class="btn btn-outline flex-1">Manage credentials</button>
-      <button id="facDeactivateBtn" onclick="deactivateFaculty(this, '${f.name.replace(/'/g, "\\'")}')" class="btn btn-danger-soft">Deactivate</button>
-      <button onclick="closeFaculty()" class="btn btn-ghost">Close</button>
-    </footer>`;
-  document.getElementById('facOverlay').style.display = 'block';
-  document.getElementById('facDrawer').style.display = 'block';
-}
-function closeFaculty(){
-  document.getElementById('facOverlay').style.display = 'none';
-  document.getElementById('facDrawer').style.display = 'none';
-}
-document.addEventListener('keydown', e => { if (e.key==='Escape') closeFaculty(); });
-
-/* ---------- Soft delete (two-step confirm, never silent) ---------- */
-window.deactivateFaculty = (btn, name) => {
-  if (!btn.dataset.confirm) {
-    btn.dataset.confirm = '1';
-    btn.textContent = 'Confirm deactivate?';
-    btn.classList.add('!bg-red-500','!text-white','!border-red-500');
-    SC.toast('Deactivation requires confirmation â€” click again to archive', 'warn');
-    setTimeout(() => { if (btn.isConnected) { btn.dataset.confirm=''; btn.textContent='Deactivate'; btn.classList.remove('!bg-red-500','!text-white','!border-red-500'); } }, 4000);
-    return;
-  }
-  const f = D.faculty.find(x => x.name === name);
-  if (f) { f.status = 'Archived'; }
-  closeFaculty();
-  SC.toast(name + ' deactivated â€” soft-deleted. Records retained, login disabled, audit-logged.', 'warn');
-  renderFacultyRefresh();
-};
-function renderFacultyRefresh(){
-  // re-render table rows with current statuses
-  document.getElementById('facultyBody').innerHTML = D.faculty.map(f => `
-    <tr class="cursor-pointer" data-dept="${DEPTS[f.dept]}"
-        data-hay="${(f.name+' '+f.email+' '+f.spec+' '+f.position+' '+f.dept+' '+DEPTS[f.dept]).toLowerCase()}"
-        onclick="openFaculty(${f.id})">
-      <td><span class="badge badge-gray">${f.employeeId}</span></td>
-      <td>
-        <div class="flex items-center gap-3">
-          <span class="avatar w-9 h-9 text-[11px] ${f.status==='Deactivated'?'opacity-50 grayscale':''}">${initialsOf(f.name)}</span>
-          <div class="min-w-0">
-            <p class="font-semibold text-[13px] text-charcoal truncate max-w-[200px]">${f.name}</p>
-            <p class="text-[11px] text-gray-400 truncate">${f.email}</p>
+      <!-- ---------- Section: Contact ---------- -->
+      <fieldset>
+        <legend class="modal-legend">Contact</legend>
+        <div class="grid grid-cols-2 gap-4 mt-3">
+          <div class="col-span-2">
+            <label class="label" for="afEmail">Email <span class="req">*</span> <span class="text-gray-400 font-normal">(account username)</span></label>
+            <input id="afEmail" type="email" class="input" placeholder="jpdelacruz@lnu.edu.ph" required>
+          </div>
+          <div>
+            <label class="label" for="afPhone">Contact number</label>
+            <input id="afPhone" class="input" placeholder="0917 000 0000" inputmode="tel">
+          </div>
+          <div>
+            <label class="label" for="afAge">Age</label>
+            <input id="afAge" class="input bg-gray-50" placeholder="Auto-computed from birthdate" readonly>
+          </div>
+          <div class="col-span-2">
+            <label class="label" for="afAddress">Address</label>
+            <input id="afAddress" class="input" placeholder="Street, Barangay, City/Municipality, Province">
           </div>
         </div>
-      </td>
-      <td><span class="font-semibold text-[12.5px]" title="${f.dept}">${DEPTS[f.dept]}</span></td>
-      <td class="text-[12.5px]">${f.position}</td>
-      <td class="text-[12.5px] text-gray-500">${f.spec}</td>
-      <td><span class="badge badge-blue">${f.programs} ${f.programs===1?'program':'programs'}</span></td>
-      <td><span class="badge ${f.status==='Active'?'badge-green':(f.status==='Deactivated'?'badge-red':'badge-yellow')}">${f.status}</span></td>
-    </tr>`).join('');
-  applyFacFilters();
-}
+      </fieldset>
+
+      <!-- ---------- Contribution (read-only explanation) ---------- -->
+      <div class="flex items-start gap-2.5 rounded-xl border border-violet-100 bg-violet-50 p-3.5">
+        <span class="w-4 h-4 text-violet-600 shrink-0 inline-flex mt-px">[[chart]]</span>
+        <p class="text-[11.5px] text-gray-600 leading-snug">
+          Faculty contribution is tracked through <b>total training hours rendered</b> and
+          <b>project involvement</b>. There is <b>no per-professor training-hours target</b> — faculty are not
+          measured against an individual quota.
+        </p>
+      </div>
+
+      <!-- ---------- Provisioning notice ---------- -->
+      <div class="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50 p-3.5">
+        <span class="w-4 h-4 text-lnu-600 shrink-0 inline-flex mt-px">[[shield]]</span>
+        <p class="text-[11.5px] text-gray-600 leading-snug">
+          Account provisioning is <b>Admin-only</b> — there is no self-registration. A temporary password
+          <span class="font-mono">lnu-temp-2026</span> is auto-generated and must be changed at first login.
+          Faculty can edit their own <b>contact and expertise</b> details afterwards.
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
+        <button type="button" id="afCancel" class="btn btn-outline" onclick="closeAdd()">Discard</button>
+        <button type="button" id="afSave" class="btn btn-primary">Save profile</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/vendor/chart.umd.min.js"></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const D = window.DATA;
+  const ico = (n,c) => `<span class="${c} inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${SC.icons[n]}</span>`;
+  const qp = new URLSearchParams(location.search);
+  const deepCollege = qp.get('college');
+
+  const FAC = D.faculty;
+  const initials = n => n.replace(/^(Prof\.|Dr\.)\s/,'').split(' ').map(w => w[0]).slice(0,2).join('');
+
+  /* ---------------- Deep-link ?college=CAS ----------------
+     This page is board-only, so a college arrival filters the board itself
+     (chart + leaderboard + insights all narrow together — see SCOPE below). */
+  const college = deepCollege && ['CAS','COE','CME'].includes(deepCollege) ? deepCollege : 'All';
+  if (college !== 'All') {
+    const meta = SC.collegeMeta(college);
+    banner.classList.remove('hidden');
+    banner.innerHTML = `
+      <div class="sc-card p-3.5 flex items-center gap-3 flex-wrap">
+        ${SC.collegePill(college, meta ? meta.name : college)}
+        <span class="text-[11.5px] text-gray-400 font-medium">Board narrowed to this college</span>
+        <a href="faculty-management.html?role=admin" class="ml-auto btn btn-outline !px-2.5 !py-1.5 text-[11px]">Show all colleges</a>
+      </div>`;
+  }
+
+  /* ============================================================
+     FACULTY ENGAGEMENT BOARD
+     Chart + leaderboard + college split, driven by one metric switch.
+
+     Only CONTRIBUTION metrics are offered — hours rendered, projects
+     involved, projects led. Attainment % was removed: there is no
+     per-professor training-hours target to attain against.
+     ============================================================ */
+  const METRICS = {
+    hours:    { label:'Training hours rendered',
+                sub:'Total hours each faculty member has rendered this academic year',
+                value:f => f.renderedHours,
+                suffix:'hrs', fmt:v => SC.hours(v) },
+    projects: { label:'Project involvement',
+                sub:'Number of extension projects led or co-led this academic year',
+                value:f => f.projectCount || 0,
+                suffix:'proj', fmt:v => v + (v === 1 ? ' project' : ' projects') },
+    leads:    { label:'Projects led',
+                sub:'Projects where the faculty member carries the lead role',
+                value:f => f.leadCount || 0,
+                suffix:'lead', fmt:v => v + (v === 1 ? ' lead role' : ' lead roles') }
+  };
+  let metric = 'hours';
+
+  const COLORS = { CAS:'#003599', COE:'#F6B800', CME:'#10b981' };
+
+  /* SCOPE is the one input the whole board reads: a ?college= deep link narrows
+     the chart, the leaderboard AND the insights together, so they never disagree. */
+  const SCOPE = college === 'All' ? FAC.slice() : FAC.filter(f => f.college === college);
+  const ranked = () => SCOPE.slice().sort((a, b) =>
+    METRICS[metric].value(b) - METRICS[metric].value(a));
+
+  /* ---------- chart ---------- */
+  let chart = null;
+
+  function drawChart() {
+    const M = METRICS[metric];
+    const list = ranked();
+    const vals = list.map(M.value);
+    const max = Math.max(...vals, 1);
+
+    engChartTitle.textContent = M.label;
+    engChartSub.textContent = M.sub;
+    engChartMeta.textContent = `${list.length} faculty`;
+
+    /* single series in every mode — no target line exists any more */
+    const datasets = [{
+      label: M.label,
+      data: vals,
+      backgroundColor: list.map(f => COLORS[f.college] || '#93b4fd'),
+      borderRadius: 5,
+      maxBarThickness: 16,
+      /* dim faculty on leave so the active load reads cleanly */
+      borderColor: list.map(f => f.status === 'On Leave' ? '#cbd5e1' : 'transparent'),
+      borderWidth: list.map(f => f.status === 'On Leave' ? 1.5 : 0)
+    }];
+
+    /* compact axis label: "Bautista J." */
+    const shortName = n => {
+      const parts = n.replace(/^(Prof\.|Dr\.)\s/, '').split(' ').filter(Boolean);
+      return parts.length < 2 ? parts[0] : `${parts[parts.length - 1]} ${parts[0][0]}.`;
+    };
+
+    const cfg = {
+      type: 'bar',
+      data: { labels: list.map(f => shortName(f.name)), datasets },
+      options: {
+        indexAxis: 'y',
+        maintainAspectRatio: false,
+        layout: { padding: { right: 8 } },
+        animation: { duration: 500 },
+        scales: {
+          x: {
+            beginAtZero: true,
+            suggestedMax: metric === 'hours' ? Math.ceil(max * 1.15) : undefined,
+            grid: { drawTicks: false, color: '#f1f3f7' },
+            ticks: { font: { size: 10.5 } }
+          },
+          y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: items => list[items[0].dataIndex].name,
+              label: ctx => {
+                const f = list[ctx.dataIndex];
+                return [` ${M.label}: ${M.fmt(ctx.parsed.x)}`,
+                        ` ${SC.hours(f.renderedHours)} hrs rendered · ${f.projectCount || 0} project${(f.projectCount || 0) === 1 ? '' : 's'}`,
+                        ` ${f.college} · ${f.position} · ${f.status}`];
+              }
+            }
+          }
+        },
+        onClick: (e, els) => { if (els.length) openFaculty(list[els[0].index].id); },
+        onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; }
+      }
+    };
+
+    if (chart) { chart.destroy(); }
+    chart = new Chart(document.getElementById('engChart'), cfg);
+  }
+
+  /* ---------- leaderboard rows ---------- */
+  function drawRows() {
+    const M = METRICS[metric];
+    const list = ranked();
+    const max = Math.max(...list.map(M.value), 1);
+
+    /* primary value + the caption that makes it meaningful, per metric */
+    const headline = f => {
+      if (metric === 'hours')    return { v: SC.hours(f.renderedHours), s: (f.projectCount || 0) + ' project' + ((f.projectCount || 0) === 1 ? '' : 's') };
+      if (metric === 'leads')    return { v: f.leadCount || 0, s: SC.hours(f.renderedHours) + ' hrs rendered' };
+      return { v: f.projectCount || 0, s: SC.hours(f.renderedHours) + ' hrs rendered' };
+    };
+
+    engRows.innerHTML = list.map((f, i) => {
+      const v     = M.value(f);
+      const rank  = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const leave = f.status === 'On Leave';
+      const h     = headline(f);
+      return `
+      <button type="button" class="eng-row" data-id="${f.id}">
+        <span class="eng-row-fill" style="width:${Math.max(v / max * 100, 3)}%; background:${COLORS[f.college] || '#93b4fd'}"></span>
+        <span class="eng-row-inner">
+          <span class="eng-rank ${rank}">${i + 1}</span>
+          <span class="avatar w-8 h-8 text-[10px] shrink-0">${initials(f.name)}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-[12.5px] font-bold truncate">${f.name}</span>
+            <span class="eng-sub truncate block">${f.college} · ${leave ? 'On leave' : (f.projectCount || 0) + ' project' + ((f.projectCount || 0) === 1 ? '' : 's')}</span>
+          </span>
+          <span class="text-right shrink-0">
+            <span class="eng-val">${h.v}</span>
+            <span class="eng-sub block">${h.s}</span>
+          </span>
+        </span>
+      </button>`;
+    }).join('');
+
+    engRows.querySelectorAll('.eng-row').forEach(el => {
+      el.addEventListener('click', () => openFaculty(+el.dataset.id));
+    });
+  }
+
+  /* ---------- college load split ---------- */
+  function drawSplit() {
+    const total = SCOPE.reduce((s, f) => s + f.renderedHours, 0) || 1;
+    const byCollege = ['CAS', 'COE', 'CME'].map(c => {
+      const hrs = SCOPE.filter(f => f.college === c).reduce((s, f) => s + f.renderedHours, 0);
+      return { code: c, hrs, share: SC.pct(hrs, total),
+               n: SCOPE.filter(f => f.college === c).length };
+    });
+
+    engSplit.innerHTML = byCollege.map(c =>
+      `<span style="width:${c.share}%; background:${COLORS[c.code]}"></span>`).join('');
+    engSplitLegend.innerHTML = byCollege.map(c =>
+      `<span><span class="eng-dot" style="background:${COLORS[c.code]}"></span>${c.code} ${c.share}%</span>`).join('');
+  }
+
+  /* ---------- insight notes (the "so what") ---------- */
+  function drawInsights() {
+    const top       = ranked()[0];
+    const byHours   = SCOPE.slice().sort((a, b) => b.renderedHours - a.renderedHours);
+    const withHours = SCOPE.filter(f => f.renderedHours > 0);
+    const unassigned= SCOPE.filter(f => !(f.projectCount || 0));
+    const sumHours  = SCOPE.reduce((s, f) => s + f.renderedHours, 0);
+    const mean      = Math.round(sumHours / (SCOPE.length || 1));
+    const share     = SC.hours(sumHours);
+    /* when the board is narrowed to one college the notes should say so */
+    const who       = college === 'All' ? 'The roster' : college + '';
+
+    const notes = [];
+    if (top) notes.push(`<div class="eng-note">${ico('sparkles','w-3.5 h-3.5 text-gold-700 mt-px')}<span><b>${top.name.split(' ').slice(-1)[0]}</b> leads the board on <b>${METRICS[metric].label.toLowerCase()}</b> at <b>${METRICS[metric].fmt(METRICS[metric].value(top))}</b>, across ${top.projectCount || 0} project${(top.projectCount || 0) === 1 ? '' : 's'}.</span></div>`);
+    if (byHours[0]) notes.push(`<div class="eng-note">${ico('chart','w-3.5 h-3.5 text-lnu-700 mt-px')}<span>${who} has rendered <b>${share} training hours</b> — a mean of <b>${mean} hrs</b> per faculty member, carried by <b>${withHours.length} of ${SCOPE.length}</b>.</span></div>`);
+    if (unassigned.length) notes.push(`<div class="eng-note">${ico('users','w-3.5 h-3.5 text-gray-400 mt-px')}<span><b>${unassigned.length}</b> faculty ${unassigned.length === 1 ? 'has' : 'have'} no project assignment yet${unassigned.length === 1 ? ' — ' + unassigned[0].name : ''}.</span></div>`);
+    if (top && top.leadCount) notes.push(`<div class="eng-note">${ico('clipboard','w-3.5 h-3.5 text-emerald-600 mt-px')}<span><b>${top.name.split(' ').slice(-1)[0]}</b> also carries the most lead roles (<b>${top.leadCount}</b>).</span></div>`);
+
+    engInsights.innerHTML = `<p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">What this says</p>
+      <div class="space-y-2">${notes.join('')}</div>`;
+  }
+
+  function renderEngagement() {
+    drawChart(); drawRows(); drawSplit(); drawInsights();
+  }
+
+  engSwitch.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    engSwitch.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    metric = b.dataset.metric;
+    renderEngagement();
+  }));
+
+  /* ---------------- Drawer ---------------- */
+  window.openFaculty = (id) => {
+    const f = FAC.find(x => x.id === id); if (!f) return;
+    const projSet = f.projectList || [];
+    const led     = projSet.filter(p => p.role === 'Lead');
+    const coLed   = projSet.filter(p => p.role === 'Co-Lead');
+    const acts    = D.activities.filter(a => projSet.some(p => p.code === a.program));
+
+    const age = f.birthdate
+      ? Math.floor((Date.now() - new Date(f.birthdate).getTime()) / 31557600000)
+      : null;
+
+    const projRow = (p) => `
+      <div class="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition cursor-pointer"
+           onclick="location.href='program-detail.html?role=admin&program=${p.code}'">
+        ${SC.collegePill(p.college)}
+        <div class="min-w-0 flex-1">
+          <p class="text-[12.5px] font-semibold truncate">${p.acr}</p>
+          <p class="text-[10.5px] text-gray-400 font-mono truncate">${p.code}</p>
+        </div>
+        <span class="badge ${p.role === 'Lead' ? 'badge-gold' : 'badge-gray'} !text-[9.5px] !px-2 !py-0.5 shrink-0">${p.role}</span>
+      </div>`;
+
+    facDrawerBody.innerHTML = `
+      <div class="p-5 border-b border-gray-100 flex items-start gap-3.5">
+        <span class="avatar w-12 h-12 text-[15px]">${initials(f.name)}</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-extrabold text-[15px] tracking-tight truncate">${f.name}</p>
+          <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">${f.position}</p>
+          <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+            ${SC.collegePill(f.college)}
+            <span class="badge ${f.status === 'Active' ? 'badge-green' : 'badge-yellow'}">${f.status}</span>
+            <span class="badge badge-gray font-mono">${f.employeeId}</span>
+          </div>
+        </div>
+        <button onclick="closeFaculty()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition shrink-0">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 space-y-5">
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Contribution · AY 2026–2027</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="sc-card p-4">
+              <p class="text-[26px] font-extrabold tracking-tight leading-none">${SC.hours(f.renderedHours)}</p>
+              <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">training hours rendered</p>
+            </div>
+            <div class="sc-card p-4">
+              <p class="text-[26px] font-extrabold tracking-tight leading-none">${projSet.length}</p>
+              <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">project${projSet.length === 1 ? '' : 's'} involved</p>
+            </div>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-1.5">
+            <span class="badge badge-gold">${led.length} lead</span>
+            <span class="badge badge-gray">${coLed.length} co-lead</span>
+            <span class="badge badge-blue">${f.communityCount || 0} communities reached</span>
+          </div>
+          <p class="text-[10.5px] text-gray-400 font-medium mt-2.5">
+            No individual training-hours target is set for faculty — contribution is read from actual hours and involvement.
+          </p>
+        </div>
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Declared expertise</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${f.expertise.map(e => `<span class="expertise-tag !text-[11px] !px-2.5 !py-1">${e}</span>`).join('')}
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Extension involvement (${projSet.length})</p>
+          <div class="space-y-2">
+            ${projSet.length
+              ? led.map(projRow).join('') + coLed.map(projRow).join('')
+              : '<p class="text-[12px] text-gray-400">Not currently assigned to any project.</p>'}
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Activities involved (${acts.length})</p>
+          <div class="space-y-2">
+            ${acts.length ? acts.map(a => `
+              <div class="px-3.5 py-2.5 rounded-xl border border-gray-100">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-[12px] font-semibold truncate">${a.title}</p>
+                  <span class="badge ${a.status === 'Completed' ? 'badge-green' : a.status === 'Upcoming' ? 'badge-blue' : 'badge-yellow'} shrink-0">${a.status}</span>
+                </div>
+                <p class="text-[10.5px] text-gray-400 font-medium mt-1">${a.date} · ${a.venue}</p>
+                <p class="text-[10.5px] text-gray-500 font-medium mt-1">
+                  ${a.trainors} trainor${a.trainors === 1 ? '' : 's'} · ${a.attendees ?? '—'} trainees · ${SC.hours(a.trainingHours)} hrs
+                </p>
+              </div>`).join('')
+              : '<p class="text-[12px] text-gray-400">No activities on record.</p>'}
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Contact &amp; personal details</p>
+          <div class="sc-card p-4">
+            <div class="kv"><span class="k">Email</span><span class="v text-[11.5px] font-mono">${f.email}</span></div>
+            <div class="kv"><span class="k">Phone</span><span class="v">${f.phone}</span></div>
+            <div class="kv"><span class="k">Age</span><span class="v">${age !== null ? age + ' years old' : '—'}${f.birthdate ? ` <span class="text-gray-400 font-normal">(b. ${f.birthdate})</span>` : ''}</span></div>
+            <div class="kv"><span class="k">Sex</span><span class="v">${f.sex || '—'}</span></div>
+            <div class="kv"><span class="k">Civil status</span><span class="v">${f.civilStatus || '—'}</span></div>
+            <div class="kv"><span class="k">Address</span><span class="v text-[11.5px]">${f.address || '—'}</span></div>
+            <div class="kv"><span class="k">College</span><span class="v">${f.collegeName}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex gap-2">
+        <button class="btn btn-outline flex-1" onclick="location.href='faculty-directory.html?role=admin&faculty=${f.id}&edit=1'">Evaluate / Edit profile</button>
+        <button class="btn btn-primary flex-1" onclick="SC.toast('Availability request sent','success')">Request availability</button>
+      </div>`;
+
+    facOverlay.style.display = 'block';
+    facDrawer.style.display = 'block';
+  };
+  window.closeFaculty = () => { facOverlay.style.display = 'none'; facDrawer.style.display = 'none'; };
+  window.closeAdd = () => document.getElementById('addModal').classList.add('hidden');
+
+  /* ============================================================
+     NEW FACULTY PROFILE MODAL
+     - Position is a grouped 18-step ladder dropdown
+     - Expertise is a multi-select chip picker fed by DATA.expertiseOptions
+     - Basic info carries birthdate / sex / civil status / contact / address
+     - No Specialization field, no Target Training Hours field
+     ============================================================ */
+
+  /* ---------- position ladder (grouped optgroups) ---------- */
+  (function buildPositions() {
+    const sel = document.getElementById('afPosition');
+    if (!sel) return;
+    const groups = [];
+    (D.positionLadder || []).forEach(p => {
+      let g = groups.find(x => x.name === p.group);
+      if (!g) { g = { name: p.group, items: [] }; groups.push(g); }
+      g.items.push(p);
+    });
+    sel.innerHTML = '<option value="">— Select rank —</option>' +
+      groups.map(g => `<optgroup label="${g.name}">` +
+        g.items.map(p => `<option value="${p.label}" data-rank="${p.rank}">${p.label}</option>`).join('') +
+      `</optgroup>`).join('');
+  })();
+
+  /* ---------- expertise multi-select ---------- */
+  const MS = (() => {
+    const root      = document.getElementById('msExpertise');
+    if (!root) return null;
+    const chipsEl   = document.getElementById('msChips');
+    const input     = document.getElementById('afExpertiseInput');
+    const optionsEl = document.getElementById('msOptions');
+    const toggle    = document.getElementById('msToggle');
+    const hint      = document.getElementById('msHint');
+    const MAX       = 5;
+    const ALL       = (D.expertiseOptions || []).slice();
+    let selected    = [];
+    let open        = false;
+
+    function renderChips() {
+      chipsEl.innerHTML = '';
+      if (!selected.length) {
+        const ph = document.createElement('span');
+        ph.className = 'ms-placeholder';
+        ph.id = 'msPlaceholder';
+        ph.textContent = 'No expertise selected yet';
+        chipsEl.appendChild(ph);
+      } else {
+        selected.forEach(v => {
+          const chip = document.createElement('span');
+          chip.className = 'ms-chip';
+          chip.innerHTML = `${v}<button type="button" class="ms-x" aria-label="Remove ${v}">✕</button>`;
+          chip.querySelector('.ms-x').addEventListener('click', () => {
+            selected = selected.filter(x => x !== v);
+            renderChips(); renderOptions();
+          });
+          chipsEl.appendChild(chip);
+        });
+      }
+      hint.textContent = selected.length >= MAX
+        ? `Maximum of ${MAX} expertise areas reached — remove one to add another.`
+        : `Choose from the canonical list so project matching stays consistent. ${selected.length}/${MAX} selected.`;
+      hint.classList.toggle('warn', selected.length >= MAX);
+    }
+
+    function renderOptions() {
+      const q = input.value.trim().toLowerCase();
+      const hits = ALL.filter(v =>
+        (!q || v.toLowerCase().includes(q)) && !selected.includes(v));
+      optionsEl.innerHTML = hits.length
+        ? hits.map(v => `<button type="button" class="ms-option" role="option" data-v="${v}">${v}</button>`).join('')
+        : `<p class="ms-none">${q ? `No expertise matches “${input.value.trim()}”.` : 'All expertise areas selected.'}</p>`;
+    }
+
+    function setOpen(v) {
+      open = v;
+      root.classList.toggle('open', open);
+      input.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) renderOptions();
+    }
+
+    input.addEventListener('focus', () => setOpen(true));
+    input.addEventListener('input', () => { setOpen(true); renderOptions(); });
+    toggle.addEventListener('click', () => { setOpen(!open); if (open) input.focus(); });
+
+    optionsEl.addEventListener('click', e => {
+      const b = e.target.closest('.ms-option');
+      if (!b) return;
+      if (selected.length >= MAX) { hint.textContent = `Maximum of ${MAX} expertise areas reached.`; hint.classList.add('warn'); return; }
+      selected.push(b.dataset.v);
+      input.value = '';
+      renderChips(); renderOptions();
+      input.focus();
+    });
+
+    /* close when the click lands outside the control */
+    document.addEventListener('click', e => {
+      if (!root.contains(e.target)) setOpen(false);
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { setOpen(false); input.blur(); }
+      if (e.key === 'Backspace' && !input.value && selected.length) {
+        selected.pop(); renderChips(); renderOptions();
+      }
+    });
+
+    renderChips();
+    return { get: () => selected.slice(), root, input, close: () => setOpen(false) };
+  })();
+
+  /* ---------- age auto-compute from birthdate ---------- */
+  (function wireAge() {
+    const bd  = document.getElementById('afBirthdate');
+    const age = document.getElementById('afAge');
+    if (!bd || !age) return;
+    const sync = () => {
+      if (!bd.value) { age.value = ''; return; }
+      const yrs = Math.floor((Date.now() - new Date(bd.value).getTime()) / 31557600000);
+      age.value = (yrs >= 0 && yrs < 120) ? yrs + ' years old' : '';
+    };
+    bd.addEventListener('change', sync);
+    sync();
+  })();
+
+  /* ---------- modal open / save ---------- */
+  function resetAddForm() {
+    const form = document.getElementById('addForm');
+    if (form) form.reset();
+    const eid = document.getElementById('afEmployeeId');
+    if (eid) eid.value = 'LNU-2026-0009';
+    const age = document.getElementById('afAge');
+    if (age) age.value = '';
+    if (MS) MS.close();
+  }
+
+  window.closeAdd = () => { document.getElementById('addModal').classList.add('hidden'); resetAddForm(); };
+
+  /* "Faculty Directory" (board header, right of the AY chip) opens the
+     dedicated directory page rather than an inline add-modal — the modal
+     stays available from inside that page. */
+  btnAdd.onclick = () => { location.href = 'faculty-directory.html?role=admin&new=1'; };
+
+  const afSave = document.getElementById('afSave');
+  if (afSave) afSave.addEventListener('click', () => {
+    const name = document.getElementById('afName').value.trim();
+    const email = document.getElementById('afEmail').value.trim();
+    const pos = document.getElementById('afPosition').value;
+    const exp = MS ? MS.get() : [];
+    if (!name)  { SC.toast('Full name is required','error'); return; }
+    if (!email) { SC.toast('Email is required','error'); return; }
+    if (!pos)   { SC.toast('Select a position rank','error'); return; }
+    if (!exp.length) { SC.toast('Select at least one expertise area','error'); return; }
+    SC.toast('Faculty profile created — LNU-2026-0009 assigned','success');
+    closeAdd();
+  });
+
+  /* ---------------- Wiring ---------------- */
+  renderEngagement();
+  SC.runCounters();
+});
 </script>
 </body>
 </html>

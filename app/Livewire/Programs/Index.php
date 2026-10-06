@@ -2,11 +2,15 @@
 
 namespace App\Livewire\Programs;
 
+use App\Models\College;
 use App\Models\Community;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
-use App\Services\KpiService;
+use App\Models\Program;
+use App\Services\RankingService;
+use App\Services\TrainingHoursService;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,105 +23,81 @@ class Index extends Component
 
     public string $status = '';
 
+    // R5 §5 step 2 filters. `#[Url]` so a filtered list is shareable and
+    // survives a refresh — the Director can send a colleague a link.
+    #[Url]
+    public string $college = '';
+
+    #[Url]
+    public string $program = '';
+
+    #[Url]
+    public string $year = '';
+
+    #[Url]
+    public string $sort = '';
+
     public string $view = 'grid';
 
-    public bool $showForm = false;
-
-    public array $form = [
-        'title' => '',
-        'description' => '',
-        'planned_start_date' => '',
-        'planned_end_date' => '',
-        'target_beneficiaries' => '',
-        'allocated_budget' => '',
-        'program_lead_id' => '',
-        'community_ids' => [],
-        'beneficiary_categories' => [],
-        'status' => 'draft',
-    ];
-
-    public function create(): void
-    {
-        $this->resetForm();
-        $this->showForm = true;
-    }
-
-    public function toggleFormArray(string $key, string|int $value): void
-    {
-        if (! in_array($key, ['community_ids', 'beneficiary_categories'], true)) {
-            return;
-        }
-
-        $values = is_array($this->form[$key] ?? null) ? $this->form[$key] : [];
-
-        $this->form[$key] = in_array($value, $values, true)
-            ? array_values(array_diff($values, [$value]))
-            : [...$values, $value];
-    }
-
-    public function save(): void
-    {
-        $this->validate([
-            'form.title' => 'required|string|max:255',
-            'form.description' => 'nullable|string|max:4000',
-            'form.planned_start_date' => 'required|date',
-            'form.planned_end_date' => 'required|date|after_or_equal:form.planned_start_date',
-            'form.target_beneficiaries' => 'nullable|integer|min:1',
-            'form.allocated_budget' => 'nullable|numeric|min:0',
-            'form.program_lead_id' => 'nullable|exists:faculties,id',
-            'form.community_ids' => 'array',
-            'form.community_ids.*' => 'exists:communities,id',
-            'form.beneficiary_categories' => 'array',
-            'form.beneficiary_categories.*' => 'string',
-            'form.status' => 'required|in:draft,ongoing,completed,cancelled',
-        ]);
-
-        $program = ExtensionProgram::create([
-            'code' => ExtensionProgram::nextCode(),
-            'title' => $this->form['title'],
-            'description' => $this->form['description'] ?: null,
-            'planned_start_date' => $this->form['planned_start_date'],
-            'planned_end_date' => $this->form['planned_end_date'],
-            'target_beneficiaries' => $this->form['target_beneficiaries'] ?: null,
-            'beneficiary_categories' => $this->form['beneficiary_categories'],
-            'allocated_budget' => $this->form['allocated_budget'] ?: 0,
-            'program_lead_id' => $this->form['program_lead_id'] ?: null,
-            'status' => $this->form['status'],
-            'created_by' => auth()->id(),
-            'updated_by' => auth()->id(),
-        ]);
-
-        if ($this->form['community_ids']) {
-            $program->communities()->sync($this->form['community_ids']);
-        }
-
-        $this->showForm = false;
-        $this->resetForm();
-        $this->dispatch('sc-toast', message: 'Program created — code '.$program->code, type: 'success');
-    }
+    /*
+     | CREATE MOVED to the hub — this page is now a READ-ONLY list (§25).
+     |
+     | The `?new=1` deep link that used to live here opened the create form on
+     | arrival, but the modal's Alpine `$wire.$watch` visibility bridge only fires
+     | on CHANGE — and the flag was already true at mount, so the watcher never
+     | ran and the page rendered with NO form on it. That is the failure §14
+     | documents twice before.
+     |
+     | Creation now happens in `Colleges\Index::openProjectCreate()`, where the
+     | college and program are pre-filled from the view the Director is on. The
+     | modal there renders server-side (`@if`), so the bug cannot recur.
+     */
 
     public function render()
     {
-        $programs = ExtensionProgram::query()
-            ->with(['programLead.user', 'communities'])
+        $rankings = app(RankingService::class);
+
+        $programs = ExtensionProject::query()
+            ->with(['college', 'programLead.user', 'communities'])
             ->withCount('activities')
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('title', 'like', "%{$this->search}%")
                 ->orWhere('code', 'like', "%{$this->search}%")))
             ->when($this->status !== '', fn ($q) => $q->where('status', $this->status))
+            // R5 §5 step 2: college / broad-program / academic-year filters.
+            ->when($this->college !== '', fn ($q) => $q->where('college_id', $this->college))
+            ->when($this->program !== '', fn ($q) => $q->where('program_id', $this->program))
+            ->when($this->year !== '', fn ($q) => $q->whereYear('planned_start_date', (int) $this->year))
             ->orderBy('planned_start_date')
             ->get();
 
-        $kpi = app(KpiService::class);
+        // R4: every figure comes from TrainingHoursService, so this list agrees
+        // with the project hub and the targets page. `KpiService` is no longer
+        // read here (R-Q2 soft-deprecation).
+        $hours = app(TrainingHoursService::class);
 
-        $rows = $programs->map(fn ($p) => (object) [
-            'model' => $p,
-            'utilized' => $p->utilizedBudget(),
-            'utilization_pct' => $kpi->budgetUtilization($p),
-            'over' => $p->isOverAllocated(),
-            'lead_name' => $p->programLead?->user?->name,
-            'reached' => $kpi->distinctServed($p),
-        ]);
+        $rows = $programs->map(function ($p) use ($hours) {
+            $rollup = $hours->forProject($p);
+
+            return (object) [
+                'model' => $p,
+                'utilized' => $p->utilizedBudget(),
+                'allocated_budget' => $p->budgetAllocated(),
+                'budget_pct' => $rollup['budget_pct'],
+                'over' => $p->isOverAllocated(),
+                'lead_name' => $p->programLead?->user?->name,
+                'reached' => $rollup['trainees'],
+                'training_hours' => $rollup['actual_hours'],
+                'hours_target' => $rollup['target_hours'],
+                'hours_pct' => $rollup['hours_pct'],
+            ];
+        });
+
+        // Sort by the ranking rule when the toolbar asks for it, so "most active"
+        // here means exactly what it means on the dashboard.
+        if ($this->sort === 'hours') {
+            $rows = $rows->sortByDesc('training_hours')->values();
+        }
 
         return view('livewire.programs.index', [
             'rows' => $rows,
@@ -125,26 +105,18 @@ class Index extends Component
             'faculties' => Faculty::with('user')->orderBy('id')->get(),
             'communities' => Community::orderBy('name')->get(),
             'categories' => config('smartcemes.beneficiary_categories'),
+            'colleges' => College::ordered()->get(),
+            'programs' => Program::active()->orderBy('title')->get(),
+            // R5 filter options, read from real rows rather than hardcoded.
+            'years' => $rankings->filterOptions()['years'],
+            'hasFilters' => $this->college !== '' || $this->program !== '' || $this->year !== '' || $this->status !== '' || $this->search !== '',
         ]);
     }
 
-    protected function resetForm(): void
+    /** R5 §5 step 2 — clear every filter at once. */
+    public function clearFilters(): void
     {
-        $this->showForm = false;
-        $this->form = [
-            'title' => '',
-            'description' => '',
-            'planned_start_date' => '',
-            'planned_end_date' => '',
-            'target_beneficiaries' => '',
-            'allocated_budget' => '',
-            'program_lead_id' => '',
-            'community_ids' => [],
-            'beneficiary_categories' => [],
-            'status' => 'draft',
-        ];
-        $this->resetErrorBag();
-        $this->dispatch('ms-sync-community_ids', ids: []);
-        $this->dispatch('ms-sync-beneficiary_categories', ids: []);
+        $this->reset('search', 'status', 'college', 'program', 'year', 'sort');
+        $this->resetPage();
     }
 }

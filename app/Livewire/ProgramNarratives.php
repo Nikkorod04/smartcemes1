@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
-use App\Models\ExtensionProgram;
-use App\Services\KpiService;
+use App\Models\ExtensionProject;
 use App\Services\ProgramNarrativeService;
+use App\Services\TrainingHoursService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -23,7 +23,7 @@ class ProgramNarratives extends Component
     /** 5.15: manual trigger, one new row per generation (history kept). */
     public function generate(int $programId): void
     {
-        $program = ExtensionProgram::findOrFail($programId);
+        $program = ExtensionProject::findOrFail($programId);
         app(ProgramNarrativeService::class)->generateFor($program);
 
         $this->dispatch('sc-toast', message: 'Narrative generated — Director-only, aggregates only', type: 'success');
@@ -36,23 +36,31 @@ class ProgramNarratives extends Component
 
     public function render()
     {
-        $kpi = app(KpiService::class);
+        $hours = app(TrainingHoursService::class);
 
-        $programs = ExtensionProgram::with([
+        // R5 / D-R7: the "objectives achieved" column was an 8.6 surface. It is
+        // replaced by the training-hours attainment against the project's annual
+        // target — the same figure the hub and the dashboard show.
+        $programs = ExtensionProject::with([
             'programNarratives' => fn ($q) => $q->latest(),
             'programLead.user',
             'communities',
-            'programObjectives',
+            'college',
         ])
             ->get()
-            ->map(fn ($p) => (object) [
-                'model' => $p,
-                'latest' => $p->programNarratives->first(),
-                'objectivesTotal' => $p->programObjectives->count(),
-                // 8.6: status derives live from the effective actual — never the stored column.
-                'objectivesAchieved' => $p->programObjectives
-                    ->filter(fn ($o) => $kpi->statusFor($o) === 'achieved')->count(),
-            ]);
+            ->map(function ($p) use ($hours) {
+                $rollup = $hours->forProject($p);
+
+                return (object) [
+                    'model' => $p,
+                    'latest' => $p->programNarratives->first(),
+                    'training_hours' => $rollup['actual_hours'],
+                    'target_hours' => $rollup['target_hours'],
+                    'hours_pct' => $rollup['hours_pct'],
+                    'trainees' => $rollup['trainees'],
+                    'activities' => $rollup['activity_count'],
+                ];
+            });
 
         return view('livewire.program-narratives', [
             'programs' => $programs,

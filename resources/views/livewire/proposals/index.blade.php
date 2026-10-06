@@ -34,7 +34,7 @@
                             <td class="text-gray-500">{{ $p->faculty?->user?->name }}</td>
                             <td class="text-gray-500">{{ $p->program?->code }} · {{ $p->community?->name }}</td>
                             <td class="whitespace-nowrap">{{ $p->proposed_start_date->format('M j, Y') }} – {{ $p->proposed_end_date->format('M j, Y') }}
-                                @if ($p->violatesProgramRange())<span class="conflict-marker ml-1">⚠ out of range</span>@endif
+                                @if ($p->violatesProgramRange())<span class="conflict-marker ml-1"><x-sc.icon name="alert" class="w-3 h-3" /> out of range</span>@endif
                             </td>
                             <td class="whitespace-nowrap">{{ $p->budget_estimate !== null ? '₱'.number_format((float) $p->budget_estimate) : '—' }}</td>
                             <td class="text-gray-500">{{ $p->submitted_at?->format('M j, Y') }}</td>
@@ -80,7 +80,7 @@
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
                     <span class="badge badge-{{ config('smartcemes.status_colors')[$detail->status] ?? 'gray' }}">{{ ucfirst($detail->status) }}</span>
-                    <button wire:click="closeModals" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition">✕</button>
+                    <button wire:click="closeModals" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
                 </div>
             </div>
 
@@ -88,12 +88,12 @@
 
             <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/70 border border-gray-100 mt-4">
                 <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Proposed dates</p><p class="text-[12.5px] font-semibold mt-1">{{ $detail->proposed_start_date->format('M j, Y') }} – {{ $detail->proposed_end_date->format('M j, Y') }}</p>
-                    @if ($detail->violatesProgramRange())<p class="text-[11px] text-red-600 font-semibold mt-1">⚠ Outside program range — approval blocked (8.8)</p>@endif
+                    @if ($detail->violatesProgramRange())<p class="text-[11px] text-red-600 font-semibold mt-1"><x-sc.icon name="alert" class="w-3 h-3" /> Outside program range — approval blocked (8.8)</p>@endif
                 </div>
                 <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Budget estimate</p><p class="text-[12.5px] font-semibold mt-1">{{ $detail->budget_estimate !== null ? '₱'.number_format((float) $detail->budget_estimate) : '—' }}</p></div>
                 @if ($detail->createdActivity)
                     <div class="col-span-2"><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Linked activity</p>
-                        <a href="{{ route('programs.show', $detail->program) }}" class="text-[12.5px] font-semibold text-lnu-700 mt-1 inline-block">{{ $detail->createdActivity->title }} (draft · auto-created on approval)</a>
+                        <a href="{{ route('projects.show', $detail->program) }}" class="text-[12.5px] font-semibold text-lnu-700 mt-1 inline-block">{{ $detail->createdActivity->title }} (draft · auto-created on approval)</a>
                     </div>
                 @endif
             </div>

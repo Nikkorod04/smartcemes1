@@ -7,7 +7,7 @@ use App\Models\Activity;
 use App\Models\ActivityImport;
 use App\Models\Attendance;
 use App\Models\Beneficiary;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\User;
 use App\Services\ActivityAttendanceTemplate;
@@ -39,7 +39,7 @@ class ActivityAttendanceImportTest extends TestCase
         $facultyUser = User::factory()->create(['role' => 'faculty']);
         $faculty = Faculty::create(['user_id' => $facultyUser->id, 'employee_id' => 'LNU-2026-0009']);
 
-        $program = ExtensionProgram::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-010',
             'title' => 'Attendance Import Program',
             'planned_start_date' => '2026-01-01',
@@ -50,7 +50,7 @@ class ActivityAttendanceImportTest extends TestCase
         ]);
 
         $activity = Activity::create([
-            'extension_program_id' => $program->id,
+            'extension_project_id' => $program->id,
             'title' => 'Training Session',
             'planned_start_date' => '2026-03-01',
             'planned_end_date' => '2026-03-01',
@@ -107,7 +107,7 @@ class ActivityAttendanceImportTest extends TestCase
     protected function openParsed(array $data, UploadedFile $file)
     {
         return Livewire::actingAs($data['secretary'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openRecords', $data['activity']->id)
             ->set('attendanceImportFile', $file)
             ->call('parseAttendanceImport');
@@ -200,7 +200,7 @@ class ActivityAttendanceImportTest extends TestCase
         $data = $this->seedBase();
 
         Livewire::actingAs($data['secretary'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openRecords', $data['activity']->id)
             ->call('parseAttendanceImport')
             ->assertHasErrors('attendanceImportFile')
@@ -381,7 +381,7 @@ class ActivityAttendanceImportTest extends TestCase
         // One Testable per call — an aborted action invalidates the instance.
         foreach (['parseAttendanceImport', 'confirmAttendanceImport'] as $action) {
             Livewire::actingAs($data['facultyUser'])
-                ->test(Hub::class, ['program' => $data['program']])
+                ->test(Hub::class, ['project' => $data['program']])
                 ->call($action)
                 ->assertForbidden();
         }
@@ -392,7 +392,7 @@ class ActivityAttendanceImportTest extends TestCase
         $data = $this->seedBase();
 
         Livewire::actingAs($data['facultyUser'])
-            ->test(Hub::class, ['program' => $data['program']])
+            ->test(Hub::class, ['project' => $data['program']])
             ->call('openRecords', $data['activity']->id)
             ->assertSet('recordsActivityId', $data['activity']->id)
             ->assertSee('Read-only — attendance is recorded')

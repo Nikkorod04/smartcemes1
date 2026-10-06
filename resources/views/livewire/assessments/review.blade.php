@@ -189,7 +189,7 @@
                         @endif
                     </p>
                 </div>
-                <button wire:click="closeDrawer" class="p-2 rounded-lg text-gray-400 hover:text-charcoal hover:bg-gray-100 transition text-lg leading-none shrink-0">✕</button>
+                <button wire:click="closeDrawer" class="p-2 rounded-lg text-gray-400 hover:text-charcoal hover:bg-gray-100 transition text-lg leading-none shrink-0"><x-sc.icon name="x" class="w-4 h-4" /></button>
             </header>
 
             <div class="flex-1 overflow-y-auto bg-gray-50/60 p-4">
@@ -273,9 +273,9 @@
         <div class="mt-4 rounded-xl border border-gray-100 bg-gray-50/70 p-3.5">
             <p class="text-[12px] font-bold text-charcoal mb-1.5">On confirm:</p>
             <ul class="space-y-1.5 text-[12px] text-gray-500 leading-relaxed">
-                <li class="flex items-start gap-2"><span class="text-emerald-500 font-bold">✓</span>The community summary recomputes automatically</li>
-                <li class="flex items-start gap-2"><span class="text-emerald-500 font-bold">✓</span>The encoder is notified of the validation</li>
-                <li class="flex items-start gap-2"><span class="text-emerald-500 font-bold">✓</span>Your name &amp; timestamp are stamped to the audit trail</li>
+                <li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>The community summary recomputes automatically</li>
+                <li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>The encoder is notified of the validation</li>
+                <li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>Your name &amp; timestamp are stamped to the audit trail</li>
             </ul>
         </div>
         <div class="mt-5 flex justify-end gap-2">

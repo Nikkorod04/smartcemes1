@@ -50,7 +50,7 @@ class Beneficiary extends Model
 
     public function extensionPrograms()
     {
-        return $this->belongsToMany(ExtensionProgram::class, 'extension_program_beneficiary');
+        return $this->belongsToMany(ExtensionProject::class, 'extension_project_beneficiary');
     }
 
     public function attendances()

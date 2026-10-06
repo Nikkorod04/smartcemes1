@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manage Extension Programs · SmartCEMES</title>
+<script src="../assets/vendor/tailwind.js"></script>
+<script src="../assets/js/tw-config.js"></script>
+<link rel="stylesheet" href="../assets/css/smartcemes.css">
+</head>
+<body class="bg-gray-50 text-charcoal font-sans antialiased" data-role="admin" data-page="colleges">
+
+<script>const R=(new URLSearchParams(location.search).get('role'))||document.body.dataset.role||'admin';document.body.dataset.role=R;</script>
+
+<div id="sc-topbar"></div>
+<div id="sc-sidebar"></div>
+
+<main class="pl-72 pr-6 pb-12">
+
+  <!-- ============================================================
+       VIEW 1 — COLLEGES ONLY
+       ============================================================ -->
+  <div id="viewColleges">
+
+    <!-- No page header: this view opens straight into the college cards.
+         The sidebar already names the entry ("Manage Extension Programs"). -->
+
+    <!-- The four colleges (CAS, COE, CME + the Graduate School) — NOTHING else -->
+    <section class="pt-6 reveal-item">
+      <div class="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <p class="hub-eyebrow">Colleges</p>
+          <h3 class="text-[15px] font-extrabold tracking-tight mt-1">Four colleges deliver CESO extension work</h3>
+        </div>
+        <div class="flex items-center gap-3">
+          <p class="text-[11.5px] text-gray-400 font-medium hidden sm:block">Click a college to open its projects</p>
+          <a href="programs.html?role=admin" class="btn btn-outline !px-3 !py-2 text-[12px]">View all programs →</a>
+        </div>
+      </div>
+      <div id="collegeCards" class="mt-4 grid md:grid-cols-2 gap-5"></div>
+    </section>
+  </div>
+
+  <!-- ============================================================
+       VIEW 2 — PROJECTS OF THE SELECTED COLLEGE
+       ============================================================ -->
+  <div id="viewCollege" class="hidden">
+
+    <!-- College hero -->
+    <section class="pt-6 reveal-item">
+      <button id="backBtn" class="hub-back" type="button">
+        <span class="inline-flex w-3.5 h-3.5" id="backIcon"></span> All colleges
+      </button>
+      <div id="collegeHero" class="mt-4"></div>
+    </section>
+
+    <!-- College KPIs -->
+    <section id="collegeKpis" class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4 reveal-item"></section>
+
+    <!-- Projects header + toolbar -->
+    <section class="mt-7">
+      <div class="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <p class="hub-eyebrow">Projects</p>
+          <h3 id="projHeading" class="text-[15px] font-extrabold tracking-tight mt-1">Extension Projects</h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex" id="projSearchIcon"></span>
+            <input id="projQ" class="input !pl-9 !w-60 !py-2" placeholder="Search project, lead, community…">
+          </label>
+          <div id="projStatusChips" class="flex items-center gap-1.5"></div>
+        </div>
+      </div>
+      <div id="projGrid" class="mt-4 grid md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+      <div id="projEmpty" class="hidden mt-4"></div>
+    </section>
+
+    <!-- Faculty of this college -->
+    <section class="mt-8">
+      <p class="hub-eyebrow">Faculty &amp; expertise</p>
+      <h3 id="facHeading" class="text-[15px] font-extrabold tracking-tight mt-1">Assigned to this college</h3>
+      <div id="facGrid" class="mt-4 grid sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>
+    </section>
+  </div>
+
+  <footer class="mt-10 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+</main>
+
+<script src="../assets/vendor/alpine.min.js" defer></script>
+<script src="../assets/js/seed-data.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const D = window.DATA;
+  const qp = new URLSearchParams(location.search);
+  const deep = qp.get('college');
+
+  const el = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const ico = (n, cls) => SC.svg(n, cls);
+  const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h15m0 0l-6-6m6 6l-6 6"/></svg>';
+
+  el('backIcon').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12h-15m0 0l6-6m-6 6l6 6"/></svg>';
+  el('projSearchIcon').innerHTML = SC.icons.search;
+
+  /* ============================================================
+     VIEW 1 — render the four college cards
+     NOTE: no university roll-up strip, and NO per-college training-hours
+     figure. Training-hours targets exist at UNIVERSITY and PROJECT level
+     only — never per college — so a college card must not show one.
+     ============================================================ */
+
+  el('collegeCards').innerHTML = D.colleges.map(c => {
+    const progs = c.programs.map(p => p.title.split(':')[0]).slice(0, 3);
+    return `
+    <button type="button" class="college-card reveal-item" data-code="${c.code}"
+            aria-label="Open ${esc(c.name)}">
+
+      <!-- logo / media area — placeholder until real college logos are supplied -->
+      <span class="college-media w-full" style="background:${c.color}">
+        <span class="college-logo-ph">Logo</span>
+        <span class="college-crest">${c.code}</span>
+      </span>
+
+      <span class="block px-6 pt-5 pb-6 flex-1 text-left">
+        <span class="block font-extrabold text-[17px] leading-snug tracking-tight">${esc(c.name)}</span>
+        <span class="block text-[11.5px] text-gray-400 font-medium mt-1.5">Dean · ${esc(c.dean)}</span>
+
+        <span class="block text-[12.5px] text-gray-500 leading-relaxed mt-3.5 min-h-[54px]">${esc(c.thrust)}</span>
+
+        <span class="block mt-4 college-metrics">
+          <span><span class="m-val block">${c.projectCount}</span><span class="m-cap block">Projects</span></span>
+          <span><span class="m-val block">${c.programCount}</span><span class="m-cap block">Programs</span></span>
+          <span><span class="m-val block">${c.facultyCount}</span><span class="m-cap block">Faculty</span></span>
+        </span>
+
+        <span class="flex flex-wrap gap-1.5 mt-4 min-h-[24px]">${progs.length ? progs.map(p =>
+          `<span class="badge badge-gray">${esc(p)}</span>`).join('') : ''}</span>
+      </span>
+
+      <span class="college-foot w-full">
+        <span class="text-[11px] text-gray-400 font-medium">
+          ${SC.num(c.reached)}/${SC.num(c.target)} reached
+          <span class="text-gray-300 mx-1.5">·</span>
+          ₱${SC.num(c.utilized)} of ₱${SC.num(c.budgetAllocated)}
+        </span>
+        <span class="college-card-cta">Open projects ${arrow}</span>
+      </span>
+    </button>`;
+  }).join('');
+
+  el('collegeCards').addEventListener('click', e => {
+    const card = e.target.closest('.college-card');
+    if (!card) return;
+    showCollege(card.dataset.code, true);
+  });
+
+  /* ============================================================
+     VIEW 2 — render one college's projects
+     ============================================================ */
+  let CURRENT = null;
+  let PROJ_FILTER = { status: 'All', q: '' };
+
+  function showCollege(code, pushUrl) {
+    const college = D.colleges.find(c => c.code === code);
+    if (!college) return;
+    CURRENT = college;
+    PROJ_FILTER = { status: 'All', q: '' };
+    const q = el('projQ'); if (q) q.value = '';
+
+    el('viewColleges').classList.add('hidden');
+    el('viewCollege').classList.remove('hidden');
+    document.title = college.name + ' · SmartCEMES';
+
+    /* --- hero --- */
+    const bp = college.budgetAllocated ? SC.pct(college.utilized, college.budgetAllocated) : 0;
+    el('collegeHero').innerHTML = `
+      <div class="sc-card overflow-hidden reveal-item">
+        <div class="h-1.5" style="background:${college.color}"></div>
+        <div class="p-6">
+          <div class="flex items-start gap-4 flex-wrap">
+            <span class="college-crest !w-14 !h-14 !text-[17px]" style="background:${college.color}">${college.code}</span>
+            <div class="min-w-0 flex-1">
+              <h2 class="text-[20px] font-extrabold tracking-tight leading-tight">${esc(college.name)}</h2>
+              <p class="text-[12.5px] text-gray-400 font-medium mt-1">Dean · ${esc(college.dean)}</p>
+              <p class="text-[13px] text-gray-500 leading-relaxed mt-3 max-w-3xl">${esc(college.description)}</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <a href="faculty-management.html?role=admin&college=${college.code}" class="btn btn-outline !px-3 !py-2 text-[12px]">Faculty</a>
+              <a href="programs.html?role=admin&college=${college.code}" class="btn btn-outline !px-3 !py-2 text-[12px]">Programs</a>
+            </div>
+          </div>
+
+          <div class="mt-5 grid sm:grid-cols-2 gap-4 max-w-2xl">
+            <div>
+              <div class="flex items-center justify-between text-[11.5px] mb-1.5">
+                <span class="text-gray-400 font-semibold">Budget utilized</span>
+                <span class="font-bold ${bp > 100 ? 'text-red-600' : 'text-charcoal'}">₱${SC.num(college.utilized)} / ₱${SC.num(college.budgetAllocated)}</span>
+              </div>
+              <div class="progress"><span style="width:${Math.min(bp,100)}%" class="${bp > 100 ? 'bg-red-500' : SC.attainTone(bp)}"></span></div>
+              <p class="text-[10.5px] text-gray-400 font-medium mt-1.5">${bp}% of the college budget</p>
+            </div>
+            <div>
+              <div class="flex items-center justify-between text-[11.5px] mb-1.5">
+                <span class="text-gray-400 font-semibold">Beneficiaries reached</span>
+                <span class="font-bold">${SC.num(college.reached)} / ${SC.num(college.target)}</span>
+              </div>
+              <div class="progress"><span style="width:${Math.min(college.target ? SC.pct(college.reached, college.target) : 0,100)}%" class="bg-lnu"></span></div>
+              <p class="text-[10.5px] text-gray-400 font-medium mt-1.5">${college.target ? SC.pct(college.reached, college.target) : 0}% of the college reach goal</p>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    /* --- KPIs (project-level quantities only; no college hours target) --- */
+    const projs = college.projects;
+    const tr = projs.reduce((a,p) => a + (p.trainors || 0), 0);
+    const te = projs.reduce((a,p) => a + (p.trainees || 0), 0);
+    const acts = projs.reduce((a,p) => a + (p.activityCount || 0), 0);
+    el('collegeKpis').innerHTML = [
+      [projs.length, 'Extension projects', `${college.programCount} broad programs`],
+      [SC.num(tr), 'Trainors', `${college.facultyCount} faculty assigned`],
+      [SC.num(te), 'Trainees', `${acts} activities`],
+      [`₱${SC.num(college.utilized)}`, 'Budget utilized', `of ₱${SC.num(college.budgetAllocated)} allocated`]
+    ].map(([v,cap,sub]) => `
+      <div class="sc-card p-4 reveal-item">
+        <p class="text-[10.5px] font-bold uppercase tracking-[.1em] text-gray-400">${cap}</p>
+        <p class="mt-2 text-[24px] font-extrabold tracking-tight leading-none">${v}</p>
+        <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">${sub}</p>
+      </div>`).join('');
+
+    /* --- projects --- */
+    el('projHeading').textContent = `${esc(college.code)} extension projects`;
+    el('projStatusChips').innerHTML = ['All','Ongoing','Completed','Draft'].map(s => {
+      const n = s === 'All' ? projs.length : projs.filter(p => p.status === s).length;
+      return `<button class="chip ${s === 'All' ? 'on' : ''}" data-status="${s}">${s}${n ? ` <span class="opacity-60">${n}</span>` : ''}</button>`;
+    }).join('');
+
+    renderProjects();
+
+    /* --- faculty --- */
+    const fac = D.faculty.filter(f => f.college === college.code);
+    el('facHeading').textContent = `Faculty assigned to ${college.code} (${fac.length})`;
+    el('facGrid').innerHTML = fac.length ? fac.map(f => {
+      const initials = f.initials || f.name.replace(/^(Prof\.|Dr\.)\s/,'').split(' ').map(w => w[0]).slice(0,2).join('');
+      const projCount = f.projectCount || 0;
+      return `
+      <div class="sc-card p-4 reveal-item fac-mini" tabindex="0" role="button" data-faculty="${esc(f.id)}" aria-label="Open profile of ${esc(f.name)}">
+        <div class="flex items-center gap-3">
+          <span class="avatar w-9 h-9 text-[11px]">${initials}</span>
+          <div class="min-w-0">
+            <p class="text-[12.5px] font-bold truncate">${esc(f.name)}</p>
+            <p class="text-[10.5px] text-gray-400 font-medium truncate">${esc(f.position)}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mt-3.5">
+          <div class="fac-mini-stat">
+            <p class="fac-mini-val">${SC.hours(f.renderedHours)}</p>
+            <p class="fac-mini-lbl">Hours rendered</p>
+          </div>
+          <div class="fac-mini-stat">
+            <p class="fac-mini-val">${projCount}</p>
+            <p class="fac-mini-lbl">Project${projCount === 1 ? '' : 's'}</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mt-3">
+          ${(f.expertise || []).slice(0,2).map(x => `<span class="expertise-tag">${esc(x)}</span>`).join('')}
+        </div>
+      </div>`;
+    }).join('') : `<div class="hub-empty col-span-full">${''}<p class="text-[12.5px] text-gray-400 font-medium">No faculty mapped to this college yet.</p></div>`;
+
+    SC.runCounters();
+    if (pushUrl && history.pushState) {
+      history.pushState({ college: code }, '', `colleges.html?role=admin&college=${code}`);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function statusTone(s) {
+    return s === 'Completed' ? 'badge-green' : s === 'Draft' ? 'badge-yellow' : 'badge-blue';
+  }
+
+  function renderProjects() {
+    const all = CURRENT ? CURRENT.projects : [];
+    const q = PROJ_FILTER.q.trim().toLowerCase();
+    const list = all.filter(p => {
+      if (PROJ_FILTER.status !== 'All' && p.status !== PROJ_FILTER.status) return false;
+      if (!q) return true;
+      return [p.code, p.acr, p.title, p.community && p.community.name, p.lead && p.lead.name]
+        .filter(Boolean).join(' ').toLowerCase().includes(q);
+    });
+
+    el('projGrid').innerHTML = list.map(p => {
+      const hp = p.hoursPct || 0;
+      const lead = (p.lead && p.lead.name) || '—';
+      const coN = (p.coLeads || []).length;
+      return `
+      <button type="button" class="proj-card reveal-item" data-code="${p.code}" aria-label="Open ${esc(p.acr)}">
+        <span class="proj-card-stripe" style="background:${(CURRENT && CURRENT.color) || '#003599'}"></span>
+        <span class="block p-5 flex-1 text-left">
+          <span class="flex items-start justify-between gap-3">
+            <span class="min-w-0">
+              <span class="block font-extrabold text-[14.5px] tracking-tight leading-snug">${esc(p.acr)}</span>
+              <span class="block text-[11px] text-gray-400 font-mono mt-0.5">${p.code}</span>
+            </span>
+            <span class="badge ${statusTone(p.status)} shrink-0">${p.status}</span>
+          </span>
+
+          <span class="block text-[11.5px] text-gray-500 leading-snug mt-2.5 min-h-[32px]">${esc(p.title)}</span>
+
+          <span class="flex items-center gap-1.5 mt-3 text-[11px] text-gray-400 font-medium">
+            ${ico('pin','w-3.5 h-3.5')} ${esc((p.community && p.community.name) || '—')}
+          </span>
+          <span class="flex items-center gap-1.5 mt-1.5 text-[11px] text-gray-400 font-medium">
+            ${ico('people','w-3.5 h-3.5')} ${esc(lead)}${coN ? ` <span class="text-gray-300">+${coN} co-lead${coN>1?'s':''}</span>` : ''}
+          </span>
+
+          <span class="block mt-4 proj-stat">
+            <span class="flex items-center justify-between text-[11px] mb-1.5">
+              <span class="text-gray-400 font-semibold">Training hours</span>
+              <span class="font-bold ${hp >= 100 ? 'text-emerald-600' : 'text-charcoal'}">${SC.hours(p.renderedTrainingHours)} / ${SC.num(p.trainingHoursTarget)}</span>
+            </span>
+            <span class="progress block"><span style="width:${Math.min(hp,100)}%" class="${SC.attainTone(hp)}"></span></span>
+          </span>
+
+          <span class="grid grid-cols-3 gap-2 mt-3">
+            <span class="proj-stat block"><span class="s-val block">${p.trainors || 0}</span><span class="s-cap block">Trainors</span></span>
+            <span class="proj-stat block"><span class="s-val block">${SC.num(p.trainees)}</span><span class="s-cap block">Trainees</span></span>
+            <span class="proj-stat block"><span class="s-val block">${p.activityCount || 0}</span><span class="s-cap block">Activities</span></span>
+          </span>
+        </span>
+        <span class="block px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-[11px] text-gray-400 font-medium">₱${SC.num(p.utilized)} of ₱${SC.num(p.budgetAllocated)}</span>
+          <span class="college-card-cta">View ${arrow}</span>
+        </span>
+      </button>`;
+    }).join('');
+
+    const nothing = list.length === 0;
+    el('projEmpty').classList.toggle('hidden', !nothing);
+    if (nothing) {
+      el('projEmpty').innerHTML = `
+        <div class="hub-empty">
+          <span class="hub-empty-badge">${ico('folder','w-6 h-6')}</span>
+          <p class="text-[13px] font-bold text-gray-600">No projects match this filter</p>
+          <p class="text-[12px] text-gray-400 font-medium mt-1">Try a different status or clear the search.</p>
+        </div>`;
+    }
+    SC.runCounters();
+  }
+
+  el('projGrid').addEventListener('click', e => {
+    const card = e.target.closest('.proj-card');
+    if (card) location.href = `program-detail.html?role=admin&program=${card.dataset.code}`;
+  });
+
+  el('projStatusChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    PROJ_FILTER.status = chip.dataset.status;
+    el('projStatusChips').querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === chip));
+    renderProjects();
+  });
+
+  el('projQ').addEventListener('input', e => { PROJ_FILTER.q = e.target.value; renderProjects(); });
+
+  /* faculty cards deep-link into the directory with the profile pre-opened */
+  el('facGrid').addEventListener('click', e => {
+    const card = e.target.closest('.fac-mini');
+    if (card) location.href = `faculty-directory.html?role=admin&faculty=${card.dataset.faculty}`;
+  });
+  el('facGrid').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.fac-mini');
+    if (card) { e.preventDefault(); location.href = `faculty-directory.html?role=admin&faculty=${card.dataset.faculty}`; }
+  });
+
+  el('backBtn').addEventListener('click', () => goBack(true));
+
+  function goBack(pushUrl) {
+    CURRENT = null;
+    el('viewCollege').classList.add('hidden');
+    el('viewColleges').classList.remove('hidden');
+    document.title = 'Manage Extension Programs · SmartCEMES';
+    if (pushUrl && history.pushState) {
+      history.pushState({}, '', 'colleges.html?role=admin');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  window.addEventListener('popstate', () => {
+    const c = new URLSearchParams(location.search).get('college');
+    if (c) showCollege(c, false); else goBack(false);
+  });
+
+  /* Deep link ?college=CAS opens straight into that college's projects */
+  if (deep && D.colleges.some(c => c.code === deep)) showCollege(deep, false);
+});
+</script>
+</body>
+</html>

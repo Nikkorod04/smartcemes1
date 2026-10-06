@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    SmartCEMES Layout Engine
    Renders role-aware sidebar + topbar, wires notifications,
    toasts, count-up animations, stagger reveals, chart theme.
@@ -33,20 +33,38 @@
     search:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>',
     download:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>',
     upload:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 7.5L12 3m0 0L7.5 7.5M12 3v13.5"/></svg>',
-    eye:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'
+    eye:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+    chevron:'<svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>',
+    list:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>',
+    pencil:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>',
+    lock:'<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>'
   };
 
   const NAV = {
     admin: [
       { section:'Overview', items:[
         { key:'dashboard-admin', label:'Dashboard', href:'dashboard-admin.html', icon:'grid' },
-        { key:'analytics',       label:'Analytics', href:'analytics.html', icon:'chart' },
+        /* Analytics was REMOVED by owner decision 2026-09-27 — see revisions.md.
+           Four of its six tabs duplicated this dashboard, the Faculty tab was
+           superseded by the Faculty module, and the two unique parts (the
+           aggregate pending list and the community-reach chart) were accepted
+           as losses. analytics.html is deleted: do not re-add this entry. */
+        { key:'targets',         label:'University Targets', href:'targets.html', icon:'shield' },
         { key:'calendar',        label:'Calendar',  href:'calendar.html', icon:'calendar' },
       ]},
+      { section:'Extension Programs', items:[
+        /* One entry. Inside it: Colleges → Programs → Projects → Activities.
+           The four sub-pages stay reachable and highlight this entry. */
+        { key:'manage-programs', label:'Manage Extension Programs', href:'colleges.html', icon:'folder', badge:3,
+          subs:['colleges','programs','projects','program-detail'] },
+      ]},
       { section:'Management', items:[
-        { key:'faculty-management', label:'Faculty Management', href:'faculty-management.html', icon:'users' },
-        { key:'programs',           label:'Extension Programs', href:'programs.html', icon:'folder' },
-        { key:'communities',        label:'Communities & Partner Schools', href:'communities.html', icon:'pin' },
+        /* Faculty Management is the engagement dashboard; Faculty Directory
+           is where the roster itself is managed (profiles, expertise, add).
+           Both keys stay so either page highlights correctly. */
+        { key:'faculty-management',   label:'Faculty Management',   href:'faculty-management.html', icon:'users',
+          subs:['faculty-directory'] },
+        { key:'communities',          label:'Communities & Partner Schools', href:'communities.html', icon:'people' },
       ]},
       { section:'Approvals', items:[
         { key:'proposals',      label:'Proposals',             href:'proposals.html', icon:'doc', badge:3 },
@@ -55,8 +73,10 @@
       ]},
       { section:'Intelligence & Reports', items:[
         { key:'ai-analysis',        label:'AI Analysis Review', href:'ai-analysis.html', icon:'sparkles', badge:1 },
-        { key:'program-narratives', label:'Program Narratives', href:'program-narratives.html', icon:'sparkles' },
+        { key:'program-narratives', label:'Project Narratives', href:'program-narratives.html', icon:'sparkles' },
+        { key:'interagency',        label:'Interagency Catalogue', href:'interagency.html', icon:'shield' },
         { key:'reports',            label:'Reports',            href:'reports.html', icon:'doc' },
+        { key:'audit-logs',         label:'Audit Logs',          href:'audit-logs.html', icon:'list' },
       ]},
     ],
     secretary: [
@@ -67,14 +87,16 @@
       { section:'Validation', items:[
         { key:'assessment-review', label:'Assessment Review', href:'assessment-review.html', icon:'doc', badge:2 },
       ]},
-      { section:'Management', items:[
-        { key:'beneficiaries', label:'Manage Beneficiaries', href:'programs.html', icon:'people' },
+      { section:'Reference', items:[
+        { key:'colleges', label:'Colleges',            href:'colleges.html', icon:'pin' },
+        { key:'projects', label:'Extension Projects',  href:'projects.html', icon:'clipboard' },
+        { key:'beneficiaries', label:'Manage Beneficiaries', href:'projects.html', icon:'people' },
       ]},
     ],
     faculty: [
       { section:'Overview', items:[
         { key:'dashboard-faculty', label:'Dashboard',   href:'dashboard-faculty.html', icon:'grid' },
-        { key:'my-programs',       label:'My Programs', href:'my-programs.html', icon:'folder' },
+        { key:'my-programs',       label:'My Projects', href:'my-programs.html', icon:'folder' },
         { key:'calendar',          label:'Calendar',    href:'calendar.html', icon:'calendar' },
       ]},
       { section:'My Extension Work', items:[
@@ -83,6 +105,11 @@
         { key:'assessment-form', label:'Encode Assessment', href:'assessment-form.html', icon:'clipboard' },
         { key:'availability',  label:'Availability Requests', href:'availability.html', icon:'clock', badge:1 },
         { key:'rendered-hours',label:'Rendered Hours',      href:'rendered-hours.html', icon:'clock', badge:1 },
+      ]},
+      { section:'My Profile', items:[
+        /* Faculty maintain their own contact details + expertise here.
+           Assignment fields (position, college, status) are admin-controlled. */
+        { key:'faculty-directory', label:'My Faculty Profile', href:'faculty-directory.html', icon:'users' },
       ]},
     ]
   };
@@ -96,8 +123,24 @@
   let PAGE = document.body.dataset.page || '';
   const U = () => (window.DATA && window.DATA.users) ? window.DATA.users[ROLE] : { name:'…', role:'', initials:'?' };
 
+  /* Render an icon. `cls` may carry extra classes AND a size override.
+     Sizing contract: the w-5 h-5 default is only emitted when the caller did
+     NOT pass a width/height class. Emitting it alongside a caller's size (e.g.
+     'w-3.5 h-3.5') left both classes on the element, and because Tailwind orders
+     .w-5 before .w-3.5 in its utility layer, the 20px default silently won —
+     every "small" icon rendered oversized. */
   function svg(name, cls) {
-    return `<span class="${cls||''} w-5 h-5 inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${ICONS[name]||''}</span>`;
+    const hasSize = /(^|\s)!?[wh]-(\[|\d|px|full|auto)/.test(cls || '');
+    const size = hasSize ? '' : 'w-5 h-5 ';
+    return `<span class="${cls||''} ${size}inline-flex shrink-0 [&>svg]:w-full [&>svg]:h-full">${ICONS[name]||''}</span>`;
+  }
+
+  /* A nav entry is "active" when its own key matches the page, or when the page
+     is one of its declared sub-keys (used by the collapsed "Manage Extension
+     Programs" hub so in-hub drill-downs keep the entry lit). */
+  function isActive(it) {
+    if (it.key === PAGE) return true;
+    return !!(it.subs && it.subs.includes(PAGE));
   }
 
   /* ---------- Sidebar ---------- */
@@ -107,10 +150,11 @@
         <p class="px-3 mb-2 text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">${g.section}</p>
         <nav class="space-y-1">
           ${g.items.map(it => `
-            <a href="${it.href}" class="sc-nav-link ${it.key===PAGE?'active':''}">
+            <a href="${it.href}" class="sc-nav-link ${isActive(it)?'active':''}">
               ${svg(it.icon)}
               <span>${it.label}</span>
               ${it.badge ? `<span class="sc-nav-badge">${it.badge}</span>` : ''}
+              ${it.subs ? svg('chevron','w-3.5 h-3.5 nav-chevron') : ''}
             </a>`).join('')}
         </nav>
       </div>`).join('');
@@ -150,6 +194,9 @@
     for (const g of NAV[ROLE]) {
       const hit = g.items.find(i => i.key === PAGE);
       if (hit) return hit.label;
+      // Sub-page of a collapsed hub (e.g. program-detail under Manage Extension Programs)
+      const parent = g.items.find(i => i.subs && i.subs.includes(PAGE));
+      if (parent) return parent.label;
     }
     return document.title.split('·')[0].trim() || 'SmartCEMES';
   }
@@ -277,6 +324,29 @@
     });
   }
 
+  /* Pages render most of their markup from JS *after* boot(), so a single pass at
+     DOMContentLoaded is not enough — tokens emitted by a render function would sit
+     in the DOM as literal "[[icon]]" text. Watch for injected nodes and expand them.
+     Re-entrancy guard stops the observer from reacting to its own insertions. */
+  let expanding = false;
+  function watchIconTokens() {
+    if (typeof MutationObserver === 'undefined') return;
+    const obs = new MutationObserver(muts => {
+      if (expanding) return;
+      const targets = [];
+      for (const m of muts) {
+        m.addedNodes.forEach(n => {
+          if (n.nodeType === 1) targets.push(n);
+          else if (n.nodeType === 3 && n.nodeValue && n.nodeValue.indexOf('[[') !== -1 && n.parentNode) targets.push(n.parentNode);
+        });
+      }
+      if (!targets.length) return;
+      expanding = true;
+      try { targets.forEach(t => expandIcons(t)); } finally { expanding = false; }
+    });
+    obs.observe(document.body, { childList:true, subtree:true });
+  }
+
   /* ---------- Keep demo role across in-app navigation ---------- */
   function carryRole() {
     if (!__qp.get('role')) return;
@@ -297,6 +367,7 @@
     document.body.insertAdjacentHTML('beforeend','<div id="sc-toasts" class="fixed bottom-5 right-5 z-[90] space-y-2 no-print"></div>');
     stagger();
     runCounters();
+    watchIconTokens();
   }
   document.addEventListener('DOMContentLoaded', boot);
 
@@ -316,13 +387,63 @@
   });
 
   /* ---------- Public helpers ---------- */
+  const COLLEGE_LABEL = { CAS:'CAS', COE:'COE', CME:'CME' };
+  const TIER_META = {
+    1: { label:'Tier 1 · CESO intervention', short:'CESO', cls:'tier-1',
+         hint:'Within CESO and LNU college expertise — deliverable as a CESO extension activity.' },
+    2: { label:'Tier 2 · Interagency referral', short:'Interagency', cls:'tier-2',
+         hint:'Outside CESO delivery scope. Flagged for referral to the named government agency.' },
+    3: { label:'Tier 3 · Prohibited', short:'Prohibited', cls:'tier-3',
+         hint:'Never surfaced as a CESO recommendation. Recorded for audit only.' }
+  };
+
   window.SC = {
     icons: ICONS,
     svg,
     toast,
     runCounters,
+    expandIcons,
     role: () => ROLE,
     money: n => '₱' + Number(n).toLocaleString('en-PH'),
-    pct: (a,b) => b ? Math.round(a/b*100) : 0
+    pct: (a,b) => b ? Math.round(a/b*100) : 0,
+    num: n => Number(n || 0).toLocaleString('en-PH'),
+    // 1,234.5 -> "1,234.5" ; keeps halves visible for training hours
+    hours: n => Number(n || 0).toLocaleString('en-PH', { maximumFractionDigits:1 }),
+
+    /* College pill */
+    collegePill(code, label) {
+      if (!code || code === '—') return '<span class="badge badge-gray">—</span>';
+      return `<span class="college-pill college-${code}">${label || COLLEGE_LABEL[code] || code}</span>`;
+    },
+    /* Pillar chip */
+    pillarChip(p) {
+      if (!p || p === '—') return '';
+      return `<span class="pillar pillar-${p}">${p}</span>`;
+    },
+    /* AI guardrail tier badge */
+    tierBadge(t) {
+      const m = TIER_META[t]; if (!m) return '';
+      return `<span class="tier-badge ${m.cls}" title="${m.hint}">${m.label}</span>`;
+    },
+    tierMeta: t => TIER_META[t],
+    collegeMeta: code => (window.DATA.colleges || []).find(c => c.code === code) || null,
+
+    /* Training-hours formula string for an activity */
+    hoursFormula: a => a.formula || '',
+
+    /* Progress-bar colour by attainment */
+    attainTone(pct) {
+      if (pct >= 100) return 'bg-emerald-500';
+      if (pct >= 70)  return 'bg-lnu-600';
+      if (pct > 0)    return 'bg-gold-500';
+      return 'bg-gray-300';
+    },
+    /* Status chip tone */
+    attainBadge(pct) {
+      if (pct >= 100) return 'badge-green';
+      if (pct >= 70)  return 'badge-blue';
+      if (pct > 0)    return 'badge-yellow';
+      return 'badge-gray';
+    }
   };
 })();

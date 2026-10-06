@@ -22,8 +22,14 @@ class AssessmentSummaryService
         'Very good' => 5,
     ];
 
-    public function __construct(protected KpiService $kpi) {}
-
+    /**
+     * R7: this class used to take `KpiService` in its constructor and never use
+     * it — a leftover from the 8.6 KPI dictionary that D-R7 removed. Dropping the
+     * parameter is safe: the only caller resolves this class from the container
+     * with no explicit arguments (`app(AssessmentSummaryService::class)`).
+     *
+     * `KpiService` itself remains in the codebase, retained unread (R-Q2).
+     */
     public function recomputeFor(int $communityId, int $quarter, int $year): AssessmentSummary
     {
         $batch = NeedsAssessment::query()

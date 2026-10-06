@@ -30,7 +30,40 @@
         </div>
       </div>
     </div>
-    <p class="mt-2.5 text-[11.5px] text-gray-400 leading-relaxed max-w-4xl">Only aggregate counts and percentages derived from validated summaries were sent to the language model. Raw responses never leave the server. Human approval is required before this analysis is cited institutionally.</p>
+    <p class="mt-2.5 text-[11.5px] text-gray-400 leading-relaxed max-w-4xl">Only aggregate counts and percentages derived from validated summaries were sent to the language model. Raw responses never leave the server. Recommendations are constrained to CESO's delivery remit — anything outside it is flagged as an interagency intervention. Human approval is required before this analysis is cited institutionally.</p>
+  </section>
+
+  <!-- ===================== SCOPE GUARDRAIL ===================== -->
+  <section class="mt-4 reveal-item">
+    <div class="sc-card p-5 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+          <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0">[[shield]]</span>
+          <div class="min-w-0">
+            <h3 class="font-extrabold text-[14.5px] tracking-tight">CESO Scope Guardrail</h3>
+            <p class="text-[11.5px] text-gray-500 mt-0.5 leading-relaxed max-w-3xl">The model may only recommend interventions CESO can deliver through LNU faculty expertise across the <b>social</b>, <b>economic</b>, and <b>environmental</b> pillars. Anything outside that remit is separated out and attributed to the responsible government agency as an <b>interagency intervention</b> — it is never presented as a CESO recommendation.</p>
+          </div>
+        </div>
+        <span id="scopeBadge" class="badge badge-gold shrink-0">guardrail active</span>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mt-4">
+        <div class="stat-tile">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-lnu-700">Tier 1 · In CESO scope</p>
+          <p class="mt-1.5 text-[20px] font-extrabold leading-none text-lnu-900" id="tierCount1">0</p>
+          <p class="text-[10.5px] text-gray-500 mt-1">Deliverable by CAS / COE / CME faculty</p>
+        </div>
+        <div class="stat-tile">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-gold-700">Tier 2 · Interagency referral</p>
+          <p class="mt-1.5 text-[20px] font-extrabold leading-none text-gold-700" id="tierCount2">0</p>
+          <p class="text-[10.5px] text-gray-500 mt-1">Flagged and routed to a named agency</p>
+        </div>
+        <div class="stat-tile">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Tier 3 · Suppressed</p>
+          <p class="mt-1.5 text-[20px] font-extrabold leading-none text-gray-500" id="tierCount3">0</p>
+          <p class="text-[10.5px] text-gray-500 mt-1">Not surfaced as a recommendation at all</p>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ===================== NARRATIVE + INTERVENTIONS ===================== -->
@@ -59,7 +92,7 @@
           <span class="badge badge-blue">from aggregates</span>
         </div>
         <ol id="priorityNeeds" class="space-y-2.5"></ol>
-        <p class="text-[11px] text-gray-400 mt-3">Derived from the AssessmentSummary aggregates for Brgy. San Jose · Q2 2026 — the exact statistics transmitted to the model (D3).</p>
+        <p class="text-[11px] text-gray-400 mt-3">Derived from the AssessmentSummary aggregates for Brgy. San Jose · Q2 2026 — the exact statistics transmitted to the model.</p>
       </div>
     </div>
   </section>
@@ -70,7 +103,7 @@
       <span class="w-9 h-9 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0">[[shield]]</span>
       <div class="min-w-0">
         <p class="text-[13px] font-bold leading-snug">As CESO Director, your approval makes this analysis citable in reports.</p>
-        <p class="text-[11px] text-gray-400 mt-0.5">Approval is signed with your name and timestamp, then archived to the audit log.</p>
+        <p class="text-[11px] text-gray-400 mt-0.5">Approval is signed with your name and timestamp and archived to the audit log. Scope classification is stored with the analysis.</p>
       </div>
       <div id="actionBtns" class="ml-auto flex items-center gap-2 shrink-0">
         <button onclick="regenerate()" class="btn btn-outline">⟳ Regenerate</button>
@@ -110,7 +143,7 @@
           <tr class="bg-lnu-50/40">
             <td class="font-semibold">Brgy. San Jose · Q2 2026 <span class="badge badge-blue !text-[10px] ml-1">viewing</span></td>
             <td class="text-gray-500">Aug 24, 2026 · 9:42 AM</td>
-            <td class="text-gray-500 font-mono text-[11.5px]">gpt-4o-mini</td>
+            <td class="text-gray-500 font-mono text-[11.5px]">gemini-2.0-flash</td>
             <td><span class="badge badge-yellow"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 pulse-dot"></span>draft</span></td>
             <td class="text-gray-400">—</td>
             <td class="!text-right"><a href="#" class="text-[12px] font-bold text-lnu-800" onclick="event.preventDefault();SC.toast('Currently viewing this analysis','info')">current →</a></td>
@@ -118,23 +151,23 @@
           <tr>
             <td class="font-semibold">Brgy. San Jose · Q1 2026</td>
             <td class="text-gray-500">May 12, 2026 · 2:18 PM</td>
-            <td class="text-gray-500 font-mono text-[11.5px]">gpt-4o-mini</td>
+            <td class="text-gray-500 font-mono text-[11.5px]">gemini-2.0-flash</td>
             <td><span class="badge badge-green">approved</span></td>
-            <td class="text-gray-600 font-semibold">Dr. Ma. Cristina A. Peñaranda</td>
+            <td class="text-gray-600 font-semibold">Dr. Lowell A. Quisumbing</td>
             <td class="!text-right"><a href="#" onclick="event.preventDefault();SC.toast('Approved analyses are citable in institutional reports','info')" class="text-[12px] font-bold text-lnu-800">view →</a></td>
           </tr>
           <tr>
             <td class="font-semibold">Brgy. El Reposo · Q1 2026</td>
             <td class="text-gray-500">Mar 02, 2026 · 10:05 AM</td>
-            <td class="text-gray-500 font-mono text-[11.5px]">gpt-4o-mini</td>
+            <td class="text-gray-500 font-mono text-[11.5px]">gemini-2.0-flash</td>
             <td><span class="badge badge-green">approved</span></td>
-            <td class="text-gray-600 font-semibold">Dr. Ma. Cristina A. Peñaranda</td>
+            <td class="text-gray-600 font-semibold">Dr. Lowell A. Quisumbing</td>
             <td class="!text-right"><a href="#" onclick="event.preventDefault();SC.toast('Approved analysis — locked and logged','info')" class="text-[12px] font-bold text-lnu-800">view →</a></td>
           </tr>
           <tr>
             <td class="font-semibold">Brgy. Sagkahan · Q2 2026</td>
             <td class="text-gray-500">Aug 22, 2026 · 4:31 PM</td>
-            <td class="text-gray-500 font-mono text-[11.5px]">gpt-4o-mini</td>
+            <td class="text-gray-500 font-mono text-[11.5px]">gemini-2.0-flash</td>
             <td id="sagkahanStatus"><span class="badge badge-red">failed</span></td>
             <td class="text-gray-400">—</td>
             <td class="!text-right" id="sagkahanAction"><button onclick="retrySagkahan(this)" class="btn btn-outline !px-2.5 !py-1.5 text-[11px]">⟳ Retry</button></td>
@@ -153,7 +186,7 @@
     <p class="reveal-item mt-2.5 text-[11.5px] text-gray-400 leading-relaxed max-w-4xl">Pipeline states are first-class UI states: <span class="badge badge-gray !text-[10px]">pending</span> queued · <span class="badge badge-yellow !text-[10px]">draft</span> awaiting review · <span class="badge badge-green !text-[10px]">approved</span> citable · <span class="badge badge-red !text-[10px]">failed</span> "analysis unavailable" — never a silent error. Retry with backoff is automatic; manual retry is available to the Director.</p>
   </section>
 
-  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.1 Prototype · Community Extension Services Office · Leyte Normal University</footer>
+  <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University</footer>
 </main>
 
 <script src="../assets/vendor/alpine.min.js" defer></script>
@@ -179,18 +212,49 @@ function renderNarrative() {
     </div>`).join('');
 }
 
+/* Three-tier guardrail: tier 1 = CESO intervention, tier 2 = interagency
+   referral (named agency), tier 3 = suppressed (never shown as a rec). */
+const TIER_META = { 1: SC.tierMeta(1), 2: SC.tierMeta(2), 3: SC.tierMeta(3) };
+
 function renderInterventions() {
-  document.getElementById('interventionsList').innerHTML = A.interventions.map(it => `
-    <li class="flex gap-3 p-3 rounded-xl border border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition">
-      <span class="w-8 h-8 rounded-full flex items-center justify-center text-[12.5px] font-extrabold shrink-0 ${RANK_TONE(it.rank)}">${it.rank}</span>
-      <div class="min-w-0 flex-1">
-        <div class="flex items-start justify-between gap-2">
-          <p class="text-[13px] font-bold leading-snug">${it.title}</p>
-          ${PRIORITY_BADGE(it.priority)}
+  const items = (A.interventions || []).filter(it => it.tier !== 3);
+  document.getElementById('interventionsBadge').textContent = items.length + ' actions';
+  document.getElementById('interventionsList').innerHTML = items.map(it => {
+    const t = TIER_META[it.tier] || TIER_META[1];
+    return `
+    <li class="tier-card tier-${it.tier}">
+      <div class="flex gap-3">
+        <span class="w-8 h-8 rounded-full flex items-center justify-center text-[12.5px] font-extrabold shrink-0 ${RANK_TONE(it.rank)}">${it.rank}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-[13px] font-bold leading-snug">${it.title}</p>
+            ${PRIORITY_BADGE(it.priority)}
+          </div>
+          <p class="text-[11.5px] text-gray-500 mt-1 leading-relaxed">${it.detail}</p>
+          <div class="flex flex-wrap items-center gap-1.5 mt-2">
+            <span class="tier-badge tier-${it.tier}">${t.label}</span>
+            ${SC.pillarChip(it.pillar)}
+            ${it.tier === 2 && it.agency
+              ? `<span class="interagency-note">[[shield]] Refer to <b>${it.agency}</b></span>`
+              : `<span class="text-[10.5px] text-gray-400 font-medium">${it.scope || ''}</span>`}
+          </div>
         </div>
-        <p class="text-[11.5px] text-gray-500 mt-1 leading-relaxed">${it.detail}</p>
       </div>
-    </li>`).join('');
+    </li>`;
+  }).join('');
+}
+
+function renderScopeCounts() {
+  const all = A.interventions || [];
+  const c1 = all.filter(i => i.tier === 1).length;
+  const c2 = all.filter(i => i.tier === 2).length;
+  const c3 = all.filter(i => i.tier === 3).length;
+  document.getElementById('tierCount1').textContent = c1;
+  document.getElementById('tierCount2').textContent = c2;
+  document.getElementById('tierCount3').textContent = c3;
+  const badge = document.getElementById('scopeBadge');
+  if (c2 > 0) { badge.textContent = c2 + ' interagency referral' + (c2 === 1 ? '' : 's'); badge.className = 'badge badge-gold shrink-0'; }
+  else { badge.textContent = 'guardrail active · all in scope'; badge.className = 'badge badge-green shrink-0'; }
 }
 
 function renderHeroMeta() {
@@ -230,8 +294,9 @@ function regenerate() {
   setTimeout(() => {
     renderNarrative();
     renderInterventions();
+    renderScopeCounts();
     regenBusy = false;
-    SC.toast('Narrative regenerated from latest aggregates', 'info');
+    SC.toast('Narrative regenerated from latest aggregates · scope guardrail re-applied', 'info');
   }, 1600);
 }
 

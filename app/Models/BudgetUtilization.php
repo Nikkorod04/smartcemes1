@@ -11,7 +11,7 @@ class BudgetUtilization extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'extension_program_id',
+        'extension_project_id',
         'activity_id',
         'item_name',
         'description',
@@ -27,7 +27,7 @@ class BudgetUtilization extends Model
 
     public function program()
     {
-        return $this->belongsTo(ExtensionProgram::class, 'extension_program_id');
+        return $this->belongsTo(ExtensionProject::class, 'extension_project_id');
     }
 
     public function activity()

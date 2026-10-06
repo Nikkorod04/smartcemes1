@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Encode Assessment Â· SmartCEMES</title>
+<title>Encode Assessment · SmartCEMES</title>
 <script src="../assets/vendor/tailwind.js"></script>
 <script src="../assets/js/tw-config.js"></script>
 <link rel="stylesheet" href="../assets/css/smartcemes.css">
@@ -22,7 +22,7 @@
         <span class="w-11 h-11 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center">[[clipboard]]</span>
         <div>
           <h2 class="text-[17px] font-extrabold tracking-tight leading-tight">Needs-Assessment Encoding</h2>
-          <p class="text-[12px] text-gray-400 font-medium mt-0.5">Community Needs-Assessment Instrument Â· entries autosave to this device</p>
+          <p class="text-[12px] text-gray-400 font-medium mt-0.5">Community Needs-Assessment Instrument · entries autosave to this device</p>
         </div>
       </div>
       <div class="flex items-end gap-5 flex-wrap">
@@ -80,32 +80,32 @@
     <!-- Stepper header -->
     <div class="sc-card px-6 py-4 flex items-center">
       <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
-        <button type="button" class="step-dot" :class="s>1?'step-dot done':(s===1?'step-dot on':'step-dot')" @click="s=1"><span x-text="s>1?'âœ“':1">1</span></button>
+        <button type="button" class="step-dot" :class="s>1?'step-dot done':(s===1?'step-dot on':'step-dot')" @click="s=1"><span x-text="s>1?'✓':1">1</span></button>
         <span class="text-[10px] font-bold tracking-wide" :class="s===1?'text-lnu-800':'text-gray-400'">Profile</span>
       </div>
       <div class="step-line mt-[17px]" :class="s>1?'done':''"></div>
       <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
-        <button type="button" class="step-dot" :class="s>2?'step-dot done':(s===2?'step-dot on':'step-dot')" @click="s=2"><span x-text="s>2?'âœ“':2">2</span></button>
+        <button type="button" class="step-dot" :class="s>2?'step-dot done':(s===2?'step-dot on':'step-dot')" @click="s=2"><span x-text="s>2?'✓':2">2</span></button>
         <span class="text-[10px] font-bold tracking-wide text-center leading-tight" :class="s===2?'text-lnu-800':'text-gray-400'">Livelihood &amp; Education</span>
       </div>
       <div class="step-line mt-[17px]" :class="s>2?'done':''"></div>
       <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
-        <button type="button" class="step-dot" :class="s>3?'step-dot done':(s===3?'step-dot on':'step-dot')" @click="s=3"><span x-text="s>3?'âœ“':3">3</span></button>
+        <button type="button" class="step-dot" :class="s>3?'step-dot done':(s===3?'step-dot on':'step-dot')" @click="s=3"><span x-text="s>3?'✓':3">3</span></button>
         <span class="text-[10px] font-bold tracking-wide text-center leading-tight" :class="s===3?'text-lnu-800':'text-gray-400'">Health &amp; Housing</span>
       </div>
       <div class="step-line mt-[17px]" :class="s>3?'done':''"></div>
       <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
-        <button type="button" class="step-dot" :class="s>4?'step-dot done':(s===4?'step-dot on':'step-dot')" @click="s=4"><span x-text="s>4?'âœ“':4">4</span></button>
+        <button type="button" class="step-dot" :class="s>4?'step-dot done':(s===4?'step-dot on':'step-dot')" @click="s=4"><span x-text="s>4?'✓':4">4</span></button>
         <span class="text-[10px] font-bold tracking-wide text-center leading-tight" :class="s===4?'text-lnu-800':'text-gray-400'">Community Life</span>
       </div>
       <div class="step-line mt-[17px]" :class="s>4?'done':''"></div>
       <div class="flex flex-col items-center gap-1.5 shrink-0 w-[104px]">
-        <button type="button" class="step-dot" :class="s===5?'step-dot on':'step-dot'" @click="s=5"><span x-text="s>5?'âœ“':5">5</span></button>
+        <button type="button" class="step-dot" :class="s===5?'step-dot on':'step-dot'" @click="s=5"><span x-text="s>5?'✓':5">5</span></button>
         <span class="text-[10px] font-bold tracking-wide" :class="s===5?'text-lnu-800':'text-gray-400'">Review</span>
       </div>
     </div>
 
-    <!-- ============ STEP 1 Â· PROFILE ============ -->
+    <!-- ============ STEP 1 · PROFILE ============ -->
     <div x-cloak x-show="s===1" class="sc-card p-6 mt-4">
       <div class="flex items-center justify-between mb-5">
         <h3 class="font-extrabold text-[15px] tracking-tight">Respondent Profile</h3>
@@ -178,7 +178,7 @@
       </div>
     </div>
 
-    <!-- ============ STEP 2 Â· LIVELIHOOD & EDUCATION ============ -->
+    <!-- ============ STEP 2 · LIVELIHOOD & EDUCATION ============ -->
     <div x-cloak x-show="s===2" class="sc-card p-6 mt-4">
       <div class="flex items-center justify-between mb-5">
         <h3 class="font-extrabold text-[15px] tracking-tight">Livelihood &amp; Education</h3>
@@ -186,7 +186,7 @@
       </div>
 
       <div>
-        <p class="text-[12px] font-semibold mb-2">Main Source of Household Livelihood <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+        <p class="text-[12px] font-semibold mb-2">Main Source of Household Livelihood <span class="text-[11px] text-gray-400 font-normal">· choose one</span></p>
         <div class="chip-group flex flex-wrap gap-2" data-single id="gLiv">
           <button type="button" class="chip on">Farming</button>
           <button type="button" class="chip">Fishing</button>
@@ -213,7 +213,7 @@
       </div>
 
       <div class="mt-5">
-        <p class="text-[12px] font-semibold mb-2">Desired Livelihood Training <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+        <p class="text-[12px] font-semibold mb-2">Desired Livelihood Training <span class="text-[11px] text-gray-400 font-normal">· choose one</span></p>
         <div class="chip-group flex flex-wrap gap-2" data-single id="gDesire">
           <button type="button" class="chip on">Food processing</button>
           <button type="button" class="chip">Soap making</button>
@@ -259,7 +259,7 @@
       </div>
     </div>
 
-    <!-- ============ STEP 3 Â· HEALTH & HOUSING ============ -->
+    <!-- ============ STEP 3 · HEALTH & HOUSING ============ -->
     <div x-cloak x-show="s===3" class="sc-card p-6 mt-4">
       <div class="flex items-center justify-between mb-5">
         <h3 class="font-extrabold text-[15px] tracking-tight">Health &amp; Housing</h3>
@@ -267,7 +267,7 @@
       </div>
 
       <div>
-        <p class="text-[12px] font-semibold mb-2">Most Common Illness <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+        <p class="text-[12px] font-semibold mb-2">Most Common Illness <span class="text-[11px] text-gray-400 font-normal">· choose one</span></p>
         <div class="chip-group flex flex-wrap gap-2" data-single id="gIll">
           <button type="button" class="chip on">Hypertension</button>
           <button type="button" class="chip">Fever</button>
@@ -279,7 +279,7 @@
 
       <div class="grid grid-cols-2 gap-6 mt-5">
         <div>
-          <p class="text-[12px] font-semibold mb-2">Main Water Source <span class="text-[11px] text-gray-400 font-normal">Â· choose one</span></p>
+          <p class="text-[12px] font-semibold mb-2">Main Water Source <span class="text-[11px] text-gray-400 font-normal">· choose one</span></p>
           <div class="chip-group flex flex-wrap gap-2" data-single id="gWater">
             <button type="button" class="chip on">Deep well</button>
             <button type="button" class="chip">Community water system</button>
@@ -291,7 +291,7 @@
           <p class="text-[12px] font-semibold mb-2">Distance to Water Source</p>
           <div class="chip-group flex flex-wrap gap-2" data-single id="gDist">
             <button type="button" class="chip on">Within the community</button>
-            <button type="button" class="chip">1â€“3 km walk</button>
+            <button type="button" class="chip">1–3 km walk</button>
             <button type="button" class="chip">More than 3 km</button>
           </div>
         </div>
@@ -316,7 +316,7 @@
       </div>
 
       <div class="mt-5">
-        <p class="text-[12px] font-semibold mb-2">Appliances Owned <span class="text-[11px] text-gray-400 font-normal">Â· select all that apply</span></p>
+        <p class="text-[12px] font-semibold mb-2">Appliances Owned <span class="text-[11px] text-gray-400 font-normal">· select all that apply</span></p>
         <div class="chip-group flex flex-wrap gap-2" id="gApp">
           <button type="button" class="chip on">Television</button>
           <button type="button" class="chip on">Cellphone</button>
@@ -328,7 +328,7 @@
       </div>
     </div>
 
-    <!-- ============ STEP 4 Â· COMMUNITY LIFE ============ -->
+    <!-- ============ STEP 4 · COMMUNITY LIFE ============ -->
     <div x-cloak x-show="s===4" class="sc-card p-6 mt-4">
       <div class="flex items-center justify-between mb-5">
         <h3 class="font-extrabold text-[15px] tracking-tight">Community Life</h3>
@@ -366,7 +366,7 @@
         </div>
       </div>
 
-      <p class="text-[12px] font-semibold mt-5 mb-2">Problems Experienced <span class="text-[11px] text-gray-400 font-normal">Â· select up to 3 per area</span></p>
+      <p class="text-[12px] font-semibold mt-5 mb-2">Problems Experienced <span class="text-[11px] text-gray-400 font-normal">· select up to 3 per area</span></p>
       <div class="grid grid-cols-3 gap-4">
         <div class="rounded-xl border border-gray-100 p-4">
           <p class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2.5">Family</p>
@@ -402,11 +402,11 @@
           <p class="text-[12px] font-semibold mb-2">Rating of Community Services</p>
           <div class="flex items-center gap-3">
             <div id="afStars" class="flex gap-1">
-              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="1">â˜…</button>
-              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="2">â˜…</button>
-              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="3">â˜…</button>
-              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="4">â˜…</button>
-              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="5">â˜…</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="1">★</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="2">★</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="3">★</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="4">★</button>
+              <button type="button" class="star-btn text-[24px] leading-none transition" data-star="5">★</button>
             </div>
             <span id="afStarsLabel" class="text-[11.5px] text-gray-400 font-semibold">Good</span>
           </div>
@@ -426,7 +426,7 @@
       </div>
     </div>
 
-    <!-- ============ STEP 5 Â· REVIEW ============ -->
+    <!-- ============ STEP 5 · REVIEW ============ -->
     <div x-cloak x-show="s===5" class="mt-4 grid grid-cols-3 gap-4 items-start">
       <div class="sc-card p-6 col-span-2">
         <div class="flex items-center justify-between mb-4">
@@ -439,7 +439,7 @@
         <div>
           <p class="text-[12px] font-extrabold mb-2">Completeness</p>
           <div class="progress"><span id="afMeterBar" style="width:0%" class="bg-lnu"></span></div>
-          <p id="afMeterText" class="text-[11.5px] text-gray-400 font-medium mt-2">â€”</p>
+          <p id="afMeterText" class="text-[11.5px] text-gray-400 font-medium mt-2">—</p>
         </div>
         <div class="border-l-4 border-gold bg-gold-50 rounded-r-xl p-3.5">
           <p class="text-[12px] font-extrabold text-gold-800">Before you submit</p>
@@ -451,16 +451,16 @@
 
     <!-- Wizard nav -->
     <div class="mt-4 flex items-center justify-between no-print">
-      <p class="text-[11.5px] text-gray-400 font-medium">Step <span x-text="s">1</span> of 5 Â· answers autosave to this device</p>
+      <p class="text-[11.5px] text-gray-400 font-medium">Step <span x-text="s">1</span> of 5 · answers autosave to this device</p>
       <div class="flex gap-2">
         <button type="button" class="btn btn-outline" :class="s===1?'opacity-40 pointer-events-none':''" @click="s=Math.max(1,s-1)">â† Back</button>
-        <button type="button" x-show="s<5" class="btn btn-primary" @click="s=Math.min(5,s+1)">Next Step â†’</button>
+        <button type="button" x-show="s<5" class="btn btn-primary" @click="s=Math.min(5,s+1)">Next Step →</button>
       </div>
     </div>
   </section>
 
   <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
-    SmartCEMES v4.1 Prototype Â· Community Extension Services Office Â· Leyte Normal University
+    SmartCEMES v4.2 Prototype · Community Extension Services Office · Leyte Normal University
   </footer>
 </main>
 
@@ -473,7 +473,7 @@
         <h3 class="font-extrabold text-[16px] tracking-tight flex items-center gap-2">
           <span class="[&>span]:w-5 [&>span]:h-5 text-lnu-700">[[doc]]</span> Import from Official Template
         </h3>
-        <button @click="window.dispatchEvent(new CustomEvent('close-import'))" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">Ã—</button>
+        <button @click="window.dispatchEvent(new CustomEvent('close-import'))" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition text-lg leading-none">×</button>
       </div>
 
       <!-- STEP: upload -->
@@ -485,11 +485,11 @@
         <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-lnu-300 transition cursor-pointer">
           <span class="mx-auto w-12 h-12 rounded-2xl bg-lnu-50 text-lnu-700 flex items-center justify-center">[[doc]]</span>
           <p class="mt-3 font-bold text-[13.5px]">Drop your .xlsx file here, or click to browse</p>
-          <p class="text-[11.5px] text-gray-400 mt-1">Max 10 MB Â· official template only Â· .xlsx</p>
+          <p class="text-[11.5px] text-gray-400 mt-1">Max 10 MB · official template only · .xlsx</p>
         </div>
         <div class="flex items-center justify-between pt-2">
           <button onclick="SC.toast('Official template downloaded — assessment-template-v2.xlsx','info')" class="btn btn-ghost !px-3 text-[12px]">↓ Download official template</button>
-          <button @click="step='preview'; window.dispatchEvent(new CustomEvent('import-parsed'))" class="btn btn-primary">Parse file â†’</button>
+          <button @click="step='preview'; window.dispatchEvent(new CustomEvent('import-parsed'))" class="btn btn-primary">Parse file →</button>
         </div>
       </div>
 
@@ -497,7 +497,7 @@
       <div x-show="step==='preview'" class="space-y-4">
         <div class="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-3">
           <span class="[&>span]:w-4 [&>span]:h-4 text-lnu-600 shrink-0">[[clipboard]]</span>
-          <p class="text-[12px] text-gray-500 leading-snug">Imported from <b>brgy-san-jose-q3-respondent-01.xlsx</b> â€” review the parsed values. <b>2 fields</b> were auto-mapped to "Other" (shown in gold). Fix or confirm to create the assessment.</p>
+          <p class="text-[12px] text-gray-500 leading-snug">Imported from <b>brgy-san-jose-q3-respondent-01.xlsx</b> — review the parsed values. <b>2 fields</b> were auto-mapped to "Other" (shown in gold). Fix or confirm to create the assessment.</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -528,7 +528,7 @@
 
         <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
           <span class="[&>span]:w-4 [&>span]:h-4 text-amber-600 shrink-0">[[clock]]</span>
-          <p class="text-[12px] text-gray-600 leading-snug">On confirm, the record is created in <b>Pending</b> review status and routed to the Secretary for validation â€” same as manual entry. Errors can be corrected here before saving.</p>
+          <p class="text-[12px] text-gray-600 leading-snug">On confirm, the record is created in <b>Pending</b> review status and routed to the Secretary for validation — same as manual entry. Errors can be corrected here before saving.</p>
         </div>
 
         <div class="mt-4 flex items-center justify-end gap-2">
@@ -548,7 +548,7 @@
       <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="w-10 h-10 text-white"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
     </div>
     <h3 class="font-extrabold text-[17px] tracking-tight mt-5">Assessment encoded successfully</h3>
-    <p id="afMeta" class="text-[12px] text-gray-400 font-medium mt-1.5">â€”</p>
+    <p id="afMeta" class="text-[12px] text-gray-400 font-medium mt-1.5">—</p>
     <div class="flex gap-2 mt-6">
       <button type="button" onclick="AF.reset()" class="btn btn-outline flex-1">Encode Another</button>
       <a href="dashboard-faculty.html?role=faculty" class="btn btn-primary flex-1">Back to Dashboard</a>
@@ -599,22 +599,22 @@ window.AF = (() => {
     $('afNum').textContent = n;
     $('afRing').style.strokeDashoffset = (163.36 * (1 - n / TOTAL)).toFixed(2);
     $('afMeterBar').style.width = pct + '%';
-    $('afMeterText').textContent = n + ' of ' + TOTAL + ' fields answered Â· ' + pct + '% complete';
+    $('afMeterText').textContent = n + ' of ' + TOTAL + ' fields answered · ' + pct + '% complete';
     return n;
   }
 
   function reviewRow(label, value) {
     return '<div class="py-2.5 grid grid-cols-[190px_1fr] gap-4">' +
       '<dt class="text-[11.5px] font-semibold text-gray-400">' + label + '</dt>' +
-      '<dd class="text-[12.5px] font-medium text-charcoal break-words">' + (value || 'â€”') + '</dd></div>';
+      '<dd class="text-[12.5px] font-medium text-charcoal break-words">' + (value || '—') + '</dd></div>';
   }
 
   function buildReview() {
-    const stars = 'â˜…â˜…â˜…â˜…â˜…'.slice(0, rating) + 'â˜†â˜†â˜†â˜†â˜†'.slice(0, 5 - rating) + ' Â· ' + RATING_LABELS[rating - 1];
+    const stars = '★★★★★'.slice(0, rating) + '☆☆☆☆☆'.slice(0, 5 - rating) + ' · ' + RATING_LABELS[rating - 1];
     const fb = val('afFeedback');
     const rows = [
       ['Respondent', (val('afFn') + ' ' + val('afMn') + ' ' + val('afLn')).replace(/\s+/g, ' ').trim()],
-      ['Age Â· Civil status', (val('afAge') || 'â€”') + ' Â· ' + val('afCivil')],
+      ['Age · Civil status', (val('afAge') || '—') + ' · ' + val('afCivil')],
       ['Sex', chipsOn('#gSex').join(', ')],
       ['Religion', val('afReligion')],
       ['Educational attainment', chipsOn('#gEdu').join(', ')],
@@ -624,7 +624,7 @@ window.AF = (() => {
       ['Desired trainings', chipsOn('#gDesire').join(', ')],
       ['Education facilities present', chipsOn('#gEduFac').join(', ')],
       ['Areas of interest', chipsOn('#gAreas').join(', ')],
-      ['Preferred schedule', [...chipsOn('#gTime'), ...chipsOn('#gDays')].join(' Â· ')],
+      ['Preferred schedule', [...chipsOn('#gTime'), ...chipsOn('#gDays')].join(' · ')],
       ['Common illnesses', chipsOn('#gIll').join(', ')],
       ['Main water source', chipsOn('#gWater').join(', ')],
       ['Distance to water', chipsOn('#gDist').join(', ')],
@@ -634,12 +634,12 @@ window.AF = (() => {
       ['Organization membership', chipsOn('#gOrg').join(', ')],
       ['Recreational facilities', chipsOn('#gRec').join(', ')],
       ['Free time', chipsOn('#gFree').join(', ')],
-      ['Problems Â· family', chipsOn('#gPFam').join(', ')],
-      ['Problems Â· health', chipsOn('#gPHealth').join(', ')],
-      ['Problems Â· economic', chipsOn('#gPEcon').join(', ')],
+      ['Problems · family', chipsOn('#gPFam').join(', ')],
+      ['Problems · health', chipsOn('#gPHealth').join(', ')],
+      ['Problems · economic', chipsOn('#gPEcon').join(', ')],
       ['Service rating', stars],
       ['Available for training', chipsOn('#gAvail').join(', ')],
-      ['General feedback', fb.length > 96 ? fb.slice(0, 96) + 'â€¦' : fb]
+      ['General feedback', fb.length > 96 ? fb.slice(0, 96) + '…' : fb]
     ];
     $('afReview').innerHTML = rows.map(r => reviewRow(r[0], r[1])).join('');
     refresh();
@@ -669,7 +669,7 @@ function submit() {
     ov.classList.add('hidden');
     ov.classList.remove('flex');
     document.querySelector('#wizRoot .step-dot').click();
-    SC.toast('Cleared â€” ready for a fresh encoding','info');
+    SC.toast('Cleared — ready for a fresh encoding','info');
   }
 
   document.addEventListener('DOMContentLoaded', () => {

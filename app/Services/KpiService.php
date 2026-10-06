@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Attendance;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\ProgramObjective;
 
 /**
@@ -14,7 +14,7 @@ use App\Models\ProgramObjective;
 class KpiService
 {
     /** 8.6: distinct beneficiaries with >= 1 attendance / linked * 100. */
-    public function participationRate(ExtensionProgram $program): ?float
+    public function participationRate(ExtensionProject $program): ?float
     {
         $linked = $program->beneficiaries()->count();
         if ($linked === 0) {
@@ -25,7 +25,7 @@ class KpiService
     }
 
     /** 8.6: completed / (total - cancelled) * 100. */
-    public function activityCompletionRate(ExtensionProgram $program): ?float
+    public function activityCompletionRate(ExtensionProject $program): ?float
     {
         $eligible = $program->activities()->whereNotIn('status', ['cancelled'])->count();
         if ($eligible === 0) {
@@ -38,7 +38,7 @@ class KpiService
     }
 
     /** 8.6: mean over participating beneficiaries of (attended / eligible) * 100. */
-    public function attendanceConsistency(ExtensionProgram $program): ?float
+    public function attendanceConsistency(ExtensionProject $program): ?float
     {
         $eligible = $program->activities()->whereNotIn('status', ['cancelled'])->pluck('id');
         if ($eligible->isEmpty()) {
@@ -62,7 +62,7 @@ class KpiService
     }
 
     /** 8.6: SUM(amount) / allocated_budget * 100. */
-    public function budgetUtilization(ExtensionProgram $program): ?float
+    public function budgetUtilization(ExtensionProject $program): ?float
     {
         if ((float) $program->allocated_budget === 0.0) {
             return null;
@@ -72,7 +72,7 @@ class KpiService
     }
 
     /** 8.6: MEAN(post - pre) across activities that have both scores. */
-    public function knowledgeGain(ExtensionProgram $program): ?float
+    public function knowledgeGain(ExtensionProject $program): ?float
     {
         $gains = $program->activities()
             ->whereNotNull('pre_assessment_score')
@@ -88,7 +88,7 @@ class KpiService
     }
 
     /** 8.6: SUM(amount) / distinct beneficiaries served. */
-    public function costPerBeneficiary(ExtensionProgram $program): ?float
+    public function costPerBeneficiary(ExtensionProject $program): ?float
     {
         $served = $this->distinctServed($program);
         if ($served === 0) {
@@ -99,12 +99,12 @@ class KpiService
     }
 
     /** 8.6: distinct beneficiaries served (present/late attendance). */
-    public function communityReach(ExtensionProgram $program): int
+    public function communityReach(ExtensionProject $program): int
     {
         return $this->distinctServed($program);
     }
 
-    public function distinctServed(ExtensionProgram $program): int
+    public function distinctServed(ExtensionProject $program): int
     {
         $activityIds = $program->activities()->whereNotIn('status', ['cancelled'])->pluck('id');
 
@@ -183,10 +183,14 @@ class KpiService
     }
 
     /**
-     * Objectives needing attention (dashboard action center 12.1 +
-     * analytics pending actions): not_met (any), or on_track with the
-     * target date within N days. Status is ALWAYS derived live from the
-     * effective actual (8.6) — never the stale stored column.
+     * Objectives needing attention: not_met (any), or on_track with the target
+     * date within N days. Status is ALWAYS derived live from the effective
+     * actual (8.6) — never the stale stored column.
+     *
+     * RETAINED BUT UNREAD (R-Q2): both former callers are gone — the dashboard
+     * Action Center was removed by the P0m prototype pass, and the Analytics
+     * pending tab was removed 2026-09-27. Only ObjectiveStatusTest calls this.
+     * Do not wire up a new caller; the 8.6 objective surface is retired (D-R7).
      */
     public function objectivesAtRisk(int $withinDays = 14)
     {

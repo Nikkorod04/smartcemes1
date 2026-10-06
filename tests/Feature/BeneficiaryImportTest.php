@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Programs\Hub;
 use App\Models\Beneficiary;
-use App\Models\ExtensionProgram;
+use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\User;
 use App\Services\BeneficiaryTemplate;
@@ -35,9 +35,9 @@ class BeneficiaryImportTest extends TestCase
         return UploadedFile::fake()->createWithContent('beneficiaries.xlsx', $contents);
     }
 
-    protected function programFor(User $admin): ExtensionProgram
+    protected function programFor(User $admin): ExtensionProject
     {
-        return ExtensionProgram::create([
+        return ExtensionProject::create([
             'code' => 'EXT-2026-001',
             'title' => 'Import Test Program',
             'planned_start_date' => '2026-01-01',
@@ -79,7 +79,7 @@ class BeneficiaryImportTest extends TestCase
         ]);
 
         Livewire::actingAs($admin)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openImport')
             ->assertSet('showImport', true)
             ->set('importFile', $file)
@@ -122,7 +122,7 @@ class BeneficiaryImportTest extends TestCase
         ]);
 
         Livewire::actingAs($admin)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openImport')
             ->set('importFile', $file)
             ->call('parseImport')
@@ -144,7 +144,7 @@ class BeneficiaryImportTest extends TestCase
         ]);
 
         Livewire::actingAs($admin)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openImport')
             ->set('importFile', $file)
             ->call('parseImport')
@@ -166,7 +166,7 @@ class BeneficiaryImportTest extends TestCase
         );
 
         Livewire::actingAs($admin)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openImport')
             ->set('importFile', $file)
             ->call('parseImport')
@@ -183,7 +183,7 @@ class BeneficiaryImportTest extends TestCase
         $program->update(['program_lead_id' => $faculty->id]);
 
         Livewire::actingAs($user)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openImport')
             ->assertForbidden();
     }
@@ -196,7 +196,7 @@ class BeneficiaryImportTest extends TestCase
         $program = $this->programFor($admin);
 
         Livewire::actingAs($admin)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openRegister')
             ->set('registerForm.first_name', 'Carlo')
             ->set('registerForm.last_name', 'Magbanua')
@@ -216,7 +216,7 @@ class BeneficiaryImportTest extends TestCase
         $program = $this->programFor($admin);
 
         Livewire::actingAs($admin)
-            ->test(Hub::class, ['program' => $program])
+            ->test(Hub::class, ['project' => $program])
             ->call('openRegister')
             ->set('registerForm.first_name', 'Ada')
             ->set('registerForm.last_name', 'Lorente')
@@ -234,9 +234,12 @@ class BeneficiaryImportTest extends TestCase
 
         $this->assertGreaterThan(0, Beneficiary::count());
         $this->assertSame(0, Beneficiary::whereNull('phone')->orWhere('phone', '')->count());
-        $this->assertSame(
-            Beneficiary::count(),
-            Beneficiary::where('phone', '09123456789')->count()
-        );
+        Beneficiary::query()->get()->each(function (Beneficiary $beneficiary): void {
+            $this->assertMatchesRegularExpression(
+                '/^09\d{9}$/',
+                $beneficiary->phone,
+                "Beneficiary {$beneficiary->first_name} {$beneficiary->last_name} has an invalid PH contact number [{$beneficiary->phone}]."
+            );
+        });
     }
 }
