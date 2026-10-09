@@ -20,6 +20,7 @@ use App\Services\KpiService;
 use App\Services\ProgramNarrativeService;
 use App\Services\TrainingHoursService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -43,8 +44,17 @@ class Hub extends Component
     /** v4.12: beneficiary + attendance actions (Admin or Secretary). */
     public bool $canManageBeneficiaries = false;
 
-    /* ---------------- executive narrative modal (5.15) ---------------- */
+    /* ---------------- project narrative modal (5.15) ---------------- */
     public bool $showNarrativeModal = false;
+
+    public ?string $generationResult = null;
+
+    public string $generationResultMessage = '';
+
+    public ?int $generationResultNarrativeId = null;
+
+    /** @var array<string, mixed> */
+    public array $generationProject = [];
 
     /* ---------------- objectives ---------------- */
     public bool $showObjList = false;
@@ -566,13 +576,110 @@ class Hub extends Component
         $this->dispatch('sc-toast', message: 'Objective removed', type: 'warn');
     }
 
-    /** 5.15: manual narrative trigger — Director-only, queued job. */
+    /** 5.15: manual narrative trigger — Director-only, synchronous in-request. */
     public function generateNarrative(): void
     {
         $this->abortUnlessManage();
-        app(ProgramNarrativeService::class)->generateFor($this->program->fresh());
 
-        $this->dispatch('sc-toast', message: 'Narrative generated — aggregates only, Director-only', type: 'success');
+        $cancelKey = $this->generationCancelKey();
+        Cache::put($cancelKey, false, now()->addMinutes(10));
+        $this->resetGenerationResult();
+
+        $project = $this->program->fresh()->load(['college', 'communities', 'programLead.user']);
+        $this->generationProject = $this->projectGenerationInfo($project);
+
+        try {
+            $narrative = app(ProgramNarrativeService::class)->generateFor($project);
+            $narrative->refresh();
+
+            if (Cache::pull($cancelKey) === true) {
+                $this->markGenerationCanceled($narrative);
+                $this->setGenerationResult('canceled', 'The project narrative generation was canceled. No narrative was published.');
+
+                return;
+            }
+
+            if ($narrative->status === ProgramNarrative::STATUS_COMPLETED) {
+                $this->generationResultNarrativeId = $narrative->id;
+                $this->setGenerationResult('success', 'The extension project narrative was generated from aggregate project data and is ready to read.');
+
+                return;
+            }
+
+            $this->setGenerationResult('error', $narrative->error_message ?: 'Narrative unavailable — see the project narrative card for the reason.');
+        } catch (\Throwable $e) {
+            $wasCanceled = Cache::pull($cancelKey) === true;
+            if ($wasCanceled) {
+                $this->setGenerationResult('canceled', 'The project narrative generation was canceled. No narrative was published.');
+
+                return;
+            }
+
+            Cache::forget($cancelKey);
+            $this->setGenerationResult('error', 'Narrative unavailable — '.$e->getMessage());
+        }
+    }
+
+    /** Request cancellation for the current synchronous generation. */
+    public function cancelGeneration(): void
+    {
+        Cache::put($this->generationCancelKey(), true, now()->addMinutes(10));
+    }
+
+    public function closeGenerationResult(): void
+    {
+        $this->resetGenerationResult();
+    }
+
+    public function viewGeneratedNarrative(): void
+    {
+        $this->abortUnlessManage();
+        $this->resetGenerationResult();
+        $this->showNarrativeModal = true;
+    }
+
+    private function generationCancelKey(): string
+    {
+        return 'program-narrative:generation-cancel:'.auth()->id();
+    }
+
+    /** @return array<string, mixed> */
+    private function projectGenerationInfo(ExtensionProject $project): array
+    {
+        return [
+            'title' => $project->title,
+            'code' => $project->code,
+            'college' => $project->college?->name ?? 'College not linked',
+            'lead' => $project->programLead?->user?->name ?? 'No project lead assigned',
+            'communities' => $project->communities->pluck('name')->values()->all(),
+        ];
+    }
+
+    private function markGenerationCanceled(ProgramNarrative $narrative): void
+    {
+        $narrative->update([
+            'status' => ProgramNarrative::STATUS_FAILED,
+            'summary' => null,
+            'health_label' => null,
+            'risks' => null,
+            'recommendations' => null,
+            'error_message' => 'Narrative generation canceled by the Director.',
+            'generated_at' => now(),
+        ]);
+    }
+
+    private function resetGenerationResult(): void
+    {
+        $this->generationResult = null;
+        $this->generationResultMessage = '';
+        $this->generationResultNarrativeId = null;
+        $this->generationProject = [];
+    }
+
+    private function setGenerationResult(string $type, string $message): void
+    {
+        $this->generationResult = $type;
+        $this->generationResultMessage = $message;
     }
 
     /** Full-narrative modal — Admin-only (D4); shows the latest completed version. */
@@ -617,10 +724,11 @@ class Hub extends Component
             ];
         } else {
             $this->editingActivityId = null;
+            $today = now()->toDateString();
             $this->activityForm = [
                 'title' => '', 'description' => '', 'venue' => '',
-                'planned_start_date' => $this->program->planned_start_date->format('Y-m-d'),
-                'planned_end_date' => $this->program->planned_start_date->format('Y-m-d'),
+                'planned_start_date' => $today,
+                'planned_end_date' => $today,
                 'start_time' => '08:00', 'end_time' => '12:00',
                 'no_of_days' => '1', 'participants' => '', 'trainors_snapshot' => '',
                 'allocated_budget' => '', 'status' => 'draft', 'faculty_ids' => [],

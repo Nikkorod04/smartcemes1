@@ -41,7 +41,7 @@ class ActivityAttendanceImport
 
         $roster = $this->roster($activity);
         if ($roster->isEmpty()) {
-            return $this->failure('No beneficiaries are enrolled in this program yet — enroll them before importing attendance.');
+            return $this->failure('No beneficiaries are enrolled in this project yet — enroll them before importing attendance.');
         }
 
         $statuses = array_map('strtolower', config('smartcemes.statuses.attendance'));

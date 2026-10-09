@@ -3,7 +3,7 @@
         <div class="sc-card p-5">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Enrolled</p>
             <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ $enrolledCount }}<span class="text-[14px] text-gray-400 font-bold"> / {{ $program->target_beneficiaries ?? '—' }}</span></p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">enrolled of program target</p>
+            <p class="text-[11px] text-gray-400 font-medium mt-1">enrolled of project target</p>
         </div>
         <div class="sc-card p-5">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Reached</p>
@@ -12,7 +12,7 @@
         </div>
         <div class="sc-card p-5 col-span-2 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Manage Beneficiaries</p>
-            <p class="text-[12.5px] text-gray-600 mt-2 leading-relaxed">Import or export the list of beneficiaries in this program, or register a new one directly. A beneficiary may belong to multiple programs — duplicates are warned before save, never silently merged.</p>
+            <p class="text-[12.5px] text-gray-600 mt-2 leading-relaxed">Import or export the list of beneficiaries in this project, or register a new one directly. A beneficiary may belong to multiple projects — duplicates are warned before save, never silently merged.</p>
             @if ($canManageBeneficiaries)
                 <div class="flex flex-wrap gap-2 mt-3">
                     <button wire:click="openRegister" class="btn btn-primary !py-1.5 !text-[11.5px]"><x-sc.icon name="people" class="w-4 h-4" /> Register new</button>
@@ -45,7 +45,7 @@
                             <td class="text-gray-500">{{ $b->phone ?? '—' }}</td>
                             <td class="!text-right row-actions">
                                 @if ($canManageBeneficiaries)
-                                    <button wire:click="unenroll({{ $b->id }})" wire:confirm="Unenroll this beneficiary from the program?" class="btn btn-danger-soft !px-2 !py-1 !text-[11px]">Unenroll</button>
+                                    <button wire:click="unenroll({{ $b->id }})" wire:confirm="Unenroll this beneficiary from this project?" class="btn btn-danger-soft !px-2 !py-1 !text-[11px]">Unenroll</button>
                                 @else
                                     <span class="text-[11.5px] text-gray-300">—</span>
                                 @endif

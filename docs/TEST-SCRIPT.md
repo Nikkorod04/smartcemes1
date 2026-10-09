@@ -84,14 +84,14 @@ Before creating anything, walk the seeded data. This is also the fastest way to 
    `EXT-2026-00X` codes.
 5. Open **CAS-2026-001**. Tabs: **Overview · Activities · Beneficiaries · Budget**.
 
-**Expected on CAS-2026-001** (seeded):
+**Expected on CME-2026-001 · PAGKAON** (seeded — the safe-zone set, `revisions.md` §31):
 
 | Figure | Value |
 |---|---|
-| Training hours rendered | **134.5** of an annual target of **150** → **89.7 %** |
-| Trainors / Trainees | 1 / 30 |
+| Training hours rendered | **108** of an annual target of **150** → **72 %** |
+| Trainors / Trainees | 2 / 20 |
 | Activities | 3 |
-| Budget utilized | **₱78,000** of **₱85,000** |
+| Allocated budget | **₱55,000** — the ALLOCATION is the budget basis (v4.19); there is no annual budget target |
 
 **What must NOT be here:** any objectives list, KPI dictionary, or results-framework panel. Every 8.6
 KPI surface was removed from the project hub and the dashboards (D-R7). If you see one, that is a
@@ -111,19 +111,20 @@ regression.
 | Target beneficiaries | 5 |
 | Allocated budget | 30000 |
 | Target training hours | 40 |
-| Target budget (₱) | 30000 |
 | Project lead | Kent Naputo |
 | Status | Ongoing |
 | Linked communities | Brgy. Sagkahan · Tacloban City |
 | Beneficiary categories | Parent |
 
-> Use a title that is **not** already seeded (`KABUHIAN:`, `BUSOG:`, `LITRAWIYA:`, `HANDA:`,
-> `e-LITERACY:`, `SENIOR CARE:` and `BATANG MATINIK:` are taken). A name that collides makes the
-> demo confusing — two rows with the same prefix.
+> Use a title that is **not** already seeded (`KULTURA:`, `NUMERO:`, `LINIS:`, `PAGKAON:` and
+> `DIGITAL:` are the five LIVE projects; the eight originals — including `BUSOG:`, `LITRAWIYA:` and
+> `HANDA:` — are ARCHIVED, `revisions.md` §31). A name that collides makes the demo confusing — two
+> rows with the same prefix.
 
-**Expected:** a success toast with the auto-generated code **`CME-2026-001`** — the prefix comes from
-the college you picked (R-Q4), which is why the college is the *first* field. The project appears in
-the grid with an **Ongoing** badge.
+**Expected:** a success toast with the auto-generated code **`CME-2026-002`** — the prefix comes from
+the college you picked (R-Q4), which is why the college is the *first* field. ⚠️ **`CME-2026-001` is
+already taken** by the seeded PAGKAON project, so the next CME code is 002. The project appears in the
+grid with an **Ongoing** badge.
 
 > The code is generated **after** the college is known. Picking a different college gives a different
 > prefix; the sequence is per college per year.
@@ -142,10 +143,11 @@ expresses the time.
 | A2 · Baking Practicum: Pan de Sal & Ensaymada | 2026-10-27 | 08:00–12:00 | **0.5** | 5 | Kent Naputo **+** Nikko Villas | 9000 | Ongoing |
 
 > **Why these dates.** The seeded demo data already books the faculty, and the 8.8 guard is a **hard
-> block** — it will refuse an assignment that overlaps an existing one. Nikko Villas is committed to
-> *Feeding Cycle 2* from **2026-09-08 to 2026-10-16**, so a September activity would be refused.
-> October 20 and 27 are clear for both facilitators. If you pick your own dates, expect the guard to
-> name the clashing activity — that is the feature working, not a bug.
+> block** — it will refuse an assignment that overlaps an existing one. Nikko Villas leads **LINIS ·
+> CAS-2026-003**, whose three activities fall on **2026-05-18**, **2026-08-22** and **2026-11-27**, so
+> an activity on one of those dates would be refused. October 20 and 27 are clear for both
+> facilitators. If you pick your own dates, expect the guard to name the clashing activity — that is
+> the feature working, not a bug.
 
 **Expected training hours, derived live:**
 
@@ -276,7 +278,7 @@ show roll-ups but never a percentage of target.
 | Where | Expected |
 |---|---|
 | Hub → view 2 (CME) | The new project in the card grid; CME's roll-ups have risen by its figures |
-| `/projects` | 8 projects; the new one shows `CME-2026-001`, Ongoing |
+| `/projects` | the **5 live** projects (8 more archived); the new one shows `CME-2026-002`, Ongoing |
 | `/programs` | The Livelihood program's project count and rendered hours have risen — **but its target column does not exist** |
 | Project hub → Overview | 15 / 40 hrs · ₱13,500 / ₱30,000 · 2 trainors · 5 trainees |
 | `/targets` | The university pool's consumption includes the new project's hours |
@@ -342,9 +344,12 @@ dumps pruned beyond the retention count. If it fails with *"'mysqldump' is not r
 
 ## 12. Optional bonus tests
 
-- **8.8 conflict hard-block** — add an activity dated **2026-09-15** (inside Nikko's *Feeding Cycle 2*
-  block, which runs 2026-09-08 → 2026-10-16) and assign **Nikko Villas** → the save is **refused**
+- **8.8 conflict hard-block** — add an activity dated **2026-08-22** (the date of LINIS's *Composting &
+  Materials Recovery Training*, `CAS-2026-003`) and assign **Nikko Villas** → the save is **refused**
   with a message naming the clashing activity and its date range. This is a hard block, not a warning.
+  ⚠️ **Moved 2026-10-07.** This demo used to book against BUSOG's *Feeding Cycle 2* (2026-09-08 →
+  2026-10-16). BUSOG is now **ARCHIVED**, and archiving takes its activities with it, so that booking
+  no longer exists and the guard would not fire. LINIS is also led by Nikko Villas and is LIVE.
 - **D7 over-allocation** — add a budget entry of ₱40,000 → the entry **saves** with an
   over-allocation warning banner plus an activity-log entry. It never blocks.
 - **Faculty read-only** — log in as `faculty1@lnu.com` → **My Projects** → the hub renders read-only
@@ -367,9 +372,14 @@ dumps pruned beyond the retention count. If it fails with *"'mysqldump' is not r
 php artisan migrate:fresh --seed
 ```
 
-Reproducible: 58 communities/schools, 4 colleges, 6 broad programs, 8 projects, 15 activities,
-6 faculty, 57 beneficiaries, 130 attendance rows, 23 budget rows, 8 interagency agencies, 1 university
-target. Eight accounts, all with password `password`.
+Reproducible: 58 communities/schools, 4 colleges, 6 broad programs, **5 live projects** (the 8
+originals are archived and restorable), 15 activities, 6 faculty, 114 beneficiaries, 336 attendance
+rows, 8 interagency agencies, 1 university target. Eight accounts, all with password `password`.
+
+> ⚠️ **Changed 2026-10-05 (`revisions.md` §31).** This line used to read *"8 projects, 15 activities,
+> 57 beneficiaries, 130 attendance rows, 23 budget rows"*. `SafeZoneProjectSeeder` now archives the
+> eight originals and creates the five safe-zone projects (KULTURA · NUMERO · LINIS · PAGKAON ·
+> DIGITAL), so the LIVE demo set and its figures are different. Re-seed to reproduce them exactly.
 
 > **Use this, not a plain `migrate`.** A plain `migrate` on a populated database leaves the hierarchy
 > **orphaned without erroring** — the backfill needs `colleges`/`programs` *rows*, but `migrate` only
@@ -381,29 +391,37 @@ target. Eight accounts, all with password `password`.
 
 Handy when you want to demo without creating anything.
 
-| Code | College | Broad program | Status | Hours target |
+| Code | College | Broad program (thrust) | Lead | Rendered / target |
 |---|---|---|---|---|
-| `CAS-2026-001` | CAS | Information, Communication & Education | ongoing | 150 hrs / ₱85,000 |
-| `EXT-2026-001` | COE | Literacy, Numeracy & Language | ongoing | — |
-| `EXT-2026-002` | CAS | Environmental Conservation & Disaster Preparedness | ongoing | — |
-| `EXT-2026-003` | CME | Livelihood, Technical & Business Management | completed | — |
-| `EXT-2026-004` | CAS | Information, Communication & Education | ongoing | — |
-| `EXT-2026-005` | COE | Information, Communication & Education | ongoing | — |
-| `EXT-2026-006` | CME | Physical Fitness & Sports Development | draft | — |
+| `CAS-2026-002` | CAS | Cultural Development | Dr. Cristina P. Manalo | 84 / 100 hrs |
+| `COE-2026-001` | COE | Literacy, Numeracy & Language | Dr. Ramon L. Villamor | 90 / 120 hrs |
+| `CAS-2026-003` | CAS | Environmental Conservation & DRP | Nikko Villas | 70 / 100 hrs |
+| `CME-2026-001` | CME | Livelihood, Technical & Business | Kent Naputo | 108 / 150 hrs |
+| `CAS-2026-004` | CAS | Information, Communication & Education | Carlo Sumile | 48 / 80 hrs |
 
-`CAS-2026-001` is the only seeded project carrying annual targets, which makes it the best one to
-open when you want to show attainment immediately. Only its activities carry `no_of_days`; the
-inherited ones predate the R4 model and legitimately show no training-hours figure.
+All five carry an `allocated_budget` and an `annual_target_hours`, and every one is **under** its
+target — so the D7 over-allocation warning stays quiet on a fresh seed.
+
+**The eight originals are ARCHIVED**, not deleted: `EXT-2026-001`…`EXT-2026-006`, `CAS-2026-001`
+(BUSOG) and `GRAD-2026-001` (PANDAY). They are soft-deleted, restorable from the hub's project view,
+and carry no annual targets — they predate the R4 model.
+
+> ⚠️ **Physical Fitness & Sports Development is the one thrust with no live project.** Archiving BATANG
+> MATINIK moved the gap Cultural Development used to have. `FreshSeedHierarchyTest` asserts it rather
+> than hiding it; a sixth project would close it (`revisions.md` §31.5).
 
 ---
 
 ## Appendix B — how this script was verified
 
 - **`tests/Feature/DefenceWalkthroughTest.php` executes the write flow** (steps 2, 3, 6, 7, 8) through
-  the real Livewire components and asserts every figure printed above: the `CME-2026-001` code, the
+  the real Livewire components and asserts every figure printed above: the generated project code, the
   `2 × 5 × days` arithmetic, 15 / 40 → 37.5 %, ₱13,500 / ₱30,000 → 45 %, the 4-hour rendered-hours
   drafts, and the `trainees` count moving 0 → 5 only once attendance exists. If a model change breaks
   a number in this document, that test fails.
+  ⚠️ **The code is asserted as a PATTERN plus "not the seeded code"**, not as the literal
+  `CME-2026-001` — that literal now belongs to the seeded PAGKAON project, so a hardcoded assertion
+  would break on every re-seed (`revisions.md` §31.4).
 - **Read-only observations (§1, §8b)** were executed against the seeded MariaDB on 2026-09-24 through
   a real admin login — the figures quoted are the values the pages actually rendered.
 - **Rule-level behaviour** the walkthrough depends on but does not itself drive is covered elsewhere:
@@ -413,9 +431,16 @@ inherited ones predate the R4 model and legitimately show no training-hours figu
   D-R5 rules), `DatabaseBackupTest` (the backup), `RankingServiceTest` (the roll-ups).
 - **The backup (§11)** was run for real and its dump restored into a scratch database with row counts
   identical to live.
-- `docs/guides/*` and the role guides (`adminguide.md`, `secretaryguide.md`, `facultyguide.md`,
-  `features.md`) are **still bannered as pre-revision** — this script replaces them for walkthrough
-  purposes, but a full refresh of those documents remains outstanding R7 work.
+- ~~`docs/guides/*` and the role guides are **still bannered as pre-revision**~~ — **✅ corrected
+  2026-10-07: that claim was WRONG.** The 11 `docs/guides/*` walkthroughs were renamed and rewritten
+  for the revision (`01-create-project.md`, `02-targets.md`, …), and `adminguide.md` / `features.md` /
+  `01-create-project.md` were corrected again on 2026-09-28 for the Analytics removal, the hub's
+  create/edit move and the retired target-budget field. **This script no longer "replaces" them** —
+  read them. The same over-claim was corrected in `README.md` (`AI_HANDOFF.md` §16 E).
+- ⚠️ **This script was itself the trailing document** (`AI_HANDOFF.md` §16 H): until 2026-10-07 it
+  described the pre-§31 demo — archived projects, a retired `Target budget (₱)` form field, and a
+  conflict demo booked against an archived activity. **The `DefenceWalkthroughTest` was current; the
+  prose was not.** Re-checked against the seeder and the live DB on 2026-10-07.
 
 ### Bugs this walkthrough re-run found
 

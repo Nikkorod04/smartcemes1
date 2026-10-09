@@ -18,7 +18,7 @@
             <p class="text-[11px] text-gray-400 font-medium mt-1">completed of assigned</p>
         </div>
         <div class="reveal-item sc-card sc-card-hover p-5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Programs</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Projects</p>
             <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ $stats['programsLed'] }}<span class="text-[14px] text-gray-400 font-bold"> led</span></p>
             <p class="text-[11px] text-gray-400 font-medium mt-1">assigned as lead or faculty</p>
         </div>
@@ -32,7 +32,7 @@
             <a href="{{ route('projects.my') }}" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">My Projects →</a>
         </div>
         <table class="sc-table">
-            <thead><tr><th>Activity</th><th>Program</th><th>Date</th><th>Status</th></tr></thead>
+            <thead><tr><th>Activity</th><th>Project</th><th>Date</th><th>Status</th></tr></thead>
             <tbody>
                 @forelse ($activities as $a)
                     <tr wire:key="dash-fact-{{ $a->id }}">

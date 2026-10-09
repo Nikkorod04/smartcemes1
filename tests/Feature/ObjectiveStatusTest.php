@@ -191,13 +191,21 @@ class ObjectiveStatusTest extends TestCase
             'target_date' => now()->addDays(30)->format('Y-m-d'), 'status' => 'not_started',
         ]);
 
-        // R5 / D-R7: the objectives-met chip was an 8.6 surface. The page now
-        // shows training-hours attainment against the annual target instead.
+        // R5 / D-R7: the objectives-met chip was an 8.6 surface. The page shows
+        // training-hours attainment against the annual target instead.
+        //
+        // Re-pointed 2026-10-07 (§34): the page was redesigned — the attainment
+        // now sits in the card's always-visible metric strip rather than in a
+        // standalone badge, so the exact old string ("Training hours: 0.0 / 100
+        // (0%)") no longer exists. The ASSERTION'S INTENT is unchanged and both
+        // halves are still pinned: the retired chip is absent, and the hours
+        // attainment against the 100-hour target is present.
         $this->actingAs($admin)->get('/program-narratives')
             ->assertOk()
             ->assertDontSee('Objectives met')
-            ->assertSee('Training hours:')
-            ->assertSee('0.0 / 100 (0%)');
+            ->assertSee('training hrs')
+            ->assertSee('0.0')
+            ->assertSee('0% of 100-hr target');
     }
 
     /* ==================== deadline scheduler (5.14) ==================== */

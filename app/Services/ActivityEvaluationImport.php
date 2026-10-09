@@ -44,7 +44,7 @@ class ActivityEvaluationImport
 
         $roster = $this->roster($activity);
         if ($roster->isEmpty()) {
-            return $this->failure('No beneficiaries are enrolled in this program yet — enroll them before importing evaluation scores.');
+            return $this->failure('No beneficiaries are enrolled in this project yet — enroll them before importing evaluation scores.');
         }
 
         $seenIds = [];

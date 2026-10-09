@@ -60,7 +60,7 @@ class ActivityEvaluationTemplate
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(12);
 
         $sheet->setCellValue('A2', sprintf(
-            'Program: %s (%s) · Activity: %s · Date: %s · Venue: %s',
+            'Project: %s (%s) · Activity: %s · Date: %s · Venue: %s',
             $activity->program?->title ?? '—',
             $activity->program?->code ?? '—',
             $activity->title,

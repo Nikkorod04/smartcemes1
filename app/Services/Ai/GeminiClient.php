@@ -35,7 +35,19 @@ class GeminiClient
 {
     public function generate(string $prompt): array
     {
-        $apiKey = config('smartcemes.ai.key') ?: env('GEMINI_API_KEY');
+        // CONFIG ONLY — never `env()` here.
+        //
+        // This used to read `config('smartcemes.ai.key') ?: env('GEMINI_API_KEY')`,
+        // and the config key did not exist, so the real read was a runtime `env()`
+        // call. That works in development and breaks on the deployed server:
+        // `php artisan config:cache` (deploy checklist item 10) stops Laravel
+        // loading `.env`, so `env()` returns null at request time and every AI
+        // surface fails with "No API key configured" — while the model id and
+        // endpoint, which ARE read through config, keep working.
+        //
+        // The key now lives in `config/smartcemes.php` under `ai.key`. Do not
+        // reintroduce an `env()` fallback: it makes the failure invisible locally.
+        $apiKey = config('smartcemes.ai.key');
 
         if (empty($apiKey)) {
             throw new AiUnavailableException('No API key configured (GEMINI_API_KEY).');

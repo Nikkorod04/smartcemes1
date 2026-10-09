@@ -389,6 +389,52 @@ class ProgramHubTest extends TestCase
         $this->assertSame($admin->id, $project->created_by);
     }
 
+    public function test_project_form_preserves_multiple_communities_and_beneficiary_categories(): void
+    {
+        $this->seed(UserSeeder::class);
+        $this->seed(CollegeSeeder::class);
+        $this->seed(ProgramSeeder::class);
+
+        $admin = User::where('email', 'admin@lnu.com')->first();
+        $communities = collect([
+            ['name' => 'Brgy. San Jose', 'municipality' => 'Tacloban City'],
+            ['name' => 'Caibaan Elementary School', 'municipality' => 'Tacloban City'],
+        ])->map(fn ($community) => Community::create([
+            ...$community,
+            'province' => 'Leyte',
+            'status' => 'active',
+        ]));
+
+        $college = College::where('code', 'CAS')->first();
+        $broadProgram = Program::where('title', 'Information, Communication & Education')->first();
+
+        Livewire::actingAs($admin)
+            ->test(CollegesIndex::class)
+            ->call('openProjectCreate')
+            ->set('projectForm.college_id', (string) $college->id)
+            ->set('projectForm.program_id', (string) $broadProgram->id)
+            ->set('projectForm.title', 'Multiple Link Regression Project')
+            ->set('projectForm.planned_start_date', '2026-09-01')
+            ->set('projectForm.planned_end_date', '2026-12-31')
+            ->set('projectForm.status', 'draft')
+            ->set('projectForm.community_ids', $communities->pluck('id')->map(fn ($id) => (string) $id)->all())
+            ->set('projectForm.beneficiary_categories', ['Parent', 'Student', 'Out-of-School Youth'])
+            ->assertSet('projectForm.community_ids', $communities->pluck('id')->map(fn ($id) => (string) $id)->all())
+            ->assertSet('projectForm.beneficiary_categories', ['Parent', 'Student', 'Out-of-School Youth'])
+            ->call('saveProject');
+
+        $project = ExtensionProject::query()->where('title', 'Multiple Link Regression Project')->firstOrFail();
+
+        $this->assertEqualsCanonicalizing(
+            $communities->pluck('id')->all(),
+            $project->communities()->pluck('communities.id')->all(),
+        );
+        $this->assertEqualsCanonicalizing(
+            ['Parent', 'Student', 'Out-of-School Youth'],
+            $project->beneficiary_categories,
+        );
+    }
+
     public function test_project_form_requires_a_college_and_a_program(): void
     {
         $this->seed(UserSeeder::class);

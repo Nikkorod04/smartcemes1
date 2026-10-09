@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\GenerateAssessmentAnalysis;
 use App\Jobs\GenerateProgramNarrative;
+use App\Livewire\AiAnalysis;
 use App\Livewire\ProgramNarratives;
 use App\Models\AssessmentAnalysis;
 use App\Models\AssessmentSummary;
@@ -122,6 +123,36 @@ class Phase5AiTest extends TestCase
         $analysis->refresh();
         $this->assertSame('failed', $analysis->status);
         $this->assertStringContainsString('Analysis unavailable', $analysis->error_message);
+    }
+
+    public function test_ai_analysis_component_exposes_success_result_after_generation(): void
+    {
+        $data = $this->seedSummary();
+        $this->actingAs($data['admin']);
+        $this->fakeGemini([
+            'summary' => 'Income insufficiency dominates.',
+            'problems_identified' => [['need' => 'Low income', 'evidence' => '61% of responses']],
+            'recommendations' => [['rank' => 1, 'title' => 'Food processing cohort', 'detail' => '5 sessions', 'priority' => 'High']],
+        ]);
+
+        Livewire::test(AiAnalysis::class)
+            ->call('generate', $data['summary']->id)
+            ->assertSet('generationResult', 'success')
+            ->assertSet('generationResultAnalysisId', fn ($id) => is_int($id) && $id > 0)
+            ->assertSee('Analysis generated')
+            ->assertSee('Review analysis');
+    }
+
+    public function test_ai_analysis_component_exposes_error_result_when_generation_fails(): void
+    {
+        $data = $this->seedSummary();
+        $this->actingAs($data['admin']);
+        Http::fake(['*generativelanguage.googleapis.com*' => Http::response('quota exceeded', 429)]);
+
+        Livewire::test(AiAnalysis::class)
+            ->call('generate', $data['summary']->id)
+            ->assertSet('generationResult', 'error')
+            ->assertSee('Analysis unavailable');
     }
 
     public function test_job_completes_with_fields_and_provenance(): void
@@ -309,10 +340,14 @@ class Phase5AiTest extends TestCase
     {
         // Regression: eager load must use assessmentSummary (the `summary`
         // TEXT column shadows the belongsTo — handoff gotcha).
+        //
+        // Re-pointed 2026-10-07 for the queue/review split: `/ai-analysis` is the
+        // QUEUE now and the narrative lives on the review route — see
+        // docs/AI-ANALYSIS-REDESIGN-PLAN.md.
         $data = $this->seedSummary();
         $this->actingAs($data['admin']);
 
-        AssessmentAnalysis::create([
+        $analysis = AssessmentAnalysis::create([
             'needs_assessment_id' => $data['assessment']->id,
             'assessment_summary_id' => $data['summary']->id,
             'summary' => 'Draft insight text',
@@ -321,7 +356,14 @@ class Phase5AiTest extends TestCase
             'metadata' => ['model' => 'test-model', 'api' => 'gemini', 'prompt_version' => 'v1'],
         ]);
 
+        // The queue lists it, grouped under its community, with a way in.
         $this->get('/ai-analysis')
+            ->assertOk()
+            ->assertSee($data['summary']->community->name)
+            ->assertSee('Review →');
+
+        // …and the review route renders the analysis itself.
+        $this->get('/ai-analysis/'.$analysis->id)
             ->assertOk()
             ->assertSee('Draft insight text')
             ->assertSee($data['summary']->community->name);
@@ -333,9 +375,20 @@ class Phase5AiTest extends TestCase
         $secretary = User::factory()->create(['role' => 'secretary']);
         $faculty = User::factory()->create(['role' => 'faculty']);
 
+        $analysis = AssessmentAnalysis::create([
+            'needs_assessment_id' => $data['assessment']->id,
+            'assessment_summary_id' => $data['summary']->id,
+            'summary' => 'Draft',
+            'approval_status' => 'draft',
+            'status' => 'completed',
+        ]);
+
         $this->actingAs($data['admin'])->get('/ai-analysis')->assertOk();
+        $this->actingAs($data['admin'])->get('/ai-analysis/'.$analysis->id)->assertOk();
         $this->actingAs($secretary)->get('/ai-analysis')->assertForbidden();
+        $this->actingAs($secretary)->get('/ai-analysis/'.$analysis->id)->assertForbidden();
         $this->actingAs($faculty)->get('/ai-analysis')->assertForbidden();
+        $this->actingAs($faculty)->get('/ai-analysis/'.$analysis->id)->assertForbidden();
         $this->actingAs($faculty)->get('/program-narratives')->assertForbidden();
     }
 }

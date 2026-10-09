@@ -66,7 +66,7 @@
                         </tr>
                     @endforeach
                     @if ($activities->isEmpty())
-                        <tr><td colspan="10" class="text-center text-gray-400 py-8">No activities yet for this program.</td></tr>
+                        <tr><td colspan="10" class="text-center text-gray-400 py-8">No activities yet for this project.</td></tr>
                     @endif
                 </tbody>
             </table>

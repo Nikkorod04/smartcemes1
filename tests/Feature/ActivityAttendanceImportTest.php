@@ -253,7 +253,7 @@ class ActivityAttendanceImportTest extends TestCase
             ->assertSet('attendanceRows.0.state', 'applied')
             ->assertSet('attendanceRows.1.state', 'error')
             ->assertSet('attendanceRows.1.errors.0', "Status 'Maybe' is not one of Present, Absent, Excused, Late.")
-            ->assertSet('attendanceRows.2.errors.0', 'Beneficiary ID 999999 is not enrolled in this program (unknown or unenrolled).')
+            ->assertSet('attendanceRows.2.errors.0', 'Beneficiary ID 999999 is not enrolled in this project (unknown or unenrolled).')
             ->assertSet('attendanceRows.3.errors.0', "Beneficiary ID {$first->id} appears more than once in this file.")
             ->assertSet('attendanceRows.4.errors.0', "Name does not match the registry for ID {$third->id} ({$third->last_name}, {$third->first_name}).");
     }

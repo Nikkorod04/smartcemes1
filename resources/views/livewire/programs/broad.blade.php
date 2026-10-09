@@ -70,11 +70,9 @@
     {{-- ===================== TOOLBAR + FILTERS ===================== --}}
     <section class="mt-5">
         <div class="sc-card p-4 hub-toolbar">
-            <label class="relative flex-1 min-w-[220px]">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex">
-                    <x-sc.icon name="search" class="w-4 h-4" />
-                </span>
-                <input wire:model.live.debounce.300ms="search" class="input !pl-9"
+            <label class="sc-search flex-1 min-w-[220px]">
+                <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
+                <input wire:model.live.debounce.300ms="search" class="input"
                        placeholder="Search program, thrust, or college…">
             </label>
 

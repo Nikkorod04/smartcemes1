@@ -8,10 +8,21 @@ use App\Models\Faculty;
 use App\Notifications\SmartCemesNotification;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use WithPagination;
+
+    public string $search = '';
+
+    public string $status = 'all';
+
+    public string $sort = 'date';
+
+    public string $direction = 'asc';
+
     /** Admin-initiated request form (5.8). */
     public bool $showCreate = false;
 
@@ -30,6 +41,42 @@ class Index extends Component
     public bool $showDecline = false;
 
     public string $declineReason = '';
+
+    public function setStatus(string $status): void
+    {
+        abort_unless(in_array($status, ['all', 'pending', 'accepted', 'declined'], true), 422);
+
+        $this->status = $status;
+        $this->resetPagination();
+    }
+
+    public function sortBy(string $column): void
+    {
+        if (! in_array($column, ['date', 'status', 'requested'], true)) {
+            return;
+        }
+
+        if ($this->sort === $column) {
+            $this->direction = $this->direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sort = $column;
+            $this->direction = 'asc';
+        }
+
+        $this->resetPagination();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPagination();
+    }
+
+    protected function resetPagination(): void
+    {
+        $this->resetPage('awaitingPage');
+        $this->resetPage('respondedPage');
+        $this->resetPage('myRequestsPage');
+    }
 
     public function openCreate(): void
     {
@@ -188,19 +235,74 @@ class Index extends Component
         $isAdmin = $user->isAdmin();
         $faculty = Faculty::where('user_id', $user->id)->first();
 
+        $countsQuery = AvailabilityRequest::query();
+        if (! $isAdmin && $faculty) {
+            $countsQuery->where('faculty_id', $faculty->id);
+        }
+        $counts = $countsQuery
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $applyFilters = function ($query) use ($isAdmin, $faculty) {
+            if (! $isAdmin && $faculty) {
+                $query->where('faculty_id', $faculty->id);
+            }
+
+            if ($this->status !== 'all') {
+                $query->where('status', $this->status);
+            }
+
+            if ($this->search !== '') {
+                $search = trim($this->search);
+                $query->where(function ($query) use ($search) {
+                    $query->whereHas('activity', function ($query) use ($search) {
+                        $query->where('title', 'like', "%{$search}%")
+                            ->orWhereHas('program', function ($query) use ($search) {
+                                $query->where('code', 'like', "%{$search}%")
+                                    ->orWhere('title', 'like', "%{$search}%");
+                            });
+                    })->orWhereHas('faculty.user', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    })->orWhere('remarks', 'like', "%{$search}%")
+                        ->orWhere('decline_reason', 'like', "%{$search}%");
+                });
+            }
+
+            return $query;
+        };
+
+        $order = function ($query) {
+            $column = match ($this->sort) {
+                'status' => 'status',
+                'requested' => 'requested_at',
+                default => 'date',
+            };
+
+            return $query->orderBy($column, $this->direction);
+        };
+
+        $awaitingQuery = $applyFilters(AvailabilityRequest::with(['activity.program', 'faculty.user'])
+            ->where('status', AvailabilityRequest::STATUS_PENDING));
+        $respondedQuery = $applyFilters(AvailabilityRequest::with(['activity.program', 'faculty.user'])
+            ->whereIn('status', [AvailabilityRequest::STATUS_ACCEPTED, AvailabilityRequest::STATUS_DECLINED]));
+
+        $awaiting = $order($awaitingQuery)->paginate(8, ['*'], 'awaitingPage');
+        $responded = $order($respondedQuery)->paginate(8, ['*'], 'respondedPage');
+
+        $myRequests = $faculty
+            ? $order($applyFilters(AvailabilityRequest::with(['activity.program', 'requester'])))
+                ->paginate(10, ['*'], 'myRequestsPage')
+            : collect();
+
         return view('livewire.availability.index', [
             'isAdmin' => $isAdmin,
             'facultyOptions' => $isAdmin ? Faculty::with('user')->orderBy('id')->get() : collect(),
             'activityOptions' => $isAdmin ? Activity::with('program')->orderBy('planned_start_date')->get() : collect(),
-            'awaiting' => $isAdmin
-                ? AvailabilityRequest::with(['activity', 'faculty.user'])->where('status', 'pending')->orderBy('date')->get()
-                : collect(),
-            'responded' => $isAdmin
-                ? AvailabilityRequest::with(['activity', 'faculty.user'])->whereIn('status', ['accepted', 'declined'])->orderByDesc('responded_at')->get()
-                : collect(),
-            'myRequests' => $faculty
-                ? AvailabilityRequest::with(['activity', 'requester'])->where('faculty_id', $faculty->id)->orderByDesc('requested_at')->get()
-                : collect(),
+            'awaiting' => $isAdmin ? $awaiting : collect(),
+            'responded' => $isAdmin ? $responded : collect(),
+            'myRequests' => $myRequests,
+            'counts' => $counts,
         ]);
     }
 }

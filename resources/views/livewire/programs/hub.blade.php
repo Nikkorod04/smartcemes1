@@ -29,14 +29,14 @@
     <section class="mt-2">
         <div class="sc-card p-3.5 !border-lnu-100 !bg-lnu-50/60 flex items-center gap-3">
             <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0"><x-sc.icon name="shield" class="w-4 h-4" /></span>
-            <p class="text-[12.5px] text-lnu-800 font-semibold">Read-only view — you can browse the program's overview, activities, beneficiaries, and budget. Editing is done by the Director's office.</p>
+            <p class="text-[12.5px] text-lnu-800 font-semibold">Read-only view — you can browse the project's overview, activities, beneficiaries, and budget. Editing is done by the Director's office.</p>
         </div>
     </section>
 @elseif (! $canManage)
     <section class="mt-2">
         <div class="sc-card p-3.5 !border-gold-200 !bg-gold-50/60 flex items-center gap-3">
             <span class="w-8 h-8 rounded-lg bg-gold-100 text-gold-700 flex items-center justify-center shrink-0"><x-sc.icon name="shield" class="w-4 h-4" /></span>
-            <p class="text-[12.5px] text-gold-800 font-semibold">You can enroll, register, and unenroll beneficiaries, import them from XLSX, and record activity attendance. Program editing, objectives, activities, and budget remain with the Director's office.</p>
+            <p class="text-[12.5px] text-gold-800 font-semibold">You can enroll, register, and unenroll beneficiaries, import them from XLSX, and record activity attendance. Project editing, activities, and budget remain with the Director's office.</p>
         </div>
     </section>
 @endif

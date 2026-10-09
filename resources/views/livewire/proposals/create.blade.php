@@ -1,6 +1,6 @@
 <div>
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">Submit an activity proposal under an existing program · routed to the Director for approval</p>
+    <p class="text-[13px] text-gray-400 font-medium mb-3">Submit an activity proposal under an existing project · routed to the Director for approval</p>
 </section>
 
 <section class="mt-2 grid grid-cols-3 gap-4 reveal-item">
@@ -12,9 +12,9 @@
                 @error('form.title') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="label">Target program *</label>
+                <label class="label">Target project *</label>
                 <select required class="input" wire:model="form.extension_project_id">
-                    <option value="">— select program —</option>
+                    <option value="">— select project —</option>
                     @foreach ($programs as $p)
                         <option value="{{ $p->id }}">{{ $p->code }} · {{ $p->title }}</option>
                     @endforeach
@@ -58,7 +58,7 @@
             </div>
             <div class="col-span-2 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3">
                 <x-sc.icon name="clock" class="w-4 h-4 text-lnu-600 shrink-0 mt-0.5" />
-                <p class="text-[12px] text-gray-500 leading-snug">Proposed dates are validated against the target program's range <b>before approval</b> — proposals outside the range cannot be approved (8.8).</p>
+                <p class="text-[12px] text-gray-500 leading-snug">Proposed dates are validated against the target project's range <b>before approval</b> — proposals outside the range cannot be approved (8.8).</p>
             </div>
         </div>
 
@@ -81,7 +81,7 @@
         </div>
         <div class="border-l-4 border-gold-500 bg-gold-50 rounded-r-xl p-3.5">
             <p class="text-[12px] font-extrabold text-gold-800">After approval</p>
-            <p class="text-[11px] text-gold-700/80 font-medium mt-1">Approved proposals auto-create a draft activity in the program hub. Your proposal then enters the assessment stage — the Secretary validates resulting submissions.</p>
+            <p class="text-[11px] text-gold-700/80 font-medium mt-1">Approved proposals auto-create a draft activity in the project hub. Your proposal then enters the assessment stage — the Secretary validates resulting submissions.</p>
         </div>
     </div>
 </section>

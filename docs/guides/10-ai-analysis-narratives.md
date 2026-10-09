@@ -18,27 +18,47 @@ summaries are what the AI consumes). `GEMINI_API_KEY` must be set.
 
 ## Part A — Community insights (/ai-analysis)
 
+### A0. The page is a QUEUE, not a form
+
+`/ai-analysis` lists **every analysis grouped by community**, plus every validated summary
+still awaiting one. There is **no summary picker** — generation starts from the row that
+says a summary is waiting.
+
+- **Search** a barangay in the box (`?q=` — partial and case-insensitive, so `san jo`
+  finds *Brgy. San Jose*), or narrow with the chips: *Awaiting review · Approved · Failed ·
+  Generating · Discarded · Awaiting analysis*.
+- **Generating** is the chip for a row left `pending`. Generation is synchronous, so a row
+  still pending was **interrupted** (a timeout against the client's 120s budget, a fatal, an
+  aborted request) and will never finish on its own. Such a row offers **Start a new
+  generation** — it is the only way out, because `retry()` accepts only a `failed` generation.
+- Each **community name is a link** → its own history page
+  (`/ai-analysis/community/{id}`): every period, every generation, with Generate, Retry,
+  **Delete** and a bulk **Clear failed**. Deleting is **scoped** — an approved analysis
+  (citable in reports) and the live draft cannot be deleted.
+- Any row opens in **any** state, including approved (read-only) and discarded.
+
 ### A1. Generate
 
 1. Log in as **admin@lnu.com** → **AI Analysis Review**.
-2. In the summary picker, choose a community summary with data — e.g. a
-   **Brgy. San Jose** one (seeded assessments exist) or the Sagkahan
-   quarter your friends just validated. Check the hero chips: model,
-   "No PII", n respondents, confidence.
-3. Click **Generate** — the button swaps to a spinner ("Generating…");
-   generation is **synchronous**, so results appear in-request (a few seconds).
+2. Find the community — e.g. a **Brgy. San Jose** row (seeded assessments exist), or
+   search for the barangay whose quarter your friends just validated.
+3. Click **Generate** on the row marked **awaiting analysis** — the button swaps to a
+   spinner ("Generating…"); generation is **synchronous**, so results appear in-request
+   (a few seconds) and you are taken to that analysis's own page.
 
 **Expected:** a **draft** analysis appears with:
 - **Situation summary** of the community.
 - **Priority needs** identified from the aggregates.
-- **Top recommended interventions** with brief rationale.
+- **Top recommended interventions** with brief rationale — collapsible rows, with the
+  **High**-priority ones left open.
 - A **confidence chip** — a derived *data*-confidence (sample size +
   coverage), never the model bragging about itself.
 
-**If the AI service is down:** you get the first-class failure state
-**"Analysis unavailable — (error)"** with a **Retry** button and the error
-persisted. That is designed behavior (D12 — live API only, no mock mode),
-not a broken page.
+**If the AI service is down:** the row turns **failed** with a readable reason
+("AI request failed — HTTP 503…") and a **Retry** button, and the error is persisted.
+That is designed behavior (D12 — live API only, no mock mode), not a broken page.
+**Regenerate** on an analysis page creates a NEW generation and keeps the previous one, so
+a regeneration is auditable rather than destructive.
 
 ### A2. The three-tier scope guardrail — the important part
 
@@ -96,39 +116,60 @@ full provenance for audit.
 
 ## Part B — Project narratives (executive summaries)
 
+### B0. The page is a searchable index
+
+**Project Narratives** lists **one card per project** — including projects with no narrative
+yet, which is a first-class state rather than an omission.
+
+- **Search** (`?q=`) matches the project's **title, code, lead or community** — so `kultura`,
+  `CAS-2026-002`, a lead's name or a barangay all find the same project.
+- **Chips** filter by the project's *latest* narrative: *Not generated · Generating · Failed ·
+  Needs attention · At risk · On track*, each with a live count. The counts describe **what is
+  on screen**, so a search narrows them too.
+- Cards are ordered **attention-first** — whatever needs you is at the top — and there are
+  **8 projects a page**.
+- A card's **body collapses** (click the title). The header and the metric strip — *trainors ·
+  trainees · training hrs vs the annual target · activities* — always show. **"Not generated",
+  "Generating" and "Failed" never collapse**, so a failure reason is never behind a click.
+
 ### B1. Generate
 
 1. Go to **Project Narratives** (or open a project hub and click
-   **Generate narrative** — e.g. on **EXT-2026-001 LITRAWIYA**).
-2. Click **Generate**.
+   **Generate narrative** — e.g. on **CAS-2026-002 KULTURA**).
+2. Click **Generate** on the card.
 
 **Expected:** an executive summary card with:
 - A **health label** — On track / At risk / Needs attention (derived by the
   model from the **target-model** inputs).
-- Executive summary text, **top risks**, and **next actions** with priority.
-- Delivery figures **against the project's annual targets** (training hours
-  rendered vs target, budget utilized vs target, beneficiaries reached).
+- Summary text, **top risks**, and **next actions** with priority.
+- Delivery figures for the project: **training hours rendered vs the annual HOURS target**,
+  **budget utilized vs the project's ALLOCATION**, and **trainees**. A project has **no annual
+  budget target** (v4.19) — the allocation is the denominator, and no surface may call it a target.
 - A provenance footer (model · prompt version · generated by/at).
 
 > **The old "Objectives met: X/Y" chip is gone.** It derived from the 8.6
 > objective machinery, which was removed from the UI (D-R7). What you see
-> instead is attainment against the project's **own annual targets** — the
-> same numbers as the hub's Overview tab.
+> instead is training-hours attainment against the project's **annual HOURS
+> target** — the same number as the hub's Overview tab.
+
+> **If it fails** you get a red **"Narrative unavailable"** card carrying the reason, and the
+> toast reports an *error* — never a green "generated" over a failed card. Click **Generate**
+> again to retry; each attempt is a new row, so the failed one stays in the version history.
 
 ### B2. Version history (no gate)
 
 1. Click **Generate** again for the same project.
 
-**Expected:** a **new version** is created — nothing is overwritten; browse
-the version-history timeline to compare. Narratives have **no approval
+**Expected:** a **new version** is created — nothing is overwritten; open **Version history**
+on the card to compare. Narratives have **no approval
 gate**: they are Director-internal decision support (contrast Part A's
 gate), but provenance is still recorded.
 
 ### B3. Cross-check the inputs
 
-Open the LITRAWIYA hub → Overview while reading the narrative.
+Open the **KULTURA** hub → Overview while reading the narrative.
 
-**Expected:** the narrative's budget / hours / reach statements match the hub's
+**Expected:** the narrative's budget / hours / trainee statements match the hub's
 live numbers — both come from `TrainingHoursService`, so they cannot disagree.
 
 ---

@@ -47,9 +47,9 @@
 <section class="mt-5 reveal-item">
     <div class="sc-card p-0 overflow-hidden">
         <div class="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-gray-100">
-            <label class="relative flex-1 min-w-[220px] max-w-sm">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 inline-flex pointer-events-none"><x-sc.icon name="search" class="w-4 h-4" /></span>
-                <input type="text" wire:model.live.debounce.300ms="search" class="input !pl-9 !py-2 bg-gray-50 border-transparent focus:bg-white" placeholder="Search community, encoder, or respondent…">
+            <label class="sc-search flex-1 min-w-[220px] max-w-sm">
+                <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
+                <input type="text" wire:model.live.debounce.300ms="search" class="input !py-2 bg-gray-50 border-transparent focus:bg-white" placeholder="Search community, encoder, or respondent…">
             </label>
             <select wire:model.live="quarter" class="input !w-40 !py-2">
                 <option value="all">All quarters</option>
@@ -163,11 +163,12 @@
          class="fixed inset-0 z-50 overflow-hidden no-print">
         <div class="absolute inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="$wire.closeDrawer()"></div>
 
-        <aside class="sc-drawer absolute inset-y-0 right-0 w-full max-w-[480px] bg-white shadow-pop flex flex-col">
-            <header class="p-5 border-b border-gray-100 flex items-start gap-3">
+        <aside class="sc-drawer absolute inset-y-0 right-0 w-full max-w-[480px] bg-white shadow-pop flex flex-col" role="dialog" aria-modal="true" aria-labelledby="assessment-dossier-title">
+            <header class="shrink-0 border-b border-white/10 bg-gradient-to-br from-lnu-800 to-lnu-700 p-5 text-white">
+                <div class="mb-4 flex items-start justify-between gap-3"><div class="flex items-center gap-2.5"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="clipboard" class="h-4 w-4" /></span><p class="text-[10px] font-extrabold uppercase tracking-[.14em] text-white/70">Encoded response dossier</p></div><button wire:click="closeDrawer" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/70 hover:bg-white/12 hover:text-white transition" aria-label="Close assessment dossier"><x-sc.icon name="x" class="w-4 h-4" /></button></div>
+                <div class="flex items-start gap-3">
                 <div class="min-w-0 flex-1">
-                    <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">Encoded Response Dossier</p>
-                    <h2 class="mt-0.5 text-[15px] font-extrabold tracking-tight truncate">{{ $selected->community->name }}</h2>
+                    <h2 id="assessment-dossier-title" class="text-[18px] font-extrabold tracking-tight truncate">{{ $selected->community->name }}</h2>
                     <div class="mt-2 flex items-center gap-2 flex-wrap">
                         @if ($selected->review_status === 'pending')
                             <span class="badge badge-yellow"><span class="w-1.5 h-1.5 rounded-full bg-gold-500 pulse-dot"></span>Pending</span>
@@ -181,15 +182,15 @@
                             <span class="badge badge-gold">XLSX import</span>
                         @endif
                     </div>
-                    <p class="mt-2 text-[11.5px] text-gray-400 leading-snug">
-                        Respondent: <span class="font-semibold text-gray-500">{{ $this->answer($selected, 'respondent_full_name') ?? '—' }}</span>
+                    <p class="mt-2 text-[11.5px] text-white/70 leading-snug">
+                        Respondent: <span class="font-semibold text-white/85">{{ $this->answer($selected, 'respondent_full_name') ?? '—' }}</span>
                         · Encoded by {{ $selected->uploader?->name ?? '—' }} · {{ $selected->created_at->format('M j, Y') }}
                         @if ($selected->reviewed_at)
                             · Reviewed by {{ $selected->reviewer?->name }} on {{ $selected->reviewed_at->format('M j, Y') }}
                         @endif
                     </p>
                 </div>
-                <button wire:click="closeDrawer" class="p-2 rounded-lg text-gray-400 hover:text-charcoal hover:bg-gray-100 transition text-lg leading-none shrink-0"><x-sc.icon name="x" class="w-4 h-4" /></button>
+                </div>
             </header>
 
             <div class="flex-1 overflow-y-auto bg-gray-50/60 p-4">
@@ -240,7 +241,7 @@
                 @endif
             </div>
 
-            <footer class="p-4 border-t border-gray-100 bg-white">
+            <footer class="shrink-0 p-4 border-t border-gray-100 bg-gray-50/80">
                 @php($pct = $this->completeness($selected))
                 <div class="flex items-center justify-between text-[11.5px]">
                     <p class="font-bold text-charcoal">Record completeness</p>
@@ -260,53 +261,34 @@
 
 {{-- Validate confirmation modal (stacks above the drawer, §14 z-rule) --}}
 <div x-data="{ open: false }" x-init="$wire.$watch('showValidate', v => open = v)" @keydown.escape.window="$wire.set('showValidate', false)"
-     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-[60] p-6 overflow-auto no-print">
-    <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="$wire.set('showValidate', false)"></div>
-    <div class="sc-modal relative max-w-lg mx-auto mt-32 sc-card p-6 shadow-pop">
-        <div class="flex items-start gap-3">
-            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><x-sc.icon name="check" /></span>
-            <div>
-                <h3 class="font-extrabold text-[15px] tracking-tight">Validate Submission</h3>
-                <p class="text-[12px] text-gray-500 mt-0.5 leading-relaxed">The submission for <b class="text-charcoal">{{ $validating?->community?->name ?? 'this community' }}</b>@if ($validating) (Q{{ $validating->quarter }} · {{ $validating->year }})@endif will be marked as validated.</p>
+     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="assessment-validate-title">
+    <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showValidate', false)"></div>
+    <section class="sc-modal relative z-10 flex w-full max-w-xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="check" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Assessment workflow</p><h3 id="assessment-validate-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Validate submission</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Confirm that this quarterly submission is complete and ready for institutional reporting.</p></div></div>
+                <button type="button" wire:click="$set('showValidate', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close validate submission dialog"><x-sc.icon name="x" class="h-4 w-4" /></button>
+            </div>
+        </header>
+        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+            <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-[11px] leading-relaxed text-emerald-900"><x-sc.icon name="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" /><p>The submission for <b>{{ $validating?->community?->name ?? 'this community' }}</b>@if ($validating) (Q{{ $validating->quarter }} · {{ $validating->year }})@endif will be marked as validated.</p></div>
+            <div class="rounded-xl border border-gray-100 bg-gray-50/70 p-4">
+                <p class="text-[12px] font-bold text-charcoal mb-1.5">On confirm:</p>
+                <ul class="space-y-1.5 text-[12px] text-gray-500 leading-relaxed"><li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>The community summary recomputes automatically</li><li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>The encoder is notified of the validation</li><li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>Your name &amp; timestamp are stamped to the audit trail</li></ul>
             </div>
         </div>
-        <div class="mt-4 rounded-xl border border-gray-100 bg-gray-50/70 p-3.5">
-            <p class="text-[12px] font-bold text-charcoal mb-1.5">On confirm:</p>
-            <ul class="space-y-1.5 text-[12px] text-gray-500 leading-relaxed">
-                <li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>The community summary recomputes automatically</li>
-                <li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>The encoder is notified of the validation</li>
-                <li class="flex items-start gap-2"><span class="text-emerald-500"><x-sc.icon name="check" class="w-4 h-4" /></span>Your name &amp; timestamp are stamped to the audit trail</li>
-            </ul>
-        </div>
-        <div class="mt-5 flex justify-end gap-2">
-            <button type="button" class="btn btn-ghost" wire:click="$set('showValidate', false)">Cancel</button>
-            <button type="button" class="btn btn-primary" wire:click="confirmValidate" wire:loading.attr="disabled" wire:target="confirmValidate">Validate Assessment</button>
-        </div>
-    </div>
+        <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6"><div class="flex justify-end gap-2"><button type="button" class="btn btn-ghost" wire:click="$set('showValidate', false)">Cancel</button><button type="button" class="btn btn-primary min-w-[150px]" wire:click="confirmValidate" wire:loading.attr="disabled" wire:target="confirmValidate"><span wire:loading.remove wire:target="confirmValidate">Validate assessment</span><span wire:loading wire:target="confirmValidate" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Validating…</span></button></div></div>
+    </section>
 </div>
 
 {{-- Return remarks modal (stacks above the drawer, §14 z-rule) --}}
 <div x-data="{ open: false }" x-init="$wire.$watch('showReturn', v => open = v)" @keydown.escape.window="$wire.set('showReturn', false)"
-     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-[60] p-6 overflow-auto no-print">
-    <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="$wire.set('showReturn', false)"></div>
-    <form wire:submit="confirmReturn" class="sc-modal relative max-w-lg mx-auto mt-32 sc-card p-6 shadow-pop">
-        <div class="flex items-start gap-3">
-            <span class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0"><x-sc.icon name="doc" /></span>
-            <div>
-                <h3 class="font-extrabold text-[15px] tracking-tight">Return to Encoder</h3>
-                <p class="text-[12px] text-gray-500 mt-0.5 leading-relaxed">The submission for <b class="text-charcoal">{{ $returning?->community?->name ?? 'this community' }}</b> goes back to the encoder with your remarks.</p>
-            </div>
-        </div>
-        <div class="mt-4">
-            <label class="label">Remarks <span class="text-red-500">*</span></label>
-            <textarea rows="4" class="input resize-none" wire:model="returnRemarks" placeholder="Explain what must be corrected before resubmission…"></textarea>
-            <p class="text-[11px] text-gray-400 mt-1.5">Remarks are logged in the audit trail and shown to the encoder.</p>
-            @error('returnRemarks') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-        </div>
-        <div class="mt-5 flex justify-end gap-2">
-            <button type="button" class="btn btn-ghost" wire:click="$set('showReturn', false)">Cancel</button>
-            <button type="submit" class="btn btn-danger-soft">Return Assessment</button>
-        </div>
+     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="assessment-return-title">
+    <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showReturn', false)"></div>
+    <form wire:submit="confirmReturn" class="sc-modal relative z-10 flex w-full max-w-xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="doc" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Assessment workflow</p><h3 id="assessment-return-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Return to encoder</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Give the encoder clear remarks so the submission can be corrected and resubmitted.</p></div></div><button type="button" wire:click="$set('showReturn', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close return assessment dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
+        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6"><div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-[11px] leading-relaxed text-red-900"><x-sc.icon name="alert" class="mt-0.5 h-4 w-4 shrink-0 text-red-700" /><p>The submission for <b>{{ $returning?->community?->name ?? 'this community' }}</b> will return to the encoder and the remarks will be recorded in the audit trail.</p></div><div><label class="label" for="assessment-return-remarks">Remarks <span class="text-red-500">*</span></label><textarea id="assessment-return-remarks" rows="5" maxlength="2000" class="input resize-none" wire:model="returnRemarks" placeholder="Explain what must be corrected before resubmission…" aria-invalid="{{ $errors->has('returnRemarks') ? 'true' : 'false' }}"></textarea><p class="mt-1.5 text-[11px] text-gray-400">Be specific about missing, inconsistent, or unsupported information. Maximum 2,000 characters.</p>@error('returnRemarks') <p class="sc-field-error">{{ $message }}</p> @enderror</div></div>
+        <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6"><div class="flex justify-end gap-2"><button type="button" class="btn btn-ghost" wire:click="$set('showReturn', false)">Cancel</button><button type="submit" class="btn btn-danger-soft min-w-[150px]" wire:loading.attr="disabled" wire:target="confirmReturn"><span wire:loading.remove wire:target="confirmReturn">Return assessment</span><span wire:loading wire:target="confirmReturn" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Returning…</span></button></div></div>
     </form>
 </div>
 </div>

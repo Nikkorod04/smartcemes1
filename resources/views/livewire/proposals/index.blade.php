@@ -1,65 +1,104 @@
 <div>
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">
-        {{ $isAdmin ? 'Proposal review queue — approvals create draft activities; proposed dates outside the program range block approval (8.8)' : 'Your submitted activity proposals' }}
-    </p>
-    <div class="reveal-item flex flex-wrap items-center gap-3">
-        <div class="flex flex-wrap items-center gap-2">
-            <button wire:click="$set('status', '')" @class(['chip', 'on' => $status === ''])>All</button>
-            <button wire:click="$set('status', 'pending')" @class(['chip', 'on' => $status === 'pending'])>Pending</button>
-            <button wire:click="$set('status', 'approved')" @class(['chip', 'on' => $status === 'approved'])>Approved</button>
-            <button wire:click="$set('status', 'rejected')" @class(['chip', 'on' => $status === 'rejected'])>Rejected</button>
-        </div>
-        @if (auth()->user()->isFaculty())
-            <div class="ml-auto">
-                <a href="{{ route('proposals.create') }}" class="btn btn-primary"><x-sc.icon name="doc" class="w-4 h-4" />Submit Proposal</a>
+    <div class="sc-card rh-filter-panel p-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <p class="rh-filter-label">Proposal status</p>
+                <div class="chip-group mt-2">
+                    @foreach ([
+                        '' => 'All proposals',
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
+                    ] as $value => $label)
+                        <button type="button" wire:click="setStatus('{{ $value }}')" @class(['chip', 'on' => $status === $value])>
+                            {{ $label }}
+                            @if ($value !== '')<span class="{{ $status === $value ? 'text-white/80' : 'text-gray-400' }}">{{ $counts[$value] ?? 0 }}</span>@endif
+                        </button>
+                    @endforeach
+                </div>
             </div>
-        @endif
+            <div class="relative flex-1 min-w-[260px] max-w-[420px]">
+                <span class="rh-filter-label block mb-2">Search proposals</span>
+                <div class="sc-search">
+                    <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
+                    <input wire:model.live.debounce.300ms="search" aria-label="Search proposals" class="input !w-full !min-w-0" placeholder="Title, faculty, project, or community…">
+                    @if ($search !== '')
+                        <button type="button" wire:click="$set('search', '')" aria-label="Clear proposal search" class="sc-search__clear">&times;</button>
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
+            <p class="text-[11.5px] text-gray-400 font-medium"><span wire:loading wire:target="search,status,sortBy" class="rh-spinner mr-1.5"></span>{{ $proposals->total() }} result{{ $proposals->total() === 1 ? '' : 's' }} · page {{ $proposals->currentPage() }} of {{ $proposals->lastPage() }}</p>
+            <p class="text-[11px] text-gray-400">Click a column heading to sort the queue.</p>
+        </div>
     </div>
 </section>
 
 <section class="mt-4">
     <div class="sc-card p-0 overflow-hidden">
+        <div class="rh-queue-head px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+            <div>
+                <h3 class="font-extrabold text-[15px] tracking-tight">Proposal queue</h3>
+                <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">{{ $proposals->total() }} matching proposal{{ $proposals->total() === 1 ? '' : 's' }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="badge badge-{{ $status === 'pending' ? 'yellow' : 'blue' }}">{{ $status === '' ? 'All proposals' : ucfirst($status) }}</span>
+                @if ($sort !== 'priority')<span class="rh-sort-summary">Sorted by {{ ucfirst($sort) }} {{ $direction === 'asc' ? '↑' : '↓' }}</span>@endif
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="sc-table">
                 <thead><tr>
-                    <th>Proposal</th><th>Proposer</th><th>Program · Community</th>
-                    <th>Proposed Dates</th><th>Budget</th><th>Submitted</th><th>Special Order</th><th>Status</th><th></th>
-                </th></tr></thead>
+                    @foreach ([['title', 'Proposal'], ['faculty', 'Proposer'], ['project', 'Project'], ['dates', 'Dates'], ['budget', 'Budget']] as [$column, $label])
+                        <th class="{{ $column === 'budget' ? '!text-right' : '' }}">
+                            <button type="button" wire:click="sortBy('{{ $column }}')" wire:loading.attr="disabled" class="rh-sort-button {{ $sort === $column ? 'is-active' : '' }}">
+                                <span>{{ $label }}</span><span class="rh-sort-arrow">{{ $sort === $column ? ($direction === 'asc' ? '↑' : '↓') : '↕' }}</span>
+                            </button>
+                        </th>
+                    @endforeach
+                    <th>
+                        <button type="button" wire:click="sortBy('status')" wire:loading.attr="disabled" class="rh-sort-button {{ $sort === 'status' ? 'is-active' : '' }}">
+                            <span>Status</span><span class="rh-sort-arrow">{{ $sort === 'status' ? ($direction === 'asc' ? '↑' : '↓') : '↕' }}</span>
+                        </button>
+                    </th>
+                    <th></th>
+                </tr></thead>
                 <tbody>
                     @forelse ($proposals as $p)
-                        <tr wire:key="prop-{{ $p->id }}">
+                        <tr wire:key="prop-{{ $p->id }}" class="rh-row rh-row--{{ $p->status }}">
                             <td><p class="font-semibold text-charcoal">{{ $p->title }}</p>
-                                @if ($p->documents->count())<p class="text-[11px] text-gray-400">{{ $p->documents->count() }} attachment{{ $p->documents->count() === 1 ? '' : 's' }}</p>@endif</td>
-                            <td class="text-gray-500">{{ $p->faculty?->user?->name }}</td>
-                            <td class="text-gray-500">{{ $p->program?->code }} · {{ $p->community?->name }}</td>
-                            <td class="whitespace-nowrap">{{ $p->proposed_start_date->format('M j, Y') }} – {{ $p->proposed_end_date->format('M j, Y') }}
+                                <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                                    <span class="text-[11px] text-gray-400">{{ $p->program?->code ?? 'Unassigned project' }}</span>
+                                    @if ($p->documents->count())<span class="badge badge-gray !text-[10px]">{{ $p->documents->count() }} attachment{{ $p->documents->count() === 1 ? '' : 's' }}</span>@endif
+                                    @if ($p->special_order_path)<span class="badge badge-gold !text-[10px]">SO attached</span>@endif
+                                </div>
+                            </td>
+                            <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="font-semibold text-charcoal">{{ $p->faculty?->user?->name ?? '—' }}</span></div></td>
+                            <td><p class="font-semibold text-charcoal">{{ $p->program?->code ?? '—' }}</p><p class="text-[11px] text-gray-400">{{ $p->community?->name ?? 'No community' }}</p></td>
+                            <td class="whitespace-nowrap"><span class="inline-flex items-center gap-1.5 text-gray-600"><x-sc.icon name="calendar" class="w-3.5 h-3.5 text-gray-400" />{{ $p->proposed_start_date->format('M j, Y') }} – {{ $p->proposed_end_date->format('M j, Y') }}</span><p class="text-[11px] text-gray-400 mt-1">Submitted {{ $p->submitted_at?->format('M j, Y') ?? '—' }}</p>
                                 @if ($p->violatesProgramRange())<span class="conflict-marker ml-1"><x-sc.icon name="alert" class="w-3 h-3" /> out of range</span>@endif
                             </td>
-                            <td class="whitespace-nowrap">{{ $p->budget_estimate !== null ? '₱'.number_format((float) $p->budget_estimate) : '—' }}</td>
-                            <td class="text-gray-500">{{ $p->submitted_at?->format('M j, Y') }}</td>
-                            <td>
-                                @if ($p->special_order_path)
-                                    <a href="{{ Storage::disk('public')->url($p->special_order_path) }}" download class="badge badge-gold hover:opacity-80 transition" title="Download Special Order">⬇ Attached</a>
-                                @else
-                                    <span class="text-[11.5px] text-gray-300">—</span>
-                                @endif
-                            </td>
-                            <td><span class="badge badge-{{ config('smartcemes.status_colors')[$p->status] ?? 'gray' }}">{{ ucfirst($p->status) }}</span></td>
+                            <td class="!text-right whitespace-nowrap font-semibold tabular-nums">{{ $p->budget_estimate !== null ? '₱'.number_format((float) $p->budget_estimate) : '—' }}</td>
+                            <td><span class="badge badge-{{ config('smartcemes.status_colors')[$p->status] ?? 'gray' }}"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ ucfirst($p->status) }}</span></td>
                             <td class="!text-right row-actions whitespace-nowrap">
-                                <button wire:click="viewDetail({{ $p->id }})" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Details</button>
+                                <button wire:click="viewDetail({{ $p->id }})" wire:loading.attr="disabled" class="rh-action btn btn-ghost !px-2 !py-1 !text-[11px]">Details</button>
                                 @if ($isAdmin && $p->status === 'pending')
-                                    <button wire:click="openApprove({{ $p->id }})" class="btn btn-success-soft !px-2 !py-1 !text-[11px]">Approve</button>
-                                    <button wire:click="openReject({{ $p->id }})" class="btn btn-danger-soft !px-2 !py-1 !text-[11px]">Reject</button>
+                                    <button wire:click="openApprove({{ $p->id }})" wire:loading.attr="disabled" class="rh-action btn btn-success-soft !px-2 !py-1 !text-[11px]">Approve</button>
+                                    <button wire:click="openReject({{ $p->id }})" wire:loading.attr="disabled" class="rh-action btn btn-danger-soft !px-2 !py-1 !text-[11px]">Reject</button>
                                 @endif
                             </td>
                         </tr>
                     @endforeach
                     @if ($proposals->isEmpty())
-                        <tr><td colspan="9" class="text-center text-gray-400 py-8">No proposals{{ $isAdmin ? ' awaiting review.' : ' yet — submit your first proposal.' }}</td></tr>
+                        <tr><td colspan="7" class="text-center py-12"><span class="mx-auto w-11 h-11 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center"><x-sc.icon name="doc" class="w-5 h-5" /></span><p class="text-[13px] font-semibold text-gray-500 mt-3">No matching proposals</p><p class="text-[11.5px] text-gray-400 mt-1">Try a different status or search term.</p></td></tr>
                     @endif
                 </tbody>
             </table>
+        </div>
+        <div class="px-5 py-4 border-t border-gray-100">
+            @include('livewire.partials.pagination', ['paginator' => $proposals])
         </div>
     </div>
 </section>
@@ -69,26 +108,18 @@
 </footer>
 
 {{-- Detail modal --}}
-@if ($detail)
-    <div class="fixed inset-0 z-50 p-6 overflow-auto no-print" style="display:block">
-        <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" wire:click="closeModals"></div>
-        <div class="sc-modal relative max-w-xl mx-auto mt-16 sc-card p-6 shadow-pop">
-            <div class="flex items-start justify-between gap-3 mb-4">
-                <div class="min-w-0">
-                    <h3 class="font-extrabold text-[15.5px] tracking-tight leading-snug">{{ $detail->title }}</h3>
-                    <p class="text-[12px] text-gray-400 mt-0.5">{{ $detail->program?->code }} · {{ $detail->community?->name }} · by {{ $detail->faculty?->user?->name }}</p>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <span class="badge badge-{{ config('smartcemes.status_colors')[$detail->status] ?? 'gray' }}">{{ ucfirst($detail->status) }}</span>
-                    <button wire:click="closeModals" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
-                </div>
-            </div>
+@if ($detail && ! $showApprove && ! $showReject)
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="proposal-detail-title">
+        <div class="fixed inset-0 sc-modal-backdrop" wire:click="closeModals"></div>
+        <section class="sc-modal relative z-10 flex w-full max-w-2xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+            <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="doc" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Proposal workspace</p><h3 id="proposal-detail-title" class="mt-1 text-[18px] font-extrabold leading-snug tracking-tight">{{ $detail->title }}</h3><p class="mt-1 text-[12px] font-medium leading-relaxed text-white/72">{{ $detail->program?->code }} · {{ $detail->community?->name }} · by {{ $detail->faculty?->user?->name }}</p></div></div><div class="flex items-center gap-2 shrink-0"><span class="badge badge-{{ config('smartcemes.status_colors')[$detail->status] ?? 'gray' }}">{{ ucfirst($detail->status) }}</span><button type="button" wire:click="closeModals" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close proposal details"><x-sc.icon name="x" class="w-4 h-4" /></button></div></div></header>
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
 
             <p class="text-[12.5px] text-gray-600 leading-relaxed">{{ $detail->description ?? 'No description provided.' }}</p>
 
             <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/70 border border-gray-100 mt-4">
                 <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Proposed dates</p><p class="text-[12.5px] font-semibold mt-1">{{ $detail->proposed_start_date->format('M j, Y') }} – {{ $detail->proposed_end_date->format('M j, Y') }}</p>
-                    @if ($detail->violatesProgramRange())<p class="text-[11px] text-red-600 font-semibold mt-1"><x-sc.icon name="alert" class="w-3 h-3" /> Outside program range — approval blocked (8.8)</p>@endif
+                    @if ($detail->violatesProgramRange())<p class="text-[11px] text-red-600 font-semibold mt-1"><x-sc.icon name="alert" class="w-3 h-3" /> Outside project range — approval blocked (8.8)</p>@endif
                 </div>
                 <div><p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Budget estimate</p><p class="text-[12.5px] font-semibold mt-1">{{ $detail->budget_estimate !== null ? '₱'.number_format((float) $detail->budget_estimate) : '—' }}</p></div>
                 @if ($detail->createdActivity)
@@ -135,26 +166,22 @@
                 @if ($detail->rejected_at)<div class="kv"><span class="k">Rejected</span><span class="v">{{ $detail->rejecter?->name }} · {{ $detail->rejected_at->format('M j, Y g:i A') }}</span></div>@endif
             </div>
 
-            @if ($isAdmin && $detail->status === 'pending')
-                <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-gray-100">
-                    <button wire:click="closeModals" class="btn btn-ghost">Close</button>
-                    <button wire:click="openApprove({{ $detail->id }})" class="btn btn-success-soft">Approve</button>
-                    <button wire:click="openReject({{ $detail->id }})" class="btn btn-danger-soft">Reject</button>
-                </div>
-            @endif
-        </div>
+            </div>
+            <footer class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6"><div class="flex justify-end gap-2"><button type="button" wire:click="closeModals" class="btn btn-ghost">Close</button>@if ($isAdmin && $detail->status === 'pending')<button type="button" wire:click="openApprove({{ $detail->id }})" class="btn btn-success-soft">Approve</button><button type="button" wire:click="openReject({{ $detail->id }})" class="btn btn-danger-soft">Reject</button>@endif</div></footer>
+        </section>
     </div>
 @endif
 
 {{-- Approve modal (Special Order attach) --}}
-<div x-data="{ open: false }" x-init="$wire.$watch('showApprove', v => open = v)" @keydown.escape.window="$wire.closeModals()"
-     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print">
-    <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="$wire.closeModals()"></div>
-    <form wire:submit="approve({{ $detailId }})" class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
-        <h3 class="font-extrabold text-[16px] tracking-tight mb-1">Approve Proposal</h3>
-        <p class="text-[12px] text-gray-400 font-medium mb-4">On approval, a draft activity is auto-created in the program hub.</p>
+<div wire:key="proposal-approve-modal" x-data="{ open: false }" x-init="$wire.$watch('showApprove', v => open = v)" @keydown.escape.window="$wire.closeModals()"
+     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="proposal-approve-title">
+    <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.closeModals()"></div>
+    <form wire:submit="approve({{ $actionId }})" class="sc-modal relative z-10 flex w-full max-w-2xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="check" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Proposal workflow</p><h3 id="proposal-approve-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Approve proposal</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Confirm the proposal and optionally attach its Special Order before the draft activity is created.</p></div></div><button type="button" wire:click="closeModals" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close approve proposal dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
 
-        <div class="space-y-3">
+        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+            <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-[11px] leading-relaxed text-emerald-900"><x-sc.icon name="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" /><p><span class="font-extrabold">Approval creates a draft activity.</span> The proposal’s dates, community, and project context will be carried into the project hub.</p></div>
+            <div class="space-y-3">
             <div>
                 <label class="label">Special Order (PDF, optional)</label>
                 <input type="file" wire:model="specialOrderFile" accept=".pdf,application/pdf" class="input !py-2.5 bg-gray-50">
@@ -168,30 +195,34 @@
                 <label class="label">Remarks (optional)</label>
                 <textarea rows="2" class="input" wire:model="adminRemarks" placeholder="Approval remarks…"></textarea>
             </div>
+            </div>
         </div>
 
-        <div class="flex justify-end gap-2 mt-5">
+        <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6 flex justify-end gap-2">
             <button type="button" class="btn btn-ghost" wire:click="closeModals">Cancel</button>
-            <button type="submit" wire:loading.attr="disabled" class="btn btn-primary">Approve proposal</button>
+            <button type="submit" wire:loading.attr="disabled" wire:target="approve" class="btn btn-primary"><span wire:loading.remove wire:target="approve">Approve proposal</span><span wire:loading wire:target="approve" class="rh-spinner"></span></button>
         </div>
     </form>
 </div>
 
 {{-- Reject modal --}}
-<div x-data="{ open: false }" x-init="$wire.$watch('showReject', v => open = v)" @keydown.escape.window="$wire.closeModals()"
-     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 p-6 overflow-auto no-print">
-    <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" @click="$wire.closeModals()"></div>
-    <form wire:submit="reject({{ $detailId }})" class="sc-modal relative max-w-xl mx-auto mt-20 sc-card p-6 shadow-pop">
-        <h3 class="font-extrabold text-[16px] tracking-tight mb-1">Reject Proposal</h3>
-        <p class="text-[12px] text-gray-400 font-medium mb-4">A rejection reason is required and is shown to the proposer.</p>
-        <div>
-            <label class="label">Rejection reason *</label>
-            <textarea rows="3" class="input" wire:model="rejectionReason" placeholder="e.g. Budget exceeds FY allocation ceiling; revise costing or split into two phases."></textarea>
-            @error('rejectionReason') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
+<div wire:key="proposal-reject-modal" x-data="{ open: false }" x-init="$wire.$watch('showReject', v => open = v)" @keydown.escape.window="$wire.closeModals()"
+     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="proposal-reject-title">
+    <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.closeModals()"></div>
+    <form wire:submit="reject({{ $actionId }})" class="sc-modal relative z-10 flex w-full max-w-2xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="x" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Proposal workflow</p><h3 id="proposal-reject-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Reject proposal</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Give the proposer a clear reason that can be acted on in the next revision.</p></div></div><button type="button" wire:click="closeModals" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close reject proposal dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
+        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+            <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-[11px] leading-relaxed text-red-900"><x-sc.icon name="alert" class="mt-0.5 h-4 w-4 shrink-0 text-red-700" /><p><span class="font-extrabold">This decision is recorded.</span> The rejection reason will be visible to the proposer and included in the proposal history.</p></div>
+            <div>
+                <label class="label" for="proposal-rejection-reason">Rejection reason <span class="text-red-500">*</span></label>
+                <textarea id="proposal-rejection-reason" rows="5" maxlength="2000" class="input resize-y" wire:model="rejectionReason" aria-invalid="{{ $errors->has('rejectionReason') ? 'true' : 'false' }}" placeholder="e.g. Budget exceeds FY allocation ceiling; revise costing or split into two phases."></textarea>
+                <p class="field-hint">Be specific about the change required before resubmission.</p>
+                @error('rejectionReason') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+            </div>
         </div>
-        <div class="flex justify-end gap-2 mt-5">
+        <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6 flex justify-end gap-2">
             <button type="button" class="btn btn-ghost" wire:click="closeModals">Cancel</button>
-            <button type="submit" class="btn btn-danger-soft">Reject with remarks</button>
+            <button type="submit" wire:loading.attr="disabled" wire:target="reject" class="btn btn-danger-soft"><span wire:loading.remove wire:target="reject">Reject with remarks</span><span wire:loading wire:target="reject" class="rh-spinner"></span></button>
         </div>
     </form>
 </div>

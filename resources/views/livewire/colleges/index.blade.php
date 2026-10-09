@@ -124,12 +124,10 @@
                         <h3 class="hub-sec-title">{{ $selectedProgram->title }} under {{ $selected['code'] }}</h3>
                     </div>
                     <div class="flex items-center gap-2">
-                        <label class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex">
-                                <x-sc.icon name="search" class="w-4 h-4" />
-                            </span>
+                        <label class="sc-search">
+                            <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
                             <input wire:model.live.debounce.300ms="projectSearch"
-                                   class="input !pl-9 !w-60 !py-2" placeholder="Search project, lead, community…">
+                                   class="input !w-60 !py-2" placeholder="Search project, lead, community…">
                         </label>
                         <div class="flex items-center gap-1.5">
                             @foreach (['All', 'Ongoing', 'Completed', 'Draft', 'Archived'] as $chip)
@@ -306,7 +304,7 @@
                     <span class="hub-crumb-here" aria-current="page">{{ $selected['model']->name }}</span>
                 </nav>
 
-                <div class="college-hero mt-4">
+                <div class="college-hero college-overview-hero mt-4">
                     <div class="college-hero-media" style="background:{{ $selected['color'] }}">
                         @if ($selected['logo'])
                             <img src="{{ asset($selected['logo']) }}" alt="{{ $selected['model']->name }} seal"
@@ -320,13 +318,9 @@
                     <div class="college-hero-body">
                         <div class="flex items-start justify-between gap-4 flex-wrap">
                             <div class="min-w-0 flex-1">
+                                <p class="hub-eyebrow !text-lnu-700 mb-2">College overview</p>
                                 <h2 class="college-hero-name">{{ $selected['model']->name }}</h2>
-                                <p class="college-hero-sub">
-                                    {{ $selected['model']->short_name }}
-                                    <span class="text-gray-300 mx-1.5">·</span>
-                                    Extension Coordinator ·
-                                    <span class="font-bold text-charcoal">{{ $selected['model']->extensionCoordinator?->user?->name ?? 'unassigned' }}</span>
-                                </p>
+                                <p class="college-hero-sub">{{ $selected['model']->short_name }}</p>
                             </div>
 
                             {{-- The "Programs" button that used to sit here linked OUT
@@ -334,35 +328,16 @@
                                  (§23): the programs are the next level of THIS page. --}}
                             <a href="{{ route('faculty.index', ['college' => $selected['code']]) }}"
                                class="btn btn-outline !px-3.5 !py-2 text-[12px] shrink-0">
-                                <x-sc.icon name="users" class="w-4 h-4" /><span class="ml-1.5">Faculty</span>
+                                <x-sc.icon name="users" class="w-4 h-4" /><span class="ml-1.5">View faculty</span>
                             </a>
                         </div>
 
                         @if ($selected['model']->description)
                             <p class="college-hero-desc">{{ $selected['model']->description }}</p>
                         @endif
-
-                        {{-- Identity facts at a glance. This strip deliberately
-                             echoes the KPI row below — the strip is the one-line
-                             summary, the row is the same figures with their
-                             sub-captions. Same numbers, so they cannot disagree. --}}
-                        <div class="college-hero-chips">
-                            <span class="hero-chip">
-                                <x-sc.icon name="folder" class="w-3.5 h-3.5" />
-                                {{ $selected['programs'] }} {{ \Illuminate\Support\Str::plural('program', $selected['programs']) }}
-                            </span>
-                            <span class="hero-chip">
-                                <x-sc.icon name="clipboard" class="w-3.5 h-3.5" />
-                                {{ $selected['projects'] }} {{ \Illuminate\Support\Str::plural('project', $selected['projects']) }}
-                            </span>
-                            <span class="hero-chip">
-                                <x-sc.icon name="users" class="w-3.5 h-3.5" />
-                                {{ $selected['faculty'] }} faculty
-                            </span>
-                            <span class="hero-chip">
-                                <x-sc.icon name="people" class="w-3.5 h-3.5" />
-                                {{ number_format($selected['trainees']) }} trainees
-                            </span>
+                        <div class="college-hero-coordinator">
+                            <span class="college-hero-coordinator-icon"><x-sc.icon name="users" class="w-4 h-4" /></span>
+                            <span><span class="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-gray-400">Extension coordinator</span><span class="block text-[12.5px] font-bold text-charcoal mt-0.5">{{ $selected['model']->extensionCoordinator?->user?->name ?? 'Unassigned' }}</span></span>
                         </div>
                     </div>
                 </div>
@@ -371,14 +346,14 @@
             {{-- Derived KPIs — project-level quantities rolled up. A college has
                  no target of its own (§2.2B / D-R5), so no attainment appears
                  here, and there is deliberately NO hours tile (PATTERNS §7). --}}
-            <section class="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-4 reveal-item">
+            <section class="mt-4 grid grid-cols-2 xl:grid-cols-4 gap-3 reveal-item" aria-label="College totals">
                 @foreach ([
-                    ['clipboard', 'lnu', $selected['projects'], 'Extension projects', $selected['programs'].' broad programs'],
-                    ['users', 'gold', number_format($selected['trainors']), 'Trainors', $selected['faculty'].' faculty assigned'],
-                    ['people', 'emerald', number_format($selected['trainees']), 'Trainees', $selected['activities'].' activities'],
-                    ['wallet', 'slate', '₱'.number_format($selected['budget_utilized']), 'Budget utilized', 'rolled up from projects'],
+                    ['clipboard', 'lnu', $selected['projects'], 'Projects', $selected['programs'].' extension programs'],
+                    ['users', 'gold', number_format($selected['trainors']), 'Trainors', $selected['faculty'].' faculty members'],
+                    ['people', 'emerald', number_format($selected['trainees']), 'Trainees', $selected['activities'].' activities delivered'],
+                    ['wallet', 'slate', '₱'.number_format($selected['budget_utilized']), 'Budget utilized', 'Across this college'],
                 ] as [$icon, $tone, $value, $caption, $sub])
-                    <div class="hub-kpi">
+                    <div class="hub-kpi college-overview-kpi college-overview-kpi--{{ $tone }}">
                         <span class="hub-kpi-chip hub-kpi-chip--{{ $tone }}">
                             <x-sc.icon name="{{ $icon }}" class="w-4 h-4" />
                         </span>
@@ -395,11 +370,9 @@
             <section class="mt-9">
                 <div class="hub-sec-head">
                     <div>
-                        <p class="hub-eyebrow">Programs</p>
-                        <h3 class="hub-sec-title">{{ $selected['code'] }} extension programs</h3>
+                        <h3 class="hub-sec-title !mt-0">{{ $selected['code'] }} extension programs</h3>
                     </div>
                     <div class="hub-sec-meta">
-                        <span class="badge badge-blue">{{ $programRows->count() }} {{ \Illuminate\Support\Str::plural('program', $programRows->count()) }}</span>
                         {{-- §25: program create/edit lives HERE now. §23 removed every
                              link to /programs, which left its create form with no
                              inbound path — "add a program" became impossible. --}}
@@ -411,60 +384,31 @@
                 </div>
 
                 @if ($programRows->isNotEmpty())
-                    {{-- 2-up, not 3-up: a college delivers one or two thrusts, and a
-                         third column would sit empty beside them. --}}
-                    <div class="mt-4 grid md:grid-cols-2 gap-5">
+                    <div class="mt-4 grid xl:grid-cols-2 gap-4">
                         @foreach ($programRows as $program)
                             <button type="button"
                                     @if ($program->id) wire:click="selectProgram({{ $program->id }})" @endif
-                                    class="prog-card reveal-item"
+                                    class="prog-card college-program-card reveal-item"
                                     aria-label="Open {{ $program->title }}">
-                                <span class="block h-1.5" style="background:{{ $selected['color'] }}"></span>
-                                <span class="block p-5 flex-1">
-                                    <span class="flex items-start justify-between gap-3">
-                                        <span class="min-w-0">
-                                            <span class="block font-extrabold text-[17px] tracking-tight leading-snug">{{ $program->title }}</span>
-                                            @if ($program->code)
-                                                <span class="block text-[11px] text-gray-400 font-mono mt-1">{{ $program->code }}</span>
-                                            @endif
-                                            @if ($program->archived > 0)
-                                                <span class="block text-[10.5px] text-gray-400 font-medium mt-1">{{ $program->archived }} archived — open to restore</span>
-                                            @endif
-                                        </span>
+                                <span class="college-program-accent" style="background:{{ $selected['color'] }}"></span>
+                                <span class="college-program-body">
+                                    <span class="college-program-topline">
+                                        <span class="font-mono">{{ $program->code ?: 'EXTENSION PROGRAM' }}</span>
                                         @if ($program->pillar)
-                                            <span class="badge badge-gray shrink-0">{{ ucfirst($program->pillar) }}</span>
+                                            <span class="college-program-pillar">{{ ucfirst($program->pillar) }} pillar</span>
                                         @endif
                                     </span>
-
-                                    <span class="grid grid-cols-4 gap-2 mt-4">
-                                        <span class="proj-stat block">
-                                            <span class="s-val block">{{ $program->projects }}</span>
-                                            <span class="s-cap block">{{ \Illuminate\Support\Str::plural('Project', $program->projects) }}</span>
-                                        </span>
-                                        <span class="proj-stat block">
-                                            <span class="s-val block">{{ $program->trainors }}</span>
-                                            <span class="s-cap block">Trainors</span>
-                                        </span>
-                                        <span class="proj-stat block">
-                                            <span class="s-val block">{{ number_format($program->trainees) }}</span>
-                                            <span class="s-cap block">Trainees</span>
-                                        </span>
-                                        <span class="proj-stat block">
-                                            <span class="s-val block">{{ $program->activities }}</span>
-                                            <span class="s-cap block">Activities</span>
-                                        </span>
+                                    <span class="college-program-title">{{ $program->title }}</span>
+                                    <span class="college-program-primary">
+                                        <span><strong>{{ $program->projects }}</strong> {{ \Illuminate\Support\Str::plural('project', $program->projects) }}</span>
+                                        <span class="college-program-primary-divider" aria-hidden="true"></span>
+                                        <span><strong>{{ $program->activities }}</strong> {{ \Illuminate\Support\Str::plural('activity', $program->activities) }}</span>
                                     </span>
+                                    <span class="college-program-secondary">{{ $program->trainors }} trainors <span aria-hidden="true">·</span> {{ number_format($program->trainees) }} trainees <span aria-hidden="true">·</span> {{ number_format($program->training_hours, 1) }} hours rendered</span>
                                 </span>
-                                <span class="block px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                                    {{-- "hrs rendered", not "Training hours": no college
-                                         or program has an hours TARGET, so the label must
-                                         not read like one (PATTERNS §7). --}}
-                                    <span class="text-[11.5px] text-gray-400 font-semibold">
-                                        {{ number_format($program->training_hours, 1) }} hrs rendered
-                                    </span>
-                                    <span class="college-card-cta">
-                                        Open projects <x-sc.icon name="chevron" class="w-3.5 h-3.5" />
-                                    </span>
+                                <span class="college-program-foot">
+                                    <span>@if ($program->archived > 0){{ $program->archived }} archived {{ \Illuminate\Support\Str::plural('project', $program->archived) }}@else View project details @endif</span>
+                                    <span class="college-program-cta">Open projects <x-sc.icon name="chevron-right" class="w-4 h-4" /></span>
                                 </span>
                             </button>
                         @endforeach
@@ -482,36 +426,30 @@
         @endif
 
         {{-- Faculty assigned to this college --}}
-        <section class="mt-8">
-            <p class="hub-eyebrow">Faculty &amp; expertise</p>
-            <h3 class="text-[15px] font-extrabold tracking-tight mt-1">
-                Faculty assigned to {{ $selected['code'] }} ({{ $facultyRows->count() }})
-            </h3>
+        <section class="mt-9 college-faculty-section">
+            <div class="hub-sec-head">
+                <div>
+                    <h3 class="hub-sec-title !mt-0">Faculty assigned to {{ $selected['code'] }}</h3>
+                </div>
+                <span class="college-faculty-count">{{ $facultyRows->count() }} {{ \Illuminate\Support\Str::plural('member', $facultyRows->count()) }}</span>
+            </div>
 
             @if ($facultyRows->isNotEmpty())
-                <div class="mt-4 grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                <div class="mt-4 grid lg:grid-cols-2 gap-3">
                     @foreach ($facultyRows as $f)
                         <a href="{{ route('faculty.show', $f['id']) }}"
-                           class="sc-card p-4 reveal-item fac-mini" aria-label="Open profile of {{ $f['name'] }}">
-                            <div class="flex items-center gap-3">
-                                <span class="avatar w-9 h-9 text-[11px]">{{ $f['initials'] }}</span>
-                                <div class="min-w-0">
-                                    <p class="text-[12.5px] font-bold truncate">{{ $f['name'] }}</p>
-                                    <p class="text-[10.5px] text-gray-400 font-medium truncate">{{ $f['position'] }}</p>
+                           class="college-faculty-card reveal-item" aria-label="Open profile of {{ $f['name'] }}">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <span class="avatar w-10 h-10 text-[11px] shrink-0">{{ $f['initials'] }}</span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[13px] font-extrabold text-charcoal truncate">{{ $f['name'] }}</p>
+                                    <p class="text-[11px] text-gray-500 font-medium truncate">{{ $f['position'] }}</p>
                                 </div>
+                                <x-sc.icon name="chevron-right" class="w-4 h-4 text-gray-400 college-faculty-arrow" />
                             </div>
-                            <div class="grid grid-cols-2 gap-2 mt-3.5">
-                                <div class="fac-mini-stat">
-                                    <p class="fac-mini-val">{{ number_format((float) $f['rendered_hours'], 1) }}</p>
-                                    <p class="fac-mini-lbl">Hours rendered</p>
-                                </div>
-                                <div class="fac-mini-stat">
-                                    <p class="fac-mini-val">{{ $f['projects'] }}</p>
-                                    <p class="fac-mini-lbl">{{ \Illuminate\Support\Str::plural('Project', $f['projects']) }}</p>
-                                </div>
-                            </div>
+                            <div class="college-faculty-meta"><strong>{{ number_format((float) $f['rendered_hours'], 1) }}</strong> hours rendered <span aria-hidden="true">·</span> <strong>{{ $f['projects'] }}</strong> {{ \Illuminate\Support\Str::plural('project', $f['projects']) }}</div>
                             @if (! empty($f['expertise']))
-                                <div class="flex flex-wrap gap-1.5 mt-3">
+                                <div class="flex flex-wrap gap-1.5 mt-2.5">
                                     @foreach (array_slice($f['expertise'], 0, 2) as $tag)
                                         <span class="expertise-tag">{{ $tag }}</span>
                                     @endforeach
@@ -636,103 +574,138 @@
          `?new=1` deep link land on a page with no form on it (§14). --}}
     @if ($showProgramForm)
         <div x-data @keydown.escape.window="$wire.closeProgramForm()"
-             class="fixed inset-0 z-50 p-6 overflow-auto no-print">
-            <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" wire:click="closeProgramForm"></div>
-            <form wire:submit="saveProgram" class="sc-modal relative max-w-2xl mx-auto mt-16 sc-card p-6 shadow-pop">
-                <div class="flex items-start justify-between mb-1">
-                    <div>
-                        <h3 class="font-extrabold text-[16px] tracking-tight">
-                            {{ $editingProgramId ? 'Edit Extension Program' : 'New Extension Program' }}
-                        </h3>
-                        <p class="text-[12px] text-gray-400 mt-0.5">
-                            @if ($editingProgramId)
-                                The code never changes — {{ $editingProgramId ? \App\Models\Program::find($editingProgramId)?->code : '' }}
-                            @else
-                                The code is generated automatically (PROG-{{ now()->format('Y') }}-nnn)
-                            @endif
-                        </p>
-                    </div>
-                    <button type="button" wire:click="closeProgramForm"
-                            class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
-                </div>
-                <p class="text-[12px] text-gray-400 font-medium mb-4">
-                    Programs are the <span class="font-semibold text-charcoal">broad</span> thematic level —
-                    the verbatim CESO thrusts. Projects sit inside a program.
-                </p>
-
-                <div class="space-y-3">
-                    <div>
-                        <label class="label">Program title *</label>
-                        <input required class="input" wire:model="programForm.title" placeholder="Literacy, Numeracy &amp; Language">
-                        @error('programForm.title') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="label">Pillar *</label>
-                            <select class="input" wire:model="programForm.pillar">
-                                @foreach ($formPillars as $key => $label)
-                                    <option value="{{ $key }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('programForm.pillar') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">Status *</label>
-                            <select class="input" wire:model="programForm.status">
-                                @foreach ($formProgramStatuses as $s)
-                                    <option value="{{ $s }}">{{ ucfirst($s) }}</option>
-                                @endforeach
-                            </select>
-                            @error('programForm.status') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="label">CESO thrust implemented *</label>
-                        <input required class="input" wire:model="programForm.ceso_thrust" placeholder="Literacy, Numeracy &amp; Language Enhancement">
-                        @error('programForm.ceso_thrust') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label class="label">Description</label>
-                        <textarea rows="2" class="input" wire:model="programForm.description"
-                                  placeholder="What this program covers across the community"></textarea>
-                        @error('programForm.description') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label class="label">Goals</label>
-                        <textarea rows="2" class="input" wire:model="programForm.goals"
-                                  placeholder="High-level goals for this thrust…"></textarea>
-                        @error('programForm.goals') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Planning figures (optional)</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">
-                            Informational only — not a target. Performance is measured per project (D-R5).
-                        </p>
-                        <div class="grid grid-cols-2 gap-3 mt-2.5">
-                            <div>
-                                <label class="label">Annual hours (planning)</label>
-                                <input type="number" step="0.01" min="0" class="input" wire:model="programForm.annual_target_hours">
-                                @error('programForm.annual_target_hours') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="label">Annual budget (planning)</label>
-                                <input type="number" step="0.01" min="0" class="input" wire:model="programForm.annual_target_budget">
-                                @error('programForm.annual_target_budget') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
+             class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print"
+             role="dialog" aria-modal="true" aria-labelledby="program-form-title">
+            <div class="fixed inset-0 bg-charcoal/50 backdrop-blur-[3px]" wire:click="closeProgramForm"></div>
+            <form wire:submit="saveProgram" class="sc-modal relative z-10 flex w-full max-w-2xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop" aria-labelledby="program-form-title">
+                <div class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15">
+                                <x-sc.icon name="shield" class="h-5 w-5" />
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Extension program</p>
+                                <h3 id="program-form-title" class="mt-1 text-[18px] font-extrabold tracking-tight">
+                                    {{ $editingProgramId ? 'Edit Extension Program' : 'New Extension Program' }}
+                                </h3>
+                                <p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">
+                                    @if ($editingProgramId)
+                                        Update the program record while keeping its generated code unchanged.
+                                    @else
+                                        Define a broad CESO thrust that projects and activities can sit under.
+                                    @endif
+                                </p>
                             </div>
                         </div>
+                        <button type="button" wire:click="closeProgramForm" aria-label="Close program form"
+                                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50"><x-sc.icon name="x" class="h-4 w-4" /></button>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 mt-5">
-                    <button type="button" wire:click="closeProgramForm" class="btn btn-ghost">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        {{ $editingProgramId ? 'Save changes' : 'Create program' }}
-                    </button>
+                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                    <div class="mb-5 flex flex-wrap items-start gap-2.5 rounded-xl border border-lnu-100 bg-lnu-50/70 px-3.5 py-3 text-[11px] leading-relaxed text-lnu-900">
+                        <x-sc.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-700" />
+                        <p class="min-w-0 flex-1"><span class="font-extrabold">Program structure.</span> Programs are the broad thematic level based on CESO thrusts. Projects and activities are managed inside a program.</p>
+                        <span class="badge badge-blue shrink-0 !bg-white !text-lnu-800">Code generated on save</span>
+                    </div>
+
+                    <div class="space-y-6">
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">1</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Program identity</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Name the program and place it within the CESO framework.</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="label" for="program-title">Program title <span class="text-red-500">*</span></label>
+                                    <input id="program-title" required maxlength="255" class="input" wire:model="programForm.title" aria-invalid="{{ $errors->has('programForm.title') ? 'true' : 'false' }}" aria-describedby="program-title-hint program-title-error" placeholder="Literacy, Numeracy &amp; Language">
+                                    <p id="program-title-hint" class="field-hint">Use a clear, reusable name for the broad extension thrust.</p>
+                                    @error('programForm.title') <p id="program-title-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label class="label" for="program-pillar">Pillar <span class="text-red-500">*</span></label>
+                                        <x-sc.select id="program-pillar" model="programForm.pillar" :value="$programForm['pillar']" :options="$formPillars" placeholder="— select a pillar —" :search="false" :required="true" :invalid="$errors->has('programForm.pillar')" />
+                                        @error('programForm.pillar') <p id="program-pillar-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="label" for="program-status">Status <span class="text-red-500">*</span></label>
+                                        <x-sc.select id="program-status" model="programForm.status" :value="$programForm['status']" :options="$formProgramStatuses" placeholder="— select a status —" :search="false" :required="true" :invalid="$errors->has('programForm.status')" />
+                                        @error('programForm.status') <p id="program-status-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">2</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Thrust and intent</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Capture what this program implements and the change it aims to create.</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="label" for="program-thrust">CESO thrust implemented <span class="text-red-500">*</span></label>
+                                    <input id="program-thrust" required maxlength="255" class="input" wire:model="programForm.ceso_thrust" aria-invalid="{{ $errors->has('programForm.ceso_thrust') ? 'true' : 'false' }}" aria-describedby="program-thrust-hint program-thrust-error" placeholder="Literacy, Numeracy &amp; Language Enhancement">
+                                    <p id="program-thrust-hint" class="field-hint">Describe the CESO thrust this program implements.</p>
+                                    @error('programForm.ceso_thrust') <p id="program-thrust-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div x-data="{ length: {{ strlen($programForm['description'] ?? '') }} }">
+                                    <label class="label" for="program-description">Description</label>
+                                    <textarea id="program-description" rows="4" maxlength="4000" class="input resize-y" wire:model="programForm.description" x-on:input="length = $event.target.value.length" aria-invalid="{{ $errors->has('programForm.description') ? 'true' : 'false' }}" aria-describedby="program-description-count program-description-error" placeholder="What this program covers across the community"></textarea>
+                                    <p id="program-description-count" class="sc-character-count"><span x-text="length"></span>/4,000 characters</p>
+                                    @error('programForm.description') <p id="program-description-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div x-data="{ length: {{ strlen($programForm['goals'] ?? '') }} }">
+                                    <label class="label" for="program-goals">Goals</label>
+                                    <textarea id="program-goals" rows="4" maxlength="4000" class="input resize-y" wire:model="programForm.goals" x-on:input="length = $event.target.value.length" aria-invalid="{{ $errors->has('programForm.goals') ? 'true' : 'false' }}" aria-describedby="program-goals-count program-goals-error" placeholder="High-level goals for this thrust…"></textarea>
+                                    <p id="program-goals-count" class="sc-character-count"><span x-text="length"></span>/4,000 characters</p>
+                                    @error('programForm.goals') <p id="program-goals-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                            <div class="flex items-start gap-3">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-lnu-700 ring-1 ring-gray-200"><x-sc.icon name="plus" class="h-4 w-4" /></span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold text-charcoal">Planning figures <span class="font-semibold text-gray-400">(optional)</span></h4>
+                                    <p class="mt-1 text-[11px] font-medium leading-relaxed text-gray-500">Informational only — performance is measured per project, not against these planning values.</p>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label" for="program-hours">Annual hours <span class="font-medium text-gray-400">(planning)</span></label>
+                                    <input id="program-hours" type="number" inputmode="decimal" step="0.01" min="0" class="input bg-white" wire:model="programForm.annual_target_hours" aria-invalid="{{ $errors->has('programForm.annual_target_hours') ? 'true' : 'false' }}" placeholder="0.00">
+                                    @error('programForm.annual_target_hours') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="program-budget">Annual budget <span class="font-medium text-gray-400">(planning)</span></label>
+                                    <input id="program-budget" type="number" inputmode="decimal" step="0.01" min="0" class="input bg-white" wire:model="programForm.annual_target_budget" aria-invalid="{{ $errors->has('programForm.annual_target_budget') ? 'true' : 'false' }}" placeholder="0.00">
+                                    @error('programForm.annual_target_budget') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-[10.5px] font-medium text-gray-400"><span class="text-red-500">*</span> Required fields</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" wire:click="closeProgramForm" class="btn btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-primary min-w-[132px]" wire:loading.attr="disabled" wire:target="saveProgram">
+                                <span wire:loading.remove wire:target="saveProgram">{{ $editingProgramId ? 'Save changes' : 'Create program' }}</span>
+                                <span wire:loading wire:target="saveProgram" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Saving…</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -743,110 +716,170 @@
          standing on, so the form never asks for the two things they just chose. --}}
     @if ($showProjectForm)
         <div x-data @keydown.escape.window="$wire.closeProjectForm()"
-             class="fixed inset-0 z-50 p-6 overflow-auto no-print">
-            <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" wire:click="closeProjectForm"></div>
-            <form wire:submit="saveProject" class="sc-modal relative max-w-xl mx-auto mt-16 sc-card p-6 shadow-pop">
-                <div class="flex items-start justify-between mb-5">
-                    <div>
-                        <h3 class="font-extrabold text-[16px] tracking-tight">New Extension Project</h3>
-                        <p class="text-[12px] text-gray-400 mt-0.5">Projects start in Draft — the code is auto-generated from the college.</p>
-                    </div>
-                    <button type="button" wire:click="closeProjectForm"
-                            class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-charcoal transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="label">College *</label>
-                        <select required class="input" wire:model.live="projectForm.college_id">
-                            <option value="">— select a college —</option>
-                            @foreach ($formColleges as $c)
-                                <option value="{{ $c->id }}">{{ $c->code }} · {{ $c->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('projectForm.college_id') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="label">Under program *</label>
-                        <select required class="input" wire:model="projectForm.program_id">
-                            <option value="">— select a program —</option>
-                            @foreach ($formPrograms as $p)
-                                <option value="{{ $p->id }}">{{ $p->title }}</option>
-                            @endforeach
-                        </select>
-                        @error('projectForm.program_id') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="col-span-2">
-                        <label class="label">Project title *</label>
-                        <input required class="input" wire:model="projectForm.title" placeholder="e.g. LITRAWIYA: Barangay Reading Proficiency Program">
-                        @error('projectForm.title') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="col-span-2">
-                        <label class="label">Description</label>
-                        <textarea rows="2" class="input" wire:model="projectForm.description" placeholder="Short narrative description"></textarea>
-                    </div>
-                    <div>
-                        <label class="label">Planned start *</label>
-                        <input required type="date" class="input" wire:model="projectForm.planned_start_date">
-                        @error('projectForm.planned_start_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="label">Planned end *</label>
-                        <input required type="date" class="input" wire:model="projectForm.planned_end_date">
-                        @error('projectForm.planned_end_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="label">Target beneficiaries</label>
-                        <input type="number" min="1" class="input" wire:model="projectForm.target_beneficiaries" placeholder="e.g. 250">
-                    </div>
-                    <div>
-                        <label class="label">Allocated budget (₱)</label>
-                        <input type="number" min="0" step="0.01" class="input" wire:model="projectForm.allocated_budget" placeholder="e.g. 48000">
-                    </div>
-                    <div>
-                        <label class="label">Target training hours (annual)</label>
-                        <input type="number" min="0" step="0.01" class="input" wire:model="projectForm.annual_target_hours" placeholder="e.g. 120">
-                    </div>
-                    <div>
-                        <label class="label">Project lead</label>
-                        <select class="input" wire:model="projectForm.program_lead_id">
-                            <option value="">— not assigned yet —</option>
-                            @foreach ($formFaculties as $f)
-                                <option value="{{ $f->id }}">{{ $f->user->name }} · {{ $f->department }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="label">Status</label>
-                        <select class="input" wire:model="projectForm.status">
-                            @foreach ($formProjectStatuses as $s)
-                                <option value="{{ $s }}">{{ ucfirst($s) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="label">Linked communities</label>
-                        <x-sc.multi-select
-                            :options="$formCommunities->map(fn ($c) => ['id' => $c->id, 'label' => $c->name.' · '.$c->municipality.($c->isSchool() ? ' · School' : '')])->all()"
-                            :selected="$projectForm['community_ids'] ?? []"
-                            method="toggleProjectFormArray"
-                            key="community_ids"
-                            placeholder="— select communities —" />
-                    </div>
-                    <div class="col-span-2">
-                        <label class="label">Beneficiary categories</label>
-                        <x-sc.multi-select
-                            :options="collect($formCategories)->map(fn ($cat) => ['id' => $cat, 'label' => $cat])->all()"
-                            :selected="$projectForm['beneficiary_categories'] ?? []"
-                            method="toggleProjectFormArray"
-                            key="beneficiary_categories"
-                            placeholder="— select categories —" />
+             class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print"
+             role="dialog" aria-modal="true" aria-labelledby="project-form-title">
+            <div class="fixed inset-0 bg-charcoal/50 backdrop-blur-[3px]" wire:click="closeProjectForm"></div>
+            <form wire:submit="saveProject" class="sc-modal relative z-10 flex w-full max-w-3xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop" aria-labelledby="project-form-title">
+                <div class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15">
+                                <x-sc.icon name="shield" class="h-5 w-5" />
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project workspace</p>
+                                <h3 id="project-form-title" class="mt-1 text-[18px] font-extrabold tracking-tight">New Extension Project</h3>
+                                <p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Set up the project context, delivery window, ownership, and community reach before adding activities.</p>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="closeProjectForm" aria-label="Close project form"
+                                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50"><x-sc.icon name="x" class="h-4 w-4" /></button>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 mt-6">
-                    <button type="button" wire:click="closeProjectForm" class="btn btn-ghost">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Project</button>
+                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                    <div class="mb-5 flex flex-wrap items-start gap-2.5 rounded-xl border border-lnu-100 bg-lnu-50/70 px-3.5 py-3 text-[11px] leading-relaxed text-lnu-900">
+                        <x-sc.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-700" />
+                        <p class="min-w-0 flex-1"><span class="font-extrabold">Draft-first setup.</span> The project code is generated automatically from the selected college. You can add activities after the project is created.</p>
+                        <span class="badge badge-blue shrink-0 !bg-white !text-lnu-800">Code generated automatically</span>
+                    </div>
+
+                    <div class="space-y-6">
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">1</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Project identity</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Connect this project to its college and extension program.</p>
+                                </div>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label" for="project-college">College <span class="text-red-500">*</span></label>
+                                    <x-sc.select id="project-college" model="projectForm.college_id" :value="$projectForm['college_id']" :options="$formColleges->mapWithKeys(fn ($c) => [$c->id => $c->code.' · '.$c->name])->all()" placeholder="— select a college —" :search="false" :required="true" :invalid="$errors->has('projectForm.college_id')" />
+                                    @error('projectForm.college_id') <p id="project-college-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="project-program">Under program <span class="text-red-500">*</span></label>
+                                    <x-sc.select id="project-program" model="projectForm.program_id" :value="$projectForm['program_id']" :options="$formPrograms->mapWithKeys(fn ($p) => [$p->id => $p->title])->all()" placeholder="— select a program —" :search="true" :required="true" :invalid="$errors->has('projectForm.program_id')" />
+                                    <p class="field-hint">Choose the university-wide CESO program this project supports.</p>
+                                    @error('projectForm.program_id') <p id="project-program-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="label" for="project-title">Project title <span class="text-red-500">*</span></label>
+                                    <input id="project-title" required maxlength="255" class="input" wire:model="projectForm.title" aria-invalid="{{ $errors->has('projectForm.title') ? 'true' : 'false' }}" aria-describedby="project-title-hint project-title-error" placeholder="e.g. LITRAWIYA: Barangay Reading Proficiency Program">
+                                    <p id="project-title-hint" class="field-hint">Use a specific name that distinguishes this project from other work under the program.</p>
+                                    @error('projectForm.title') <p id="project-title-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div class="sm:col-span-2" x-data="{ length: {{ strlen($projectForm['description'] ?? '') }} }">
+                                    <label class="label" for="project-description">Description</label>
+                                    <textarea id="project-description" rows="4" maxlength="4000" class="input resize-y" wire:model="projectForm.description" x-on:input="length = $event.target.value.length" aria-invalid="{{ $errors->has('projectForm.description') ? 'true' : 'false' }}" aria-describedby="project-description-count project-description-error" placeholder="Short narrative description"></textarea>
+                                    <p id="project-description-count" class="sc-character-count"><span x-text="length"></span>/4,000 characters</p>
+                                    @error('projectForm.description') <p id="project-description-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">2</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Delivery plan</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Set the project window and the planning figures used by the team.</p>
+                                </div>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label" for="project-start">Planned start <span class="text-red-500">*</span></label>
+                                    <input id="project-start" required type="date" class="input" wire:model.live="projectForm.planned_start_date" aria-invalid="{{ $errors->has('projectForm.planned_start_date') ? 'true' : 'false' }}">
+                                    <p class="field-hint">Choose the first day of project delivery.</p>
+                                    @error('projectForm.planned_start_date') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="project-end">Planned end <span class="text-red-500">*</span></label>
+                                    <input id="project-end" required type="date" class="input" wire:model.live="projectForm.planned_end_date" min="{{ $projectForm['planned_start_date'] ?: '' }}" aria-invalid="{{ $errors->has('projectForm.planned_end_date') ? 'true' : 'false' }}">
+                                    <p class="field-hint">Must be the same day as or after the planned start.</p>
+                                    @error('projectForm.planned_end_date') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="project-beneficiaries">Target beneficiaries</label>
+                                    <input id="project-beneficiaries" type="number" inputmode="numeric" min="1" step="1" class="input" wire:model="projectForm.target_beneficiaries" aria-invalid="{{ $errors->has('projectForm.target_beneficiaries') ? 'true' : 'false' }}" placeholder="e.g. 250">
+                                    @error('projectForm.target_beneficiaries') <p class="sc-field-error">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="project-budget">Allocated budget <span class="font-medium text-gray-400">(₱)</span></label>
+                                    <input id="project-budget" type="number" inputmode="decimal" min="0" step="0.01" class="input" wire:model="projectForm.allocated_budget" aria-invalid="{{ $errors->has('projectForm.allocated_budget') ? 'true' : 'false' }}" placeholder="e.g. 48000">
+                                    @error('projectForm.allocated_budget') <p class="sc-field-error">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="project-hours">Target training hours <span class="font-medium text-gray-400">(annual)</span></label>
+                                    <input id="project-hours" type="number" inputmode="decimal" min="0" step="0.01" class="input" wire:model="projectForm.annual_target_hours" aria-invalid="{{ $errors->has('projectForm.annual_target_hours') ? 'true' : 'false' }}" placeholder="e.g. 120">
+                                    @error('projectForm.annual_target_hours') <p class="sc-field-error">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="project-status">Status</label>
+                                    <x-sc.select id="project-status" model="projectForm.status" :value="$projectForm['status']" :options="$formProjectStatuses" placeholder="— select a status —" :search="false" :required="true" :invalid="$errors->has('projectForm.status')" />
+                                    @error('projectForm.status') <p class="sc-field-error">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">3</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">People and communities</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Add the lead, locations, and beneficiary groups connected to the project.</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="label" for="project-lead">Project lead</label>
+                                    <x-sc.select id="project-lead" model="projectForm.program_lead_id" :value="$projectForm['program_lead_id']" :options="$formFaculties->mapWithKeys(fn ($f) => [$f->id => $f->user->name.' · '.$f->department])->all()" placeholder="— not assigned yet —" :search="true" :clearable="true" :invalid="$errors->has('projectForm.program_lead_id')" />
+                                    @error('projectForm.program_lead_id') <p class="sc-field-error">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label">Linked communities</label>
+                                    <x-sc.multi-select
+                                        :options="$formCommunities->map(fn ($c) => ['id' => $c->id, 'label' => $c->name.' · '.$c->municipality.($c->isSchool() ? ' · School' : '')])->all()"
+                                        :selected="$projectForm['community_ids'] ?? []"
+                                        model="projectForm.community_ids"
+                                        method="toggleProjectFormArray"
+                                        key="community_ids"
+                                        id="project-communities"
+                                        :invalid="$errors->has('projectForm.community_ids')"
+                                        placeholder="— select communities —" />
+                                    @error('projectForm.community_ids') <p class="sc-field-error">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label">Beneficiary categories</label>
+                                    <x-sc.multi-select
+                                        :options="collect($formCategories)->map(fn ($cat) => ['id' => $cat, 'label' => $cat])->all()"
+                                        :selected="$projectForm['beneficiary_categories'] ?? []"
+                                        model="projectForm.beneficiary_categories"
+                                        method="toggleProjectFormArray"
+                                        key="beneficiary_categories"
+                                        id="project-categories"
+                                        :invalid="$errors->has('projectForm.beneficiary_categories')"
+                                        placeholder="— select categories —" />
+                                    @error('projectForm.beneficiary_categories') <p class="sc-field-error">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-[10.5px] font-medium text-gray-400"><span class="text-red-500">*</span> Required fields</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" wire:click="closeProjectForm" class="btn btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-primary min-w-[132px]" wire:loading.attr="disabled" wire:target="saveProject">
+                                <span wire:loading.remove wire:target="saveProject">Create Project</span>
+                                <span wire:loading wire:target="saveProject" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Saving…</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

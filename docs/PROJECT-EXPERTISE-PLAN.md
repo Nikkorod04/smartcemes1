@@ -1,8 +1,13 @@
 # SmartCEMES — Safe-Zone Plan: Extension Projects & Faculty Expertise
 
-_Status: **PARTLY IMPLEMENTED.** The **project archive feature is built and tested** (§11). The **5-project
-seeder is planned, not built** (§10) — owner decision 2026-10-05: build it later. **The expertise list is
-NOT being changed** (§6 is deferred)._
+_Status: **IMPLEMENTED — except the expertise list.** The **project archive feature is built and tested**,
+with visibility and undo (§11–§12). The **5-project seeder IS BUILT** (`SafeZoneProjectSeeder`, §10.6) and
+is registered LAST in `DatabaseSeeder`. **The expertise list is NOT being changed** — §6 is a deferred
+proposal (owner decision). Recorded in `revisions.md` §31._
+
+> ⚠️ **Corrected 2026-10-07.** This line previously read *"the 5-project seeder is planned, not built"*
+> while §10 below already read *"✅ IMPLEMENTED (2026-10-05)"* — the file contradicted itself. The seeder
+> has been built since 2026-10-05; only this status line lagged. Flagged in `AI_HANDOFF.md` §16 H.
 
 **Goal:** bring the demo's projects into a "safe zone" — simple, plainly LNU-plausible, and easy to
 defend — without contradicting anything the owner has already locked.

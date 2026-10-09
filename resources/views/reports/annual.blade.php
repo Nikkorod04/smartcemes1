@@ -1,11 +1,11 @@
 @extends('layouts.report', ['reportTitle' => 'Annual Extension Performance Report', 'subtitle' => 'AY '.$year.' · Sections I–VIII'])
 
 @section('content')
-{{-- I. Program Portfolio --}}
+{{-- I. Project Portfolio --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[15px] tracking-tight text-lnu-800 uppercase mb-3">I · Program Portfolio ({{ $programs->count() }} programs)</h2>
+    <h2 class="font-extrabold text-[15px] tracking-tight text-lnu-800 uppercase mb-3">I · Project Portfolio ({{ $programs->count() }} projects)</h2>
     <table class="sc-table">
-        <thead><tr><th>Code</th><th>Program</th><th>Lead</th><th>Community</th><th>Period</th><th>Status</th></tr></thead>
+        <thead><tr><th>Code</th><th>Project</th><th>Lead</th><th>Community</th><th>Period</th><th>Status</th></tr></thead>
         <tbody>
             @forelse ($programs as $p)
                 <tr>
@@ -17,7 +17,7 @@
                     <td>{{ ucfirst($p->status) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="text-center text-gray-400 py-6">No programs for this year.</td></tr>
+                <tr><td colspan="6" class="text-center text-gray-400 py-6">No projects for this year.</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -66,9 +66,9 @@
 
 {{-- IV. Faculty participation --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">IV · Faculty Participation by Program</h2>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">IV · Faculty Participation by Project</h2>
     <table class="sc-table">
-        <thead><tr><th>Faculty</th><th class="!text-right">Programs Led</th><th class="!text-right">Approved Rendered Hours</th></tr></thead>
+        <thead><tr><th>Faculty</th><th class="!text-right">Projects Led</th><th class="!text-right">Approved Rendered Hours</th></tr></thead>
         <tbody>
             @foreach ($facultyParticipation as $f)
                 <tr><td>{{ $f['name'] }}</td><td class="!text-right">{{ $f['programs'] }}</td><td class="!text-right">{{ number_format($f['hours'], 2) }}</td></tr>
@@ -118,9 +118,9 @@
     </table>
 </section>
 
-{{-- VII. Executive narratives --}}
+{{-- VII. Project narratives --}}
 <section class="mb-6">
-    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">VII · Program Executive Narratives</h2>
+    <h2 class="font-extrabold text-[13.5px] tracking-tight text-lnu-800 uppercase mb-3">VII · Project Narratives</h2>
     <p class="text-[12.5px] text-gray-500 italic">The latest approved ProgramNarrative per project, with generated_at provenance, appears here.</p>
 </section>
 

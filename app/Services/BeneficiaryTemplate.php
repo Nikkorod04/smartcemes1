@@ -106,7 +106,7 @@ class BeneficiaryTemplate
         $sheet->getStyle('A2')->getFont()->setSize(10)->setItalic(true);
 
         $sheet->setCellValue('A3', $isExport
-            ? 'This is the program\'s enrolled list in the import format — edit it and import it straight back.'
+            ? 'This is the project\'s enrolled list in the import format — edit it and import it straight back.'
             : 'Blank Contact Number defaults to '.self::DEFAULT_CONTACT_NUMBER.'. Unknown beneficiary categories auto-map to "Other".');
         $sheet->getStyle('A3')->getFont()->setSize(10)->setItalic(true);
 

@@ -10,16 +10,28 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class Index extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
+
+    private const PER_PAGE = 10;
 
     #[Url]
     public string $status = '';
 
+    public string $search = '';
+
+    public string $sort = 'priority';
+
+    public string $direction = 'asc';
+
     public ?int $detailId = null;
+
+    /** The proposal targeted by the approve/reject workflow modal. */
+    public ?int $actionId = null;
 
     public bool $showApprove = false;
 
@@ -30,6 +42,45 @@ class Index extends Component
     public string $rejectionReason = '';
 
     public $specialOrderFile;
+
+    public function setStatus(string $status): void
+    {
+        abort_unless(in_array($status, ['', ActivityProposal::STATUS_PENDING, ActivityProposal::STATUS_APPROVED, ActivityProposal::STATUS_REJECTED], true), 422);
+
+        $this->status = $status;
+        $this->resetPage();
+    }
+
+    public function updatingStatus(string $status): void
+    {
+        abort_unless(in_array($status, ['', ActivityProposal::STATUS_PENDING, ActivityProposal::STATUS_APPROVED, ActivityProposal::STATUS_REJECTED], true), 422);
+
+        $this->resetPage();
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function sortBy(string $column): void
+    {
+        abort_unless(in_array($column, ['priority', 'title', 'faculty', 'project', 'dates', 'budget', 'submitted', 'status'], true), 422);
+
+        if ($this->sort === $column) {
+            $this->direction = $this->direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sort = $column;
+            $this->direction = in_array($column, ['dates', 'budget', 'submitted'], true) ? 'desc' : 'asc';
+        }
+
+        $this->resetPage();
+    }
+
+    public function paginationView(): string
+    {
+        return 'livewire.partials.pagination';
+    }
 
     public function updatedShowApprove(): void
     {
@@ -143,7 +194,9 @@ class Index extends Component
     {
         $this->adminRemarks = '';
         $this->specialOrderFile = null;
-        $this->detailId = $id;
+        $this->detailId = null;
+        $this->actionId = $id;
+        $this->showReject = false;
         $this->showApprove = true;
         $this->resetErrorBag();
     }
@@ -151,19 +204,24 @@ class Index extends Component
     public function openReject(int $id): void
     {
         $this->rejectionReason = '';
-        $this->detailId = $id;
+        $this->detailId = null;
+        $this->actionId = $id;
+        $this->showApprove = false;
         $this->showReject = true;
         $this->resetErrorBag();
     }
 
     public function viewDetail(int $id): void
     {
+        $this->actionId = null;
+        $this->showApprove = false;
+        $this->showReject = false;
         $this->detailId = $id;
     }
 
     public function closeModals(): void
     {
-        $this->reset(['detailId', 'showApprove', 'showReject', 'rejectionReason', 'adminRemarks']);
+        $this->reset(['detailId', 'actionId', 'showApprove', 'showReject', 'rejectionReason', 'adminRemarks']);
     }
 
     public function render()
@@ -171,24 +229,64 @@ class Index extends Component
         $user = auth()->user();
         $isAdmin = $user->isAdmin();
 
-        $proposals = ActivityProposal::query()
-            ->with(['faculty.user', 'program', 'community', 'createdActivity'])
-            ->when($this->status !== '', fn ($q) => $q->where('status', $this->status))
+        $baseQuery = ActivityProposal::query()
+            ->select('activity_proposals.*')
             ->when($user->isFaculty(), function ($q) use ($user) {
                 $q->where('faculty_id', Faculty::where('user_id', $user->id)->value('id'));
-            })
-            ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END")
-            ->orderByDesc('submitted_at')
-            ->get();
+            });
+
+        $overview = (clone $baseQuery)->with('program')->get();
+        $counts = $overview->groupBy('status')->map->count();
+
+        $query = (clone $baseQuery)->with(['faculty.user', 'program', 'community', 'createdActivity', 'documents']);
+
+        if ($this->status !== '') {
+            $query->where('status', $this->status);
+        }
+
+        if (trim($this->search) !== '') {
+            $search = trim($this->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhereHas('faculty.user', fn ($faculty) => $faculty->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('program', fn ($program) => $program->where('code', 'like', "%{$search}%"))
+                    ->orWhereHas('community', fn ($community) => $community->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($this->sort === 'priority') {
+            $query->orderByRaw("CASE activity_proposals.status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END")
+                ->orderByDesc('activity_proposals.submitted_at');
+        } elseif ($this->sort === 'faculty') {
+            $query->leftJoin('faculties', 'faculties.id', '=', 'activity_proposals.faculty_id')
+                ->leftJoin('users', 'users.id', '=', 'faculties.user_id')
+                ->orderBy('users.name', $this->direction)
+                ->orderByDesc('activity_proposals.submitted_at');
+        } elseif ($this->sort === 'project') {
+            $query->leftJoin('extension_projects', 'extension_projects.id', '=', 'activity_proposals.extension_project_id')
+                ->orderBy('extension_projects.code', $this->direction)
+                ->orderByDesc('activity_proposals.submitted_at');
+        } else {
+            $sortColumn = [
+                'title' => 'title',
+                'dates' => 'proposed_start_date',
+                'budget' => 'budget_estimate',
+                'submitted' => 'submitted_at',
+                'status' => 'status',
+            ][$this->sort];
+            $query->orderBy('activity_proposals.'.$sortColumn, $this->direction);
+        }
 
         $detail = $this->detailId
             ? ActivityProposal::with(['faculty.user', 'program', 'community', 'documents', 'createdActivity', 'approver', 'rejecter'])->find($this->detailId)
             : null;
 
         return view('livewire.proposals.index', [
-            'proposals' => $proposals,
+            'proposals' => $query->paginate(self::PER_PAGE),
             'detail' => $detail,
             'isAdmin' => $isAdmin,
+            'counts' => $counts,
+            'outOfRange' => $overview->filter(fn (ActivityProposal $proposal) => $proposal->violatesProgramRange())->count(),
         ]);
     }
 }

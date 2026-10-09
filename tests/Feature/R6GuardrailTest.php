@@ -422,6 +422,32 @@ class R6GuardrailTest extends TestCase
             ->get('/interagency')->assertForbidden();
     }
 
+    public function test_interagency_page_renders_with_analysis_data_and_resolved_community(): void
+    {
+        $this->seedCatalogue();
+        $data = $this->seedHealthInfraSummary();
+
+        AssessmentAnalysis::create([
+            'needs_assessment_id' => $data['assessment']->id,
+            'assessment_summary_id' => $data['summary']->id,
+            'approval_status' => AssessmentAnalysis::APPROVAL_DRAFT,
+            'status' => AssessmentAnalysis::STATUS_COMPLETED,
+            'recommendations' => [],
+            'interagency_referrals' => [[
+                'need' => 'No potable water supply',
+                'agency_code' => 'LGU',
+                'agency_name' => 'Local Government Unit',
+                'rationale' => 'Water systems are a local government mandate.',
+            ]],
+        ]);
+
+        $analysis = AssessmentAnalysis::latest('id')->firstOrFail();
+
+        $this->assertSame('Brgy. San Jose', $analysis->resolvedCommunity()?->name);
+
+        $this->actingAs($data['admin'])->get('/interagency')->assertOk();
+    }
+
     public function test_non_admin_cannot_call_mutating_actions(): void
     {
         $this->seedCatalogue();
@@ -580,8 +606,10 @@ class R6GuardrailTest extends TestCase
             ],
         ]);
 
+        // Re-pointed 2026-10-07: the two scope groups render on the REVIEW route
+        // now — `/ai-analysis` is the queue (docs/AI-ANALYSIS-REDESIGN-PLAN.md).
         $this->actingAs($data['admin'])
-            ->get('/ai-analysis')
+            ->get('/ai-analysis/'.$analysis->id)
             ->assertOk()
             // Both group headings and both scope labels — the screen uses scope
             // wording, never "tier" (the tier vocabulary is internal only).
@@ -619,8 +647,10 @@ class R6GuardrailTest extends TestCase
 
         $this->assertSame(1, $analysis->unverifiedReferralCount());
 
+        // Re-pointed 2026-10-07: the two scope groups render on the REVIEW route
+        // now — `/ai-analysis` is the queue (docs/AI-ANALYSIS-REDESIGN-PLAN.md).
         $this->actingAs($data['admin'])
-            ->get('/ai-analysis')
+            ->get('/ai-analysis/'.$analysis->id)
             ->assertOk()
             ->assertSee('Agency not in the catalogue')
             ->assertSee('NOPE')

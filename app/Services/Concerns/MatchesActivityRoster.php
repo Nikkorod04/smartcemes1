@@ -115,7 +115,7 @@ trait MatchesActivityRoster
         $beneficiary = $roster->get($id);
 
         if ($beneficiary === null) {
-            return ["Beneficiary ID {$id} is not enrolled in this program (unknown or unenrolled)."];
+            return ["Beneficiary ID {$id} is not enrolled in this project (unknown or unenrolled)."];
         }
 
         if ($lastName !== '' && mb_strtolower($lastName) !== mb_strtolower($beneficiary->last_name)) {

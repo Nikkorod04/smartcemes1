@@ -170,6 +170,9 @@ class EngagementBoard extends Component
 
     /**
      * The leaderboard row's big number, per metric (prototype `headline`).
+     *
+     * The unit is rendered SEPARATELY (see `headlineUnit`) so the view can set
+     * it in the muted `.eng-val small` style without the number losing weight.
      */
     public function headlineValue(array $row, array $metric): string
     {
@@ -178,6 +181,31 @@ class EngagementBoard extends Component
         return $metric['key'] === 'rendered_hours'
             ? $this->fmtHours($value)
             : (string) $value;
+    }
+
+    /**
+     * The unit that sits beside the value — 'hrs rendered' / 'Project(s)' /
+     * 'Project(s) led'. Sourced from the metric definition so the wording has
+     * one owner (owner request 2026-10-07).
+     *
+     * Before this the row printed a bare number and the unit appeared only in
+     * the caption of the OTHER two metrics, so the hours tab was the one tab
+     * whose number carried no unit at all.
+     */
+    public function headlineUnit(array $row, array $metric): string
+    {
+        $unit = $metric['unit'] ?? '';
+
+        if ($unit === '') {
+            return '';
+        }
+
+        // 'hrs rendered' is a fixed label — never "1 hr rendered" — because
+        // that is the house term used by the hub tile, the caption and the
+        // chart tooltip. Only the countable metrics carry a singular form.
+        return (int) ($row[$metric['key']] ?? 0) === 1
+            ? ($metric['unit_one'] ?? $unit)
+            : $unit;
     }
 
     /**
@@ -193,6 +221,36 @@ class EngagementBoard extends Component
             'rendered_hours' => $projects.' project'.($projects === 1 ? '' : 's'),
             default => $hours.' hrs rendered',
         };
+    }
+
+    /**
+     * The identity line under the name: the college, then the ACTIVITY count.
+     *
+     * It used to carry the project count, which duplicated the caption on the
+     * hours tab and the value itself on the projects tab. The activity count is
+     * the one contribution figure neither the value nor the caption ever shows,
+     * so a row now reads hours / projects / activities without repeating itself
+     * (owner request 2026-10-07).
+     */
+    public function rowSubline(array $row): string
+    {
+        $college = $row['college'] ?? '—';
+
+        if (($row['status'] ?? 'active') === 'on_leave') {
+            return $college.' · On leave';
+        }
+
+        return $college.' · '.$this->countLabel((int) ($row['activities_handled'] ?? 0), 'activity', 'activities');
+    }
+
+    /**
+     * "1 activity" / "4 activities" — the shared pluralisation idiom. Public so
+     * the drawer badges use the same rule as the row (they used to print
+     * "2 lead" and "1 activities").
+     */
+    public function countLabel(int $count, string $singular, string $plural): string
+    {
+        return $count.' '.($count === 1 ? $singular : $plural);
     }
 
     /**

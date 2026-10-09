@@ -348,14 +348,32 @@ ringed.
 
 ## 12. AI Analysis Review (community insights) — admin only
 
-1. Go to **AI Analysis Review**.
-2. Pick a community summary (e.g. a **San Jose** one) in the picker and click **Generate**.
+The page is a **QUEUE**, not a form: it lists every analysis this office has generated,
+grouped by community, plus every validated summary still awaiting one. **There is no
+summary picker any more** — you generate from the row that says a summary is awaiting
+analysis.
+
+1. Go to **AI Analysis Review** (`/ai-analysis`).
+2. Find the community — type a name in the **search** box (partial and
+   case-insensitive: `san jo` finds *Brgy. San Jose*), or narrow with the filter chips
+   (*Awaiting review · Approved · Failed · Discarded · Awaiting analysis*) — then click
+   **Generate** on the row marked **awaiting analysis**.
 
 **Expected:** the button shows a spinner (generation is **synchronous** — results appear
-immediately), then a **draft** appears with: situation summary, **priority needs**, **top recommended
-interventions**, and a confidence chip (derived from data coverage — not the model bragging). If the
-AI service fails, you instead see the first-class failure state **"Analysis unavailable"** with a
-Retry button — that is also correct behavior.
+immediately) and you land on **that analysis's own page**, where a **draft** appears with:
+situation summary, **priority needs**, **top recommended interventions**, and a confidence
+chip (derived from data coverage — not the model bragging). If the AI service fails, the
+row turns **failed** with a readable reason and a **Retry** button — that is also correct
+behavior.
+
+> **Community pages.** Every community name in the queue is a **link** to its own history
+> (`/ai-analysis/community/{id}`): every period, every generation, with Generate, Retry,
+> **Delete** and a bulk **Clear failed**. Deleting is **scoped** — an **approved** analysis
+> (citable in reports) and the **live draft** cannot be deleted.
+
+> **Reading any analysis.** Each row opens its own page in **any** state — a draft, an
+> approved one (read-only, citable), or a discarded one. An approved analysis used to have
+> no reading surface at all; that was the point of the split (`revisions.md` §33).
 
 3. Open the **Community response data** accordion on the draft.
 

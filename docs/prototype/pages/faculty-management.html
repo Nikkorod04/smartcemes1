@@ -381,11 +381,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = ranked();
     const max = Math.max(...list.map(M.value), 1);
 
-    /* primary value + the caption that makes it meaningful, per metric */
+    /* primary value + its UNIT + the caption that makes it meaningful, per metric.
+       The unit rides on the value in the muted .eng-val small style (owner
+       request 2026-10-07). 'hrs rendered' is a fixed label — never "1 hr
+       rendered" — matching the hub tile, the caption and the chart tooltip. */
     const headline = f => {
-      if (metric === 'hours')    return { v: SC.hours(f.renderedHours), s: (f.projectCount || 0) + ' project' + ((f.projectCount || 0) === 1 ? '' : 's') };
-      if (metric === 'leads')    return { v: f.leadCount || 0, s: SC.hours(f.renderedHours) + ' hrs rendered' };
-      return { v: f.projectCount || 0, s: SC.hours(f.renderedHours) + ' hrs rendered' };
+      if (metric === 'hours')    return { v: SC.hours(f.renderedHours), u: 'hrs rendered', s: (f.projectCount || 0) + ' project' + ((f.projectCount || 0) === 1 ? '' : 's') };
+      if (metric === 'leads')    return { v: f.leadCount || 0, u: (f.leadCount || 0) === 1 ? 'Project led' : 'Projects led', s: SC.hours(f.renderedHours) + ' hrs rendered' };
+      return { v: f.projectCount || 0, u: (f.projectCount || 0) === 1 ? 'Project' : 'Projects', s: SC.hours(f.renderedHours) + ' hrs rendered' };
     };
 
     engRows.innerHTML = list.map((f, i) => {
@@ -404,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="eng-sub truncate block">${f.college} · ${leave ? 'On leave' : (f.projectCount || 0) + ' project' + ((f.projectCount || 0) === 1 ? '' : 's')}</span>
           </span>
           <span class="text-right shrink-0">
-            <span class="eng-val">${h.v}</span>
+            <span class="eng-val">${h.v} <small>${h.u}</small></span>
             <span class="eng-sub block">${h.s}</span>
           </span>
         </span>

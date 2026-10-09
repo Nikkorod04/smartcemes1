@@ -25,11 +25,9 @@
     {{-- ===================== toolbar ===================== --}}
     <section class="reveal-item mt-4">
         <div class="sc-card p-4 flex flex-wrap items-center gap-3">
-            <label class="relative flex-1 min-w-[220px] max-w-xs">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 inline-flex">
-                    <x-sc.icon name="search" class="w-4 h-4" />
-                </span>
-                <input type="text" wire:model.live.debounce.300ms="search" class="input !pl-9"
+            <label class="sc-search flex-1 min-w-[220px] max-w-xs">
+                <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
+                <input type="text" wire:model.live.debounce.300ms="search" class="input"
                        placeholder="Search name, ID, position, email…">
             </label>
 
@@ -159,105 +157,164 @@
 
     {{-- ===================== NEW / EDIT PROFILE MODAL ===================== --}}
     @if ($showForm)
-        <div class="fixed inset-0 z-50 p-6 overflow-auto no-print">
-            <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" wire:click="closeForm"></div>
+        <div x-data @keydown.escape.window="$wire.closeForm()"
+             class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print"
+             role="dialog" aria-modal="true" aria-labelledby="faculty-form-title">
+            <div class="fixed inset-0 bg-charcoal/50 backdrop-blur-[3px]" wire:click="closeForm"></div>
 
-            <div class="relative max-w-2xl mx-auto mt-10 sc-card p-0 shadow-pop overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="font-extrabold text-[16px] tracking-tight leading-tight">
-                        {{ $editingId ? 'Edit Faculty Profile' : 'New Faculty Profile' }}
-                    </h3>
-                    <button type="button" wire:click="closeForm"
-                            class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
-                </div>
-
-                <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="label">Full name <span class="req">*</span></label>
-                            <input type="text" wire:model="form.name" class="input" required>
-                            @error('form.name') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+            <form wire:submit="save"
+                  class="sc-modal relative z-10 flex w-full max-w-3xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+                <div class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15">
+                                <x-sc.icon name="users" class="h-5 w-5" />
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Faculty directory</p>
+                                <h3 id="faculty-form-title" class="mt-1 text-[18px] font-extrabold tracking-tight">
+                                    {{ $editingId ? 'Edit faculty profile' : 'Add faculty member' }}
+                                </h3>
+                                <p class="mt-1 max-w-xl text-[12px] font-medium leading-relaxed text-white/72">
+                                    {{ $editingId ? 'Keep the faculty record, assignment, and expertise details up to date.' : 'Create a faculty profile so they can be assigned to extension programs and activities.' }}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="label">Email address <span class="req">*</span></label>
-                            <input type="email" wire:model="form.email" class="input" required>
-                            @error('form.email') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">Employee ID</label>
-                            <input type="text" wire:model="form.employee_id" class="input font-mono"
-                                   placeholder="Auto-generated if left blank">
-                            @error('form.employee_id') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">College <span class="req">*</span></label>
-                            <select wire:model="form.college_id" class="input">
-                                <option value="">— Select —</option>
-                                @foreach ($colleges as $college)
-                                    <option value="{{ $college->id }}">{{ $college->code }} — {{ $college->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('form.college_id') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">Position</label>
-                            <select wire:model="form.position" class="input">
-                                <option value="">— Select —</option>
-                                @foreach ($positionLadder as $rung)
-                                    <option value="{{ $rung['label'] }}">{{ $rung['label'] }}</option>
-                                @endforeach
-                            </select>
-                            @error('form.position') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">Status</label>
-                            <select wire:model="form.status" class="input">
-                                @foreach (\App\Models\Faculty::STATUS_LABELS as $value => $label)
-                                    <option value="{{ $value }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('form.status') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">Specialization</label>
-                            <input type="text" wire:model="form.specialization" class="input">
-                        </div>
-                        <div>
-                            <label class="label">Department</label>
-                            <input type="text" wire:model="form.department" class="input">
-                        </div>
-                        <div>
-                            <label class="label">Contact number</label>
-                            <input type="text" wire:model="form.phone" class="input">
-                        </div>
-                        <div>
-                            <label class="label">Address</label>
-                            <input type="text" wire:model="form.address" class="input">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="label">
-                            Expertise areas
-                            <span class="text-gray-400 font-normal">(select all that apply — used to match faculty to projects)</span>
-                        </label>
-                        <x-sc.multi-select
-                            :options="collect($expertiseOptions)->map(fn ($area) => ['id' => $area, 'label' => $area])->all()"
-                            :selected="$form['expertise']"
-                            method="toggleExpertise"
-                            key="faculty-expertise"
-                            placeholder="Type to filter, then pick from the list…" />
-                        @error('form.expertise') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                        <button type="button" wire:click="closeForm" aria-label="Close faculty form"
+                                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50">
+                            <x-sc.icon name="x" class="h-4 w-4" />
+                        </button>
                     </div>
                 </div>
 
-                <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-end gap-2">
-                    <button type="button" wire:click="closeForm" class="btn btn-outline">Cancel</button>
-                    <button type="button" wire:click="save" class="btn btn-primary">
-                        {{ $editingId ? 'Save changes' : 'Create profile' }}
-                    </button>
+                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-lnu-100 bg-lnu-50/70 px-3.5 py-3 text-[11px] leading-relaxed text-lnu-900">
+                        <x-sc.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-700" />
+                        <p><span class="font-extrabold">Profile note.</span> The account uses the email address for sign-in. Employee ID is generated automatically when it is left blank.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">1</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Identity</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">The name and account details shown across the system.</p>
+                                </div>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label" for="faculty-name">Full name <span class="text-red-500">*</span></label>
+                                    <input id="faculty-name" type="text" wire:model="form.name" class="input" autocomplete="name" required>
+                                    @error('form.name') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="faculty-email">Email address <span class="text-red-500">*</span></label>
+                                    <input id="faculty-email" type="email" wire:model="form.email" class="input" autocomplete="email" required>
+                                    @error('form.email') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="faculty-employee-id">Employee ID</label>
+                                    @if ($editingId)
+                                        <input id="faculty-employee-id" type="text" wire:model="form.employee_id" class="input font-mono" autocomplete="off">
+                                    @else
+                                        <div class="relative">
+                                            <input id="faculty-employee-id" type="text" value="Generated automatically" class="input bg-gray-50 pr-20 font-mono text-gray-400" disabled aria-describedby="faculty-employee-help">
+                                            <span class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-md bg-white px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.1em] text-lnu-700 ring-1 ring-gray-200">Auto</span>
+                                        </div>
+                                    @endif
+                                    @if (! $editingId)
+                                        <p id="faculty-employee-help" class="mt-1.5 text-[10.5px] font-medium text-gray-400">Assigned by the system when the profile is created.</p>
+                                    @endif
+                                    @error('form.employee_id') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="faculty-college">College</label>
+                                    <x-sc.select id="faculty-college" model="form.college_id" :value="$form['college_id']" :options="$colleges->mapWithKeys(fn ($college) => [$college->id => $college->code.' — '.$college->name])->all()" placeholder="— select college —" :search="false" :invalid="$errors->has('form.college_id')" />
+                                    @error('form.college_id') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">2</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Appointment</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Place the faculty member within the university and extension roster.</p>
+                                </div>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label" for="faculty-position">Position</label>
+                                    <x-sc.select id="faculty-position" model="form.position" :value="$form['position']" :options="collect($positionLadder)->mapWithKeys(fn ($rung) => [$rung['label'] => $rung['label']])->all()" placeholder="— select position —" :search="false" :invalid="$errors->has('form.position')" />
+                                    @error('form.position') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="faculty-status">Status</label>
+                                    <x-sc.select id="faculty-status" model="form.status" :value="$form['status']" :options="\App\Models\Faculty::STATUS_LABELS" placeholder="— select status —" :search="false" :required="true" :invalid="$errors->has('form.status')" />
+                                    @error('form.status') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="faculty-department">Department</label>
+                                    <input id="faculty-department" type="text" wire:model="form.department" class="input" autocomplete="organization-title">
+                                </div>
+                                <div>
+                                    <label class="label" for="faculty-specialization">Specialization</label>
+                                    <input id="faculty-specialization" type="text" wire:model="form.specialization" class="input">
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">3</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Contact and expertise</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Optional details used for coordination and project matching.</p>
+                                </div>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label" for="faculty-phone">Contact number</label>
+                                    <input id="faculty-phone" type="text" wire:model="form.phone" class="input" autocomplete="tel">
+                                </div>
+                                <div>
+                                    <label class="label" for="faculty-address">Address</label>
+                                    <input id="faculty-address" type="text" wire:model="form.address" class="input" autocomplete="street-address">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="label">
+                                    Expertise areas
+                                    <span class="font-normal text-gray-400">(select all that apply)</span>
+                                </label>
+                                <x-sc.multi-select
+                                    :options="collect($expertiseOptions)->map(fn ($area) => ['id' => $area, 'label' => $area])->all()"
+                                    :selected="$form['expertise']"
+                                    model="form.expertise"
+                                    method="toggleExpertise"
+                                    key="faculty-expertise"
+                                    placeholder="Search and select expertise areas…" />
+                                @error('form.expertise') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </section>
+                    </div>
                 </div>
-            </div>
+
+                <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-[10.5px] font-medium text-gray-400"><span class="text-red-500">*</span> Required fields</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" wire:click="closeForm" class="btn btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-primary min-w-[132px]" wire:loading.attr="disabled" wire:target="save">
+                                <span wire:loading.remove wire:target="save">{{ $editingId ? 'Save changes' : 'Create profile' }}</span>
+                                <span wire:loading wire:target="save" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Saving…</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     @endif
 </div>

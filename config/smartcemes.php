@@ -316,6 +316,16 @@ return [
     | Aggregation-before-send: only aggregate statistics leave the system.
     */
     'ai' => [
+        /*
+        | The API key MUST be read through config, never via a runtime `env()`
+        | call. `php artisan config:cache` (deploy checklist item 10) stops
+        | Laravel loading `.env`, so `env('GEMINI_API_KEY')` evaluated at request
+        | time returns null and every AI surface falls into its "unavailable"
+        | state with "No API key configured" — while the model id and endpoint,
+        | which ARE read through config, keep working. GeminiClient reads
+        | `config('smartcemes.ai.key')` first for exactly this reason.
+        */
+        'key' => env('GEMINI_API_KEY'),
         'endpoint' => env('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta/models'),
         'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
         // v2 (R6, feedback #8/#9): embeds the CESO scope, the Tier-3 prohibition
@@ -484,7 +494,6 @@ return [
                         'label' => 'Manage Extension Programs',
                         'route' => 'colleges.index',
                         'icon' => 'folder',
-                        'badge' => 3,
                         /* `subs` is a HIGHLIGHT list, not a navigation list — it
                            decides which sidebar entry stays lit, and creates no
                            link. It deliberately still names all four routes even

@@ -379,66 +379,102 @@
 
     {{-- ===================== CONTACT SELF-EDIT ===================== --}}
     @if ($showEdit)
-        <div class="fixed inset-0 z-50 p-6 overflow-auto no-print">
+        <div x-data @keydown.escape.window="$wire.set('showEdit', false)"
+             class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print"
+             role="dialog" aria-modal="true" aria-labelledby="faculty-self-edit-title">
             <div class="fixed inset-0 bg-charcoal/45 backdrop-blur-[2px]" wire:click="$set('showEdit', false)"></div>
-            <div class="relative max-w-lg mx-auto mt-10 sc-card p-0 shadow-pop overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="font-extrabold text-[15px] tracking-tight">Edit profile</h3>
-                    <button type="button" wire:click="$set('showEdit', false)"
-                            class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition"><x-sc.icon name="x" class="w-4 h-4" /></button>
-                </div>
-                <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-                    {{-- The boundary, stated where the faculty member is acting on
-                         it. Kept in step with FacultyPolicy::updateOwnProfile()
-                         and Profile::saveProfile() — all three describe the same
-                         split, and the enforcement is server-side. --}}
-                    <p class="text-[11.5px] text-gray-500 font-medium leading-relaxed">
-                        Your employee ID, college, position, status and login account are institutional
-                        records and can only be changed by the Director.
-                    </p>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="label">Specialization</label>
-                            <input type="text" wire:model="editForm.specialization" class="input">
-                            @error('editForm.specialization') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+            <form wire:submit="saveProfile" class="sc-modal relative z-10 flex w-full max-w-2xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+                <div class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15">
+                                <x-sc.icon name="users" class="h-5 w-5" />
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Faculty profile</p>
+                                <h3 id="faculty-self-edit-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Edit profile</h3>
+                                <p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Keep your expertise and coordination details current for project matching.</p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="label">Department</label>
-                            <input type="text" wire:model="editForm.department" class="input">
-                            @error('editForm.department') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">Contact number</label>
-                            <input type="text" wire:model="editForm.phone" class="input">
-                            @error('editForm.phone') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="label">Address</label>
-                            <input type="text" wire:model="editForm.address" class="input">
-                            @error('editForm.address') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="label">
-                            Expertise areas
-                            <span class="text-gray-400 font-normal">(select all that apply — used to match you to projects)</span>
-                        </label>
-                        <x-sc.multi-select
-                            :options="collect(config('smartcemes.expertise_options'))->map(fn ($area) => ['id' => $area, 'label' => $area])->all()"
-                            :selected="$editForm['expertise']"
-                            method="toggleExpertise"
-                            key="profile-expertise"
-                            placeholder="Type to filter, then pick from the list…" />
-                        @error('editForm.expertise') <p class="text-[11px] text-red-600 font-semibold mt-1">{{ $message }}</p> @enderror
+                        <button type="button" wire:click="$set('showEdit', false)" aria-label="Close profile form"
+                                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50"><x-sc.icon name="x" class="h-4 w-4" /></button>
                     </div>
                 </div>
-                <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-end gap-2">
-                    <button type="button" wire:click="$set('showEdit', false)" class="btn btn-outline">Cancel</button>
-                    <button type="button" wire:click="saveProfile" class="btn btn-primary">Save changes</button>
+
+                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-lnu-100 bg-lnu-50/70 px-3.5 py-3 text-[11px] leading-relaxed text-lnu-900">
+                        <x-sc.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-700" />
+                        <p><span class="font-extrabold">Institutional records.</span> Employee ID, college, position, status, and login credentials remain Director-managed and cannot be changed here.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">1</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Academic and contact details</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">These details help staff coordinate with you and match you to extension work.</p>
+                                </div>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label" for="profile-specialization">Specialization</label>
+                                    <input id="profile-specialization" type="text" maxlength="255" wire:model="editForm.specialization" class="input" aria-invalid="{{ $errors->has('editForm.specialization') ? 'true' : 'false' }}" placeholder="e.g. Reading Education">
+                                    @error('editForm.specialization') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="profile-department">Department</label>
+                                    <input id="profile-department" type="text" maxlength="255" wire:model="editForm.department" class="input" aria-invalid="{{ $errors->has('editForm.department') ? 'true' : 'false' }}" placeholder="e.g. College of Education">
+                                    @error('editForm.department') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="profile-phone">Contact number</label>
+                                    <input id="profile-phone" type="tel" maxlength="32" wire:model="editForm.phone" class="input" autocomplete="tel" aria-invalid="{{ $errors->has('editForm.phone') ? 'true' : 'false' }}" placeholder="09XX XXX XXXX">
+                                    @error('editForm.phone') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label" for="profile-address">Address</label>
+                                    <input id="profile-address" type="text" maxlength="255" wire:model="editForm.address" class="input" autocomplete="street-address" aria-invalid="{{ $errors->has('editForm.address') ? 'true' : 'false' }}" placeholder="City / municipality">
+                                    @error('editForm.address') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-100 text-[11px] font-extrabold text-gray-500">2</span>
+                                <div>
+                                    <h4 class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-charcoal">Expertise areas</h4>
+                                    <p class="text-[11px] font-medium text-gray-400">Select all areas that should be considered for project matching.</p>
+                                </div>
+                            </div>
+                            <x-sc.multi-select
+                                :options="collect(config('smartcemes.expertise_options'))->map(fn ($area) => ['id' => $area, 'label' => $area])->all()"
+                                :selected="$editForm['expertise']"
+                                model="editForm.expertise"
+                                method="toggleExpertise"
+                                key="profile-expertise"
+                                id="profile-expertise"
+                                :invalid="$errors->has('editForm.expertise')"
+                                placeholder="Type to filter, then pick from the list…" />
+                            @error('editForm.expertise') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
+                        </section>
+                    </div>
                 </div>
-            </div>
+
+                <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-[10.5px] font-medium text-gray-400">Changes are recorded in your activity log.</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" wire:click="$set('showEdit', false)" class="btn btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-primary min-w-[132px]" wire:loading.attr="disabled" wire:target="saveProfile">
+                                <span wire:loading.remove wire:target="saveProfile">Save changes</span>
+                                <span wire:loading wire:target="saveProfile" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Saving…</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     @endif
 </div>

@@ -303,10 +303,18 @@ Gemini is **aggregates** — distributions and counts, never respondent PII. Liv
 only — no mock mode — and when it fails, the failure is a first-class UI state, not a broken page."*
 
 **a) Community insights — `/ai-analysis` (AI Analysis Review):**
-- Pick a community summary (e.g. San Jose) → **Generate** — button shows the spinner, generation is
-  synchronous → draft appears with **priority needs, recommended interventions, confidence chip**
-  (say: *"confidence is a derived **data**-confidence — sample size + coverage — never the model
-  bragging"*).
+- The page is a **QUEUE grouped by community**, not a form — it lists every analysis plus every validated
+  summary still awaiting one. **There is no summary picker any more.** Search a barangay (`?q=`, partial
+  and case-insensitive), or narrow with the chips (*Awaiting review · Approved · Failed · Discarded ·
+  Awaiting analysis*), then click **Generate** on an **awaiting analysis** row — button shows the spinner,
+  generation is synchronous, and you land on **that analysis's own page**.
+- Each **community name is a link** to its history (`/ai-analysis/community/{id}`) — every period, every
+  generation, with Generate, Retry, **Delete** and a bulk **Clear failed**. Deleting is **scoped**: an
+  approved analysis and the live draft cannot be deleted.
+- Any row opens in **any** state — draft, approved (read-only, citable) or discarded. **Regenerate**
+  creates a new generation and keeps the old one.
+- The draft shows **priority needs, recommended interventions, confidence chip** (say: *"confidence is a
+  derived **data**-confidence — sample size + coverage — never the model bragging"*).
 - Open the **Community response data** accordion: *"this is the EXACT aggregate payload sent to the
   API — our DPA audit view."*
 - **The three-tier scope guardrail** (D-R8): *"Tier 1 CESO can deliver it · Tier 2 an interagency

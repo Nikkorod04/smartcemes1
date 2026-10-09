@@ -107,12 +107,10 @@ class ReportController extends Controller
         ]);
     }
 
-    /** 3. Faculty Rendered Hours (per semester, by activity and program). */
+    /** 3. Faculty Rendered Hours (by activity and project). */
     public function renderedHours(): View
     {
         abort_unless(auth()->user()->isAdmin(), 403);
-
-        $semester = request('semester', now()->month <= 5 ? 2 : (now()->month <= 10 ? 1 : 2));
 
         $entries = RenderedHours::with(['faculty.user', 'activity.program'])
             ->where('status', 'approved')

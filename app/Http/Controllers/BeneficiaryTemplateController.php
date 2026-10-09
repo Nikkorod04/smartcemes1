@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  *
  * The workbook layout lives in `BeneficiaryTemplate::build()` so this and
  * `BeneficiaryExportController` cannot drift — the export is the same sheet with
- * the program's enrolled list where the grey example row would be.
+ * the project's enrolled list where the grey example row would be.
  */
 class BeneficiaryTemplateController extends Controller
 {

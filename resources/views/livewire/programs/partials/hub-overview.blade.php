@@ -1,7 +1,7 @@
 <div class="mt-4 grid grid-cols-3 gap-4">
     <div class="sc-card p-6 col-span-2">
-        <h3 class="font-bold text-[14px] mb-2 flex items-center gap-2"><x-sc.icon name="folder" class="!w-[18px] !h-[18px] text-lnu-700" /> Program Goal</h3>
-        <p class="text-[13.5px] text-gray-600 leading-relaxed whitespace-pre-line">{{ $program->goals ?: ($program->description ?: 'No program goal recorded yet.') }}</p>
+        <h3 class="font-bold text-[14px] mb-2 flex items-center gap-2"><x-sc.icon name="folder" class="!w-[18px] !h-[18px] text-lnu-700" /> Project Goal</h3>
+        <p class="text-[13.5px] text-gray-600 leading-relaxed whitespace-pre-line">{{ $program->goals ?: ($program->description ?: 'No project goal recorded yet.') }}</p>
         <div class="mt-5 pt-4 border-t border-gray-100">
             <p class="label">Linked Communities & Partners</p>
             <div class="flex flex-wrap gap-2">
@@ -92,7 +92,7 @@
         <div class="sc-card p-6 col-span-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h3 class="font-bold text-[14px] flex items-center gap-2">
-                    <x-sc.icon name="sparkles" class="!w-[18px] !h-[18px] text-gold-500" /> Executive Narrative
+                    <x-sc.icon name="sparkles" class="!w-[18px] !h-[18px] text-gold-500" /> Project Narrative
                     <span class="badge badge-gray !text-[10px]">Director-only · aggregates only</span>
                 </h3>
                 <div class="flex flex-wrap gap-2">
@@ -102,8 +102,8 @@
                             <x-sc.icon name="doc" class="w-3.5 h-3.5" />View full narrative
                         </button>
                     @endif
-                    <button wire:click="generateNarrative" wire:loading.attr="disabled" wire:target="generateNarrative" class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">
-                        <span wire:loading.remove wire:target="generateNarrative" class="inline-flex items-center gap-1.5"><x-sc.icon name="sparkles" class="w-3.5 h-3.5" />Generate program narrative</span>
+                    <button type="button" @click="$dispatch('project-narrative-generate', { title: @js($program->title), code: @js($program->code), college: @js($program->college?->name ?? 'College not linked'), lead: @js($program->programLead?->user?->name ?? 'No project lead assigned'), communities: @js($program->communities->pluck('name')->values()->all()) })" wire:click="generateNarrative" wire:loading.attr="disabled" wire:target="generateNarrative" class="btn btn-primary !px-2.5 !py-1.5 !text-[11px]">
+                        <span wire:loading.remove wire:target="generateNarrative" class="inline-flex items-center gap-1.5"><x-sc.icon name="sparkles" class="w-3.5 h-3.5" />Generate narrative</span>
                         <span wire:loading wire:target="generateNarrative" class="inline-flex items-center gap-1.5"><x-sc.icon name="loader" class="w-3.5 h-3.5 animate-spin" />Generating…</span>
                     </button>
                 </div>
@@ -111,8 +111,8 @@
             <div class="mt-3">
                 @if ($narrative === null)
                     <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center">
-                        <p class="text-[12.5px] text-gray-500 font-semibold">No narrative generated yet for this program.</p>
-                        <p class="text-[11.5px] text-gray-400 mt-1">The Director can generate an executive summary from program aggregates (no PII leaves the system).</p>
+                        <p class="text-[12.5px] text-gray-500 font-semibold">No narrative generated yet for this project.</p>
+                        <p class="text-[11.5px] text-gray-400 mt-1">The Director can generate a project narrative from aggregate data (no PII leaves the system).</p>
                     </div>
                 @elseif ($narrative->status === \App\Models\ProgramNarrative::STATUS_FAILED)
                     <div class="rounded-xl border border-red-200 bg-red-50/70 p-4">
@@ -127,7 +127,7 @@
                     <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
                         <div class="flex flex-wrap items-center gap-2 mb-2">
                             <span class="narrative-health {{ $narrative->health_label }}">{{ match ($narrative->health_label) { 'on-track' => 'On track', 'at-risk' => 'At risk', default => 'Needs attention' } }}</span>
-                            <span class="text-[11px] text-gray-400 font-medium">Generated {{ $narrative->generated_at?->format('M j, Y g:i A') }} · {{ $narrative->generator?->name }} · {{ $narrative->metadata['model'] ?? 'gemini' }} · prompt v{{ $narrative->metadata['prompt_version'] ?? '—' }}</span>
+                            <span class="text-[11px] text-gray-400 font-medium">Generated {{ $narrative->generated_at?->format('M j, Y g:i A') }} · {{ $narrative->generator?->name }} · {{ $narrative->metadata['model'] ?? 'gemini' }} · prompt {{ $narrative->metadata['prompt_version'] ?? '—' }}</span>
                         </div>
                         <p class="text-[13px] text-gray-600 leading-relaxed">{{ $narrative->summary }}</p>
                         <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">

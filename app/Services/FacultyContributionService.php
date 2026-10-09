@@ -237,26 +237,38 @@ class FacultyContributionService
     public function metricDefinitions(): array
     {
         return [
+            // `unit` labels the leaderboard row's value; `unit_one` is the
+            // singular form. Both were previously written as bare
+            // abbreviations ('hrs' / 'proj' / 'lead') and read by NOTHING —
+            // the row printed a naked number and the unit only ever appeared
+            // in the caption of the OTHER two metrics (owner request
+            // 2026-10-07). `unit` is now the plural/default wording.
+            //
+            // Hours keep a fixed label: "hrs rendered" is the house term used
+            // by the hub tile, the caption and the chart tooltip, so the row
+            // must not be the one place that says "1 hr rendered".
             'hours' => [
                 'label' => 'Training hours rendered',
                 'short' => 'Hours rendered',
                 'sub' => 'Total hours each faculty member has rendered this academic year',
                 'key' => 'rendered_hours',
-                'unit' => 'hrs',
+                'unit' => 'hrs rendered',
             ],
             'projects' => [
                 'label' => 'Project involvement',
                 'short' => 'Projects',
                 'sub' => 'Number of extension projects led or co-led this academic year',
                 'key' => 'projects_involved',
-                'unit' => 'proj',
+                'unit' => 'Projects',
+                'unit_one' => 'Project',
             ],
             'leads' => [
                 'label' => 'Projects led',
                 'short' => 'Leads',
                 'sub' => 'Projects where the faculty member carries the lead role',
                 'key' => 'projects_led',
-                'unit' => 'lead',
+                'unit' => 'Projects led',
+                'unit_one' => 'Project led',
             ],
         ];
     }

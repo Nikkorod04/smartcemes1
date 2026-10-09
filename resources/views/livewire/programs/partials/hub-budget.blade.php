@@ -34,7 +34,7 @@
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <div>
                 <h3 class="font-bold text-[14px]">Utilization Entries</h3>
-                <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Each entry attaches to the program (required) and optionally to an activity</p>
+                <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Each entry attaches to the project (required) and optionally to an activity</p>
             </div>
             @if ($canManage)
                 <button wire:click="openBudgetForm" class="btn btn-primary"><x-sc.icon name="wallet" class="w-4 h-4" /> Record utilization</button>

@@ -299,7 +299,7 @@ class Index extends Component
             $payload['code'] = Program::nextCode();
             $payload['created_by'] = auth()->id();
             $program = Program::create($payload);
-            $this->dispatch('sc-toast', message: "Program created — code {$program->code}", type: 'success');
+            $this->dispatch('sc-toast', message: "Program {$program->code} created — add a project to link it to {$this->college}", type: 'success');
         }
 
         $this->closeProgramForm();
@@ -342,12 +342,9 @@ class Index extends Component
     }
 
     /**
-     * Toggle one entry in a multi-select of the project form.
-     *
-     * The `(key, value)` signature is the `x-sc.multi-select` contract — its JS
-     * calls `$wire.call(method, key, id)`. Never `$toggle`: Livewire 3.8's client
-     * implementation ignores the value argument for arrays and coerces the
-     * property to a bool (§14).
+     * Legacy toggle endpoint retained for existing Livewire tests and callers.
+     * The shared multi-select now binds the complete array directly, so new UI
+     * interactions do not depend on per-item toggle requests.
      */
     public function toggleProjectFormArray(string $key, string|int $value): void
     {
@@ -355,10 +352,16 @@ class Index extends Component
             return;
         }
 
-        $values = is_array($this->projectForm[$key] ?? null) ? $this->projectForm[$key] : [];
+        // Livewire may hydrate numeric ids as integers while Alpine sends them
+        // back as strings. Normalize both sides before toggling to prevent
+        // duplicate values or a previous selection being treated as missing.
+        $value = (string) $value;
+        $values = is_array($this->projectForm[$key] ?? null)
+            ? array_values(array_map('strval', $this->projectForm[$key]))
+            : [];
 
         $this->projectForm[$key] = in_array($value, $values, true)
-            ? array_values(array_diff($values, [$value]))
+            ? array_values(array_filter($values, fn ($item) => $item !== $value))
             : [...$values, $value];
     }
 

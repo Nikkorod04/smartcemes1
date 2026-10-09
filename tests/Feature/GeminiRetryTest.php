@@ -203,4 +203,52 @@ class GeminiRetryTest extends TestCase
         $this->assertSame('Recovered from a timeout.', $result['data']['summary']);
         $this->assertSame(2, $result['metadata']['attempts']);
     }
+
+    /**
+     * THE KEY MUST COME FROM CONFIG — a runtime `env()` fallback hides a
+     * production-only failure (added 2026-10-07).
+     *
+     * `GeminiClient` used to read `config('smartcemes.ai.key') ?: env('GEMINI_API_KEY')`
+     * and the config key did not exist, so the real read was a runtime `env()` call.
+     * That works in development and breaks on the deployed server: `php artisan
+     * config:cache` (deploy checklist item 10) stops Laravel loading `.env`, so
+     * `env()` returns null at request time and every AI surface falls into its
+     * "unavailable" state — while the model id and endpoint, which ARE read through
+     * config, keep working.
+     *
+     * This test puts a key in the ENVIRONMENT and none in config, which is exactly
+     * the shape of a cached production config. An `env()` fallback would rescue the
+     * call and this test would fail; with config as the single source of truth the
+     * client refuses to start, which is the honest outcome.
+     */
+    public function test_the_api_key_is_read_from_config_not_from_a_runtime_env_call(): void
+    {
+        $originalEnv = getenv('GEMINI_API_KEY');
+        putenv('GEMINI_API_KEY=an-env-only-key');
+        $_ENV['GEMINI_API_KEY'] = 'an-env-only-key';
+
+        config(['smartcemes.ai.key' => null]);
+
+        // If the client reached the network at all, the fake below would answer it
+        // and no exception would be raised — which is the bug being pinned.
+        Http::fake(['*generativelanguage.googleapis.com*' => Http::response($this->ok('Should never be reached.'), 200)]);
+
+        try {
+            app(GeminiClient::class)->generate('prompt');
+
+            $this->fail('The client reached the network: a runtime env() fallback rescued a null config key.');
+        } catch (AiUnavailableException $e) {
+            $this->assertStringContainsString('No API key configured', $e->getMessage());
+        } finally {
+            if ($originalEnv === false) {
+                putenv('GEMINI_API_KEY');
+                unset($_ENV['GEMINI_API_KEY']);
+            } else {
+                putenv('GEMINI_API_KEY='.$originalEnv);
+                $_ENV['GEMINI_API_KEY'] = $originalEnv;
+            }
+        }
+
+        Http::assertNothingSent();
+    }
 }

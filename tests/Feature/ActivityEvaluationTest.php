@@ -247,7 +247,7 @@ class ActivityEvaluationTest extends TestCase
             ->assertSet('evaluationStep', 'preview')
             ->assertSet('evaluationSummary.applied', 1)
             ->assertSet('evaluationSummary.invalid', 3)
-            ->assertSet('evaluationRows.1.errors.0', 'Beneficiary ID 999999 is not enrolled in this program (unknown or unenrolled).')
+            ->assertSet('evaluationRows.1.errors.0', 'Beneficiary ID 999999 is not enrolled in this project (unknown or unenrolled).')
             ->assertSet('evaluationRows.2.errors.0', "Beneficiary ID {$first->id} appears more than once in this file.")
             ->assertSet('evaluationRows.3.errors.0', "Name does not match the registry for ID {$third->id} ({$third->last_name}, {$third->first_name}).");
 

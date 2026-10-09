@@ -118,7 +118,6 @@
                                 $value = $row[$activeMetric['key']] ?? 0;
                                 $max = max($ranked->max(fn ($r) => $r[$activeMetric['key']] ?? 0), 1);
                                 $rankClass = $index === 0 ? 'top1' : ($index === 1 ? 'top2' : ($index === 2 ? 'top3' : ''));
-                                $isOnLeave = ($row['status'] ?? 'active') === 'on_leave';
                             @endphp
                             <button type="button" class="eng-row" wire:key="row-{{ $row['id'] }}"
                                     wire:click="openFaculty({{ $row['id'] }})">
@@ -129,13 +128,14 @@
                                     <span class="avatar w-8 h-8 text-[10px] shrink-0">{{ $contribution->initials($row['name']) }}</span>
                                     <span class="min-w-0 flex-1">
                                         <span class="block text-[12.5px] font-bold truncate">{{ $row['name'] }}</span>
-                                        <span class="eng-sub truncate block">
-                                            {{ $row['college'] ?? '—' }} ·
-                                            {{ $isOnLeave ? 'On leave' : ($row['projects_involved'] ?? 0).' project'.(($row['projects_involved'] ?? 0) === 1 ? '' : 's') }}
-                                        </span>
+                                        {{-- College · the ACTIVITY count: the one contribution
+                                             figure the value and the caption never carry. --}}
+                                        <span class="eng-sub truncate block">{{ $this->rowSubline($row) }}</span>
                                     </span>
                                     <span class="text-right shrink-0">
-                                        <span class="eng-val">{{ $this->headlineValue($row, $activeMetric) }}</span>
+                                        {{-- The unit rides on the value (owner request 2026-10-07).
+                                             `small` is the pre-existing muted style in app.css. --}}
+                                        <span class="eng-val">{{ $this->headlineValue($row, $activeMetric) }} <small>{{ $this->headlineUnit($row, $activeMetric) }}</small></span>
                                         <span class="eng-sub block">{{ $this->headlineCaption($row, $activeMetric) }}</span>
                                     </span>
                                 </span>
@@ -216,8 +216,10 @@
                             </div>
                         </div>
                         <div class="mt-3 flex flex-wrap gap-1.5">
-                            <span class="badge badge-gold">{{ $record['projects_led'] ?? 0 }} lead</span>
-                            <span class="badge badge-gray">{{ $record['activities_handled'] ?? 0 }} activities</span>
+                            {{-- Pluralised via the shared helper: these used to print
+                                 "2 lead" and "1 activities" (owner request 2026-10-07). --}}
+                            <span class="badge badge-gold">{{ $this->countLabel((int) ($record['projects_led'] ?? 0), 'Project led', 'Projects led') }}</span>
+                            <span class="badge badge-gray">{{ $this->countLabel((int) ($record['activities_handled'] ?? 0), 'activity', 'activities') }}</span>
                             @if (($record['pending_hours'] ?? 0) > 0)
                                 <span class="badge badge-yellow">{{ $this->fmtHours($record['pending_hours']) }} hrs pending</span>
                             @endif

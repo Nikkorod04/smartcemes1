@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  * Export a project's ENROLLED beneficiaries as XLSX (owner request 2026-10-05).
  *
  * Deliberately the SAME workbook as the import template — headers, widths,
- * freeze pane and all — with the program's list where the grey example row would
+ * freeze pane and all — with the project's list where the grey example row would
  * be. That makes it round-trip: download the list, edit it in Excel, import it
  * straight back. Both workbooks come from `BeneficiaryTemplate::build()`, so the
  * two can never drift.

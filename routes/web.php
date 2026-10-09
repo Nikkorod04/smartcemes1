@@ -9,6 +9,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Livewire\AiAnalysis;
+use App\Livewire\AiAnalysisCommunity;
+use App\Livewire\AiAnalysisReview;
 use App\Livewire\Assessments\Import;
 use App\Livewire\Assessments\Review;
 use App\Livewire\Assessments\Wizard;
@@ -53,8 +55,24 @@ Route::get('/dashboard', Dashboard::class)
 */
 
 // AI — Admin-only surfaces (D4): insights workspace + program narratives
+// Split 2026-10-07 (docs/AI-ANALYSIS-REDESIGN-PLAN.md): the INDEX is the queue
+// (every analysis, grouped by community, plus the summaries still awaiting one)
+// and the SHOW route is the review surface for ONE analysis in ANY state —
+// including approved and discarded, which previously had no reading surface at
+// all. The show route needs a real model, so RouteSurfaceTest's
+// unlinked-surfaces walk (which skips model-parameter routes) does NOT cover it;
+// AiAnalysisQueueTest does.
 Route::get('/ai-analysis', AiAnalysis::class)
     ->middleware(['auth', 'role:admin'])->name('ai-analysis.index');
+
+Route::get('/ai-analysis/{analysis}', AiAnalysisReview::class)
+    ->middleware(['auth', 'role:admin'])->name('ai-analysis.show');
+
+// ONE community's analysis history. Two path segments, so it cannot collide with
+// the one-segment `{analysis}` route above. This is the deep link the queue lacks:
+// the queue paginates BY GROUP, so a community's rows can sit on any page.
+Route::get('/ai-analysis/community/{community}', AiAnalysisCommunity::class)
+    ->middleware(['auth', 'role:admin'])->name('ai-analysis.community');
 
 Route::get('/program-narratives', ProgramNarratives::class)
     ->middleware(['auth', 'role:admin'])->name('program-narratives.index');

@@ -12,7 +12,10 @@ use App\Models\Faculty;
 use App\Models\ProgramNarrative;
 use App\Models\ProgramObjective;
 use App\Models\User;
+use App\Services\ProgramNarrativeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -262,19 +265,38 @@ class RedesignUiTest extends TestCase
             'recommendations' => [
                 ['priority' => 'High', 'action' => 'Lock in a second rice supplier', 'rationale' => 'Single-supplier dependency flagged.'],
             ],
+            // THE REAL PAYLOAD SHAPE. `ProgramAggregates::build()` emits exactly these
+            // four keys (`project`, `training`, `budget`, `activities`).
+            //
+            // This fixture used to fabricate the PRE-R5 shape — `program`, `objectives`,
+            // `kpis` — and the modal test asserted an objective ('Reach 30 pupils')
+            // rendered. That is why the view's reads of those dead keys went unnoticed
+            // for so long: the fixture SUPPLIED them, so the suite stayed green while
+            // production showed "0 objectives" and a blank Period, and the test would
+            // have FAILED if the view were corrected to match reality.
             'raw_extracted_data' => [
-                'program' => ['code' => $program->code, 'status' => 'ongoing', 'period' => '2026-01-01 to 2026-12-31', 'communities' => []],
-                'objectives' => [
-                    'total' => 1,
-                    'status_counts' => ['achieved' => 1, 'on_track' => 0, 'not_met' => 0, 'not_started' => 0],
-                    'list' => [[
-                        'objective' => 'Reach 30 pupils', 'kpi_metric' => 'community_reach',
-                        'baseline' => 0, 'target' => 30, 'actual' => 30, 'status' => 'achieved', 'target_date' => '2026-12-31',
-                    ]],
+                'project' => [
+                    'code' => $program->code,
+                    'title' => $program->title,
+                    'status' => 'ongoing',
+                    'college' => null,
+                    'period' => '2026-01-01 to 2026-12-31',
+                    'communities' => [],
                 ],
-                'kpis' => ['community_reach' => 30, 'attendance_consistency' => 98.9],
+                'training' => [
+                    'training_hours' => 30.0,
+                    'completed_hours' => 30.0,
+                    'training_days' => 1.0,
+                    'trainors' => 3,
+                    'trainees' => 30,
+                    'avg_hours_per_completed' => 30.0,
+                    'target_hours' => 60.0,
+                    'hours_attainment_pct' => 50,
+                    'formula' => 'trainors x trainees x days (no x 8)',
+                    'trainee_sources' => ['attendance' => 1],
+                ],
+                'budget' => ['allocated' => 85000, 'utilized' => 78000, 'utilization_pct' => 92, 'over_allocated' => false],
                 'activities' => ['total' => 3, 'completed' => 2, 'overdue' => 0],
-                'budget' => ['allocated' => 85000, 'utilized' => 78000, 'over_allocated' => false],
             ],
             'confidence_score' => 0.82,
             'metadata' => ['model' => 'gemini-3.6-flash', 'prompt_version' => 'v1', 'confidence_basis' => 'derived'],
@@ -290,10 +312,10 @@ class RedesignUiTest extends TestCase
 
         Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
             ->assertSee('View full narrative')
-            ->assertSee('Generate program narrative')
+            ->assertSee('Generate narrative')
             ->assertSee('Read the full narrative')
             ->assertSeeHtml('wire:loading.flex')
-            ->assertSee('Generating executive narrative')
+            ->assertSee('Generating extension project narrative')
             ->assertDontSee('Data the AI reviewed')
             ->call('openNarrativeModal')
             ->assertSet('showNarrativeModal', true)
@@ -301,10 +323,79 @@ class RedesignUiTest extends TestCase
             ->assertSee('Rice supply volatility may affect cycle 3.')
             ->assertSee('Lock in a second rice supplier')
             ->assertSee('confidence 0.82')
-            ->assertSee('Reach 30 pupils')
             ->assertSee('₱85,000 allocated')
+            // The D3 accordion now reads the keys the payload ACTUALLY carries: the
+            // period lives under `project` (not `program`), and the retired objectives
+            // list is replaced by the `training` block the narrative is built from.
+            ->assertSee('2026-01-01 to 2026-12-31')
+            ->assertSee('Training reviewed')
+            ->assertSee('50% of the 60-hr annual target')
+            ->assertSee('trainee figures rest on 1 activity from attendance')
+            ->assertSee('Current figures')
+            ->assertDontSee('Objectives reviewed')
+            ->assertDontSee('0 objectives')
             ->call('closeNarrativeModal')
             ->assertSet('showNarrativeModal', false);
+    }
+
+    public function test_hub_narrative_generation_exposes_a_success_result(): void
+    {
+        config(['smartcemes.ai.key' => 'test-key']);
+        Http::fake([
+            '*generativelanguage.googleapis.com*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => json_encode([
+                        'summary' => 'On pace.',
+                        'health_label' => 'on-track',
+                        'risks' => [],
+                        'recommendations' => [],
+                    ])]]],
+                ]],
+                'usageMetadata' => ['totalTokenCount' => 500],
+            ]),
+        ]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $program = $this->program();
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $program])
+            ->call('generateNarrative')
+            ->assertSet('generationResult', 'success')
+            ->assertSee('Project narrative generated')
+            ->assertSee('View Narrative')
+            ->assertSee('View full narrative');
+    }
+
+    public function test_hub_canceled_generation_is_recorded_and_not_published(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $program = $this->program();
+        $narrative = ProgramNarrative::create([
+            'extension_project_id' => $program->id,
+            'generated_by' => $admin->id,
+            'status' => ProgramNarrative::STATUS_PENDING,
+            'metadata' => [],
+        ]);
+
+        $service = \Mockery::mock(ProgramNarrativeService::class);
+        $service->shouldReceive('generateFor')->once()->andReturnUsing(function () use ($narrative, $admin) {
+            Cache::put('program-narrative:generation-cancel:'.$admin->id, true, now()->addMinutes(10));
+
+            return $narrative;
+        });
+        $this->app->instance(ProgramNarrativeService::class, $service);
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $program])
+            ->call('generateNarrative')
+            ->assertSet('generationResult', 'canceled')
+            ->assertSee('Generation canceled');
+
+        $narrative->refresh();
+        $this->assertSame(ProgramNarrative::STATUS_FAILED, $narrative->status);
+        $this->assertSame('Narrative generation canceled by the Director.', $narrative->error_message);
+        $this->assertNull($narrative->summary);
     }
 
     public function test_hub_hides_full_narrative_button_without_completed_narrative(): void

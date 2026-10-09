@@ -2,9 +2,7 @@
 
 namespace App\Livewire\Interagency;
 
-use App\Models\AssessmentAnalysis;
 use App\Models\InteragencyAgency;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -52,9 +50,8 @@ use Livewire\Component;
  *     confused the reader. The prototype still renders three tier chips; that
  *     divergence is accepted and Laravel-only (revisions.md not yet updated).
  *
- * The referrals panel reuses `AssessmentAnalysis::resolvedReferrals()`, which is
- * the same resolver the AI review screen uses — so both surfaces agree on what
- * counts as verified.
+ * Referral review remains available in the AI workspace; this screen stays
+ * focused on maintaining the agency allow-list.
  */
 #[Layout('layouts.app')]
 class Index extends Component
@@ -71,6 +68,8 @@ class Index extends Component
         'sample_service' => '',
         'contact_info' => '',
         'active' => true,
+        // Internal ordering remains supported for seeders/tests, but is not
+        // exposed in the reusable agency form UI.
         'sort_order' => 0,
     ];
 
@@ -152,6 +151,8 @@ class Index extends Component
             'sample_service' => $this->form['sample_service'] ?: null,
             'contact_info' => $this->form['contact_info'] ?: null,
             'active' => (bool) $this->form['active'],
+            // Ordering is retained for compatibility, but intentionally is not
+            // exposed in the form UI.
             'sort_order' => (int) (($this->form['sort_order'] === '' || $this->form['sort_order'] === null)
                 ? 0
                 : $this->form['sort_order']),
@@ -262,50 +263,13 @@ class Index extends Component
             return str_contains($haystack, strtolower(trim($this->search)));
         })->values();
 
-        $referrals = $this->referralCards();
-
         return view('livewire.interagency.index', [
             'agencies' => $filtered,
             'totalCount' => $agencies->count(),
             'activeCount' => $agencies->where('active', true)->count(),
             'categories' => $agencies->pluck('need_category')->filter()->unique()->sort()->values(),
             'categoryCount' => $agencies->pluck('need_category')->filter()->unique()->count(),
-            'referrals' => $referrals,
-            'referralCount' => $referrals->count(),
-            'unverifiedCount' => $referrals->filter(fn (array $r) => $r['agency'] === null)->count(),
         ]);
-    }
-
-    /**
-     * The Tier-2 referrals the AI has actually raised, for the panel at the
-     * bottom of the page. Each card carries the resolved agency so the panel can
-     * say "Refer to DOH — Department of Health", and an unresolved one is kept
-     * in the list (flagged) rather than dropped.
-     *
-     * @return Collection<int, array<string, mixed>>
-     */
-    protected function referralCards(): Collection
-    {
-        return AssessmentAnalysis::query()
-            ->whereNotNull('interagency_referrals')
-            ->with('assessmentSummary.community')
-            ->latest('id')
-            ->limit(40)
-            ->get()
-            ->flatMap(function (AssessmentAnalysis $analysis) {
-                return collect($analysis->resolvedReferrals())->map(fn (array $referral) => [
-                    'need' => $referral['need'],
-                    'rationale' => $referral['rationale'],
-                    'agency' => $referral['agency'],
-                    'as_cited' => $referral['as_cited'],
-                    'community' => $analysis->community?->name,
-                    'analysis_id' => $analysis->id,
-                    'created_at' => $analysis->created_at,
-                ]);
-            })
-            // Newest analyses first, and within one analysis keep the model's order.
-            ->sortByDesc(fn (array $card) => $card['created_at']?->timestamp ?? 0)
-            ->values();
     }
 
     protected function resetForm(): void

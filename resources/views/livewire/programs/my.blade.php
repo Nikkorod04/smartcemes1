@@ -1,13 +1,13 @@
 <div>
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">Programs you lead or are assigned to as faculty</p>
+    <p class="text-[13px] text-gray-400 font-medium mb-3">Projects you lead or are assigned to as faculty</p>
 </section>
 
 <section class="mt-2">
     @if ($programs->isEmpty())
         <div class="reveal-item sc-card px-5 py-12 text-center">
-            <p class="text-[13.5px] font-semibold text-gray-500">No programs assigned to you yet</p>
-            <p class="text-[12px] text-gray-400 mt-1">Programs appear here once the Director's office assigns you as lead or to an activity.</p>
+            <p class="text-[13.5px] font-semibold text-gray-500">No projects assigned to you yet</p>
+            <p class="text-[12px] text-gray-400 mt-1">Projects appear here once the Director's office assigns you as lead or to an activity.</p>
         </div>
     @else
         <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">

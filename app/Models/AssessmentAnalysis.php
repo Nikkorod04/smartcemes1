@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -75,7 +77,13 @@ class AssessmentAnalysis extends Model
         return $this->belongsTo(AssessmentSummary::class, 'assessment_summary_id');
     }
 
-    public function community(): ?Community
+    /**
+     * Resolve the community through the linked assessment summary.
+     *
+     * This is intentionally not named `community()`: Eloquent reserves that
+     * convention for relationship methods that return a Relation instance.
+     */
+    public function resolvedCommunity(): ?Community
     {
         return $this->assessmentSummary?->community;
     }
@@ -158,5 +166,168 @@ class AssessmentAnalysis extends Model
         return collect($this->resolvedReferrals())
             ->filter(fn (array $r) => $r['agency'] === null)
             ->count();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Generation lineage (2026-10-07 redesign) */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Memoised generation list — see `siblings()`.
+     *
+     * Private, so it is never serialised by Livewire and never confused with a
+     * database attribute.
+     */
+    private ?Collection $siblingsCache = null;
+
+    /**
+     * Every analysis for the SAME summary, oldest first.
+     *
+     * A summary can legitimately have several generations — regenerating creates
+     * a new row and leaves the old one intact (the live DB holds 4 for one
+     * summary). Ordered by **id, not `created_at`**, because generations created
+     * in the same second would otherwise sort arbitrarily; the id is monotonic.
+     *
+     * ⚠️ **Memoised per instance, and that matters.** A row reads up to four
+     * lineage values (`generationCount`, `generationIndex`, `isCurrent`,
+     * `isSuperseded`) and each one asks this question. Un-memoised that measured
+     * **4 queries per row — 24 of the queue's 36 queries** for six generations.
+     * `refresh()` drops the cache, so a state change is never read back through a
+     * stale list.
+     *
+     * @return Collection<int, self>
+     */
+    public function siblings(): Collection
+    {
+        if ($this->siblingsCache !== null) {
+            return $this->siblingsCache;
+        }
+
+        if ($this->assessment_summary_id === null) {
+            return $this->siblingsCache = collect([$this]);
+        }
+
+        return $this->siblingsCache = static::query()
+            ->where('assessment_summary_id', $this->assessment_summary_id)
+            ->orderBy('id')
+            ->get();
+    }
+
+    /** Drop the memoised lineage — see `siblings()`. */
+    public function refresh(): static
+    {
+        $this->siblingsCache = null;
+
+        return parent::refresh();
+    }
+
+    /** 1-based position of this analysis within its summary. */
+    public function generationIndex(): int
+    {
+        $index = $this->siblings()->search(fn (self $a) => $a->id === $this->id);
+
+        return $index === false ? 1 : $index + 1;
+    }
+
+    /** How many generations exist for this summary. */
+    public function generationCount(): int
+    {
+        return $this->siblings()->count();
+    }
+
+    /**
+     * The generation the Director should treat as authoritative: the NEWEST
+     * **completed** generation for the summary that has not been discarded.
+     *
+     * Derived, never stored — so it cannot drift from the rows, and it needs no
+     * `superseded_by` column.
+     *
+     * ⚠️ A FAILED newer attempt must NOT become "current": a regeneration that
+     * fails leaves the previous usable draft as the best thing available, so
+     * demoting it would be wrong. (Caught on the real page — a failed row was
+     * rendering as `current`.)
+     */
+    public function isCurrent(): bool
+    {
+        $newest = $this->siblings()
+            ->reject(fn (self $a) => $a->approval_status === self::APPROVAL_DISCARDED)
+            ->filter(fn (self $a) => $a->status === self::STATUS_COMPLETED)
+            ->last();
+
+        return $newest?->id === $this->id;
+    }
+
+    /** A completed generation that a newer usable one has replaced. */
+    public function isSuperseded(): bool
+    {
+        return $this->status === self::STATUS_COMPLETED
+            && $this->approval_status !== self::APPROVAL_DISCARDED
+            && ! $this->isCurrent();
+    }
+
+    /**
+     * The single state the queue filters on — the two axes (`status`, the
+     * pipeline; `approval_status`, the human gate) collapsed for display.
+     */
+    public function queueState(): string
+    {
+        return match (true) {
+            $this->status === self::STATUS_FAILED => 'failed',
+            $this->status !== self::STATUS_COMPLETED => 'pending',
+            $this->approval_status === self::APPROVAL_APPROVED => 'approved',
+            $this->approval_status === self::APPROVAL_DISCARDED => 'discarded',
+            default => 'awaiting_review',
+        };
+    }
+
+    /**
+     * Can this generation be deleted?
+     *
+     * Two generations must NEVER be deletable:
+     *  - an **approved** one — it is citable in reports and its content is mirrored
+     *    onto the summary (`ai_analysis*`), so deleting it would orphan a citation;
+     *  - the **current draft** — it is the queue's only actionable row, and Discard
+     *    is the way to retire it (discard, then delete, if you really mean it).
+     *
+     * Everything else (failed, pending, discarded, superseded) is a past attempt.
+     *
+     * A HARD delete is safe here, which is unusual: nothing carries a foreign key
+     * to `assessment_analyses`, and `AuditLogs\Index` already renders a NULL
+     * subject for a row that no longer exists — so the audit trail keeps the
+     * description text and degrades gracefully. The deletion is itself logged.
+     */
+    public function isDeletable(): bool
+    {
+        if ($this->approval_status === self::APPROVAL_APPROVED) {
+            return false;
+        }
+
+        return ! ($this->queueState() === 'awaiting_review' && $this->isCurrent());
+    }
+
+    /**
+     * A short, human reason for a failed generation.
+     *
+     * `error_message` stores the provider's RAW body (a full JSON error
+     * document), which is unreadable on a row and unreachable by keyboard when
+     * hidden in a `title=`. The raw text stays stored for forensics; this only
+     * renders a summary of it.
+     */
+    public function failureSummary(): string
+    {
+        $raw = trim((string) $this->error_message);
+
+        if ($raw === '') {
+            return 'Analysis unavailable.';
+        }
+
+        return match (true) {
+            str_contains($raw, '503') => 'AI request failed — HTTP 503, the provider was overloaded.',
+            str_contains($raw, '429') => 'AI request failed — HTTP 429, rate limited.',
+            str_contains($raw, 'quota') => 'AI request failed — quota exceeded.',
+            str_contains($raw, '401'), str_contains($raw, '403') => 'AI request failed — the API key was rejected.',
+            str_contains($raw, 'timed out'), str_contains($raw, 'timeout') => 'AI request failed — the request timed out.',
+            default => Str::limit(preg_replace('/\s+/', ' ', $raw), 90),
+        };
     }
 }

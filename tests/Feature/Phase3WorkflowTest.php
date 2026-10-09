@@ -82,6 +82,29 @@ class Phase3WorkflowTest extends TestCase
         $this->assertSame($proposal->extension_project_id, $activity->extension_project_id);
     }
 
+    public function test_proposal_action_modal_does_not_render_the_detail_modal_at_the_same_time(): void
+    {
+        $data = $this->seedBase();
+        $proposal = $this->makeProposal($data);
+
+        $component = Livewire::actingAs($data['admin'])
+            ->test(ProposalsIndex::class)
+            ->call('openApprove', $proposal->id)
+            ->assertSet('actionId', $proposal->id)
+            ->assertSet('detailId', null)
+            ->assertSet('showApprove', true)
+            ->assertSet('showReject', false)
+            ->assertDontSeeHtml('id="proposal-detail-title"');
+
+        $component->call('closeModals')
+            ->call('openReject', $proposal->id)
+            ->assertSet('actionId', $proposal->id)
+            ->assertSet('detailId', null)
+            ->assertSet('showApprove', false)
+            ->assertSet('showReject', true)
+            ->assertDontSeeHtml('id="proposal-detail-title"');
+    }
+
     public function test_approval_blocked_when_proposed_dates_outside_program_range(): void
     {
         $data = $this->seedBase();

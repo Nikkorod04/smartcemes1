@@ -246,6 +246,101 @@ class FacultyModuleTest extends TestCase
             ->assertSet('openFacultyId', $faculty->id);
     }
 
+    /**
+     * The leaderboard value carries its UNIT (owner request 2026-10-07).
+     *
+     * Before this the row printed a bare number on every tab, and the unit
+     * appeared only in the CAPTION of the other two metrics — so the hours tab
+     * was the one tab whose number said nothing about what it counted.
+     */
+    public function test_the_leaderboard_value_carries_its_unit(): void
+    {
+        $component = Livewire::actingAs($this->admin())->test(EngagementBoard::class)->instance();
+        $definitions = app(FacultyContributionService::class)->metricDefinitions();
+
+        // Hours keep a FIXED label: "hrs rendered" is the house term used by the
+        // hub tile, the caption and the chart tooltip, so it must not
+        // singularise to "1 hr rendered" here.
+        $this->assertSame('hrs rendered', $component->headlineUnit(['rendered_hours' => 21.0], $definitions['hours']));
+        $this->assertSame(
+            'hrs rendered',
+            $component->headlineUnit(['rendered_hours' => 1.0], $definitions['hours']),
+            'The hours label is fixed and must not singularise.'
+        );
+
+        // The countable metrics do singularise.
+        $this->assertSame('Project', $component->headlineUnit(['projects_involved' => 1], $definitions['projects']));
+        $this->assertSame('Projects', $component->headlineUnit(['projects_involved' => 4], $definitions['projects']));
+        $this->assertSame('Project led', $component->headlineUnit(['projects_led' => 1], $definitions['leads']));
+        $this->assertSame('Projects led', $component->headlineUnit(['projects_led' => 4], $definitions['leads']));
+    }
+
+    /**
+     * The sub-line under the name carries the ACTIVITY count.
+     *
+     * It used to carry the project count, which duplicated the caption on the
+     * hours tab and the value itself on the projects tab. A row now reads
+     * hours / projects / activities with no figure printed twice.
+     */
+    public function test_the_row_subline_carries_the_activity_count_not_the_project_count(): void
+    {
+        $component = Livewire::actingAs($this->admin())->test(EngagementBoard::class)->instance();
+
+        $row = [
+            'college' => 'CAS',
+            'status' => 'active',
+            'activities_handled' => 4,
+            'projects_involved' => 2,
+            'projects_led' => 1,
+        ];
+
+        $this->assertSame('CAS · 4 activities', $component->rowSubline($row));
+        $this->assertSame(
+            'COE · 1 activity',
+            $component->rowSubline(['college' => 'COE', 'status' => 'active', 'activities_handled' => 1])
+        );
+
+        // The whole point of the trim: the project count must NOT reappear.
+        $this->assertStringNotContainsString(
+            'project',
+            strtolower($component->rowSubline($row)),
+            'The project count is already the caption (hours tab) or the value (projects tab).'
+        );
+
+        // On leave still replaces the figure, as it did before.
+        $this->assertSame(
+            'GRAD · On leave',
+            $component->rowSubline(['college' => 'GRAD', 'status' => 'on_leave', 'activities_handled' => 4])
+        );
+    }
+
+    /**
+     * The rendered row, not just the helpers — and the drawer badges, which
+     * used to print "2 lead" and "1 activities".
+     *
+     * `assertSeeHtml` is deliberate: "hrs rendered" also appears in the chart
+     * bootstrap script, so a plain assertSee would pass even with the unit
+     * removed from the row (a test passing for the wrong reason).
+     */
+    public function test_the_rendered_board_labels_the_value_and_pluralises_its_badges(): void
+    {
+        $project = $this->project();
+        $faculty = Faculty::factory()->create();
+
+        // Exactly one activity, so both the sub-line and the drawer badge are in
+        // their SINGULAR form — where the old copy read "1 activities".
+        $this->attachActivity($faculty, $project, 'Unit Label Session', '2026-03-01', 1.0, 10, 1);
+
+        Livewire::actingAs($this->admin())
+            ->test(EngagementBoard::class)
+            ->assertSeeHtml('<small>hrs rendered</small>')
+            ->assertSee('· 1 activity')
+            ->assertDontSee('1 activities')
+            ->call('openFaculty', $faculty->id)
+            ->assertSee('1 activity')
+            ->assertSee('0 Projects led');
+    }
+
     public function test_a_faculty_member_cannot_reach_the_board_at_all(): void
     {
         // Defence in depth. Two layers are refused here:

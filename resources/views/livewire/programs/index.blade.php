@@ -11,9 +11,9 @@
         <a href="{{ route('programs.index') }}" class="btn btn-outline !px-3 !py-2 text-[12px]">← Programs</a>
     </div>
     <div class="reveal-item flex flex-wrap items-center gap-3 mt-3">
-        <label class="relative flex-1 min-w-[230px] max-w-xs">
-            <x-sc.icon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" wire:model.live.debounce.300ms="search" class="input !pl-9 bg-white" placeholder="Search programs by title or code…">
+        <label class="sc-search flex-1 min-w-[230px] max-w-xs">
+            <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
+            <input type="text" wire:model.live.debounce.300ms="search" class="input bg-white" placeholder="Search projects by title or code…">
         </label>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -78,12 +78,12 @@
 
 <section class="mt-4">
     <p class="mt-3 text-[11.5px] text-gray-400 font-medium">
-        Showing {{ $rows->count() }} program{{ $rows->count() === 1 ? '' : 's' }}{{ $search !== '' ? ' for “'.$search.'”' : '' }}{{ $status !== '' ? ' · '.ucfirst($status) : '' }}@if ($sort === 'hours') · ranked by training hours rendered @endif
+        Showing {{ $rows->count() }} project{{ $rows->count() === 1 ? '' : 's' }}{{ $search !== '' ? ' for “'.$search.'”' : '' }}{{ $status !== '' ? ' · '.ucfirst($status) : '' }}@if ($sort === 'hours') · ranked by training hours rendered @endif
     </p>
 
     @if ($rows->isEmpty())
         <div class="reveal-item sc-card px-5 py-12 text-center">
-            <p class="text-[13.5px] font-semibold text-gray-500">No programs match your filters</p>
+            <p class="text-[13.5px] font-semibold text-gray-500">No projects match your filters</p>
             <p class="text-[12px] text-gray-400 mt-1">Try a different keyword or reset the status chips.</p>
         </div>
     @elseif ($view === 'grid')

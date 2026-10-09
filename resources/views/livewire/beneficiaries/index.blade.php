@@ -31,9 +31,9 @@
 <section class="mt-5 reveal-item">
     <div class="sc-card p-0 overflow-hidden">
         <div class="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-gray-100">
-            <label class="relative flex-1 min-w-[220px] max-w-sm">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 inline-flex pointer-events-none"><x-sc.icon name="search" class="w-4 h-4" /></span>
-                <input type="text" wire:model.live.debounce.300ms="search" class="input !pl-9 !py-2 bg-gray-50 border-transparent focus:bg-white" placeholder="Search project by title or code…">
+            <label class="sc-search flex-1 min-w-[220px] max-w-sm">
+                <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
+                <input type="text" wire:model.live.debounce.300ms="search" class="input !py-2 bg-gray-50 border-transparent focus:bg-white" placeholder="Search project by title or code…">
             </label>
             <span class="ml-auto text-[11.5px] text-gray-400 font-medium whitespace-nowrap">{{ $programs->count() }} project{{ $programs->count() === 1 ? '' : 's' }}</span>
         </div>

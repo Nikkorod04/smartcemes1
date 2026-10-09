@@ -1,16 +1,28 @@
 # SmartCEMES — Adviser Revision Plan
 
-_Status (2026-09-24): **P0 ✅ · R1 ✅ · R2 ✅ · R3 ✅ (R3a/R3b §14, R3c §18) · R4 ✅ · R5 ✅ · R6 ✅ · R7 🔨 IN PROGRESS — documentation only.**_
+_Status (2026-10-07): **P0 ✅ · R1 ✅ · R2 ✅ · R3 ✅ (R3a/R3b §14, R3c §18) · R4 ✅ · R5 ✅ · R6 ✅ · R7 🔨 IN PROGRESS — only the production deploy remains (AI_HANDOFF §15.4).**_
 _Created 2026-09-22. Baseline: Phases 1–5 complete, **232 tests / 1184 assertions**, blueprint v4.14._
-_**Current: 491 tests / 2894 assertions passing, 0 failures** — growth: 276 (R1) → 286 (R2) → 339 (R3a/R3b) → 378 (R4) → 403 (R5) → 423 (R6) → 437 (R3c) → 444 (R7 route-surface) → 470 (R7 college seals) → 467 (R7 graduate set — 5 college-CRUD tests removed, 2 added, hence the dip) → 472 (R7 dashboard pass) → 472 / 2165 (v4.19 budget-basis correction — same tests, 4 net new assertions) → 467 / 2139 (v4.20 Analytics removal — the 5 tests that covered the page) → 468 / 2145 (the Graduate School seal — 1 new fallback test) → 476 / 2177 (the faculty self-edit widening — 1 test replaced, 9 added) → 484 / 2208 (the college hub Programs level — 8 new tests) → 485 / 2215 (the hub redesign — 1 new design-rule guard) → 485 / 2217 (§25 — 8 tests re-pointed at the hub, 2 replaced by 2) → **487 / 2233** (§26 — the
+_**Current: 572 tests / 3318 assertions passing, 0 failures** — growth: 276 (R1) → 286 (R2) → 339 (R3a/R3b) → 378 (R4) → 403 (R5) → 423 (R6) → 437 (R3c) → 444 (R7 route-surface) → 470 (R7 college seals) → 467 (R7 graduate set — 5 college-CRUD tests removed, 2 added, hence the dip) → 472 (R7 dashboard pass) → 472 / 2165 (v4.19 budget-basis correction — same tests, 4 net new assertions) → 467 / 2139 (v4.20 Analytics removal — the 5 tests that covered the page) → 468 / 2145 (the Graduate School seal — 1 new fallback test) → 476 / 2177 (the faculty self-edit widening — 1 test replaced, 9 added) → 484 / 2208 (the college hub Programs level — 8 new tests) → 485 / 2215 (the hub redesign — 1 new design-rule guard) → 485 / 2217 (§25 — 8 tests re-pointed at the hub, 2 replaced by 2) → **487 / 2233** (§26 — the
 hub's budget surfaces consolidated to one, the chart turned into a doughnut, and the annual hours target
 made settable from the Edit modal; 2 new tests, 16 new assertions) → **488 / 2238** (§27 — the
 university targets page lost its year chart, its D-R5 guardrail card and its Training Hours Formula card,
 and the Project-targets sort was made to work; 1 net new test, 5 new assertions) → **489 / 2244** (§28 — the
 the retired-vocabulary sweep and a D-R7 leak the project-scoped guards missed; +1 test, +6 assertions)
 → **491 / 2894** (§29 — the Secretary's import template widened, plus two more links a role could see but not
-reach, found by sweeping every `route()` call against each route's role middleware; +2 tests, +7 assertions)._
-_**Blueprint v4.20. Prototype 29 pages.**_
+reach, found by sweeping every `route()` call against each route's role middleware; +2 tests, +7 assertions)
+→ **535 / 3168** (§31 — the safe-zone project set, the project archive with a visible restore, seeded
+rendered hours for faculty performance, and two dashboard glyphs removed) → **538 / 3183** (§32 — the
+faculty leaderboard's value carries its unit and its sub-line carries the activity count; +3 tests, +15
+assertions) → **572 / 3318** (§33 — the AI analysis page split into a queue and a review surface, so an
+approved analysis finally has a reading surface; +34 tests, +135 assertions across the split, its
+presentation pass, the queue search, the per-community history page, and a lineage N+1 fix) → **592 / 3402**
+(§34 — the project narratives page gains search / filters / pagination, and **six** AI-surface defects are fixed:
+a lying toast, a `config:cache` API-key blocker, `prompt vv2` on five surfaces, an unreachable `pending`,
+a never-completed attempt labelled as a narrative, and a hub audit view reading dead payload keys;
++20 tests, +84 assertions). **§30** (the demo cohorts)
+recorded its own total in §30.5, and its test count held at 491 while assertions rose — several tests
+iterate the seeded rows._
+_**Blueprint v4.25. Prototype 29 pages.**_
 
 > ### How to read this document (new sessions start here)
 >
@@ -620,7 +632,7 @@ bug. Mitigation: land it inside Phase R2, add per-college duplicate-protection t
 | R4 | Training hours model + project performance revamp | ✅ **Complete — see §15** |
 | R5 | Filters, rankings, dashboards, reports | ✅ **Complete — see §16** |
 | R6 | AI guardrail + interagency catalogue | ✅ **Complete — see §17** |
-| R7 | Hardening, docs, blueprint v4.18 | 🔨 **In progress — see §19** |
+| R7 | Hardening, docs, blueprint v4.23 | 🔨 **In progress — only the production deploy remains (AI_HANDOFF §15.4); see §19** |
 | **§20** | **Budget-basis correction: no per-project annual budget target (blueprint v4.19)** | ✅ **Complete — see §20** |
 | **§21** | **Admin Analytics page removed entirely (blueprint v4.20)** | ✅ **Complete — see §21** |
 | **§22** | **Faculty self-edit widened to expertise + academic (code catching up with its own contract)** | ✅ **Complete — see §22** |
@@ -633,6 +645,10 @@ bug. Mitigation: land it inside Phase R2, add per-college duplicate-protection t
 | **§29** | **Access mismatches: a link a role can see but cannot reach — three fixed** | ✅ **Complete — see §29** |
 | **§30** | **Demo cohorts for the six legacy projects — hours now match the prototype exactly** | ✅ **Complete — see §30** |
 | **§31** | **The safe-zone project set (5 live / 8 archived) + the project archive with visibility and restore** | ✅ **Complete — see §31** |
+| **§32** | **Faculty leaderboard: the value carries its unit; the sub-line carries activities** | ✅ **Complete — see §32** |
+| **§33** | **AI analysis split into a queue + a review surface (approved analyses get a reading surface)** | ✅ **Complete — see §33** |
+| **§34** | **Project narratives: search / filters / pagination, plus six AI-surface defects (a lying toast, a `config:cache` API-key blocker, `prompt vv2`, an unreachable `pending`, a mislabelled attempt, a hub audit view on dead keys)** | ✅ **Complete — see §34** |
+| **§35** | **Vocabulary: "program" → "project" on the narrow entity (29 files, text only) and "Executive" dropped from the narrative's name** | ✅ **Complete — see §35** |
 
 **PLAN STATUS: P0 + R1–R6 COMPLETE. R7 (documentation & verification) IN PROGRESS — no feature work
 outstanding.** All owner decisions are locked (§2 / §2.1); all four open questions resolved. The
@@ -4340,6 +4356,11 @@ cannot drift silently.
    agreed set — and it is asserted rather than hidden. A sixth project would close it.
 2. **`docs/TEST-SCRIPT.md` now trails** — it documents BUSOG's figures, the `CME-2026-001` code and the
    Feeding-Cycle-2 conflict demo, all of which have moved. The test is current; the prose is not.
+   **✅ FIXED 2026-10-07** — re-checked against the seeder and the live DB: the orientation figures now
+   use the seeded **PAGKAON**, the expected code is **`CME-2026-002`** (001 belongs to PAGKAON), the
+   create form's retired **`Target budget (₱)`** field is gone, the conflict demo moved to
+   **LINIS · 2026-08-22**, Appendix A lists the five live projects, and the stale *"the guides are still
+   bannered"* claim is corrected. `AI_HANDOFF.md` §16 H carries the closure.
 3. **The faculty expertise vocabulary is untouched** — `docs/PROJECT-EXPERTISE-PLAN.md` §6 remains a
    proposal (the owner deferred it).
 
@@ -4384,6 +4405,611 @@ dashboard renders both headings icon-free.
 > annual SmartCEMES target · 2,100 hrs still to be rendered"*. That is correct — 84+90+70+108+48 = 400
 > across the five live projects, and 400/2,500 = 16 %. An apparent mismatch with the caption turned out to
 > be a misreading of a scaled screenshot, not a bug.
+
+## 32. FACULTY LEADERBOARD: THE VALUE CARRIES ITS UNIT (2026-10-07)
+
+Owner request: on the admin Faculty Engagement board, label the leaderboard value rather than printing a
+bare number — "21 hrs rendered" / "1 Project" / "1 Project led".
+
+### 32.1 What was wrong
+
+The row rendered a **value + caption pair**, mirrored 1:1 with the prototype's `headline()` → `{v, s}`.
+The unit lived ONLY in the caption — and the caption carries the *other* metric — so the **hours tab was
+the one tab whose number said nothing about what it counted** (value `21`, caption `2 projects`).
+
+Two hooks for the fix were already in the codebase and **both were dead**: `.eng-val small` (defined in
+`resources/css/app.css` AND the prototype's `smartcemes.css`, rendered nowhere) and the `unit` key in
+`FacultyContributionService::metricDefinitions()`, read by nothing. The wording slot existed; it had
+never been used.
+
+### 32.2 What landed
+
+- `EngagementBoard::headlineUnit()` renders the unit in the pre-existing `.eng-val small` style.
+  `unit` is now the plural/default wording and `unit_one` the singular. **Hours keep a FIXED label** —
+  "hrs rendered" is the house term used by the hub tile, the caption and the chart tooltip, so it must
+  not singularise to "1 hr rendered" here.
+- The row sub-line now carries the **activity count**, not the project count: `GRAD · 4 activities`.
+  The project count was printed twice on the hours tab (caption + sub-line) and twice on the projects tab
+  (value + sub-line). A row now reads hours / projects / activities with no figure repeated.
+- The drawer badges pluralise through a shared `countLabel()`; they used to print **"2 lead"** and
+  **"1 activities"**.
+- **Deliberately NOT changed:** the metric switch still reads "Hours rendered · Projects · Leads" and the
+  chart title still says "Training hours rendered". The owner reviewed the repetition and accepted it.
+- **The caption is kept on every tab** — it is the only place the second metric appears.
+
+### 32.3 The prototype mirror — and the one field that could not cross
+
+`faculty-management.html`'s `headline()` gained a `u` field and the row renders it in `<small>`. All six
+harnesses stay green; `_facultytest.cjs:102` asserts the projects-mode **caption** carries "hrs rendered",
+which is precisely why the caption was kept.
+
+⚠️ **The sub-line could NOT be mirrored.** The prototype's `activities[]` carry **no faculty assignment
+at all** — only `program` and a `trainors` *count* — so a per-faculty activity count is not derivable
+from `seed-data.js`, and §11 rule 3 forbids inventing it. The prototype's sub-line therefore keeps its
+project count. **Accepted divergence, same class as §23.6 / §31.3.** Check `seed-data.js` for a field
+BEFORE promising to mirror it.
+
+### 32.4 Verification
+
+**538 tests / 3183 assertions, 0 failures** (535/3168 → +3 tests, +15 assertions). `pint` clean on the
+three changed PHP files; `npm run build` OK (CSS 104.86 kB); all six prototype harnesses green; the page
+was screenshotted through `.workbuddy-ai/shot.sh` and the units, the activity sub-line and the
+`On leave` branch all read correctly. The new render test was **mutation-tested** — removing the
+`<small>` wrapper reproduces the failure. `assertSeeHtml` was used deliberately: "hrs rendered" also
+appears in the chart bootstrap script, so a plain `assertSee` would have passed with the unit removed
+(a test passing for the wrong reason).
+
+---
+
+## 33. THE AI ANALYSIS PAGE: A QUEUE AND A REVIEW (2026-10-07)
+
+Owner decision, from the plan in `docs/AI-ANALYSIS-REDESIGN-PLAN.md`. The page did three jobs in one
+scroll — pick a summary and generate / review one analysis / browse history — and could only ever show
+**one** reviewable analysis.
+
+### 33.1 What was actually broken
+
+`$drafts = completed + approval_status = draft`, and `$hero = $drafts->first()`. So the review surface
+could only render a draft, and **an APPROVED analysis had no reading surface at all** — the history row
+said "citable in reports" with no link. Neither did a discarded one.
+
+Measured before the change: **11 analyses** (2 completed — 1 draft, 1 discarded — and **9 failed**),
+**30 summaries** of which only **4** had ever been analysed, and **multiple generations** on one summary
+(summary 1 → 4, 2 → 2, 8 → 2, 16 → 3) with nothing distinguishing them.
+
+### 33.2 What landed
+
+- **`/ai-analysis` is the QUEUE.** Community grouping, derived filter chips
+  (All · Awaiting review · Approved · Failed · Discarded · Awaiting analysis), `gen N of M` lineage with
+  derived `current`/`superseded`, a readable failure reason, per-row **Generate** and inline **Retry**.
+- **`/ai-analysis/{analysis}` is the REVIEW**, for **any** state. Full width, 2-up panels, a
+  state-dependent sticky action bar, a provenance footer, and a generation-history block.
+- **`awaiting_analysis` is a DERIVED state** — a validated summary with no analysis yet. 26 of the 30 live
+  summaries are in it; before, they were 26 options in one dropdown.
+- **The panels collapse** into the pre-existing `sc-acc` accordion (no new CSS, no JS, no Alpine), with
+  **High-priority interventions left `open`** so triage is never hidden. Referral rows lead with the
+  **agency chip** and clamp `need` to one line — `need` averages 55 characters and reads as a sentence.
+- **Regenerate** creates a NEW generation and leaves the previous one intact (`isCurrent()` is derived, so
+  no `superseded_by` column is needed). **Discard is confirmed** via a server-rendered `@if`, never an
+  Alpine visibility bridge.
+- `AssessmentAnalysisService::retry()` was **extracted** so the queue and the review cannot drift.
+
+### 33.3 The bug the rendered page exposed
+
+The first cut of `isCurrent()` returned the newest non-discarded generation **regardless of status**, so a
+**FAILED** attempt rendered as `current` — *"gen 3 of 4 · current · failed"* — pointing the Director at the
+one analysis with no content. `isCurrent()` now requires `status = completed`, and `isSuperseded()`
+excludes discarded. Verified on live data: **0 failed rows marked current**. Pinned by
+`AiAnalysisQueueTest::test_a_failed_newer_generation_does_not_demote_a_completed_draft`.
+**Lesson: for a derived "authoritative" marker, newest is not the same as newest USABLE.**
+
+### 33.4 Provenance
+
+`assessment_analyses.needs_assessment_id` is **vestigial** — `generate()` picks the lowest-id respondent
+row, and all four generations of summary 1 cite row #1 out of thirteen. The analysis's real parent is the
+**summary**, so the review footer cites the summary plus counts (`13 validated responses · 2 contributors`)
+and **never** renders "submitted by". Retiring the FK is left as its own decision.
+
+### 33.5 Verification
+
+**551 tests / 3249 assertions, 0 failures** (538 / 3183 → **+13 tests, +66 assertions**, all from the new
+`AiAnalysisQueueTest`). `pint` clean on the 8 changed PHP files; `npm run build` OK; both surfaces
+screenshotted on the real page. The **Community response data** block (the D3 evidence surface) was moved
+**verbatim** and is asserted down to a breakdown row by
+`test_the_review_surface_keeps_the_community_response_data_breakdown`.
+
+### 33.6 The prototype is NOT mirrored (owner decision)
+
+`docs/prototype/pages/ai-analysis.html` still renders the old single-page shape. **Accepted Laravel-only
+divergence**, the same class as §23.6 / §31.3 / §32.3 — the six harnesses were **not** re-run, because the
+prototype was not touched. Note the prototype already contains most of this design (a sticky action bar, a
+Regenerate button, a discard confirmation, `view →` links); the queue/review split itself is Laravel-only.
+
+### 33.7 The queue's presentation pass (owner review, same day)
+
+Four owner-requested changes to the queue only:
+
+1. **The page heading and the "Director-only · aggregated inputs only (D3)" badge are REMOVED.** The
+   sidebar and the topbar already name the page, and the D3 boundary is stated in the hero panel and the
+   legend — the same call the Faculty Management board made in P0i/P0j. The **filter chips and the
+   pipeline legend stay**.
+2. **One container card.** Each community used to be its own card, so 21 communities meant 21 floating
+   cards. They are now group header ROWS inside a single `sc-card`, divided by `divide-y`.
+3. **Pagination, by COMMUNITY GROUP rather than by row.** A community's generations must not straddle a
+   page break — you would otherwise read "gen 2 of 3" on one page and "gen 3 of 3" on the next with
+   nothing tying them together. `GROUPS_PER_PAGE = 8`, so 21 communities ≈ 3 pages. ⚠️
+   **`Collection::paginate()` does not exist in this Laravel**, so the page slice is wrapped in a manual
+   `LengthAwarePaginator` — and the shared `livewire.partials.pagination` renders "Showing 1–8 of 21",
+   which counts **communities**, hence the "21 communities · 37 rows" label beside the chips.
+   `filterBy()` calls `resetPage()` (the `Faculty\Directory` pattern), so a filter change cannot strand
+   you on a page that no longer exists.
+4. **Generate / Retry are revealed on hover**, as requested, through a `.hover-reveal` utility in
+   `app.css` gated on **`@media (hover: hover) and (min-width: 1024px)`** — **not** on a bare breakpoint.
+   A plain `lg:opacity-0` also hides the button on a **touch** device at ≥1024px, where there is no hover
+   to bring it back: an invisible but tappable control. With the gate, any pointer that cannot hover keeps
+   the action visible, and `:focus-within` covers keyboard users. Opening an analysis is the PRIMARY
+   action, so `Review →` / `View →` stay always visible — only the secondary action hides.
+   ⚠️ **A new Tailwind class needs `npm run build`** — the reveal silently did nothing until the build ran.
+   (Hand-written CSS in `app.css` is also immune to Tailwind's content scan, unlike a utility class.)
+
+Verified: **554 tests / 3265 assertions, 0 failures** (+3 tests, +16 assertions from this pass).
+
+### 33.8 Search on the queue (owner request, same day)
+
+The queue groups by community, so with 21 communities the only way to reach one barangay was to scan or
+paginate. Added a **search over the community name**:
+
+- `#[Url(as: 'q', except: '')] public string $search` — the **house URL alias** (`Faculty\Directory`,
+  `Communities\Index` both use `q`), so the query string stays consistent across the app, and the term is
+  shareable/bookmarkable.
+- Bound with `wire:model.live.debounce.300ms` (house pattern). **Matching is partial and
+  case-insensitive**, so `san jo` finds *Brgy. San Jose*.
+- ⚠️ **The search is applied BEFORE the chip counts**, so the chips describe what is on screen. Counting
+  the unfiltered queue instead would print "Awaiting analysis 26" above a single row. It is a **Collection
+  filter, not SQL**, so no LIKE escaping is needed (contrast `Faculty\Directory`, which escapes `%`/`_`).
+- `updatedSearch()` calls `resetPage()` — narrowing a search can leave you past the last page, which
+  renders an empty list that looks like a failed search. `clearSearch()` also resets.
+- The empty state distinguishes **"your search found nothing"** from **"this state is empty"** — they need
+  different fixes — and offers Clear search / Show all states.
+- **Not searched:** the period. Typing `Q2` will not match; the axis is the community, which is what the
+  grouping is by.
+
+Verified: **560 tests / 3285 assertions, 0 failures** (+6 tests, +20 assertions).
+
+### 33.9 A per-community history page, and a scoped delete (owner request)
+
+Owner: *"make the community or school clickable, so when clicked i can see the past generates of that
+certain community or school, inside that page, make also a feature to delete past requests."*
+
+**Why the page was worth adding.** The queue already lists a community's generations inline, but it
+**paginates by group** — so a community's rows can sit on any page, and there was no way to LINK to one
+community. `/ai-analysis/community/{community}` is that link. It is keyed to the **community**, not a
+period: a community has one summary per quarter/year, so the page lists **periods**, each with its own
+generation lineage. Two path segments, so it cannot collide with the one-segment `{analysis}` route.
+
+It is also where housekeeping lives: **Generate** on a period with no analysis, **Retry** on a failed one,
+**Delete** per row, and a bulk **Clear N failed** (9 of the 12 live generations are failed noise).
+
+**The delete is SCOPED, and the scope is the design decision.** A hard delete here is permanent
+(`assessment_analyses` has no `deleted_at`), so:
+
+- **Never deletable: an APPROVED analysis.** It is citable in reports and its content is mirrored onto the
+  summary (`ai_analysis*`), so deleting it would orphan a citation.
+- **Never deletable: the CURRENT draft.** It is the queue's only actionable row — `Discard` is the way to
+  retire it, then delete. The row reads *"live draft — locked"* with that reason on hover.
+- **Deletable: everything else** — failed, pending, discarded, superseded. `isDeletable()` on the model.
+
+Three facts made a hard delete acceptable, all verified rather than assumed:
+
+1. **Nothing carries a foreign key to `assessment_analyses`** (checked
+   `information_schema.COLUMNS` for any `%analysis%` column) — so no referential integrity breaks.
+2. **`AuditLogs\Index` already renders a NULL subject by design** — its own docblock says *"A deleted
+   subject resolves to NULL, which the [view handles]"* — so the audit trail keeps the stored description
+   text and degrades gracefully instead of breaking.
+3. **The deletion is logged** — the model auto-logs it (`LogsActivity`) and the component adds a semantic
+   event naming the community. Two rows per action is the existing house behaviour: `approve()` and
+   `discard()` do exactly the same.
+
+⚠️ **The id arrives from the browser, so it is scoped to the community** (`analysisInScope()` →
+`findOrFail`). Without that, a crafted call could delete another community's analysis.
+
+**Navigation now forms a loop: queue ↔ community ↔ review.** The queue's group header is a link (with a
+chevron affordance), and the review page gained a **community breadcrumb** next to "Analysis queue" —
+before this, a generation was a dead end: you could not reach the community's other periods from it.
+
+Verified: **571 tests / 3312 assertions, 0 failures** (+11 tests, +27 assertions).
+
+### 33.10 A self-inflicted N+1 in the lineage badges, found by measuring
+
+The lineage helpers (`generationCount`, `generationIndex`, `isCurrent`, `isSuperseded`) each call
+`siblings()`, and a rendered row reads up to four of them. Measured on the real pages with `DB::listen`
+against **six generations on one summary**:
+
+| Page | Before | After |
+|---|---|---|
+| `/ai-analysis` (the queue) | **36 queries** | **13** |
+| `/ai-analysis/community/{id}` | **41 queries** | **12** |
+| `/ai-analysis/{analysis}` (the review) | — | **13** |
+
+⚠️ **The review page was measured last, and only because I checked my own work for a gap** — I had
+measured two of the three surfaces I built. It was fine (13), but it had never been verified.
+
+So ~4 queries per row were lineage, i.e. **24 of the queue's 36** — two thirds of the page's queries were
+self-inflicted. `siblings()` is now **memoised per instance**, with a `refresh()` override that drops the
+cache so a state change (approve / discard / regenerate / retry) is never read back through a stale
+generation list.
+
+⚠️ **Note the method of finding it.** Nothing failed; the suite was green and both pages looked right. It
+took *counting queries* to see it. This is the same class of defect as `AuditLogs\Index`'s eager-load
+comment — and worth re-measuring whenever a per-row badge is added.
+
+Pinned by `AiAnalysisQueueTest::test_the_lineage_badges_do_not_fire_a_query_each`, which now measures
+**all three surfaces** (not just the queue) with a deliberately loose bound (25) so it catches a
+regression without pinning an exact count that framework drift could break.
+
+Verified: **572 tests / 3318 assertions, 0 failures**.
+
+### 33.11 The GUIDES described the pre-§33 page (fixed)
+
+The split invalidated three documents that describe the AI analysis **workflow** — the same class of debt
+§31 left in `TEST-SCRIPT.md`. All three told the reader to *"pick a community summary in the picker and
+click Generate"*, and **that picker no longer exists**:
+
+- `docs/adminguide.md` §12 — the flow steps
+- `docs/features.md` §3.11(a) — the demo script
+- `docs/guides/10-ai-analysis-narratives.md` Part A — the worked walkthrough
+
+Each now describes the **queue** (grouped by community, search, chips), the **per-community history page**,
+generation from an `awaiting analysis` **row**, the failure state as a **row** with a readable reason, the
+**scoped delete**, the collapsible panels, and **Regenerate**. The **Community response data** accordion is
+unchanged and remains documented in all three.
+
+⚠️ **A structural change invalidates PROSE, not just counts.** When §33 split the page I updated the four
+authoritative documents and the plan, and verified the tests — but the *guides* describe the same workflow
+and were never on my checklist. **Grep the doc set for the removed UI, not only for the changed numbers.**
+
+---
+
+## 34. PROJECT NARRATIVES — SEARCH, FILTERS, PAGINATION, AND SIX AI-SURFACE DEFECTS (2026-10-07)
+
+`/program-narratives` was **a reading surface pretending to be an index**. Its own heading promised
+"status at a glance" while offering no search, no filter and no pagination, and rendering every
+project's full body — so scanning five projects was already a long scroll. It worked only because the
+live set is five projects. It is now the sibling of the AI-analysis **queue** (§33).
+
+### 34.1 The mechanism is the QUEUE's, the SHAPE is not
+
+Reused from `AiAnalysis` verbatim, so the two AI surfaces cannot drift: `use WithPagination`;
+`#[Url(as: 'q', except: '')] $search`; `#[Url(as: 'state', except: '')] $state` + `stateFilters()` +
+`mount()` validation + `filterBy()`→`resetPage()`; `updatedSearch()`→`resetPage()`; `clearSearch()`;
+counts via `countBy('state')` taken **after the search, before the state filter**; the shared pager
+(`livewire.partials.pagination`); and the two distinct empties.
+
+⚠️ **`GROUPS_PER_PAGE` was NOT copied, and must not be.** The queue groups by community, so it
+paginates *groups* to stop a lineage straddling a page break. Here the unit **is** the project — one row
+per project — so plain pagination over projects is correct and group-slicing would be a cargo cult.
+
+The card shape is also deliberately different: the queue is a **triage** surface (compact rows), this is
+the **reading** surface, so the card keeps its summary / risks / next-actions body. What changed is that
+the body now **collapses** (Alpine, keyed by `wire:key` so Livewire's morphing keeps the open state),
+while the header and a new **metric strip** (trainors · trainees · hours vs target · activities) always
+show. Only the **title area** toggles, so the Generate button beside it cannot double as a collapse
+control.
+
+**"Not generated" and "Failed" do NOT collapse.** There is nothing to read, and the failure reason is
+the one thing that must be visible without a click.
+
+### 34.1a `pending` gets a chip, because the real data says so
+
+The queue **omits** `pending` from its chips, reasoning that generation is synchronous (v4.4) so a
+pending row resolves inside the request that created it. The page was built to match — and then
+**querying the dev database disproved the premise**: project 9 carried **two `pending` rows with
+`generated_at = NULL`**, left by the 2026-10-06 quota failures.
+
+The reasoning holds only while the request **completes**. If the PHP process dies mid-generation — a
+timeout against `GeminiClient`'s 120s wall-clock budget, a fatal, an aborted Livewire request — the row
+is left `pending` and **nothing will ever move it**.
+
+⚠️ **Whether such a row is the project's LATEST narrative is chance, and in the dev data it was not.**
+Both interrupted rows sat *behind* a later `failed` attempt, so project 9 read as **failed** and the two
+rows appeared in its **version history** — not as cards. Had either been latest, the old page and the
+first cut of this one would have rendered it as a skeleton reading *"Generating…"* forever, with no chip
+to find it and no action to escape it: **the exact silent error the first-class failure state exists to
+prevent.** The chip is justified by the mechanism being reachable, not by which row happened to be newest
+on the day it was measured.
+
+So this page now has **seven** chips (`All · Not generated · Generating · Failed · Needs attention ·
+At risk · On track`) and the pending card carries **Start a new generation**. The general rule it
+establishes: ⚠️ **a state the page RENDERS but no chip can REACH is a filter that lies by omission.**
+Adding a render branch means checking the chip list.
+
+⚠️ **The AI-analysis queue had the same latent gap, and it is fixed in this same pass.** `queueState()`
+maps any non-completed, non-failed status to `pending`, so an interrupted analysis generation lands in
+exactly the same dead end — and there it was **worse**: the queue had no `pending` chip, the row carried
+no link in, and `retry()` refuses anything but `failed` (**422**, *"Only a failed generation can be
+retried"*). The queue now has the chip and the pending row offers **Start a new generation**, which
+leaves the stuck attempt as history rather than mutating it — the retry guard is deliberately **not**
+relaxed, because re-running a row in place would erase the record of the attempt that hung.
+`AiAnalysisQueueTest::test_a_stuck_pending_row_is_findable_and_recoverable` pins it.
+
+### 34.2 The structural win: paginate BEFORE enriching
+
+`TrainingHoursService::forProject()` runs ~4 queries per project (activities + `withCount`, the distinct
+`activity_faculty` join, `traineesReached()`, budget), and the old `render()` called it for **every**
+project inside `->map()`. The page was an **N+1 by design**.
+
+The pipeline is now `search → count → filter → sort → PAGINATE → enrich only the visible page`, so the
+rollup cost is bounded by the page instead of the set. Measured: a page of 8 projects fires **38
+queries**, ~32 of them the rollup.
+
+⚠️ **The corollary is a constraint, not a preference:** filter and sort may read only CHEAP fields (the
+narrative state, the title). Sorting on hours attainment would force a rollup for every project and undo
+the win. The default sort is **attention-first** — the same order the chips read in — so the list and the
+controls tell one story.
+
+### 34.3 Defect A — the success toast lied (both entry points)
+
+`ProgramNarratives::generate()` and `Programs\Hub::generateNarrative()` both dispatched
+`sc-toast … type: 'success'` **unconditionally**. `ProgramNarrativeService::generateFor()` catches its own
+`Throwable` and persists the first-class `failed` state, so it **never throws** — the Director got a green
+"Narrative generated" toast above a red "Narrative unavailable" card. The row was honest; the toast was not.
+
+Both now read the returned narrative's status and toast `type: 'error'` with `error_message` otherwise —
+the same rule `AiAnalysis::generate()` already followed. ⚠️ **A newer sibling surface had this right and
+the older one did not**; nothing failed, because **no test asserted the narrative toast type** (the only
+`sc-toast` assertions in the suite are on project archive/restore).
+
+### 34.4 Defect B — the API key would have vanished in production
+
+`GeminiClient` read `config('smartcemes.ai.key') ?: env('GEMINI_API_KEY')`, but **`config/smartcemes.php`
+defined no `key` entry** — so the `config()` half was always null and the real read was a **runtime
+`env()` call**. That works in development and breaks on the deployed server: `php artisan config:cache`
+(§15.4 item 10, which the deploy checklist *mandates*) stops Laravel loading `.env`, so `env()` returns
+null at request time and **every AI surface** falls into its "unavailable" state with *"No API key
+configured"* — while `GEMINI_MODEL` and `GEMINI_ENDPOINT`, which ARE read through config, keep working.
+
+The fix is two lines: `'key' => env('GEMINI_API_KEY')` in the `ai` block, and the client now reads
+**config only** — the `env()` fallback is gone, because it is what made the failure invisible locally.
+
+⚠️ **Two things hid it.** `bootstrap/cache/config.php` does not exist in development, so `env()` still
+resolved and the 2026-10-07 smoke test passed. And the suite masked it: `Phase5AiTest` and
+`GeminiRetryTest` both set `config(['smartcemes.ai.key' => 'test-key'])` by hand, so the real resolution
+path was never exercised. Pinned now by
+`GeminiRetryTest::test_the_api_key_is_read_from_config_not_from_a_runtime_env_call`, which puts a key in
+the **environment** and none in config — the shape of a cached production config — and asserts the client
+refuses to start rather than silently using it.
+
+### 34.5 Also in this pass
+
+- **`$detailId` / `toggleDetail()` deleted** from the component: dead code, never referenced by the view
+  (the version-history accordion is a native `<details class="sc-acc">`).
+- **Vocabulary:** the hero read "Executive **Program** Narratives" / "Program Status" while the sidebar
+  and the prototype hero both say "**Project** Narratives" — and "program" means the BROAD level
+  everywhere else (§28 swept exactly this). The user-visible strings now say *project*. The route name,
+  the component class and the `ProgramNarrative` model keep their legacy names, consistent with the
+  `reports.results-framework` precedent.
+- **The hero counts are labelled PORTFOLIO** and each badge is a shortcut to its own chip. The hero is
+  unfiltered (the whole set); the chips are view-scoped. ⚠️ One screen must never show two numbers that
+  look like the same number — so the label is part of the design, not decoration.
+- The `⟳` glyph was **not** changed: `ai-analysis.blade.php:150` uses `⟳ Retry` too. It is a house-wide
+  inconsistency across both AI surfaces, not a narratives defect — fixing one page would have made it
+  worse. (This corrects an over-claim in the audit that prompted this pass.)
+
+### 34.5a A third defect, found by writing the test for §34.1: every AI surface read "prompt vv2"
+
+`config('smartcemes.ai.prompt_version')` is **`'v2'`** — the canonical label *including* its `v`, pinned by
+`R6GuardrailTest::test_prompt_version_is_tagged_v2`. **Five render sites prepended another `v`**, so the
+Director has been reading **"prompt vv2"** (and `vv2` on the review's Prompt tile) since R6:
+
+| Site | Was | Now |
+|---|---|---|
+| `program-narratives.blade.php` (pending state) | `prompt v{{ … }}` | `prompt {{ … }}` |
+| `program-narratives.blade.php` (provenance footer) | `prompt v{{ … }}` | `prompt {{ … }}` |
+| `programs/partials/hub-modals.blade.php` | `prompt v{{ … }}` | `prompt {{ … }}` |
+| `programs/partials/hub-overview.blade.php` | `prompt v{{ … }}` | `prompt {{ … }}` |
+| `ai-analysis-review.blade.php` (Prompt tile) | `v{{ … }}` | `{{ … }}` |
+
+⚠️ **It was found only because a new test asserted the rendered string.** The stored value was asserted
+(R6), the *rendered* value never was — so a doubled prefix in a template could not fail anything. **A
+provenance label is part of the audit surface; assert what the page prints, not only what the row holds.**
+`ProgramNarrativesTest::test_a_completed_narrative_renders_its_body_and_provenance` now pins `prompt v2`
+and asserts `vv2` is absent.
+
+### 34.5b A version that never finished was labelled a narrative
+
+The version-history timeline branched on **`failed` alone**:
+
+```php
+@php($failed = $v->status === 'failed')
+@if ($failed) Generation attempt — failed
+@else Narrative v{{ … }} · {{ $v->health_label }} …
+```
+
+A **`pending`** version is neither failed nor completed, so it fell through to the completed branch and the
+Director read **"Narrative vN · Generated \<date\> · \<model\>"** — a narrative that was never produced. This
+is the same defect class as §34.1a, one level down: a state the page RENDERS as something it is not.
+
+⚠️ **It was live in the data.** Project KULTURA's two interrupted `pending` versions (§34.1a) were being
+presented as narratives, with the completed sibling sitting beside them.
+
+Now three states, with distinct labels and tones: **completed** (`Narrative vN` + health label, blue dot) ·
+**failed** (`Generation attempt — failed` + the reason, red) · **never completed** (`Generation attempt —
+never completed` + *"Started \<date\> · interrupted before it finished"*, gold). Pinned by
+`ProgramNarrativesTest::test_a_version_that_never_completed_is_not_shown_as_a_narrative`.
+
+⚠️ **Note the shape of the miss.** The timeline was written for two states and the model has three. When a
+status column gains a value, every `if/else` that reads it becomes a silent default — the *else* branch is
+where the lie lives.
+
+### 34.5c The project hub's D3 audit view read a payload shape that no longer exists
+
+The full-narrative modal on the project hub (`hub-modals.blade.php`) carries a **"Data the AI reviewed"**
+accordion — the D3 evidence surface where the Director sees the aggregate snapshot sent to the model. It was
+reading keys **`ProgramAggregates` stopped emitting in R5**:
+
+| Read | Reality | Symptom |
+|---|---|---|
+| `$raw['program']['period']` | the key is **`project`** | the **Period tile always showed "—"** |
+| `count($raw['objectives']['list'] ?? [])` | no `objectives` key at all | the header **always read "0 objectives"** — naming a concept **D-R7 retired** |
+| the whole `@if (! empty($raw['objectives']['list']))` block | never non-empty | **dead markup**, carrying retired 8.6 status badges |
+
+Confirmed against the live database: real snapshots carry exactly `project, training, budget, activities`.
+So the one screen built for cross-checking the narrative was permanently printing a retired metric and a blank
+period — and **omitting the `training` block**, which is the dictionary the narrative is actually built from
+and the figure guide B3 tells the Director to verify.
+
+Fixed: `project.period`, the objectives block replaced by a **Training reviewed** block (trainors · trainees ·
+training hours · training days, the formula, attainment against the annual hours target, and the
+`trainee_sources` note the prompt itself uses to caveat a manual count), and the modal's four live tiles
+labelled **"Current figures"** — they read `$performance` (live) while the narrative and the accordion are the
+frozen `raw_extracted_data`, which on an audit surface must not be silently mixed.
+
+⚠️ **THE TEST WAS ENFORCING THE BUG.** `RedesignUiTest::completedNarrative()` fabricated the **pre-R5** shape
+(`'program' => […]`, `'objectives' => ['list' => [['objective' => 'Reach 30 pupils' …]]]`, `'kpis' => […]`) and
+the modal test asserted `Reach 30 pupils` rendered. The fixture **supplied** the dead keys, so the suite was
+green and **would have failed if the view were corrected** to match reality. The fixture now mirrors
+`ProgramAggregates::build()` exactly, and the test asserts the real content
+(`50% of the 60-hr annual target`, the trainee-source line, the period) while asserting `Objectives reviewed`
+and `0 objectives` are **absent**.
+
+⚠️ **The general rule: a fixture that hand-builds a payload is a contract with the PAST.** It pins the shape
+the producer used to emit, so it cannot notice the producer moving on — and it silently converts "this view is
+broken" into "this view is required to stay broken". Derive fixtures from the producer (or assert against a
+real payload), the same lesson as the Gemini config key in §34.4.
+
+### 34.6 The prototype is NOT mirrored (accepted divergence)
+
+`docs/prototype/pages/program-narratives.html` still renders the pre-§34 shape — no search, no chips, no
+pager, always-expanded cards. Accepted by the owner, following the §33 / §23.6 / §31.3 / §32.3 precedent
+for Laravel-only divergences.
+
+### 34.7 Test coverage, and one test deliberately NOT written
+
+New `tests/Feature/ProgramNarrativesTest.php` (the page had no dedicated test file): search across all
+four axes (title, code, lead, community), case-insensitive partial matching, chips-and-counts,
+attention-first ordering, the unknown-`?state=` fallback, pagination bounds, `resetPage` on both search
+and filter, the three empty states, and the failure/success toast on both entry points.
+
+⚠️ **An absolute query bound was written, measured, and then DELETED.** "8 projects must cost fewer than N
+queries" cannot do the job it appears to do: a NEW per-row query hits the visible page in **both**
+requests equally, so no set-scaling comparison can see it — and a bound loose enough to survive framework
+drift (measured 38 → ~56) would still miss the +8 one per-row query adds. A brittle guard that cannot
+catch its own target is worse than an honest relative one. The surviving test compares **page 1 vs page
+2** on a 12-project set, which pins the property that actually regressed (the rollup following the set
+rather than the page).
+
+⚠️ **Livewire 3 keeps the page in `paginators.page`, not a `$page` property** — `set('page', 2)` throws
+`PublicPropertyNotFoundException`. Use `call('setPage', 2)` / `assertSet('paginators.page', 1)`.
+`Paginator::resolveCurrentPage('page')` is wired to that state by `SupportPagination`, which is why the
+house manual-paginator pattern works.
+
+### 34.8 Files touched
+
+| File | Change |
+|---|---|
+| `app/Livewire/ProgramNarratives.php` | search / chips / sort / pagination; paginate-before-enrich; status-checked toast; dead code removed |
+| `resources/views/livewire/program-narratives.blade.php` | control bar, collapsible cards, metric strip, pager, three empties, Project vocabulary, `prompt vv2` fix, version-history three states (§34.5b) |
+| `resources/views/livewire/programs/partials/hub-overview.blade.php` | `prompt vv2` fix |
+| `resources/views/livewire/programs/partials/hub-modals.blade.php` | `prompt vv2` fix; the D3 audit view's dead payload keys → `project.period` + a **Training reviewed** block, and the live tiles labelled (§34.5c) |
+| `resources/views/livewire/ai-analysis-review.blade.php` | `vv2` fix on the Prompt tile |
+| `resources/views/livewire/partials/program-narrative-heading.blade.php` | **new** — the shared identity block (phrasing content only, because one branch renders it inside a `<button>`) |
+| `app/Livewire/Programs/Hub.php` | status-checked toast in `generateNarrative()` |
+| `app/Livewire/AiAnalysis.php` | `pending` chip (§34.1a) |
+| `resources/views/livewire/ai-analysis.blade.php` | pending row's **Start a new generation** action |
+| `docs/guides/10-ai-analysis-narratives.md` | Part B rewritten (stale budget-target wording, the archived `LITRAWIYA` reference, and the new controls); Part A's chip list gains *Generating* |
+| `config/smartcemes.php` | `ai.key` — the `config:cache` blocker |
+| `app/Services/Ai/GeminiClient.php` | config-only key resolution; `env()` fallback removed |
+| `tests/Feature/ProgramNarrativesTest.php` | **new** |
+| `tests/Feature/GeminiRetryTest.php` | the config-not-env regression test |
+| `tests/Feature/RedesignUiTest.php` | the narrative fixture now mirrors `ProgramAggregates::build()` exactly, and the D3 assertions follow it (§34.5c) |
+
+**Verified:** **592 tests / 3402 assertions, 0 failures** (was 572 / 3318 — **+20 tests, +84 assertions**:
+18 new tests in `ProgramNarrativesTest`, one in `GeminiRetryTest`, one in `AiAnalysisQueueTest` for the queue's
+`pending` chip, and one re-pointed in `ObjectiveStatusTest`). `npm run build` re-run and the new classes
+verified present in the built CSS — `group-hover/t:` needed it, exactly the §33.7 lesson.
+
+---
+
+## 35. VOCABULARY: "PROGRAM" → "PROJECT" ON THE NARROW ENTITY, AND "EXECUTIVE" DROPPED (2026-10-07)
+
+The hierarchy is `College → **Program** → **Project** → Activity`, where **Program** is one of the six broad
+CESO thrusts and **Project** is the narrow entity that carries the activities, the budget and the targets.
+The app nonetheless called the narrow entity a **"program"** on most of its project surfaces — so the same
+word meant two different levels depending on which page you were on. That is the exact confusion §2.1/D14
+name as *"the single most common mistake a new session makes"*, except here it was user-facing, on the page
+the Director opens from **"Manage Extension Programs"**.
+
+**This is a TEXT-ONLY change.** No migration, no route or class rename, no behaviour change.
+
+### 35.1 The classification rule (the part worth keeping)
+
+"Program" appears ~200 times in the codebase and **most of those are correct**. The rule that separates them:
+
+| Means | Where | Action |
+|---|---|---|
+| the **BROAD** thrust (correct) | `colleges/index.blade.php` (the whole hub — `Program` is literally the level it browses), `programs/broad.blade.php`, "Broad programs carry **no** target", "no per-**program** target exists" (admin dashboard, targets page), the CESO-thrust badge on the AI review (`$r['ceso_program']`), the Program CRUD (`programForm`) | **leave** |
+| the **NARROW** entity (wrong) | project hub + its tabs, `/projects`, `/my-projects`, proposals, the communities page's linked-rows column, the faculty dashboard, the print reports, the import errors, the generated XLSX headers | **sweep** |
+| **unrelated** to the hierarchy | the assessment instrument's `has_barangay_health_programs` / `programs_benefited_from`, the AI prompt's "school feeding programmes" | **leave** |
+| **invisible** | `$program`, `ProgramPolicy`, `program_lead_id`, `config('smartcemes.statuses.program')`, the `program-narratives` route, the `ProgramNarrative` model, `Community::extensionPrograms()`, `violatesProgramRange()` | **leave** — house precedent: the report route is still `reports.results-framework` |
+
+⚠️ **Two relations carry the legacy name and point at the PROJECT**: `Community::extensionPrograms()` is
+`belongsToMany(ExtensionProject::class, 'community_extension_project')`, and `Activity`'s lead relation is
+`program`. So the *labels* on those screens were wrong even though the code was right — verify the relation's
+target before deciding, never the label alone.
+
+### 35.2 What changed
+
+| Layer | Examples |
+|---|---|
+| Project hub + its four tabs | "**Program Goal**" → "**Project Goal**"; "Generate **program** narrative" → "**Generate narrative**"; "**Program** is locked to this hub… the **program** range" → project; "Edit **program** details"; "Unenroll this beneficiary from the **program**?"; "Charged against this **program**"; "**Program-level** (no specific activity)" |
+| `/projects` and `/my-projects` | "Search **programs** by title or code…", "No **programs** match your filters", "**Programs** you lead" |
+| Proposals | "Target **program** \*", "Outside **program** range — approval blocked", the "**Program** · Community" column, "the **program** hub" |
+| Communities | the linked-rows column "**Programs**", "No linked **programs** yet" |
+| Faculty dashboard | the "**Programs** … led" tile, the "**Program**" column |
+| Print reports | "I · **Program** Portfolio", "IV · Faculty Participation by **Program**", "**Programs** Led" |
+| **Import error messages** | "…is not enrolled in this **program**", "No beneficiaries are enrolled in this **program** yet" |
+| **Generated XLSX headers** | `Program: %s (%s) · Activity: …` → `Project: …`, "This is the **program's** enrolled list" |
+| Prototype | `program-detail.html`, `program-narratives.html`, `reports.html` |
+
+**"Executive" is dropped from the feature's name** (owner request, same pass): the modal chip, the hub card
+heading and the narratives-page hero chip now read **"Project Narrative"** / **"Project Narratives"** — not
+"Executive Program Narrative". The report section "Program Executive Narratives" → "Project Narratives".
+
+**"Executive Summary" → "Summary"** — the block label *inside* a narrative (the card, the modal, and the
+prototype), plus the guide's wording. So **"Executive" no longer appears anywhere user-visible.**
+
+⚠️ **I first left this one, and that was under-delivering.** My reasoning was that "executive summary" is a
+genre term rather than a scope claim, so I flagged it instead of changing it. But the instruction was
+*"remove the 'Executive' part"* — unqualified — and flagging is not the same as doing. **When an instruction
+is broad enough to cover a case you are unsure about, do the case and say you did, rather than deferring the
+whole thing.**
+
+### 35.3 ⚠️ The inventory must cover EVERY layer — my first pass did not
+
+My first inventory grepped **only `resources/views/livewire/programs/`** and produced a 12-file, ~35-string
+plan. The real scope was **29 files** — the reports, the communities page, the faculty dashboard and the
+proposals had all been missed, and the reports are *printed documents*. The
+`user-facing-vocabulary-rename` skill's Step 1 says to grep the term across every layer and **report the
+inventory as a table before editing**; I skipped the reporting step and under-scoped as a result.
+
+⚠️ **An under-scoped sweep is worse than no sweep**: it leaves the layers actively disagreeing — a page
+saying "Project" beside a sheet headed "Program:" — which is the drift this project repeatedly warns about.
+Grep `resources/views/` **entirely** (not one subdirectory), plus `resources/js/`, `app/`, `docs/prototype/`,
+and the tests.
+
+### 35.4 Tests
+
+Three pinned assertions followed the text: `RedesignUiTest` (`Generate narrative`),
+`ActivityAttendanceImportTest` and `ActivityEvaluationTest` (the import error). No prototype harness asserted
+any of the changed strings.
+
+**Verified:** **592 tests / 3402 assertions, 0 failures** — **unchanged** from §34, and that is the
+expected result for a text-only change: three pinned assertions were swapped one-for-one, so neither the
+test count nor the assertion count moves (the `user-facing-vocabulary-rename` skill calls this out
+explicitly — confirm by the pass count, not by a delta).
+
+**Left alone on purpose:** `layouts/guest.blade.php`'s login tagline "…for community extension programs" —
+generic institutional phrasing, not a reference to a specific entity.
 
 ---
 
