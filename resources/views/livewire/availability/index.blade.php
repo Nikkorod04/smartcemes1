@@ -1,10 +1,10 @@
-<div>
+<div class="faculty-availability-page">
 @php($totalRequests = $isAdmin ? $awaiting->total() + $responded->total() : $myRequests->total())
 <section class="pt-6">
     <div class="sc-card rh-filter-panel p-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <p class="rh-filter-label">Request status</p>
+                <p class="availability-filter-label">Request status</p>
                 <div class="chip-group mt-2">
                     @foreach ([
                         'all' => 'All requests',
@@ -21,7 +21,7 @@
             </div>
             <div class="flex flex-wrap items-end gap-2 min-w-[min(100%,420px)] justify-end">
                 <div class="relative flex-1 min-w-[240px]">
-                    <span class="rh-filter-label block mb-2">Search requests</span>
+                    <span class="availability-filter-label block mb-2">Search requests</span>
                     <div class="sc-search">
                         <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
                         <input wire:model.live.debounce.300ms="search" aria-label="Search availability requests" class="input !w-full !min-w-0" placeholder="Activity, faculty, project, or note…">
@@ -36,8 +36,8 @@
             </div>
         </div>
         <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
-            <p class="text-[11.5px] text-gray-400 font-medium"><span wire:loading wire:target="search,status,sortBy" class="rh-spinner mr-1.5"></span>{{ $totalRequests }} matching request{{ $totalRequests === 1 ? '' : 's' }} · page {{ $isAdmin ? ($awaiting->currentPage() > 1 ? $awaiting->currentPage() : $responded->currentPage()) : $myRequests->currentPage() }}</p>
-            <p class="text-[11px] text-gray-400">Click a column heading to sort the queue.</p>
+            <p class="availability-result-summary"><span wire:loading wire:target="search,status,sortBy" class="rh-spinner mr-1.5"></span>{{ $totalRequests }} matching request{{ $totalRequests === 1 ? '' : 's' }} · page {{ $isAdmin ? ($awaiting->currentPage() > 1 ? $awaiting->currentPage() : $responded->currentPage()) : $myRequests->currentPage() }}</p>
+            <p class="availability-sort-hint">Click a column heading to sort the queue.</p>
         </div>
     </div>
 </section>
@@ -48,8 +48,8 @@
             <div class="sc-card p-0 overflow-hidden">
                 <div class="rh-queue-head px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
                     <div>
-                        <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2"><x-sc.icon name="clock" class="w-[18px] h-[18px] text-gold-600" /> Awaiting response</h3>
-                        <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Requests waiting for a faculty response</p>
+                        <h3 class="availability-section-title flex items-center gap-2"><x-sc.icon name="clock" class="w-[18px] h-[18px] text-gold-600" /> Awaiting response</h3>
+                        <p class="availability-section-meta">Requests waiting for a faculty response</p>
                     </div>
                     <span class="badge badge-yellow">{{ $awaiting->total() }} pending</span>
                 </div>
@@ -59,8 +59,8 @@
                         <tbody>
                             @forelse ($awaiting as $r)
                                 <tr wire:key="av-{{ $r->id }}" class="rh-row rh-row--pending">
-                                    <td><p class="font-semibold text-charcoal">{{ $r->activity?->title }}</p><p class="text-[11px] text-gray-400">{{ $r->activity?->program?->code ?? 'Unassigned project' }}</p></td>
-                                    <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="font-semibold text-charcoal">{{ $r->faculty?->user?->name ?? '—' }}</span></div></td>
+                                    <td><p class="availability-row-title">{{ $r->activity?->title }}</p><p class="availability-row-subtext">{{ $r->activity?->program?->code ?? 'Unassigned project' }}</p></td>
+                                    <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="availability-row-person">{{ $r->faculty?->user?->name ?? '—' }}</span></div></td>
                                     <td class="whitespace-nowrap"><span class="inline-flex items-center gap-1.5 text-gray-600"><x-sc.icon name="calendar" class="w-3.5 h-3.5 text-gray-400" />{{ $r->date->format('M j, Y') }}</span><p class="text-[11px] text-gray-400 mt-1">{{ \Carbon\Carbon::parse($r->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($r->end_time)->format('g:i A') }}</p></td>
                                     <td><span class="badge badge-yellow"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>Pending</span></td>
                                     <td class="text-gray-500 max-w-[260px] truncate" title="{{ $r->remarks ?? '' }}">{{ $r->remarks ?? '—' }}</td>
@@ -83,8 +83,8 @@
             <div class="sc-card p-0 overflow-hidden">
                 <div class="rh-queue-head px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
                     <div>
-                        <h3 class="font-extrabold text-[15px] tracking-tight">Response history</h3>
-                        <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Accepted and declined availability requests</p>
+                        <h3 class="availability-section-title">Response history</h3>
+                        <p class="availability-section-meta">Accepted and declined availability requests</p>
                     </div>
                     <span class="badge badge-blue">{{ $responded->total() }} responded</span>
                 </div>
@@ -94,8 +94,8 @@
                         <tbody>
                             @forelse ($responded as $r)
                                 <tr wire:key="avr-{{ $r->id }}" class="rh-row rh-row--{{ $r->status === 'accepted' ? 'approved' : 'rejected' }}">
-                                    <td><p class="font-semibold text-charcoal">{{ $r->activity?->title }}</p><p class="text-[11px] text-gray-400">{{ $r->activity?->program?->code ?? 'Unassigned project' }}</p></td>
-                                    <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="font-semibold text-charcoal">{{ $r->faculty?->user?->name ?? '—' }}</span></div></td>
+                                    <td><p class="availability-row-title">{{ $r->activity?->title }}</p><p class="availability-row-subtext">{{ $r->activity?->program?->code ?? 'Unassigned project' }}</p></td>
+                                    <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="availability-row-person">{{ $r->faculty?->user?->name ?? '—' }}</span></div></td>
                                     <td class="whitespace-nowrap"><span class="inline-flex items-center gap-1.5 text-gray-600"><x-sc.icon name="calendar" class="w-3.5 h-3.5 text-gray-400" />{{ $r->date->format('M j, Y') }}</span><p class="text-[11px] text-gray-400 mt-1">{{ \Carbon\Carbon::parse($r->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($r->end_time)->format('g:i A') }}</p></td>
                                     <td><span class="badge {{ $r->status === 'accepted' ? 'badge-green' : 'badge-red' }}"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ ucfirst($r->status) }}</span></td>
                                     <td class="text-gray-500 max-w-[260px] truncate" title="{{ $r->status === 'declined' ? ($r->decline_reason ?? '') : ($r->remarks ?? '') }}">{{ $r->status === 'declined' ? ($r->decline_reason ?? '—') : ($r->remarks ?? '—') }}</td>
@@ -117,8 +117,8 @@
         <div class="sc-card p-0 overflow-hidden">
             <div class="rh-queue-head px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
                 <div>
-                    <h3 class="font-extrabold text-[15px] tracking-tight">Requests for you</h3>
-                    <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Availability requests addressed to you</p>
+                    <h3 class="availability-section-title">Requests for you</h3>
+                    <p class="availability-section-meta">Availability requests addressed to you</p>
                 </div>
                 <span class="badge badge-{{ $status === 'pending' ? 'yellow' : 'blue' }}">{{ $status === 'all' ? 'All requests' : ucfirst($status) }}</span>
             </div>
@@ -128,7 +128,7 @@
                     <tbody>
                         @forelse ($myRequests as $r)
                             <tr wire:key="myav-{{ $r->id }}" class="rh-row rh-row--{{ $r->status === 'accepted' ? 'approved' : ($r->status === 'declined' ? 'rejected' : 'pending') }}">
-                                <td><p class="font-semibold text-charcoal">{{ $r->activity?->title }}</p><div class="flex flex-wrap items-center gap-1.5 mt-1"><span class="text-[11px] text-gray-400">{{ $r->activity?->program?->code ?? 'Unassigned project' }}</span><span class="text-[11px] text-gray-400">· requested by {{ $r->requester?->name ?? 'Director’s Office' }} {{ $r->requested_at?->diffForHumans() }}</span></div></td>
+                                <td><p class="availability-row-title">{{ $r->activity?->title }}</p><div class="flex flex-wrap items-center gap-1.5 mt-1"><span class="availability-row-subtext">{{ $r->activity?->program?->code ?? 'Unassigned project' }}</span><span class="availability-row-subtext">· requested by {{ $r->requester?->name ?? 'Director’s Office' }} {{ $r->requested_at?->diffForHumans() }}</span></div></td>
                                 <td class="whitespace-nowrap"><span class="inline-flex items-center gap-1.5 text-gray-600"><x-sc.icon name="calendar" class="w-3.5 h-3.5 text-gray-400" />{{ $r->date->format('M j, Y') }}</span><p class="text-[11px] text-gray-400 mt-1">{{ \Carbon\Carbon::parse($r->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($r->end_time)->format('g:i A') }}</p></td>
                                 <td><span class="badge badge-{{ config('smartcemes.status_colors')[$r->status === 'accepted' ? 'approved' : ($r->status === 'declined' ? 'rejected' : 'pending')] ?? 'gray' }}"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ ucfirst($r->status) }}</span></td>
                                 <td class="text-gray-500 max-w-[260px] truncate" title="{{ $r->status === 'declined' ? ($r->decline_reason ?? '') : ($r->remarks ?? '') }}">{{ $r->status === 'declined' ? 'Reason: '.($r->decline_reason ?? '—') : ($r->remarks ?? '—') }}</td>

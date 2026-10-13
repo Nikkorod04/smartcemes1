@@ -1,46 +1,46 @@
-<div>
+<div class="secretary-assessment-review-page">
 <section class="pt-6">
     <div class="flex items-end justify-between mb-3">
-        <p class="text-[13px] text-gray-400 font-medium">Needs-assessment validation queue · pending → validated | returned (with remarks)</p>
-        <p class="text-[12px] text-gray-400 font-medium">Validations stamp your name &amp; timestamp to the audit trail</p>
+        <p class="secretary-page-eyebrow">Needs-assessment validation queue · pending → validated | returned (with remarks)</p>
+        <p class="secretary-page-hint">Validations stamp your name &amp; timestamp to the audit trail</p>
     </div>
     <div class="reveal-item grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <div class="sc-card sc-card-hover p-5">
+        <x-sc.color-card tone="gold" class="secretary-review-kpi reveal-item flex h-full flex-col p-5">
             <div class="flex items-center justify-between">
-                <span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center"><x-sc.icon name="clipboard" /></span>
-                <span class="badge badge-yellow"><span class="w-1.5 h-1.5 rounded-full bg-gold-500 pulse-dot"></span>needs review</span>
+                <span class="secretary-review-kpi-icon"><x-sc.icon name="clipboard" /></span>
+                <span class="secretary-review-kpi-chip"><span class="w-1.5 h-1.5 rounded-full bg-white/80 pulse-dot"></span>needs review</span>
             </div>
-            <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-gold-700">{{ (int) $stats->pending }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Pending Review</p>
-        </div>
+            <p class="secretary-review-kpi-value mt-4">{{ (int) $stats->pending }}</p>
+            <p class="secretary-review-kpi-label">Pending Review</p>
+        </x-sc.color-card>
 
-        <div class="sc-card sc-card-hover p-5">
+        <x-sc.color-card tone="teal" class="secretary-review-kpi reveal-item flex h-full flex-col p-5">
             <div class="flex items-center justify-between">
-                <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><x-sc.icon name="check" /></span>
-                <span class="badge badge-green">cleared</span>
+                <span class="secretary-review-kpi-icon"><x-sc.icon name="check" /></span>
+                <span class="secretary-review-kpi-chip">cleared</span>
             </div>
-            <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none">{{ (int) $stats->validated }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Validated</p>
-        </div>
+            <p class="secretary-review-kpi-value mt-4">{{ (int) $stats->validated }}</p>
+            <p class="secretary-review-kpi-label">Validated</p>
+        </x-sc.color-card>
 
-        <div class="sc-card sc-card-hover p-5">
+        <x-sc.color-card tone="indigo" class="secretary-review-kpi reveal-item flex h-full flex-col p-5">
             <div class="flex items-center justify-between">
-                <span class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center"><x-sc.icon name="doc" /></span>
-                <span class="badge badge-red">re-encode</span>
+                <span class="secretary-review-kpi-icon"><x-sc.icon name="doc" /></span>
+                <span class="secretary-review-kpi-chip">re-encode</span>
             </div>
-            <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none">{{ (int) $stats->returned }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Returned</p>
-        </div>
+            <p class="secretary-review-kpi-value mt-4">{{ (int) $stats->returned }}</p>
+            <p class="secretary-review-kpi-label">Returned</p>
+        </x-sc.color-card>
 
-        <div class="sc-card sc-card-hover p-5">
+        <x-sc.color-card tone="blue" class="secretary-review-kpi reveal-item flex h-full flex-col p-5">
             <div class="flex items-center justify-between">
-                <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center"><x-sc.icon name="people" /></span>
-                <span class="badge badge-blue">all quarters</span>
+                <span class="secretary-review-kpi-icon"><x-sc.icon name="people" /></span>
+                <span class="secretary-review-kpi-chip">all quarters</span>
             </div>
-            <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-lnu-800">{{ (int) $stats->total }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Total Encoded</p>
-        </div>
+            <p class="secretary-review-kpi-value mt-4">{{ (int) $stats->total }}</p>
+            <p class="secretary-review-kpi-label">Total Encoded</p>
+        </x-sc.color-card>
     </div>
 </section>
 
@@ -168,7 +168,7 @@
                 <div class="mb-4 flex items-start justify-between gap-3"><div class="flex items-center gap-2.5"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="clipboard" class="h-4 w-4" /></span><p class="text-[10px] font-extrabold uppercase tracking-[.14em] text-white/70">Encoded response dossier</p></div><button wire:click="closeDrawer" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/70 hover:bg-white/12 hover:text-white transition" aria-label="Close assessment dossier"><x-sc.icon name="x" class="w-4 h-4" /></button></div>
                 <div class="flex items-start gap-3">
                 <div class="min-w-0 flex-1">
-                    <h2 id="assessment-dossier-title" class="text-[18px] font-extrabold tracking-tight truncate">{{ $selected->community->name }}</h2>
+                    <h2 id="assessment-dossier-title" class="secretary-drawer-title truncate">{{ $selected->community->name }}</h2>
                     <div class="mt-2 flex items-center gap-2 flex-wrap">
                         @if ($selected->review_status === 'pending')
                             <span class="badge badge-yellow"><span class="w-1.5 h-1.5 rounded-full bg-gold-500 pulse-dot"></span>Pending</span>

@@ -1,10 +1,10 @@
-<div>
+<div class="faculty-proposal-form-page">
 <section class="pt-6">
     <p class="text-[13px] text-gray-400 font-medium mb-3">Submit an activity proposal under an existing project · routed to the Director for approval</p>
 </section>
 
 <section class="mt-2 grid grid-cols-3 gap-4 reveal-item">
-    <form wire:submit="save" class="sc-card p-6 col-span-2">
+    <form wire:submit="save" class="faculty-form-card sc-card p-6 col-span-2">
         <div class="grid grid-cols-2 gap-3">
             <div class="col-span-2">
                 <label class="label">Proposal title *</label>

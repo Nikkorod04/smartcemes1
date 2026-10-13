@@ -1,28 +1,28 @@
-<div>
+<div class="secretary-beneficiaries-page">
 <section class="pt-6">
     <div class="flex items-end justify-between mb-3">
-        <p class="text-[13px] text-gray-400 font-medium">Pick a project to manage its beneficiaries and activity attendance (§5.4)</p>
-        <p class="text-[12px] text-gray-400 font-medium">Enrollment is project-scoped · duplicates are warned, never merged</p>
+        <p class="secretary-page-eyebrow">Pick a project to manage its beneficiaries and activity attendance (§5.4)</p>
+        <p class="secretary-page-hint">Enrollment is project-scoped · duplicates are warned, never merged</p>
     </div>
     <div class="reveal-item grid grid-cols-3 gap-4">
-        <div class="sc-card sc-card-hover p-5">
+        <x-sc.color-card tone="blue" class="secretary-beneficiary-kpi reveal-item flex h-full flex-col p-5">
             <div class="flex items-center justify-between">
-                <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center"><x-sc.icon name="folder" /></span>
-                <span class="badge badge-blue">all statuses</span>
+                <span class="secretary-beneficiary-kpi-icon"><x-sc.icon name="folder" /></span>
+                <span class="secretary-beneficiary-kpi-chip">all statuses</span>
             </div>
-            <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none text-lnu-800">{{ $programs->count() }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Projects</p>
-        </div>
-        <div class="sc-card sc-card-hover p-5">
+            <p class="secretary-beneficiary-kpi-value mt-4">{{ $programs->count() }}</p>
+            <p class="secretary-beneficiary-kpi-label">Projects</p>
+        </x-sc.color-card>
+        <x-sc.color-card tone="teal" class="secretary-beneficiary-kpi reveal-item flex h-full flex-col p-5">
             <div class="flex items-center justify-between">
-                <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><x-sc.icon name="people" /></span>
-                <span class="badge badge-green">enrolled</span>
+                <span class="secretary-beneficiary-kpi-icon"><x-sc.icon name="people" /></span>
+                <span class="secretary-beneficiary-kpi-chip">enrolled</span>
             </div>
-            <p class="mt-4 text-[28px] font-extrabold tracking-tight leading-none">{{ $totalEnrolled }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Beneficiary enrollments</p>
-        </div>
+            <p class="secretary-beneficiary-kpi-value mt-4">{{ $totalEnrolled }}</p>
+            <p class="secretary-beneficiary-kpi-label">Beneficiary enrollments</p>
+        </x-sc.color-card>
         <div class="sc-card p-5 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">What you can do</p>
+            <p class="secretary-section-kicker">What you can do</p>
             <p class="text-[12.5px] text-gray-600 mt-2 leading-relaxed">Enroll from the global registry, register new beneficiaries (dedup-checked), import from the official XLSX template, unenroll, and record per-activity attendance. Project structure, targets, and budget remain with the Director's office.</p>
         </div>
     </div>
@@ -46,8 +46,8 @@
                     @forelse ($programs as $p)
                         <tr wire:key="benprog-{{ $p->id }}">
                             <td>
-                                <p class="font-bold text-[13px] text-charcoal">{{ $p->title }}</p>
-                                <p class="text-[11px] text-gray-400 mt-0.5">{{ $p->code }} · {{ $p->programLead?->user?->name ?? 'No lead assigned' }}</p>
+                                <p class="secretary-table-title">{{ $p->title }}</p>
+                                <p class="secretary-table-meta">{{ $p->code }} · {{ $p->programLead?->user?->name ?? 'No lead assigned' }}</p>
                             </td>
                             <td><span class="badge badge-{{ config('smartcemes.status_colors')[$p->status] ?? 'gray' }}">{{ ucfirst($p->status) }}</span></td>
                             <td class="text-gray-500 max-w-[220px] truncate">{{ $p->communities->pluck('name')->implode(', ') ?: '—' }}</td>

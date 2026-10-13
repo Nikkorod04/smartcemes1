@@ -1,4 +1,4 @@
-<div>
+<div class="project-detail-page">
 <section class="pt-6">
     @php
         /* The admin's back-link used to point at the cross-college /projects
@@ -22,19 +22,19 @@
             default => $this->program->college?->code ?? 'All colleges',
         };
     @endphp
-    <a href="{{ $backUrl }}" class="text-[12px] font-bold text-gray-400 hover:text-lnu-700 transition">← {{ $backLabel }}</a>
+    <a href="{{ $backUrl }}" class="project-detail-back">← {{ $backLabel }}</a>
 </section>
 
 @if (! $canManage && ! $canManageBeneficiaries)
     <section class="mt-2">
-        <div class="sc-card p-3.5 !border-lnu-100 !bg-lnu-50/60 flex items-center gap-3">
+        <div class="project-detail-notice sc-card p-3.5 !border-lnu-100 !bg-lnu-50/60 flex items-center gap-3">
             <span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center shrink-0"><x-sc.icon name="shield" class="w-4 h-4" /></span>
             <p class="text-[12.5px] text-lnu-800 font-semibold">Read-only view — you can browse the project's overview, activities, beneficiaries, and budget. Editing is done by the Director's office.</p>
         </div>
     </section>
 @elseif (! $canManage)
     <section class="mt-2">
-        <div class="sc-card p-3.5 !border-gold-200 !bg-gold-50/60 flex items-center gap-3">
+        <div class="project-detail-notice sc-card p-3.5 !border-gold-200 !bg-gold-50/60 flex items-center gap-3">
             <span class="w-8 h-8 rounded-lg bg-gold-100 text-gold-700 flex items-center justify-center shrink-0"><x-sc.icon name="shield" class="w-4 h-4" /></span>
             <p class="text-[12.5px] text-gold-800 font-semibold">You can enroll, register, and unenroll beneficiaries, import them from XLSX, and record activity attendance. Project editing, activities, and budget remain with the Director's office.</p>
         </div>
@@ -56,7 +56,7 @@
                             <span class="badge badge-{{ config('smartcemes.status_colors')[$program->status] ?? 'gray' }}">{{ ucfirst($program->status) }}</span>
                             @if ($over)<span class="badge badge-red"><x-sc.icon name="alert" class="w-3 h-3" /> Budget over-allocated</span>@endif
                         </div>
-                        <h1 class="font-extrabold text-[19px] tracking-tight leading-tight">{{ $program->title }}</h1>
+                        <h1 class="project-detail-title">{{ $program->title }}</h1>
                     </div>
                 </div>
                 <div class="flex gap-2 pb-1">
@@ -66,7 +66,7 @@
                     @endif
                 </div>
             </div>
-            <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-x-7 gap-y-2.5 text-[12.5px] text-gray-600">
+            <div class="project-detail-hero-meta mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-x-7 gap-y-2.5">
                 <span class="flex items-center gap-2"><x-sc.icon name="people" class="w-4 h-4 text-lnu-600" /><span class="font-semibold">{{ $program->programLead?->user?->name ?? 'No lead assigned' }}</span><span class="text-gray-400">· Lead</span></span>
                 <span class="flex items-center gap-2"><x-sc.icon name="pin" class="w-4 h-4 text-red-400" />{{ $program->communities->pluck('name')->implode(', ') ?: 'No community linked' }}</span>
                 <span class="flex items-center gap-2"><x-sc.icon name="calendar" class="w-4 h-4 text-emerald-500" />{{ $program->planned_start_date->format('M j, Y') }} – {{ $program->planned_end_date->format('M j, Y') }}</span>
@@ -80,7 +80,7 @@
      Budget has no annual target (owner decision 2026-09-26). --}}
 @if ($over)
     <section class="mt-4 reveal-item">
-        <div class="sc-card p-4 !border-amber-200 !bg-amber-50/70 flex items-start gap-3">
+        <div class="project-detail-notice sc-card p-4 !border-amber-200 !bg-amber-50/70 flex items-start gap-3">
             <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><x-sc.icon name="wallet" class="w-4 h-4" /></span>
             <div><p class="text-[13px] font-bold text-amber-800">This project exceeded its ₱{{ number_format($budgetVsAllocation['allocated']) }} allocation by ₱{{ number_format($utilized - $budgetVsAllocation['allocated']) }} ({{ $budgetVsAllocation['pct'] === null ? '—' : $budgetVsAllocation['pct'].'%' }})</p>
                 <p class="text-[12px] text-amber-700 mt-0.5">Entries are still saved; a persistent warning badge shows on the project and overruns are written to the activity log (D7). Review is advisory, not blocking.</p></div>
@@ -95,38 +95,50 @@
 @endphp
 <section class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4 reveal-item">
     {{-- Trainors --}}
-    <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Trainors</p><span class="w-8 h-8 rounded-lg bg-lnu-50 text-lnu-700 flex items-center justify-center"><x-sc.icon name="users" class="w-4 h-4" /></span></div>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ $performance['trainors'] }}</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1">assigned faculty · lead + co-leads</p>
-    </div>
+    <x-sc.color-card tone="blue" class="project-detail-kpi flex h-full flex-col p-5">
+        <div class="flex items-center justify-between gap-3">
+            <p class="project-kpi-label">Trainors</p>
+            <span class="project-kpi-icon"><x-sc.icon name="users" class="w-4 h-4" /></span>
+        </div>
+        <p class="project-kpi-value mt-4">{{ $performance['trainors'] }}</p>
+        <p class="project-kpi-sub mt-2">assigned faculty · lead + co-leads</p>
+    </x-sc.color-card>
 
     {{-- Trainees --}}
-    <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Trainees</p><span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center"><x-sc.icon name="people" class="w-4 h-4" /></span></div>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ number_format($linked) }}</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-2.5">distinct trainees reached</p>
-        <div class="progress"><span style="width:{{ min((int) round($program->target_beneficiaries ? $linked / (int) $program->target_beneficiaries * 100 : 0), 100) }}%" class="bg-blue-500"></span></div>
-        <p class="text-[11px] text-gray-500 font-semibold mt-2">{{ $program->target_beneficiaries ? $linked.' of '.number_format((int) $program->target_beneficiaries).' target reached' : 'no beneficiary target set' }}</p>
-    </div>
+    <x-sc.color-card tone="teal" class="project-detail-kpi flex h-full flex-col p-5">
+        <div class="flex items-center justify-between gap-3">
+            <p class="project-kpi-label">Trainees</p>
+            <span class="project-kpi-icon"><x-sc.icon name="people" class="w-4 h-4" /></span>
+        </div>
+        <p class="project-kpi-value mt-4">{{ number_format($linked) }}</p>
+        <p class="project-kpi-sub mt-2 mb-3">distinct trainees reached</p>
+        <div class="project-kpi-progress progress"><span style="width:{{ min((int) round($program->target_beneficiaries ? $linked / (int) $program->target_beneficiaries * 100 : 0), 100) }}%" class="bg-emerald-200"></span></div>
+        <p class="project-kpi-note mt-2">{{ $program->target_beneficiaries ? $linked.' of '.number_format((int) $program->target_beneficiaries).' target reached' : 'no beneficiary target set' }}</p>
+    </x-sc.color-card>
 
     {{-- Training hours --}}
-    <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Training Hrs</p><span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><x-sc.icon name="clock" class="w-4 h-4" /></span></div>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ number_format($performance['actual_hours']) }}<span class="text-[14px] text-gray-400 font-bold"> / {{ $performance['target_hours'] === null ? '—' : number_format($performance['target_hours']) }}</span></p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-2.5">rendered of annual target</p>
-        <div class="progress"><span style="width:{{ min((int) round($performance['hours_pct'] ?? 0), 100) }}%" class="{{ $performance['hours_pct'] === null ? 'bg-gray-300' : ($performance['hours_pct'] >= 100 ? 'bg-emerald-500' : ($performance['hours_pct'] >= 60 ? 'bg-lnu-600' : 'bg-gold-500')) }}"></span></div>
-        <p class="text-[11px] text-gray-500 font-semibold mt-2">{{ $performance['hours_pct'] === null ? 'no annual hours target set' : $performance['hours_pct'].'% of annual target' }}</p>
-    </div>
+    <x-sc.color-card tone="gold" class="project-detail-kpi flex h-full flex-col p-5">
+        <div class="flex items-center justify-between gap-3">
+            <p class="project-kpi-label">Training Hrs</p>
+            <span class="project-kpi-icon"><x-sc.icon name="clock" class="w-4 h-4" /></span>
+        </div>
+        <p class="project-kpi-value mt-4">{{ number_format($performance['actual_hours']) }}<span class="project-kpi-secondary"> / {{ $performance['target_hours'] === null ? '—' : number_format($performance['target_hours']) }}</span></p>
+        <p class="project-kpi-sub mt-2 mb-3">rendered of annual target</p>
+        <div class="project-kpi-progress progress"><span style="width:{{ min((int) round($performance['hours_pct'] ?? 0), 100) }}%" class="{{ $performance['hours_pct'] === null ? 'bg-white/50' : ($performance['hours_pct'] >= 100 ? 'bg-emerald-200' : ($performance['hours_pct'] >= 60 ? 'bg-lnu-200' : 'bg-amber-100')) }}"></span></div>
+        <p class="project-kpi-note mt-2">{{ $performance['hours_pct'] === null ? 'no annual hours target set' : $performance['hours_pct'].'% of annual target' }}</p>
+    </x-sc.color-card>
 
     {{-- Activities --}}
-    <div class="sc-card sc-card-hover p-5">
-        <div class="flex items-center justify-between"><p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Activities</p><span class="w-8 h-8 rounded-lg bg-violet-50 text-violet-700 flex items-center justify-center"><x-sc.icon name="clipboard" class="w-4 h-4" /></span></div>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none flex items-center gap-2">{{ $performance['activity_count'] }}@php $upcomingCount = $activities->whereIn('status', ['draft', 'ongoing'])->count(); @endphp@if ($upcomingCount)<span class="badge badge-blue !text-[10px]">{{ $upcomingCount }} in flight</span>@endif</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1 mb-2.5">in this project</p>
-        <div class="progress"><span style="width:{{ $performance['activity_count'] ? round($completedCount / $performance['activity_count'] * 100) : 0 }}%" class="bg-gold-500"></span></div>
-        <p class="text-[11px] text-gray-500 font-semibold mt-2">{{ $completedCount }} completed · {{ $hoursDaysTotal = (new \App\Services\TrainingHoursService)->formatDays($performance['training_days']) }} training days</p>
-    </div>
+    <x-sc.color-card tone="indigo" class="project-detail-kpi flex h-full flex-col p-5">
+        <div class="flex items-center justify-between gap-3">
+            <p class="project-kpi-label">Activities</p>
+            <span class="project-kpi-icon"><x-sc.icon name="clipboard" class="w-4 h-4" /></span>
+        </div>
+        <p class="project-kpi-value mt-4 flex items-center gap-2">{{ $performance['activity_count'] }}@php $upcomingCount = $activities->whereIn('status', ['draft', 'ongoing'])->count(); @endphp@if ($upcomingCount)<span class="project-kpi-chip">{{ $upcomingCount }} in flight</span>@endif</p>
+        <p class="project-kpi-sub mt-2 mb-3">in this project</p>
+        <div class="project-kpi-progress progress"><span style="width:{{ $performance['activity_count'] ? round($completedCount / $performance['activity_count'] * 100) : 0 }}%" class="bg-violet-200"></span></div>
+        <p class="project-kpi-note mt-2">{{ $completedCount }} completed · {{ $hoursDaysTotal = (new \App\Services\TrainingHoursService)->formatDays($performance['training_days']) }} training days</p>
+    </x-sc.color-card>
 </section>
 
 {{-- TRAINING HOURS vs ANNUAL TARGET  +  BUDGET vs ALLOCATION (R4 / §2.2, D-R7) --}}
@@ -307,7 +319,7 @@
 
 {{-- TABS --}}
 <section class="reveal-item mt-5">
-    <div class="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
+    <div class="project-detail-tabs flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-max">
         @foreach (['overview' => 'Overview', 'activities' => 'Activities', 'beneficiaries' => 'Beneficiaries', 'budget' => 'Budget'] as $key => $label)
             <button wire:click="setTab('{{ $key }}')" @class(['tab', 'on' => $tab === $key])>{{ $label }}</button>
         @endforeach

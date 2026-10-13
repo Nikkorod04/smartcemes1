@@ -34,19 +34,19 @@
          Counts and derived roll-ups only — no per-program target exists. --}}
     <section class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
         @foreach ([
-            ['folder', 'bg-lnu-50 text-lnu-800', $totalPrograms, 'Extension Programs', 'Across the 3 CESO pillars'],
-            ['clipboard', 'bg-blue-50 text-blue-700', $totalProjects, 'Extension Projects', 'Nested under these programs'],
-            ['clock', 'bg-emerald-50 text-emerald-600', number_format($totalHours, 1), 'Training Hours Rendered', number_format($totalTrainees).' beneficiaries reached'],
-            ['wallet', 'bg-gold-50 text-gold-700', '₱'.number_format($totalUtilized), 'Budget Utilized', 'Rolled up from projects'],
-        ] as [$icon, $tone, $value, $label, $caption])
-            <div class="sc-card p-5 reveal-item">
-                <span class="w-10 h-10 rounded-xl {{ $tone }} flex items-center justify-center">
+            ['blue', 'folder', $totalPrograms, 'Extension Programs', 'Across the 3 CESO pillars'],
+            ['indigo', 'clipboard', $totalProjects, 'Extension Projects', 'Nested under these programs'],
+            ['teal', 'clock', number_format($totalHours, 1), 'Training Hours Rendered', number_format($totalTrainees).' beneficiaries reached'],
+            ['gold', 'wallet', '₱'.number_format($totalUtilized), 'Budget Utilized', 'Rolled up from projects'],
+        ] as [$cardTone, $icon, $value, $label, $caption])
+            <x-sc.color-card :tone="$cardTone" class="p-5 reveal-item flex h-full flex-col">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/14 text-white ring-1 ring-white/20">
                     <x-sc.icon :name="$icon" class="w-5 h-5" />
                 </span>
-                <p class="mt-4 text-[24px] font-extrabold tracking-tight leading-none">{{ $value }}</p>
-                <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">{{ $label }}</p>
-                <p class="text-[11px] text-gray-400 font-medium mt-2">{{ $caption }}</p>
-            </div>
+                <p class="mt-4 text-[25px] font-extrabold tracking-tight leading-none text-white">{{ $value }}</p>
+                <p class="mt-1.5 text-[12.5px] font-extrabold leading-snug text-white/90">{{ $label }}</p>
+                <p class="mt-2 text-[11px] font-medium leading-relaxed text-white/65">{{ $caption }}</p>
+            </x-sc.color-card>
         @endforeach
     </section>
 
@@ -136,17 +136,21 @@
                         'environmental' => '#15803d',
                         default => '#003599',
                     })
-                    <article class="sc-card sc-card-hover overflow-hidden flex flex-col" wire:key="program-{{ $row->id }}">
-                        <div class="h-1.5 shrink-0" style="background:{{ $accent }}"></div>
+                    <article class="program-grid-card sc-card sc-card-hover overflow-hidden flex flex-col" wire:key="program-{{ $row->id }}">
+                        <div class="relative h-14 shrink-0 overflow-hidden" style="background:linear-gradient(135deg, {{ $accent }} 0%, color-mix(in srgb, {{ $accent }} 72%, #172b6a) 100%)">
+                            <span class="absolute -right-5 -top-12 h-28 w-28 rounded-full bg-white/10"></span>
+                            <span class="absolute bottom-2 left-5 text-[10px] font-extrabold uppercase tracking-[0.15em] text-white/75">{{ ucfirst($row->pillar) }} pillar</span>
+                            <span class="absolute -bottom-4 right-3 select-none text-[50px] font-black leading-none text-white/10">{{ strtoupper(IlluminateSupportStr::substr($row->code, 0, 3)) }}</span>
+                        </div>
                         <div class="p-5 flex flex-col flex-1">
 
                             <div class="flex items-start justify-between gap-3">
-                                <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 tracking-wide font-mono">{{ $row->code }}</span>
+                                <span class="program-card-code">{{ $row->code }}</span>
                                 <x-sc.pillar-chip :pillar="$row->pillar" />
                             </div>
 
-                            <h3 class="mt-2.5 font-bold text-[14.5px] leading-snug">{{ $row->title }}</h3>
-                            <p class="mt-1.5 text-[11.5px] text-gray-500 leading-relaxed line-clamp-2 min-h-[34px]">
+                            <h3 class="program-card-title mt-2.5">{{ $row->title }}</h3>
+                            <p class="program-card-blurb mt-1.5 line-clamp-2 min-h-[34px]">
                                 {{ $row->blurb ?: '—' }}
                             </p>
 
@@ -156,26 +160,26 @@
                                 @empty
                                     <x-sc.college-pill />
                                 @endforelse
-                                <span class="text-[10.5px] text-gray-400 font-medium truncate">{{ $row->thrust }}</span>
+                                <span class="program-card-thrust truncate">{{ $row->thrust }}</span>
                             </div>
 
-                            <div class="mt-4 pt-3 border-t border-gray-50 mt-auto space-y-3">
+                            <div class="program-card-metrics mt-4 border-t border-gray-100 pt-4 mt-auto space-y-3">
                                 {{-- Derived roll-ups. No "of target" and no attainment bar: D-R5. --}}
                                 <div class="grid grid-cols-3 gap-2">
                                     <div>
-                                        <p class="text-[16px] font-extrabold tracking-tight leading-none">{{ number_format($row->training_hours, 1) }}</p>
-                                        <p class="text-[10px] text-gray-400 font-semibold mt-1">Training hrs</p>
-                                        <p class="text-[9.5px] text-gray-300 font-medium">rendered</p>
+                                        <p class="program-card-metric-value">{{ number_format($row->training_hours, 1) }}</p>
+                                        <p class="program-card-metric-label">Training hrs</p>
+                                        <p class="program-card-metric-note">rendered</p>
                                     </div>
                                     <div>
-                                        <p class="text-[16px] font-extrabold tracking-tight leading-none">{{ $row->project_count }}</p>
-                                        <p class="text-[10px] text-gray-400 font-semibold mt-1">{{ \Illuminate\Support\Str::plural('Project', $row->project_count) }}</p>
-                                        <p class="text-[9.5px] text-gray-300 font-medium">{{ number_format($row->trainees) }} reached</p>
+                                        <p class="program-card-metric-value">{{ $row->project_count }}</p>
+                                        <p class="program-card-metric-label">{{ \Illuminate\Support\Str::plural('Project', $row->project_count) }}</p>
+                                        <p class="program-card-metric-note">{{ number_format($row->trainees) }} reached</p>
                                     </div>
                                     <div>
-                                        <p class="text-[16px] font-extrabold tracking-tight leading-none">₱{{ number_format($row->utilized) }}</p>
-                                        <p class="text-[10px] text-gray-400 font-semibold mt-1">Budget</p>
-                                        <p class="text-[9.5px] text-gray-300 font-medium">utilized</p>
+                                        <p class="program-card-metric-value">₱{{ number_format($row->utilized) }}</p>
+                                        <p class="program-card-metric-label">Budget</p>
+                                        <p class="program-card-metric-note">utilized</p>
                                     </div>
                                 </div>
 

@@ -1,4 +1,4 @@
-<div>
+<div class="secretary-assessment-import-page">
 @php
     $communityOptions = $communities->mapWithKeys(fn ($c) => [$c->id => $c->name.' · '.$c->municipality])->all();
     $quarterOptions = [1 => 'Q1 · Jan–Mar', 2 => 'Q2 · Apr–Jun', 3 => 'Q3 · Jul–Sep', 4 => 'Q4 · Oct–Dec'];
@@ -13,8 +13,8 @@
             <a href="{{ route('assessments.create') }}" class="inline-flex items-center gap-1.5 text-[12px] font-bold text-lnu-700 hover:text-lnu-900 transition mb-2 -ml-1">
                 <x-sc.icon name="chevron" class="w-3.5 h-3.5 rotate-90" /> Back to encoding form
             </a>
-            <h1 class="text-[22px] font-extrabold tracking-tight">Import from Official Template</h1>
-            <p class="text-[13px] text-gray-400 font-medium mt-0.5">One file = one respondent · parsed values are previewed for confirmation before anything is saved</p>
+            <h1 class="secretary-form-title">Import from Official Template</h1>
+            <p class="secretary-form-subtitle">One file = one respondent · parsed values are previewed for confirmation before anything is saved</p>
         </div>
         <a href="{{ route('assessments.template') }}" class="btn btn-outline !py-2 !px-3 text-[12px] shrink-0"><x-sc.icon name="download" class="w-4 h-4" /> Download official template</a>
     </div>

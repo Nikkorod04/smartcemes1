@@ -12,14 +12,14 @@ $notifications = auth()->user()->notifications()->take(8)->get();
 $unreadCount = auth()->user()->unreadNotifications->count();
 @endphp
 
-<header class="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center pl-72 pr-6 gap-4 no-print">
+<header class="sc-topbar sticky top-0 z-30 h-16 flex items-center pl-72 pr-6 gap-4 no-print">
     <div>
-        <h1 class="text-[17px] font-extrabold text-charcoal tracking-tight leading-none">{{ $pageLabel }}</h1>
-        <p class="text-[11px] text-gray-400 mt-1 font-medium">Community Extension Services Office · LNU</p>
+        <h1 class="sc-topbar-title">{{ $pageLabel }}</h1>
+        <p class="sc-topbar-subtitle">Community Extension Services Office · LNU</p>
     </div>
     <div class="ml-auto flex items-center gap-2">
         <div x-data="{ open: false }" class="relative">
-            <button @click="open=!open" class="relative p-2.5 rounded-xl hover:bg-gray-100 transition text-gray-500">
+            <button @click="open=!open" class="sc-topbar-icon-button relative p-2.5 rounded-xl transition" aria-label="Open notifications">
                 <x-sc.icon name="bell" class="w-5 h-5" />
                 @if ($unreadCount)
                     <span class="bell-dot"></span>
@@ -67,7 +67,7 @@ $unreadCount = auth()->user()->unreadNotifications->count();
             </div>
         </div>
         <div x-data="{ open: false }" class="relative">
-            <button @click="open=!open" class="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-100 transition">
+            <button @click="open=!open" class="sc-topbar-profile flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl transition" aria-label="Open profile menu">
                 <span class="avatar w-8 h-8 text-[11px]">{{ $initials }}</span>
                 <div class="hidden lg:block leading-tight text-left">
                     <p class="text-[12.5px] font-bold text-charcoal">{{ auth()->user()->name }}</p>

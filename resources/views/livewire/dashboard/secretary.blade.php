@@ -1,35 +1,35 @@
-<div>
+<div class="secretary-dashboard-page">
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">Validation workspace · {{ now()->format('l, F j, Y') }}</p>
+    <p class="secretary-dashboard-eyebrow mb-3">Validation workspace · {{ now()->format('l, F j, Y') }}</p>
     <div class="grid grid-cols-4 gap-4">
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <div class="flex items-center justify-between"><span class="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center"><x-sc.icon name="clock" class="w-5 h-5" /></span></div>
-            <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none {{ $pending->count() ? 'text-gold-700' : '' }}">{{ $pending->count() }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Pending Validations</p>
-        </div>
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <div class="flex items-center justify-between"><span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><x-sc.icon name="check" class="w-5 h-5" /></span></div>
-            <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">{{ $validatedCount }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Validated Submissions</p>
-        </div>
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <div class="flex items-center justify-between"><span class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><x-sc.icon name="doc" class="w-5 h-5" /></span></div>
-            <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">{{ $returnedCount }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">Returned for Re-encoding</p>
-        </div>
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <div class="flex items-center justify-between"><span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-700 flex items-center justify-center"><x-sc.icon name="doc" class="w-5 h-5" /></span></div>
-            <p class="mt-4 text-[26px] font-extrabold tracking-tight leading-none">{{ $importedCount }}</p>
-            <p class="text-[12.5px] text-gray-500 font-medium mt-1.5">XLSX Imports Archived</p>
-        </div>
+        <x-sc.color-card tone="gold" class="secretary-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <div class="flex items-center justify-between"><span class="secretary-dashboard-kpi-icon"><x-sc.icon name="clock" class="w-5 h-5" /></span><span class="secretary-dashboard-kpi-chip">needs review</span></div>
+            <p class="secretary-dashboard-kpi-value mt-4">{{ $pending->count() }}</p>
+            <p class="secretary-dashboard-kpi-label">Pending Validations</p>
+        </x-sc.color-card>
+        <x-sc.color-card tone="teal" class="secretary-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <div class="flex items-center justify-between"><span class="secretary-dashboard-kpi-icon"><x-sc.icon name="check" class="w-5 h-5" /></span><span class="secretary-dashboard-kpi-chip">cleared</span></div>
+            <p class="secretary-dashboard-kpi-value mt-4">{{ $validatedCount }}</p>
+            <p class="secretary-dashboard-kpi-label">Validated Submissions</p>
+        </x-sc.color-card>
+        <x-sc.color-card tone="indigo" class="secretary-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <div class="flex items-center justify-between"><span class="secretary-dashboard-kpi-icon"><x-sc.icon name="doc" class="w-5 h-5" /></span><span class="secretary-dashboard-kpi-chip">re-encode</span></div>
+            <p class="secretary-dashboard-kpi-value mt-4">{{ $returnedCount }}</p>
+            <p class="secretary-dashboard-kpi-label">Returned for Re-encoding</p>
+        </x-sc.color-card>
+        <x-sc.color-card tone="blue" class="secretary-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <div class="flex items-center justify-between"><span class="secretary-dashboard-kpi-icon"><x-sc.icon name="doc" class="w-5 h-5" /></span><span class="secretary-dashboard-kpi-chip">all imports</span></div>
+            <p class="secretary-dashboard-kpi-value mt-4">{{ $importedCount }}</p>
+            <p class="secretary-dashboard-kpi-label">XLSX Imports Archived</p>
+        </x-sc.color-card>
     </div>
 </section>
 
 <section class="mt-5 grid grid-cols-3 gap-4">
     <div class="reveal-item sc-card p-0 overflow-hidden col-span-2">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2"><x-sc.icon name="doc" class="w-[18px] h-[18px] text-lnu-700" /> Pending Validations</h3>
-            <a href="{{ route('assessments.review') }}" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open review queue →</a>
+            <h3 class="secretary-dashboard-section-title flex items-center gap-2"><x-sc.icon name="doc" class="w-[18px] h-[18px] text-lnu-700" /> Pending Validations</h3>
+            <a href="{{ route('assessments.review') }}" class="secretary-dashboard-action">Open review queue →</a>
         </div>
         <table class="sc-table">
             <thead><tr><th>Community</th><th>Period</th><th>Respondent</th><th>Submitted By</th><th>Submitted</th></tr></thead>
@@ -50,7 +50,7 @@
     </div>
     <div class="space-y-4">
         <div class="reveal-item sc-card p-5">
-            <h3 class="font-bold text-[14px] mb-3">Recent Summaries</h3>
+            <h3 class="secretary-dashboard-section-title mb-3">Recent Summaries</h3>
             @forelse ($recentSummaries as $s)
                 <div class="kv" wire:key="dash-sum-{{ $s->id }}">
                     <span class="k">{{ $s->community->name }} · Q{{ $s->quarter }}</span>
@@ -61,8 +61,8 @@
             @endforelse
         </div>
         <div class="border-l-4 border-lnu-800 bg-lnu-50 rounded-r-xl p-3.5">
-            <p class="text-[12px] font-extrabold text-lnu-800">Your workflow</p>
-            <p class="text-[11px] text-lnu-700/80 font-medium mt-1">Validated submissions feed the community needs summaries used in dashboards and AI analyses (Phase 5 — aggregates only).</p>
+            <p class="secretary-dashboard-callout-title">Your workflow</p>
+            <p class="secretary-dashboard-callout-copy">Validated submissions feed the community needs summaries used in dashboards and AI analyses (Phase 5 — aggregates only).</p>
         </div>
     </div>
 </section>

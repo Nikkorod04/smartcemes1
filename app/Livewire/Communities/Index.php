@@ -20,6 +20,8 @@ class Index extends Component
 
     public string $type = '';
 
+    public string $sort = 'name_asc';
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -147,6 +149,31 @@ class Index extends Component
         $this->detailId = null;
     }
 
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProvince(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedType(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSort(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $communities = Community::query()
@@ -162,8 +189,11 @@ class Index extends Component
             ->when($this->province !== '', fn ($q) => $q->where('province', $this->province))
             ->when($this->status !== '' && $this->status !== 'archived', fn ($q) => $q->where('status', $this->status))
             ->when($this->type !== '', fn ($q) => $q->where('type', $this->type))
-            ->orderBy('name')
-            ->get();
+            ->when($this->sort === 'name_desc', fn ($q) => $q->orderByDesc('name'))
+            ->when($this->sort === 'newest', fn ($q) => $q->orderByDesc('created_at')->orderBy('name'))
+            ->when($this->sort === 'status', fn ($q) => $q->orderBy('status')->orderBy('name'))
+            ->when($this->sort === 'name_asc', fn ($q) => $q->orderBy('name'))
+            ->paginate(10);
 
         $provinces = Community::query()
             ->when($this->status === 'archived', fn ($q) => $q->onlyTrashed())

@@ -3,7 +3,7 @@
     <div class="sc-card rh-filter-panel p-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <p class="rh-filter-label">Review state</p>
+                <p class="rendered-filter-label">Review state</p>
                 <div class="chip-group mt-2">
                 @foreach ([
                     'all' => 'All entries',
@@ -20,7 +20,7 @@
             </div>
             <div class="flex flex-wrap items-end gap-2 min-w-[min(100%,560px)] justify-end">
                 <div class="relative flex-1 min-w-[240px]">
-                    <span class="rh-filter-label block mb-2">Search records</span>
+                    <span class="rendered-filter-label block mb-2">Search records</span>
                     <div class="sc-search">
                         <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
                         <input wire:model.live.debounce.300ms="search" aria-label="Search faculty, activity, or project" class="input !w-full !min-w-0" placeholder="Faculty, activity, or project…">
@@ -30,7 +30,7 @@
                     </div>
                 </div>
                 <label class="min-w-[150px]">
-                    <span class="rh-filter-label block mb-2">Source</span>
+                    <span class="rendered-filter-label block mb-2">Source</span>
                     <select wire:model.live="source" aria-label="Filter by source" class="input !w-full">
                         <option value="all">All sources</option>
                         <option value="auto">Auto-drafted</option>
@@ -40,8 +40,8 @@
             </div>
         </div>
         <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
-            <p class="text-[11.5px] text-gray-400 font-medium"><span wire:loading wire:target="search,status,source,sortBy" class="rh-spinner mr-1.5"></span>{{ $queue->total() }} result{{ $queue->total() === 1 ? '' : 's' }} · page {{ $queue->currentPage() }} of {{ $queue->lastPage() }}</p>
-            <p class="text-[11px] text-gray-400">Click a column heading to sort the queue.</p>
+            <p class="rendered-result-summary"><span wire:loading wire:target="search,status,source,sortBy" class="rh-spinner mr-1.5"></span>{{ $queue->total() }} result{{ $queue->total() === 1 ? '' : 's' }} · page {{ $queue->currentPage() }} of {{ $queue->lastPage() }}</p>
+            <p class="rendered-sort-hint">Click a column heading to sort the queue.</p>
         </div>
     </div>
 </section>
@@ -50,8 +50,8 @@
     <div class="sc-card p-0 overflow-hidden">
         <div class="rh-queue-head px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
             <div>
-                <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">Review queue</h3>
-                <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">{{ $queue->total() }} matching entr{{ $queue->total() === 1 ? 'y' : 'ies' }}</p>
+                <h3 class="rendered-section-title flex items-center gap-2">Review queue</h3>
+                <p class="rendered-section-meta">{{ $queue->total() }} matching entr{{ $queue->total() === 1 ? 'y' : 'ies' }}</p>
             </div>
             <div class="flex items-center gap-2">
                 <span class="badge badge-{{ $status === 'pending' ? 'yellow' : 'blue' }}">{{ $status === 'all' ? 'All entries' : ucfirst($status) }}</span>
@@ -73,8 +73,8 @@
                 <tbody>
                     @forelse ($queue as $e)
                         <tr wire:key="rh-{{ $e->id }}" class="rh-row rh-row--{{ $e->status }}">
-                            <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="font-semibold text-charcoal">{{ $e->faculty->user->name }}</span></div></td>
-                            <td><p class="font-semibold text-charcoal">{{ $e->activity->title }}</p><p class="text-[11px] text-gray-400">{{ $e->activity->program?->code }}</p></td>
+                            <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="rendered-row-person">{{ $e->faculty->user->name }}</span></div></td>
+                            <td><p class="rendered-row-title">{{ $e->activity->title }}</p><p class="rendered-row-subtext">{{ $e->activity->program?->code }}</p></td>
                             <td class="text-gray-500 whitespace-nowrap"><span class="inline-flex items-center gap-1.5"><x-sc.icon name="calendar" class="w-3.5 h-3.5 text-gray-400" />{{ $e->date->format('M j, Y') }}</span></td>
                             <td class="!text-right font-bold tabular-nums">{{ number_format((float) $e->hours, 2) }} hrs</td>
                             <td><span class="badge badge-{{ $e->source === 'auto' ? 'blue' : 'gold' }}">{{ ucfirst($e->source) }}</span></td>

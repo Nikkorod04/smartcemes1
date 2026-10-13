@@ -6,9 +6,12 @@ use App\Models\College;
 use App\Models\ExtensionProject;
 use App\Models\UniversityTarget;
 use App\Services\TrainingHoursService;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 /**
  * University Targets (Phase R4b, revision §4.7 / §2.2B / R-Q3).
@@ -32,6 +35,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Targets extends Component
 {
+    use WithPagination;
+
     /** AY START year (2026 means AY 2026-2027) — R-Q3. */
     #[Url]
     public ?int $year = null;
@@ -51,6 +56,8 @@ class Targets extends Component
      * component), reintroducing exactly that mismatch.
      */
     public string $sort = 'hours';
+
+    public string $college = '';
 
     public array $form = [
         'annual_target_hours' => '',
@@ -112,6 +119,17 @@ class Targets extends Component
     {
         $this->showForm = false;
         $this->loadForm();
+        $this->resetPage();
+    }
+
+    public function updatedSort(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedCollege(): void
+    {
+        $this->resetPage();
     }
 
     /** Stored label when the Director set one, else the derived AY convention. */
@@ -204,7 +222,7 @@ class Targets extends Component
         // never contradict the project hubs (prototype: `actuals()`).
         $projects = ExtensionProject::with(['college', 'programLead.user'])->orderBy('code')->get();
 
-        $rows = $projects->map(function ($p) use ($hours) {
+        $allRows = $projects->map(function ($p) use ($hours) {
             $perf = $hours->forProject($p);
 
             return (object) [
@@ -214,24 +232,38 @@ class Targets extends Component
             ];
         });
 
+        $actuals = [
+            'training_hours' => (float) $allRows->sum(fn ($r) => $r->hours['actual_hours']),
+            'budget' => (float) $allRows->sum(fn ($r) => $r->hours['utilized_budget']),
+            'trainees' => (int) $allRows->sum(fn ($r) => $r->hours['trainees']),
+            'activities' => (int) $allRows->sum(fn ($r) => $r->hours['activity_count']),
+            'projects' => $allRows->count(),
+        ];
+
+        $rows = $this->college === ''
+            ? $allRows
+            : $allRows->filter(fn ($r) => (string) ($r->model->college?->code ?? '') === $this->college);
+
         // Sort keys mirror the prototype's comparator exactly (targets.html):
         // hours ASCENDING (worst attainment first), budget DESCENDING, code A-Z.
         // A project with no hours target counts as 0 — the prototype does the
         // same (`p.hoursPct = target ? ... : 0`), so an untargeted project sorts
         // first under "hours up" rather than landing somewhere unpredictable.
-        $rows = match ($this->sort) {
+        $rows = (match ($this->sort) {
             'budget' => $rows->sortByDesc(fn ($r) => $r->hours['budget_pct'] ?? 0),
             'code' => $rows->sortBy(fn ($r) => (string) $r->model->code),
             default => $rows->sortBy(fn ($r) => $r->hours['hours_pct'] ?? 0),
-        };
+        })->values();
 
-        $actuals = [
-            'training_hours' => (float) $rows->sum(fn ($r) => $r->hours['actual_hours']),
-            'budget' => (float) $rows->sum(fn ($r) => $r->hours['utilized_budget']),
-            'trainees' => (int) $rows->sum(fn ($r) => $r->hours['trainees']),
-            'activities' => (int) $rows->sum(fn ($r) => $r->hours['activity_count']),
-            'projects' => $rows->count(),
-        ];
+        $page = Paginator::resolveCurrentPage('page');
+        $perPage = 10;
+        $rows = new LengthAwarePaginator(
+            $rows->slice(($page - 1) * $perPage, $perPage)->all(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page']
+        );
 
         $targetHours = $target?->annual_target_hours !== null ? (float) $target->annual_target_hours : null;
         $targetBudget = $target?->annual_target_budget !== null ? (float) $target->annual_target_budget : null;

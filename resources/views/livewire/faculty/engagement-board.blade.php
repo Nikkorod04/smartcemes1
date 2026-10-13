@@ -12,11 +12,11 @@
     Chart.js is re-inited on every Livewire render, guarded against the
     "Canvas is already in use" failure documented in the handoff gotchas.
 --}}
-<div>
+<div class="faculty-board-page">
     {{-- Deep-link banner: the board is narrowed to one college --}}
     @if ($collegeScope)
         @php $scopedCollege = $colleges->firstWhere('code', strtoupper($collegeScope)); @endphp
-        <div class="mt-6 sc-card p-3.5 flex items-center gap-3 flex-wrap">
+        <div class="faculty-board-scope mt-6 sc-card p-3.5 flex items-center gap-3 flex-wrap">
             <x-sc.college-pill :code="strtoupper($collegeScope)" :name="$scopedCollege?->name" />
             <span class="text-[11.5px] text-gray-400 font-medium">Board narrowed to this college</span>
             <button type="button" wire:click="clearCollegeScope"
@@ -36,10 +36,10 @@
                         <x-sc.icon name="chart" class="w-4 h-4" />
                     </span>
                     <div>
-                        <h2 id="heading" class="font-extrabold text-[15px] tracking-tight leading-tight">
+                        <h2 id="heading" class="faculty-board-title">
                             Faculty Engagement
                         </h2>
-                        <p class="text-[11px] text-gray-400 font-medium">
+                        <p class="faculty-board-subtitle">
                             How the extension load is actually distributed across the roster
                         </p>
                     </div>
@@ -72,10 +72,10 @@
                 <div class="lg:col-span-3">
                     <div class="flex items-baseline justify-between mb-3">
                         <div>
-                            <p class="font-extrabold text-[14px] tracking-tight">{{ $activeMetric['label'] }}</p>
-                            <p class="text-[11px] text-gray-400 font-medium mt-0.5">{{ $activeMetric['sub'] }}</p>
+                            <p class="faculty-board-chart-title">{{ $activeMetric['label'] }}</p>
+                            <p class="faculty-board-chart-subtitle">{{ $activeMetric['sub'] }}</p>
                         </div>
-                        <span class="text-[10.5px] text-gray-400 font-semibold whitespace-nowrap">
+                        <span class="faculty-board-count whitespace-nowrap">
                             {{ $ranked->count() }} faculty
                         </span>
                     </div>
@@ -87,7 +87,7 @@
                     {{-- college split --}}
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <div class="flex items-center justify-between mb-2.5">
-                            <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400">Load by college</p>
+                            <p class="faculty-board-kicker">Load by college</p>
                             <div class="eng-split-legend">
                                 @foreach ($split as $slice)
                                     <span>
@@ -108,8 +108,8 @@
                 {{-- ===================== RIGHT: leaderboard ===================== --}}
                 <div class="lg:col-span-2">
                     <div class="flex items-baseline justify-between mb-3">
-                        <p class="font-extrabold text-[14px] tracking-tight">Leaderboard</p>
-                        <span class="text-[10.5px] text-gray-400 font-semibold">select to open profile</span>
+                        <p class="faculty-board-chart-title">Leaderboard</p>
+                        <span class="faculty-board-count">select to open profile</span>
                     </div>
 
                     <div id="engRows" class="space-y-2 max-h-[400px] overflow-y-auto pr-0.5">
@@ -127,7 +127,7 @@
                                     <span class="eng-rank {{ $rankClass }}">{{ $index + 1 }}</span>
                                     <span class="avatar w-8 h-8 text-[10px] shrink-0">{{ $contribution->initials($row['name']) }}</span>
                                     <span class="min-w-0 flex-1">
-                                        <span class="block text-[12.5px] font-bold truncate">{{ $row['name'] }}</span>
+                                        <span class="faculty-board-row-name block truncate">{{ $row['name'] }}</span>
                                         {{-- College · the ACTIVITY count: the one contribution
                                              figure the value and the caption never carry. --}}
                                         <span class="eng-sub truncate block">{{ $this->rowSubline($row) }}</span>
@@ -135,7 +135,7 @@
                                     <span class="text-right shrink-0">
                                         {{-- The unit rides on the value (owner request 2026-10-07).
                                              `small` is the pre-existing muted style in app.css. --}}
-                                        <span class="eng-val">{{ $this->headlineValue($row, $activeMetric) }} <small>{{ $this->headlineUnit($row, $activeMetric) }}</small></span>
+                                        <span class="faculty-board-row-value eng-val">{{ $this->headlineValue($row, $activeMetric) }} <small>{{ $this->headlineUnit($row, $activeMetric) }}</small></span>
                                         <span class="eng-sub block">{{ $this->headlineCaption($row, $activeMetric) }}</span>
                                     </span>
                                 </span>
@@ -149,7 +149,7 @@
 
                     <div class="mt-4 pt-4 border-t border-gray-100" id="engInsights">
                         @if ($insights)
-                            <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">
+                            <p class="faculty-board-kicker mb-2.5">
                                 What this says
                             </p>
                             <div class="space-y-2">
@@ -176,8 +176,8 @@
                 <div class="p-5 border-b border-gray-100 flex items-start gap-3.5">
                     <span class="avatar w-12 h-12 text-[15px]">{{ $contribution->initials($selected->user?->name) }}</span>
                     <div class="min-w-0 flex-1">
-                        <p class="font-extrabold text-[15px] tracking-tight truncate">{{ $selected->user?->name }}</p>
-                        <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">{{ $selected->position }}</p>
+                        <p class="faculty-board-drawer-name truncate">{{ $selected->user?->name }}</p>
+                        <p class="faculty-board-drawer-position">{{ $selected->position }}</p>
                         <div class="mt-2 flex flex-wrap gap-1.5 items-center">
                             <x-sc.college-pill :code="$selected->college?->code" :name="$selected->college?->name" />
                             <span class="badge badge-{{ $selected->isActive() ? 'green' : 'yellow' }}">
@@ -196,7 +196,7 @@
 
                 <div class="flex-1 overflow-y-auto p-5 space-y-5">
                     <div>
-                        <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">
+                        <p class="faculty-board-kicker mb-2.5">
                             Contribution · AY {{ now()->format('Y') }}–{{ now()->addYear()->format('Y') }}
                         </p>
                         <div class="grid grid-cols-2 gap-3">
@@ -241,7 +241,7 @@
 
                     @if ($selected->expertise->isNotEmpty())
                         <div>
-                            <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Expertise</p>
+                            <p class="faculty-board-kicker mb-2.5">Expertise</p>
                             <div class="flex flex-wrap gap-1.5">
                                 @foreach ($selected->expertise as $area)
                                     <span class="badge badge-lnu">{{ $area->area }}</span>
@@ -252,7 +252,7 @@
 
                     @if ($selectedProjects->isNotEmpty())
                         <div>
-                            <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Projects</p>
+                            <p class="faculty-board-kicker mb-2.5">Projects</p>
                             <div class="space-y-2">
                                 @foreach ($selectedProjects as $entry)
                                     <a href="{{ route('projects.show', ['project' => $entry['project']]) }}"
@@ -273,7 +273,7 @@
 
                     @if ($selected->specialization || $selected->department)
                         <div>
-                            <p class="text-[10.5px] font-bold uppercase tracking-[.12em] text-gray-400 mb-2.5">Academic</p>
+                            <p class="faculty-board-kicker mb-2.5">Academic</p>
                             <div class="space-y-1.5 text-[12px]">
                                 @if ($selected->specialization)
                                     <p><span class="text-gray-400 font-medium">Specialization</span> · {{ $selected->specialization }}</p>

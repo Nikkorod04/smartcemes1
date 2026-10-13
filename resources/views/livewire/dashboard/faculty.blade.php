@@ -1,34 +1,38 @@
-<div>
+<div class="faculty-dashboard-page">
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">Welcome, {{ auth()->user()->name }} · your extension work at a glance</p>
+    <p class="faculty-page-hint mb-3">Welcome, {{ auth()->user()->name }} · your extension work at a glance</p>
     <div class="grid grid-cols-4 gap-4">
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Approved Hours</p>
-            <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600">{{ number_format($stats['approvedHours'], 2) }}</p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">toward the rendered-hours KPI</p>
-        </div>
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Pending Hours</p>
-            <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-gold-700">{{ number_format($stats['pendingHours'], 2) }}</p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">awaiting Director approval</p>
-        </div>
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Activities</p>
-            <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ $stats['activitiesCompleted'] }}<span class="text-[14px] text-gray-400 font-bold"> / {{ $stats['activitiesAssigned'] }}</span></p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">completed of assigned</p>
-        </div>
-        <div class="reveal-item sc-card sc-card-hover p-5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Projects</p>
-            <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ $stats['programsLed'] }}<span class="text-[14px] text-gray-400 font-bold"> led</span></p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">assigned as lead or faculty</p>
-        </div>
+        <x-sc.color-card tone="teal" class="faculty-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <span class="faculty-kpi-icon"><x-sc.icon name="clock" class="w-4 h-4" /></span>
+            <p class="faculty-kpi-label">Approved hours</p>
+            <p class="faculty-kpi-value mt-3">{{ number_format($stats['approvedHours'], 2) }}</p>
+            <p class="faculty-kpi-sub">toward the rendered-hours KPI</p>
+        </x-sc.color-card>
+        <x-sc.color-card tone="gold" class="faculty-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <span class="faculty-kpi-icon"><x-sc.icon name="clock" class="w-4 h-4" /></span>
+            <p class="faculty-kpi-label">Pending hours</p>
+            <p class="faculty-kpi-value mt-3">{{ number_format($stats['pendingHours'], 2) }}</p>
+            <p class="faculty-kpi-sub">awaiting Director approval</p>
+        </x-sc.color-card>
+        <x-sc.color-card tone="blue" class="faculty-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <span class="faculty-kpi-icon"><x-sc.icon name="calendar" class="w-4 h-4" /></span>
+            <p class="faculty-kpi-label">Activities</p>
+            <p class="faculty-kpi-value mt-3">{{ $stats['activitiesCompleted'] }}<span class="faculty-kpi-secondary"> / {{ $stats['activitiesAssigned'] }}</span></p>
+            <p class="faculty-kpi-sub">completed of assigned</p>
+        </x-sc.color-card>
+        <x-sc.color-card tone="indigo" class="faculty-dashboard-kpi reveal-item flex h-full flex-col p-5">
+            <span class="faculty-kpi-icon"><x-sc.icon name="people" class="w-4 h-4" /></span>
+            <p class="faculty-kpi-label">Projects</p>
+            <p class="faculty-kpi-value mt-3">{{ $stats['programsLed'] }}<span class="faculty-kpi-secondary"> led</span></p>
+            <p class="faculty-kpi-sub">assigned as lead or faculty</p>
+        </x-sc.color-card>
     </div>
 </section>
 
 <section class="mt-5 grid grid-cols-3 gap-4">
     <div class="reveal-item sc-card p-0 overflow-hidden col-span-2">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2"><x-sc.icon name="calendar" class="w-[18px] h-[18px] text-lnu-700" /> My Activities</h3>
+            <h3 class="faculty-section-title flex items-center gap-2"><x-sc.icon name="calendar" class="w-[18px] h-[18px] text-lnu-700" /> My Activities</h3>
             <a href="{{ route('projects.my') }}" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">My Projects →</a>
         </div>
         <table class="sc-table">
@@ -49,7 +53,7 @@
     </div>
     <div class="space-y-4">
         <div class="reveal-item sc-card p-5">
-            <h3 class="font-bold text-[14px] mb-3">Pending Availability <span class="badge badge-yellow">{{ $availability->count() }}</span></h3>
+            <h3 class="faculty-section-title mb-3">Pending Availability <span class="badge badge-yellow">{{ $availability->count() }}</span></h3>
             @forelse ($availability->take(4) as $a)
                 <div class="kv" wire:key="dash-fav-{{ $a->id }}">
                     <span class="k truncate">{{ \Illuminate\Support\Str::limit($a->activity?->title ?? '—', 24) }}</span>
@@ -60,7 +64,7 @@
             @endforelse
         </div>
         <div class="reveal-item sc-card p-5">
-            <h3 class="font-bold text-[14px] mb-3">My Proposals</h3>
+            <h3 class="faculty-section-title mb-3">My Proposals</h3>
             @forelse ($myProposals as $p)
                 <div class="kv" wire:key="dash-fpr-{{ $p->id }}">
                     <span class="k truncate">{{ \Illuminate\Support\Str::limit($p->title, 26) }}</span>
@@ -77,7 +81,7 @@
 <section class="mt-4">
     <div class="reveal-item sc-card p-0 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2"><x-sc.icon name="clock" class="w-[18px] h-[18px] text-gold-600" /> My Rendered Hours</h3>
+            <h3 class="faculty-section-title flex items-center gap-2"><x-sc.icon name="clock" class="w-[18px] h-[18px] text-gold-600" /> My Rendered Hours</h3>
             <a href="{{ route('rendered-hours.my') }}" class="text-[12.5px] font-bold text-lnu-800 hover:text-lnu-600 transition">Manage →</a>
         </div>
         <table class="sc-table">

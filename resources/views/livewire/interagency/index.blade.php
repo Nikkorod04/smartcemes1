@@ -6,8 +6,8 @@
                 <div class="flex min-w-0 items-start gap-3">
                     <span class="w-9 h-9 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="shield" class="w-4 h-4" /></span>
                     <div class="min-w-0">
-                        <p class="rh-filter-label">Catalogue guardrail</p>
-                        <p class="text-[11.5px] text-gray-500 font-medium mt-1 max-w-xl leading-relaxed">The AI uses these rows as its closed vocabulary. Retired agencies remain visible for history but are no longer available for new referrals.</p>
+                        <p class="interagency-filter-label">Catalogue guardrail</p>
+                        <p class="interagency-guardrail-copy">The AI uses these rows as its closed vocabulary. Archived agencies remain visible for history but are no longer available for new referrals.</p>
                         <div class="flex flex-wrap items-center gap-2 mt-2"><span class="tier-badge tier-1">CESO intervention</span><span class="tier-badge tier-2">Interagency referral</span></div>
                     </div>
                 </div>
@@ -15,7 +15,7 @@
             </div>
             <div class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-end gap-2 min-w-0 justify-end">
                     <div class="relative flex-1 min-w-[240px]">
-                        <span class="rh-filter-label block mb-2">Search catalogue</span>
+                        <span class="interagency-filter-label block mb-2">Search catalogue</span>
                         <div class="sc-search">
                             <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
                             <input wire:model.live.debounce.300ms="search" aria-label="Search agency catalogue" class="input !w-full !min-w-0" placeholder="Agency, scope, category, or contact…">
@@ -24,13 +24,13 @@
                             @endif
                         </div>
                     </div>
-                    <label class="min-w-[150px]"><span class="rh-filter-label block mb-2">Category</span><select wire:model.live="categoryFilter" aria-label="Filter by intervention category" class="input !w-full"><option value="">All categories</option>@foreach ($categories as $category)<option value="{{ $category }}">{{ $category }}</option>@endforeach</select></label>
-                    <label class="min-w-[130px]"><span class="rh-filter-label block mb-2">Status</span><select wire:model.live="statusFilter" aria-label="Filter by agency status" class="input !w-full"><option value="">Any status</option><option value="active">Active only</option><option value="retired">Retired only</option></select></label>
+                    <label class="min-w-[150px]"><span class="interagency-filter-label block mb-2">Category</span><select wire:model.live="categoryFilter" aria-label="Filter by intervention category" class="input !w-full"><option value="">All categories</option>@foreach ($categories as $category)<option value="{{ $category }}">{{ $category }}</option>@endforeach</select></label>
+                    <label class="min-w-[130px]"><span class="interagency-filter-label block mb-2">Status</span><select wire:model.live="statusFilter" aria-label="Filter by agency status" class="input !w-full"><option value="">Any status</option><option value="active">Active only</option><option value="archived">Archived only</option></select></label>
                     @if ($search !== '' || $categoryFilter !== '' || $statusFilter !== '')<button type="button" wire:click="clearFilters" class="btn btn-ghost !shrink-0 !py-2 !text-[12px]">Clear</button>@endif
             </div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-semibold text-gray-400"><span><b class="text-charcoal">{{ $activeCount }}</b> active</span><span><b class="text-charcoal">{{ $totalCount - $activeCount }}</b> retired</span><span><b class="text-charcoal">{{ $categoryCount }}</b> categories</span></div>
-                <p class="text-[11px] text-gray-400 font-medium">{{ $agencies->count() }} of {{ $totalCount }} {{ \Illuminate\Support\Str::plural('agency', $totalCount) }}</p>
+                <div class="interagency-stat-line"><span><b>{{ $activeCount }}</b> active</span><span><b>{{ $totalCount - $activeCount }}</b> archived</span><span><b>{{ $categoryCount }}</b> categories</span></div>
+                <p class="interagency-result-summary">{{ $agencies->firstItem() ?? 0 }}–{{ $agencies->lastItem() ?? 0 }} of {{ $agencies->total() }} matching {{ \Illuminate\Support\Str::plural('agency', $agencies->total()) }}</p>
             </div>
         </div>
     </section>
@@ -40,8 +40,8 @@
         <div class="reveal-item sc-card p-0 overflow-hidden">
             <div class="rh-queue-head px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
                 <div>
-                    <h3 class="font-extrabold text-[15px] tracking-tight">Agency catalogue</h3>
-                    <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Manage the agencies the AI is allowed to cite</p>
+                    <h3 class="interagency-section-title">Agency catalogue</h3>
+                    <p class="interagency-section-meta">Manage the agencies the AI is allowed to cite</p>
                 </div>
                 <span class="badge badge-green"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ $activeCount }} active agencies</span>
             </div>
@@ -66,8 +66,8 @@
                                             {{ \Illuminate\Support\Str::limit($agency->agency_code, 5, '') }}
                                         </span>
                                         <div class="min-w-0">
-                                            <p class="font-semibold text-charcoal leading-snug">{{ $agency->agency_name }}</p>
-                                            <p class="text-[11px] text-gray-400">
+                                            <p class="interagency-row-title">{{ $agency->agency_name }}</p>
+                                            <p class="interagency-row-code">
                                                 {{ $agency->agency_code }}
                                                 @if ($agency->mandate) · {{ $agency->mandate }} @endif
                                             </p>
@@ -76,26 +76,23 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-gray">{{ $agency->need_category }}</span>
-                                    @if ($agency->mandate)<p class="text-[10.5px] text-gray-400 mt-1.5 leading-snug">{{ \Illuminate\Support\Str::limit($agency->mandate, 70) }}</p>@endif
+                                    @if ($agency->mandate)<p class="interagency-row-subtext">{{ \Illuminate\Support\Str::limit($agency->mandate, 70) }}</p>@endif
                                 </td>
-                                <td class="text-gray-500 text-[12px] leading-snug">
+                                <td class="interagency-row-detail">
                                     <span class="block max-w-[320px]">{{ $agency->sample_service ?: '—' }}</span>
                                 </td>
-                                <td class="text-gray-500 text-[12px] leading-snug">{{ $agency->contact_info ?: '—' }}</td>
+                                <td class="interagency-row-detail">{{ $agency->contact_info ?: '—' }}</td>
                                 <td class="!text-right">
                                     <span class="badge {{ $agency->active ? 'badge-green' : 'badge-gray' }}"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                                        {{ $agency->active ? 'Active' : 'Retired' }}
+                                        {{ $agency->active ? 'Active' : 'Archived' }}
                                     </span>
                                 </td>
                                 <td class="!text-right row-actions whitespace-nowrap">
                                     <button wire:click="edit({{ $agency->id }})"
                                             wire:loading.attr="disabled" class="rh-action btn btn-outline !px-2 !py-1 !text-[11px]">Edit</button>
-                                    <button wire:click="toggleActive({{ $agency->id }})"
-                                            wire:confirm="{{ $agency->active
-                                                ? 'Retire '.$agency->agency_code.'? The AI will stop citing it, but past referrals stay readable.'
-                                                : 'Restore '.$agency->agency_code.' to the AI catalogue?' }}"
+                                    <button wire:click="confirmToggleActive({{ $agency->id }})"
                                             wire:loading.attr="disabled" class="rh-action btn {{ $agency->active ? 'btn-danger-soft' : 'btn-success-soft' }} !px-2 !py-1 !text-[11px]">
-                                        {{ $agency->active ? 'Retire' : 'Restore' }}
+                                        {{ $agency->active ? 'Archive' : 'Restore' }}
                                     </button>
                                 </td>
                             </tr>
@@ -110,6 +107,9 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+            <div class="border-t border-gray-100 bg-gray-50/50 px-5 py-3.5">
+                @include('livewire.partials.pagination', ['paginator' => $agencies])
             </div>
         </div>
     </section>
@@ -224,13 +224,13 @@
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <h4 class="text-[12px] font-extrabold text-charcoal">Catalogue availability</h4>
-                                    <p class="mt-1 max-w-md text-[11px] font-medium leading-relaxed text-gray-500">Active agencies may be cited for new interagency referrals. Retired agencies stay visible for history only.</p>
+                                    <p class="mt-1 max-w-md text-[11px] font-medium leading-relaxed text-gray-500">Active agencies may be cited for new interagency referrals. Archived agencies stay visible for history only.</p>
                                 </div>
                                 <span class="shrink-0 rounded-full bg-white px-2 py-1 text-[10px] font-bold text-gray-400 ring-1 ring-gray-200">Access</span>
                             </div>
                             <div class="mt-3">
                                 <label class="label" for="agency-status">Status <span class="text-red-500">*</span></label>
-                                <x-sc.select id="agency-status" model="form.active" :value="$form['active'] ? 1 : 0" :options="[1 => 'Active — citable by the AI', 0 => 'Retired — kept for history only']" placeholder="— select catalogue status —" :search="false" :required="true" :invalid="$errors->has('form.active')" />
+                                <x-sc.select id="agency-status" model="form.active" :value="$form['active'] ? 1 : 0" :options="[1 => 'Active — citable by the AI', 0 => 'Archived — kept for history only']" placeholder="— select catalogue status —" :search="false" :required="true" :invalid="$errors->has('form.active')" />
                                 @error('form.active') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </section>
@@ -250,6 +250,49 @@
                     </div>
                 </div>
             </form>
+        </div>
+    @endif
+
+    {{-- ============ Archive / restore confirmation modal ============ --}}
+    @if ($confirmingAgency)
+        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 no-print" role="dialog" aria-modal="true" aria-labelledby="agency-toggle-title" wire:keydown.escape.window="cancelToggleActive">
+            <div class="fixed inset-0 bg-charcoal/55 backdrop-blur-[3px]" wire:click="cancelToggleActive"></div>
+            <div class="sc-modal relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-pop">
+                <div class="border-b border-gray-100 bg-gradient-to-br {{ $confirmingAgency->active ? 'from-amber-700 to-orange-600' : 'from-lnu-800 to-lnu-700' }} px-5 py-5 text-white sm:px-6">
+                    <div class="flex items-start gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15">
+                            <x-sc.icon name="shield" class="h-5 w-5" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Catalogue access</p>
+                            <h3 id="agency-toggle-title" class="mt-1 text-[18px] font-extrabold tracking-tight">{{ $confirmingAgency->active ? 'Archive agency?' : 'Restore agency?' }}</h3>
+                            <p class="mt-1 text-[12px] font-medium leading-relaxed text-white/75">{{ $confirmingAgency->agency_code }} · {{ $confirmingAgency->agency_name }}</p>
+                        </div>
+                        <button type="button" wire:click="cancelToggleActive" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close confirmation">
+                            <x-sc.icon name="x" class="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+                <div class="px-5 py-5 sm:px-6">
+                    <div class="flex items-start gap-3 rounded-xl border {{ $confirmingAgency->active ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-lnu-100 bg-lnu-50/70 text-lnu-950' }} px-3.5 py-3.5">
+                        <x-sc.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 {{ $confirmingAgency->active ? 'text-amber-700' : 'text-lnu-700' }}" />
+                        <p class="text-[12px] font-medium leading-relaxed">
+                            @if ($confirmingAgency->active)
+                                Archive this agency from new AI referrals? Existing referral history will remain readable, but the agency will no longer be available for new citations.
+                            @else
+                                Restore this agency to the active catalogue so the AI can cite it for new referrals?
+                            @endif
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                    <button type="button" wire:click="cancelToggleActive" class="btn btn-ghost">Cancel</button>
+                    <button type="button" wire:click="toggleActive({{ $confirmingAgency->id }})" wire:loading.attr="disabled" wire:target="toggleActive" class="btn {{ $confirmingAgency->active ? 'btn-danger-soft' : 'btn-primary' }} min-w-[128px]">
+                        <span wire:loading.remove wire:target="toggleActive">{{ $confirmingAgency->active ? 'Archive agency' : 'Restore agency' }}</span>
+                        <span wire:loading wire:target="toggleActive" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Updating…</span>
+                    </button>
+                </div>
+            </div>
         </div>
     @endif
 </div>

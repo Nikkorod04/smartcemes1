@@ -59,10 +59,10 @@
                                     <span class="hub-kpi-chip hub-kpi-chip--lnu !mb-0">
                                         <x-sc.icon name="folder" class="w-4 h-4" />
                                     </span>
-                                    <p class="hub-eyebrow">Program</p>
+                                    <p class="program-view-eyebrow">Program</p>
                                 </div>
-                                <h2 class="college-hero-name mt-2.5">{{ $selectedProgram->title }}</h2>
-                                <p class="college-hero-sub">
+                                <h2 class="program-view-title mt-2.5">{{ $selectedProgram->title }}</h2>
+                                <p class="program-view-meta">
                                     {{ $selected['model']->name }}
                                     @if ($selectedProgram->code)
                                         <span class="text-gray-300 mx-1.5">·</span>
@@ -100,18 +100,18 @@
                  (PATTERNS §7). --}}
             <section class="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-4 reveal-item">
                 @foreach ([
-                    ['clipboard', 'lnu', $selectedProgram->projects, 'Projects', 'in this program'],
+                    ['clipboard', 'blue', $selectedProgram->projects, 'Projects', 'in this program'],
                     ['users', 'gold', number_format($selectedProgram->trainors), 'Trainors', number_format($selectedProgram->trainees).' trainees'],
-                    ['clock', 'emerald', number_format($selectedProgram->training_hours, 1), 'Hours rendered', 'rolled up from projects'],
-                    ['wallet', 'slate', '₱'.number_format($selectedProgram->utilized), 'Budget utilized', 'of ₱'.number_format($selectedProgram->allocated)],
+                    ['clock', 'teal', number_format($selectedProgram->training_hours, 1), 'Hours rendered', 'rolled up from projects'],
+                    ['wallet', 'indigo', '₱'.number_format($selectedProgram->utilized), 'Budget utilized', 'of ₱'.number_format($selectedProgram->allocated)],
                 ] as [$icon, $tone, $value, $caption, $sub])
-                    <div class="hub-kpi">
-                        <span class="hub-kpi-chip hub-kpi-chip--{{ $tone }}">
+                    <div class="program-view-kpi sc-card-colorful sc-card-colorful--{{ $tone }}">
+                        <span class="program-view-kpi-icon">
                             <x-sc.icon name="{{ $icon }}" class="w-4 h-4" />
                         </span>
-                        <p class="hub-kpi-val">{{ $value }}</p>
-                        <p class="hub-kpi-cap">{{ $caption }}</p>
-                        <p class="hub-kpi-sub">{{ $sub }}</p>
+                        <p class="program-view-kpi-value">{{ $value }}</p>
+                        <p class="program-view-kpi-label">{{ $caption }}</p>
+                        <p class="program-view-kpi-sub">{{ $sub }}</p>
                     </div>
                 @endforeach
             </section>
@@ -120,8 +120,8 @@
             <section class="mt-9">
                 <div class="hub-sec-head">
                     <div>
-                        <p class="hub-eyebrow">Projects</p>
-                        <h3 class="hub-sec-title">{{ $selectedProgram->title }} under {{ $selected['code'] }}</h3>
+                        <p class="program-view-section-eyebrow">Projects</p>
+                        <h3 class="program-view-section-title">{{ $selectedProgram->title }} under {{ $selected['code'] }}</h3>
                     </div>
                     <div class="flex items-center gap-2">
                         <label class="sc-search">
@@ -150,7 +150,7 @@
                                  can carry the archive button. A <button> inside an <a> is
                                  invalid HTML and the click bubbles, so the archive action
                                  would navigate to the project instead of archiving it. --}}
-                            <div class="proj-card reveal-item">
+                            <div class="proj-card program-project-card reveal-item">
                                 @if ($row->archived)
                                     {{-- No hub link on an archived card: `projects.show`
                                          binds through the soft-delete scope, so it would
@@ -164,8 +164,8 @@
                                 <span class="block p-5 text-left">
                                     <span class="flex items-start justify-between gap-3">
                                         <span class="min-w-0">
-                                            <span class="block font-extrabold text-[14.5px] tracking-tight leading-snug">{{ $row->acr }}</span>
-                                            <span class="block text-[11px] text-gray-400 font-mono mt-0.5">{{ $row->code }}</span>
+                                            <span class="program-project-title">{{ $row->acr }}</span>
+                                            <span class="program-project-code">{{ $row->code }}</span>
                                         </span>
                                         @if ($row->archived)
                                             <span class="badge badge-gray shrink-0">Archived</span>
@@ -177,16 +177,16 @@
                                     </span>
 
                                     @if ($row->acr !== $row->title)
-                                        <span class="block text-[11.5px] text-gray-500 leading-snug mt-2.5 min-h-[32px]">{{ $row->title }}</span>
+                                        <span class="program-project-subtitle">{{ $row->title }}</span>
                                     @else
                                         <span class="block mt-2.5 min-h-[32px]"></span>
                                     @endif
 
-                                    <span class="flex items-center gap-1.5 mt-3 text-[11px] text-gray-400 font-medium">
+                                    <span class="program-project-context flex items-center gap-1.5 mt-3">
                                         <x-sc.icon name="pin" class="w-3.5 h-3.5" />
                                         {{ $row->community ?? '—' }}
                                     </span>
-                                    <span class="flex items-center gap-1.5 mt-1.5 text-[11px] text-gray-400 font-medium">
+                                    <span class="program-project-context flex items-center gap-1.5 mt-1.5">
                                         <x-sc.icon name="people" class="w-3.5 h-3.5" />
                                         {{ $row->lead ?? '—' }}
                                     </span>
@@ -198,14 +198,14 @@
                                              retained, so a 0 would be a false claim rather
                                              than an honest zero (the NULL-over-0 rule). --}}
                                         <span class="block mt-4 proj-stat">
-                                            <span class="block text-[11px] text-gray-400 font-medium leading-relaxed">
+                                            <span class="program-project-archive-note block">
                                                 Archived — its hours, reach and budget are retained and return when it is restored.
                                             </span>
                                         </span>
                                     @else
                                         <span class="block mt-4 proj-stat">
                                             <span class="flex items-center justify-between text-[11px] mb-1.5">
-                                                <span class="text-gray-400 font-semibold">Training hours</span>
+                                                <span class="program-project-metric-label">Training hours</span>
                                                 <span class="font-bold {{ ($row->hours_pct ?? 0) >= 100 ? 'text-emerald-600' : 'text-charcoal' }}">
                                                     {{ number_format($row->training_hours, 1) }}@if ($row->hours_target !== null) / {{ number_format($row->hours_target) }}@endif
                                                 </span>
@@ -216,7 +216,7 @@
                                                           class="{{ ($row->hours_pct ?? 0) >= 100 ? 'bg-emerald-500' : (($row->hours_pct ?? 0) >= 50 ? 'bg-lnu-600' : 'bg-gold-500') }}"></span>
                                                 </span>
                                             @else
-                                                <span class="block text-[10.5px] text-gray-300 font-medium">no annual target set</span>
+                                                <span class="program-project-no-target block">no annual target set</span>
                                             @endif
                                         </span>
 
@@ -241,8 +241,8 @@
                                 @else
                                     </a>
                                 @endif
-                                <span class="block px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                                    <span class="text-[11px] text-gray-400 font-medium">
+                                <span class="program-project-footer block px-5 py-3 flex items-center justify-between">
+                                    <span class="program-project-budget">
                                         @if ($row->archived)
                                             Data retained
                                         @else
@@ -255,14 +255,12 @@
                                                  one-way door. Restores the exact inverse of what
                                                  the archive cascaded. --}}
                                             <button type="button"
-                                                    wire:click="restoreProject({{ $row->id }})"
-                                                    wire:confirm="Restore {{ $row->acr }}? Its activities, attendance, rendered hours and budget entries all come back."
+                                                    wire:click="openRestoreProjectConfirmation({{ $row->id }})"
                                                     class="btn btn-outline !px-2.5 !py-1 !text-[11px]">Restore</button>
                                         @else
                                             <a href="{{ route('projects.show', $row->id) }}" class="college-card-cta">View <x-sc.icon name="chevron-right" class="w-3.5 h-3.5" /></a>
                                             <button type="button"
-                                                    wire:click="archiveProject({{ $row->id }})"
-                                                    wire:confirm="Archive {{ $row->acr }}?@if ($row->activities > 0) This also archives its {{ $row->activities }} {{ $row->activities === 1 ? 'activity' : 'activities' }} and their attendance, rendered-hours, availability and budget records.@endif The record is kept, and you can bring it back from the Archived filter."
+                                                    wire:click="openArchiveProjectConfirmation({{ $row->id }})"
                                                     class="proj-archive-btn" title="Archive project"
                                                     aria-label="Archive {{ $row->acr }}">
                                                 <x-sc.icon name="trash" class="w-3.5 h-3.5" />
@@ -318,9 +316,9 @@
                     <div class="college-hero-body">
                         <div class="flex items-start justify-between gap-4 flex-wrap">
                             <div class="min-w-0 flex-1">
-                                <p class="hub-eyebrow !text-lnu-700 mb-2">College overview</p>
-                                <h2 class="college-hero-name">{{ $selected['model']->name }}</h2>
-                                <p class="college-hero-sub">{{ $selected['model']->short_name }}</p>
+                                <p class="college-overview-eyebrow mb-2">College overview</p>
+                                <h2 class="college-overview-title">{{ $selected['model']->name }}</h2>
+                                <p class="college-overview-subtitle">{{ $selected['model']->short_name }}</p>
                             </div>
 
                             {{-- The "Programs" button that used to sit here linked OUT
@@ -337,7 +335,7 @@
                         @endif
                         <div class="college-hero-coordinator">
                             <span class="college-hero-coordinator-icon"><x-sc.icon name="users" class="w-4 h-4" /></span>
-                            <span><span class="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-gray-400">Extension coordinator</span><span class="block text-[12.5px] font-bold text-charcoal mt-0.5">{{ $selected['model']->extensionCoordinator?->user?->name ?? 'Unassigned' }}</span></span>
+                            <span><span class="college-overview-coordinator-label">Extension coordinator</span><span class="college-overview-coordinator-name">{{ $selected['model']->extensionCoordinator?->user?->name ?? 'Unassigned' }}</span></span>
                         </div>
                     </div>
                 </div>
@@ -348,19 +346,19 @@
                  here, and there is deliberately NO hours tile (PATTERNS §7). --}}
             <section class="mt-4 grid grid-cols-2 xl:grid-cols-4 gap-3 reveal-item" aria-label="College totals">
                 @foreach ([
-                    ['clipboard', 'lnu', $selected['projects'], 'Projects', $selected['programs'].' extension programs'],
+                    ['clipboard', 'blue', $selected['projects'], 'Projects', $selected['programs'].' extension programs'],
                     ['users', 'gold', number_format($selected['trainors']), 'Trainors', $selected['faculty'].' faculty members'],
-                    ['people', 'emerald', number_format($selected['trainees']), 'Trainees', $selected['activities'].' activities delivered'],
-                    ['wallet', 'slate', '₱'.number_format($selected['budget_utilized']), 'Budget utilized', 'Across this college'],
-                ] as [$icon, $tone, $value, $caption, $sub])
-                    <div class="hub-kpi college-overview-kpi college-overview-kpi--{{ $tone }}">
-                        <span class="hub-kpi-chip hub-kpi-chip--{{ $tone }}">
+                    ['people', 'teal', number_format($selected['trainees']), 'Trainees', $selected['activities'].' activities delivered'],
+                    ['wallet', 'indigo', '₱'.number_format($selected['budget_utilized']), 'Budget utilized', 'Across this college'],
+                ] as [$icon, $cardTone, $value, $caption, $sub])
+                    <x-sc.color-card :tone="$cardTone" class="college-overview-kpi flex h-full flex-col p-4">
+                        <span class="college-overview-kpi-icon">
                             <x-sc.icon name="{{ $icon }}" class="w-4 h-4" />
                         </span>
-                        <p class="hub-kpi-val">{{ $value }}</p>
-                        <p class="hub-kpi-cap">{{ $caption }}</p>
-                        <p class="hub-kpi-sub">{{ $sub }}</p>
-                    </div>
+                        <p class="college-overview-kpi-value">{{ $value }}</p>
+                        <p class="college-overview-kpi-label">{{ $caption }}</p>
+                        <p class="college-overview-kpi-sub">{{ $sub }}</p>
+                    </x-sc.color-card>
                 @endforeach
             </section>
 
@@ -370,7 +368,7 @@
             <section class="mt-9">
                 <div class="hub-sec-head">
                     <div>
-                        <h3 class="hub-sec-title !mt-0">{{ $selected['code'] }} extension programs</h3>
+                        <h3 class="college-overview-section-title">{{ $selected['code'] }} extension programs</h3>
                     </div>
                     <div class="hub-sec-meta">
                         {{-- §25: program create/edit lives HERE now. §23 removed every
@@ -388,7 +386,7 @@
                         @foreach ($programRows as $program)
                             <button type="button"
                                     @if ($program->id) wire:click="selectProgram({{ $program->id }})" @endif
-                                    class="prog-card college-program-card reveal-item"
+                                    class="prog-card college-program-card college-program-card--global reveal-item"
                                     aria-label="Open {{ $program->title }}">
                                 <span class="college-program-accent" style="background:{{ $selected['color'] }}"></span>
                                 <span class="college-program-body">
@@ -429,7 +427,7 @@
         <section class="mt-9 college-faculty-section">
             <div class="hub-sec-head">
                 <div>
-                    <h3 class="hub-sec-title !mt-0">Faculty assigned to {{ $selected['code'] }}</h3>
+                    <h3 class="college-overview-section-title">Faculty assigned to {{ $selected['code'] }}</h3>
                 </div>
                 <span class="college-faculty-count">{{ $facultyRows->count() }} {{ \Illuminate\Support\Str::plural('member', $facultyRows->count()) }}</span>
             </div>
@@ -442,8 +440,8 @@
                             <div class="flex min-w-0 items-center gap-3">
                                 <span class="avatar w-10 h-10 text-[11px] shrink-0">{{ $f['initials'] }}</span>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-[13px] font-extrabold text-charcoal truncate">{{ $f['name'] }}</p>
-                                    <p class="text-[11px] text-gray-500 font-medium truncate">{{ $f['position'] }}</p>
+                                    <p class="college-faculty-name truncate">{{ $f['name'] }}</p>
+                                    <p class="college-faculty-position truncate">{{ $f['position'] }}</p>
                                 </div>
                                 <x-sc.icon name="chevron-right" class="w-4 h-4 text-gray-400 college-faculty-arrow" />
                             </div>
@@ -486,7 +484,7 @@
             {{-- 2x2: four colleges divide evenly, so xl:grid-cols-3 would strand a lone card. --}}
             <div class="mt-4 grid md:grid-cols-2 gap-5">
                 @foreach ($cards as $card)
-                    <button type="button" class="college-card reveal-item"
+                    <button type="button" class="college-card college-card--global reveal-item"
                             wire:click="selectCollege('{{ $card['code'] }}')"
                             aria-label="Open {{ $card['model']->name }}">
 
@@ -882,6 +880,69 @@
                     </div>
                 </div>
             </form>
+        </div>
+    @endif
+
+    {{-- Standardized project archive / restore confirmation. The server-rendered
+         state keeps the confirmation in the Livewire component, so there is no
+         second transient browser dialog competing with this modal. --}}
+    @if ($confirmingProject)
+        @php($isRestore = $confirmingProjectAction === 'restore')
+        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 no-print"
+             wire:key="project-status-confirmation-{{ $confirmingProject->id }}-{{ $confirmingProjectAction }}"
+             role="dialog" aria-modal="true" aria-labelledby="project-status-title">
+            <div class="sc-modal-backdrop fixed inset-0" wire:click="cancelProjectConfirmation"></div>
+            <div class="sc-modal relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white"
+                 x-data @keydown.escape.window="$wire.cancelProjectConfirmation">
+                <div class="px-6 py-5 {{ $isRestore ? 'bg-lnu-700' : 'bg-amber-600' }} text-white">
+                    <div class="flex items-start gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                            <x-sc.icon name="{{ $isRestore ? 'folder' : 'shield' }}" class="h-5 w-5" />
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/70">Project status</p>
+                            <h2 id="project-status-title" class="mt-1 text-[18px] font-extrabold tracking-tight">
+                                {{ $isRestore ? 'Restore project?' : 'Archive project?' }}
+                            </h2>
+                            <p class="mt-1 text-[12px] font-medium leading-relaxed text-white/75">
+                                {{ $confirmingProject->acr }} · {{ $confirmingProject->code }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 py-5">
+                    <p class="text-[13px] font-semibold leading-relaxed text-slate-700">
+                        @if ($isRestore)
+                            Restore this project and return its linked activities and related records to the active program view?
+                        @else
+                            Archive this project? Its activities, attendance, rendered hours, availability, and budget records will be kept and can be restored later.
+                        @endif
+                    </p>
+                    <div class="mt-4 flex items-start gap-2.5 rounded-xl border {{ $isRestore ? 'border-blue-100 bg-blue-50 text-blue-800' : 'border-amber-100 bg-amber-50 text-amber-800' }} px-3.5 py-3">
+                        <x-sc.icon name="{{ $isRestore ? 'check' : 'alert' }}" class="mt-0.5 h-4 w-4 shrink-0" />
+                        <p class="text-[11px] font-semibold leading-relaxed">
+                            {{ $isRestore ? 'The project will appear in the active project list again.' : 'The record is not permanently deleted.' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
+                    <button type="button" wire:click="cancelProjectConfirmation" class="btn btn-ghost">Cancel</button>
+                    <button type="button"
+                            wire:click="{{ $isRestore ? 'restoreProject' : 'archiveProject' }}({{ $confirmingProject->id }})"
+                            wire:loading.attr="disabled"
+                            wire:target="{{ $isRestore ? 'restoreProject' : 'archiveProject' }}"
+                            class="btn {{ $isRestore ? 'btn-primary' : 'btn-danger-soft' }} min-w-[128px]">
+                        <span wire:loading.remove wire:target="{{ $isRestore ? 'restoreProject' : 'archiveProject' }}">
+                            {{ $isRestore ? 'Restore project' : 'Archive project' }}
+                        </span>
+                        <span wire:loading wire:target="{{ $isRestore ? 'restoreProject' : 'archiveProject' }}" class="inline-flex items-center gap-2">
+                            <span class="rh-spinner"></span>Processing…
+                        </span>
+                    </button>
+                </div>
+            </div>
         </div>
     @endif
 </div>

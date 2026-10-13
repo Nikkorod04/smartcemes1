@@ -17,7 +17,7 @@
     the trend chart below is a native build with no markup to mirror. Recorded as a
     deliberate divergence in revisions.md §18.
 --}}
-<div>
+<div class="faculty-profile-page">
     {{-- Admin-only. The Directory trail exists to orient the DIRECTOR, who arrives
          from /faculty or /faculty/directory — and BOTH of those routes are admin-only.
          This view is also served by `/my-profile` (`faculty.me`), so rendering the
@@ -39,8 +39,8 @@
         <div class="sc-card p-5 flex flex-wrap items-start gap-4">
             <span class="avatar w-14 h-14 text-[17px]">{{ $contribution->initials($faculty->user?->name) }}</span>
             <div class="min-w-0 flex-1">
-                <h2 class="text-[20px] font-extrabold tracking-tight leading-tight">{{ $faculty->user?->name }}</h2>
-                <p class="text-[12.5px] text-gray-400 font-medium mt-0.5">{{ $faculty->position ?? '—' }}</p>
+                <h2 class="faculty-profile-name">{{ $faculty->user?->name }}</h2>
+                <p class="faculty-profile-position">{{ $faculty->position ?? '—' }}</p>
                 <div class="mt-2.5 flex flex-wrap gap-1.5 items-center">
                     <x-sc.college-pill :code="$faculty->college?->code" :name="$faculty->college?->name" />
                     <span class="badge badge-{{ $faculty->isActive() ? 'green' : 'yellow' }}">{{ $faculty->status_label }}</span>
@@ -60,18 +60,18 @@
     <section class="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         @php
             $tiles = [
-                ['label' => 'Rendered hours approved', 'value' => $this->fmt($record['rendered_hours'] ?? 0), 'sub' => 'service credit'],
-                ['label' => 'Projects involved', 'value' => $record['projects_involved'] ?? 0, 'sub' => ($record['projects_led'] ?? 0).' as lead'],
-                ['label' => 'Activities handled', 'value' => $record['activities_handled'] ?? 0, 'sub' => 'assigned'],
-                ['label' => 'Proposal approval rate', 'value' => ($record['proposal_approval_rate'] ?? null) === null ? '—' : $record['proposal_approval_rate'].'%', 'sub' => ($record['proposals_submitted'] ?? 0).' submitted'],
+                ['tone' => 'teal', 'label' => 'Rendered hours approved', 'value' => $this->fmt($record['rendered_hours'] ?? 0), 'sub' => 'service credit'],
+                ['tone' => 'blue', 'label' => 'Projects involved', 'value' => $record['projects_involved'] ?? 0, 'sub' => ($record['projects_led'] ?? 0).' as lead'],
+                ['tone' => 'gold', 'label' => 'Activities handled', 'value' => $record['activities_handled'] ?? 0, 'sub' => 'assigned'],
+                ['tone' => 'indigo', 'label' => 'Proposal approval rate', 'value' => ($record['proposal_approval_rate'] ?? null) === null ? '—' : $record['proposal_approval_rate'].'%', 'sub' => ($record['proposals_submitted'] ?? 0).' submitted'],
             ];
         @endphp
         @foreach ($tiles as $tile)
-            <div class="sc-card p-4">
-                <p class="text-[26px] font-extrabold tracking-tight leading-none">{{ $tile['value'] }}</p>
-                <p class="text-[11.5px] text-gray-400 font-medium mt-1.5">{{ $tile['label'] }}</p>
-                <p class="text-[10.5px] text-gray-300 font-semibold mt-0.5">{{ $tile['sub'] }}</p>
-            </div>
+            <x-sc.color-card :tone="$tile['tone']" class="faculty-profile-kpi flex h-full flex-col p-5">
+                <p class="faculty-kpi-value">{{ $tile['value'] }}</p>
+                <p class="faculty-kpi-label">{{ $tile['label'] }}</p>
+                <p class="faculty-kpi-sub">{{ $tile['sub'] }}</p>
+            </x-sc.color-card>
         @endforeach
     </section>
 
@@ -198,7 +198,17 @@
 
             {{-- --- Involvement --- --}}
             <div class="sc-card p-5">
-                <h3 class="font-extrabold text-[14px] tracking-tight mb-3">Involvement</h3>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                        <h3>Involvement</h3>
+                        <p class="mt-1 text-[10.5px] font-semibold text-gray-400">Showing {{ $projects->count() }} of {{ $projectsTotal }} project{{ $projectsTotal === 1 ? '' : 's' }}</p>
+                    </div>
+                    @if (auth()->user()->isFaculty())
+                        <a href="{{ route('projects.my') }}" class="text-[11px] font-extrabold text-lnu-700 hover:text-lnu-500 transition whitespace-nowrap">View all →</a>
+                    @else
+                        <a href="{{ route('faculty.directory') }}" class="text-[11px] font-extrabold text-lnu-700 hover:text-lnu-500 transition whitespace-nowrap">Directory →</a>
+                    @endif
+                </div>
                 @if ($projects->isEmpty())
                     <p class="text-[12px] text-gray-400 font-medium">No project assignment yet.</p>
                 @else
@@ -222,7 +232,13 @@
 
             {{-- --- Proposals --- --}}
             <div class="sc-card p-5">
-                <h3 class="font-extrabold text-[14px] tracking-tight mb-3">Proposals</h3>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                        <h3>Proposals</h3>
+                        <p class="mt-1 text-[10.5px] font-semibold text-gray-400">Showing {{ $proposals->count() }} of {{ $proposalTotal }} submitted</p>
+                    </div>
+                    <a href="{{ route('proposals.index') }}" class="text-[11px] font-extrabold text-lnu-700 hover:text-lnu-500 transition whitespace-nowrap">View all →</a>
+                </div>
                 <div class="flex flex-wrap gap-1.5 mb-3">
                     <span class="badge badge-gray">{{ $record['proposals_submitted'] }} submitted</span>
                     <span class="badge badge-green">{{ $record['proposals_approved'] }} approved</span>

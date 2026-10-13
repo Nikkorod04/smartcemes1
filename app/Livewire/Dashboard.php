@@ -43,6 +43,15 @@ class Dashboard extends Component
         // target model (§4.7) — see the note in the returned view for what
         // replaced the objective-status tile.
         $programs = ExtensionProject::with(['college'])->get();
+        $latestProjectIds = ExtensionProject::query()
+            ->latest('created_at')
+            ->latest('id')
+            ->take(10)
+            ->pluck('id');
+        $latestProjects = $latestProjectIds
+            ->map(fn ($id) => $programs->firstWhere('id', $id))
+            ->filter()
+            ->values();
 
         $statusColors = [
             'ongoing' => '#003599',
@@ -55,7 +64,7 @@ class Dashboard extends Component
             ->mapWithKeys(fn ($s) => [$s => $programs->where('status', $s)->count()])
             ->filter();
 
-        $budget = $programs->map(fn ($p) => [
+        $budget = $latestProjects->map(fn ($p) => [
             'code' => $p->code,
             // The TITLE, not the code (owner request 2026-09-25): the budget panel
             // labels each row with the project a Director actually recognises.
@@ -197,9 +206,15 @@ class Dashboard extends Component
             'target_pct' => null,
         ]);
 
-        // Chart rows: rendered vs each PROJECT's annual target. Targets exist at
-        // university and project level only (D-R5) — never per program.
-        $hoursRows = $rankings->projects();
+        // Chart rows: rendered vs each PROJECT's annual target. The dashboard
+        // shows the ten most recently created projects, in newest-first order.
+        // Targets exist at university and project level only (D-R5) — never per
+        // program.
+        $rankedProjectRows = $rankings->projects();
+        $hoursRows = $latestProjectIds
+            ->map(fn ($id) => $rankedProjectRows->firstWhere('id', $id))
+            ->filter()
+            ->values();
 
         return view('livewire.dashboard.admin', [
             'kpis' => $kpis,

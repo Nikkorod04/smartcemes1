@@ -213,6 +213,10 @@ class Index extends Component
     /** Project create. The college and program arrive pre-filled from the view. */
     public bool $showProjectForm = false;
 
+    public ?int $confirmingProjectId = null;
+
+    public string $confirmingProjectAction = 'archive';
+
     public array $projectForm = [
         'college_id' => '',
         'program_id' => '',
@@ -443,6 +447,32 @@ class Index extends Component
     /* Project archive (owner request 2026-10-05) */
     /* ------------------------------------------------------------------ */
 
+    public function openArchiveProjectConfirmation(int $id): void
+    {
+        $project = ExtensionProject::findOrFail($id);
+
+        Gate::authorize('delete', $project);
+
+        $this->confirmingProjectId = $project->id;
+        $this->confirmingProjectAction = 'archive';
+    }
+
+    public function openRestoreProjectConfirmation(int $id): void
+    {
+        $project = ExtensionProject::onlyTrashed()->findOrFail($id);
+
+        Gate::authorize('restore', $project);
+
+        $this->confirmingProjectId = $project->id;
+        $this->confirmingProjectAction = 'restore';
+    }
+
+    public function cancelProjectConfirmation(): void
+    {
+        $this->confirmingProjectId = null;
+        $this->confirmingProjectAction = 'archive';
+    }
+
     /**
      * Archive one project (and everything that renders through it).
      *
@@ -451,12 +481,10 @@ class Index extends Component
      * the two-implementations-of-one-ruleset problem §25 had to undo for the
      * create forms. The service also owns the mirror `restore()`.
      *
-     * The confirmation is Livewire's own `wire:confirm` on the button — the same
-     * convention `Communities\Index::confirmDelete()` uses — rather than a
-     * hand-rolled modal. That is deliberate: a custom modal would need a
-     * visibility flag, and §14/§25 record three separate bugs where a watcher
-     * bridge failed to open one. `wire:confirm` has no visibility state to get
-     * wrong.
+     * The confirmation is opened through the standardized server-rendered modal
+     * state above. Keeping the action behind an explicit component method avoids
+     * a browser confirm competing with the app's modal and lets the operation
+     * expose the same loading and toast feedback as the other project actions.
      */
     public function archiveProject(int $id): void
     {
@@ -464,20 +492,28 @@ class Index extends Component
 
         Gate::authorize('delete', $project);
 
-        $activityCount = app(ProjectArchiveService::class)->archive($project);
+        try {
+            $activityCount = app(ProjectArchiveService::class)->archive($project);
 
-        // The archived row is no longer in the live list, so a Director sitting
-        // on the "Archived" chip should see it appear; on any other chip the
-        // card simply leaves.
-        $this->dispatch(
-            'sc-toast',
-            message: 'Project '.$project->code.' archived'
-                .($activityCount > 0
-                    ? ' with '.$activityCount.' '.($activityCount === 1 ? 'activity' : 'activities')
-                    : '')
-                .' — find it under the Archived filter to restore.',
-            type: 'warn'
-        );
+            $this->cancelProjectConfirmation();
+
+            // The archived row is no longer in the live list, so a Director sitting
+            // on the "Archived" chip should see it appear; on any other chip the
+            // card simply leaves.
+            $this->dispatch(
+                'sc-toast',
+                message: 'Project '.$project->code.' archived'
+                    .($activityCount > 0
+                        ? ' with '.$activityCount.' '.($activityCount === 1 ? 'activity' : 'activities')
+                        : '')
+                    .' — find it under the Archived filter to restore.',
+                type: 'success'
+            );
+        } catch (\Throwable $e) {
+            $this->cancelProjectConfirmation();
+            report($e);
+            $this->dispatch('sc-toast', message: 'The project could not be archived. Please try again.', type: 'error');
+        }
     }
 
     /**
@@ -493,20 +529,27 @@ class Index extends Component
 
         Gate::authorize('restore', $project);
 
-        $activityCount = app(ProjectArchiveService::class)->restore($project);
+        try {
+            $activityCount = app(ProjectArchiveService::class)->restore($project);
 
-        // The row is live again, so the Archived list no longer holds it —
-        // return the Director to the live list where it now appears.
-        $this->projectStatus = 'All';
+            // The row is live again, so the Archived list no longer holds it —
+            // return the Director to the live list where it now appears.
+            $this->projectStatus = 'All';
+            $this->cancelProjectConfirmation();
 
-        $this->dispatch(
-            'sc-toast',
-            message: 'Project '.$project->code.' restored'
-                .($activityCount > 0
-                    ? ' with '.$activityCount.' '.($activityCount === 1 ? 'activity' : 'activities')
-                    : ''),
-            type: 'success'
-        );
+            $this->dispatch(
+                'sc-toast',
+                message: 'Project '.$project->code.' restored'
+                    .($activityCount > 0
+                        ? ' with '.$activityCount.' '.($activityCount === 1 ? 'activity' : 'activities')
+                        : ''),
+                type: 'success'
+            );
+        } catch (\Throwable $e) {
+            $this->cancelProjectConfirmation();
+            report($e);
+            $this->dispatch('sc-toast', message: 'The project could not be restored. Please try again.', type: 'error');
+        }
     }
 
     /** The selected college's id, or NULL when view 1 is showing. */
@@ -596,6 +639,11 @@ class Index extends Component
             'formPillars' => config('smartcemes.pillars'),
             'formProgramStatuses' => ['active', 'inactive'],
             'formProjectStatuses' => config('smartcemes.statuses.program'),
+            'confirmingProject' => $this->confirmingProjectId
+                ? ($this->confirmingProjectAction === 'restore'
+                    ? ExtensionProject::onlyTrashed()->find($this->confirmingProjectId)
+                    : ExtensionProject::find($this->confirmingProjectId))
+                : null,
         ]);
     }
 

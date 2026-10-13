@@ -1,15 +1,21 @@
 <div>
 <section class="pt-6">
     <div class="reveal-item sc-card p-3.5">
-        <div class="flex flex-nowrap items-center gap-1.5 overflow-x-auto">
-            <div class="flex shrink-0 items-center gap-1">
-                <span class="mr-1 text-[10px] font-extrabold uppercase tracking-[0.13em] text-gray-400">View</span>
+        <div class="community-toolbar-top">
+            <div class="community-type-switch" role="group" aria-label="Partner directory view">
+                <span class="community-toolbar-label">View</span>
                 <button type="button" wire:click="$set('type', '')" @class(['chip', 'on' => $type === ''])>All</button>
                 <button type="button" wire:click="$set('type', 'community')" @class(['chip', 'on' => $type === 'community'])>Communities</button>
                 <button type="button" wire:click="$set('type', 'school')" @class(['chip', 'on' => $type === 'school'])>Partner schools</button>
             </div>
 
-            <label class="sc-search w-[150px] shrink-0">
+            <button type="button" wire:click="create" class="btn btn-primary community-add-button whitespace-nowrap !px-3 !text-[11px]">
+                <x-sc.icon name="pin" class="w-4 h-4" />Add community / school
+            </button>
+        </div>
+
+        <div class="community-filter-controls">
+            <label class="sc-search community-directory-search">
                 <span class="sc-search__icon"><x-sc.icon name="search" class="h-4 w-4" /></span>
                 <input type="text" wire:model.live.debounce.300ms="search" class="input !bg-white" placeholder="Search name, municipality, or contact…">
                 @if ($search)
@@ -17,25 +23,37 @@
                 @endif
             </label>
 
-            <label class="sr-only" for="community-province-filter">Province</label>
-            <select id="community-province-filter" wire:model.live="province" class="input !w-auto !bg-white">
-                <option value="">All provinces</option>
-                @foreach ($provinces as $p)
-                    <option value="{{ $p }}">{{ $p }}</option>
-                @endforeach
-            </select>
+            <div class="community-filter-selects">
+                <label class="community-filter-control">
+                    <span>Province</span>
+                    <select id="community-province-filter" wire:model.live="province" class="input !bg-white">
+                        <option value="">All provinces</option>
+                        @foreach ($provinces as $p)
+                            <option value="{{ $p }}">{{ $p }}</option>
+                        @endforeach
+                    </select>
+                </label>
 
-            <label class="sr-only" for="community-status-filter">Status</label>
-            <select id="community-status-filter" wire:model.live="status" class="input !w-auto !bg-white">
-                <option value="">All statuses</option>
-                <option value="active">Active</option>
-                <option value="prospecting">Prospecting</option>
-                <option value="archived">Archived</option>
-            </select>
+                <label class="community-filter-control">
+                    <span>Status</span>
+                    <select id="community-status-filter" wire:model.live="status" class="input !bg-white">
+                        <option value="">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="prospecting">Prospecting</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </label>
 
-            <button type="button" wire:click="create" class="btn btn-primary ml-auto shrink-0 whitespace-nowrap !px-2.5 !text-[11px]">
-                <x-sc.icon name="pin" class="w-4 h-4" />Add community / school
-            </button>
+                <label class="community-filter-control">
+                    <span>Sort by</span>
+                    <select wire:model.live="sort" class="input !bg-white" aria-label="Sort partner directory">
+                        <option value="name_asc">Name A–Z</option>
+                        <option value="name_desc">Name Z–A</option>
+                        <option value="newest">Recently added</option>
+                        <option value="status">Status</option>
+                    </select>
+                </label>
+            </div>
         </div>
     </div>
 </section>
@@ -53,12 +71,11 @@
         </div>
     @else
         <div class="reveal-item sc-card overflow-hidden">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+            <div class="community-directory-header flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
                 <div>
-                    <h3 class="text-[14px] font-extrabold tracking-tight">Partner directory</h3>
-                    <p class="mt-0.5 text-[11px] font-medium text-gray-400">Select a record to inspect its relationship history and contact details.</p>
+                    <h3 class="community-directory-title">Partner directory</h3>
                 </div>
-                <span class="badge badge-gray">{{ $communities->count() }} shown</span>
+                <span class="community-directory-count">{{ $communities->total() }} record{{ $communities->total() === 1 ? '' : 's' }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="sc-table">
@@ -108,6 +125,9 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="community-pagination border-t border-gray-100 px-5 py-3.5">
+                @include('livewire.partials.pagination', ['paginator' => $communities])
             </div>
         </div>
     @endif

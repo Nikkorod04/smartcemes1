@@ -9,6 +9,28 @@
     $otherNarratives = $narrativeLabels
         ->reject(fn ($n) => $featuredNarratives->contains('code', $n['code']))
         ->filter(fn ($n) => $n['health'] !== null);
+    $hoursChartRows = collect($hoursChart['labels'])->values()->map(function ($label, $i) use ($hoursChart) {
+        $target = $hoursChart['target'][$i] ?? null;
+
+        return [
+            'label' => $label,
+            'rendered' => (float) ($hoursChart['rendered'][$i] ?? 0),
+            'target' => $target === null ? null : (float) $target,
+        ];
+    });
+    $hoursAttainedColors = $hoursChartRows->map(function ($row) {
+        if ($row['target'] === null) {
+            return '#94a3b8';
+        }
+
+        if ($row['rendered'] >= $row['target']) {
+            return '#059669';
+        }
+
+        return $row['target'] > 0 && ($row['rendered'] / $row['target']) < .6
+            ? '#d99a06'
+            : '#003599';
+    })->values();
     /* Rank label for the leaderboards. The 🥇🥈🥉 medals were REMOVED 2026-09-25
        (owner request): a trophy glyph is not an institutional mark, it rendered
        inconsistently across platforms, and it made the top three look like prizes
@@ -18,33 +40,17 @@
 @endphp
 
 <div>
-{{-- ===================== PAGE HEAD ===================== --}}
-<section class="pt-6">
-    <div class="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-            <p class="dash-sec-eyebrow">Dashboard</p>
-            <h2 class="text-[21px] font-extrabold tracking-tight leading-tight mt-1">Extension Overview</h2>
-            <p class="text-[12.5px] text-gray-400 font-medium mt-1.5">
-                {{ now()->format('l, F j, Y') }} · {{ $kpis['ayLabel'] }}
-            </p>
-        </div>
-        <p class="dash-note max-w-xs text-right">
-            Training hours derive from <span class="font-mono font-semibold text-gray-500">trainors × trainees × days</span> — no hourly factor
-        </p>
-    </div>
-</section>
-
 {{-- ===================== KPI ROW (R4/R5 dictionary) ===================== --}}
 <section class="dash-section">
     <div class="reveal-item grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
         {{-- Extension Projects --}}
-        <div class="dash-panel dash-kpi">
+        <x-sc.color-card tone="blue" class="dash-panel dash-kpi dash-kpi--projects">
             <div class="dash-kpi-top">
                 <span class="dash-kpi-icon bg-lnu-50 text-lnu-800"><x-sc.icon name="folder" class="w-5 h-5" /></span>
-                <span class="badge badge-gray">{{ $kpis['programCount'] }} programs</span>
+                <span class="dash-kpi-chip dash-kpi-chip--blue"><span class="dash-kpi-chip-dot"></span>{{ $kpis['programCount'] }} programs</span>
             </div>
-            <p class="dash-kpi-value" style="color:#003599">{{ $kpis['programs'] }}</p>
+            <p class="dash-kpi-value">{{ $kpis['programs'] }}</p>
             <p class="dash-kpi-label">Extension Projects</p>
             <div class="dash-kpi-foot">
                 @if ($statusChart['data']->sum() > 0)
@@ -61,17 +67,17 @@
                     <p class="dash-note">no projects yet</p>
                 @endif
             </div>
-        </div>
+        </x-sc.color-card>
 
         {{-- Training hours vs the ANNUAL POOL (R4 / §2.2B — consumption, not a ratio) --}}
-        <div class="dash-panel dash-kpi">
+        <x-sc.color-card tone="teal" class="dash-panel dash-kpi dash-kpi--hours">
             <div class="dash-kpi-top">
                 <span class="dash-kpi-icon bg-lnu-50 text-lnu-800"><x-sc.icon name="chart" class="w-5 h-5" /></span>
-                <span class="badge {{ $kpis['hoursPct'] === null ? 'badge-gray' : ($kpis['hoursPct'] >= 100 ? 'badge-green' : 'badge-blue') }}">
+                <span class="dash-kpi-chip {{ $kpis['hoursPct'] === null ? 'dash-kpi-chip--gray' : ($kpis['hoursPct'] >= 100 ? 'dash-kpi-chip--green' : 'dash-kpi-chip--blue') }}"><span class="dash-kpi-chip-dot"></span>
                     {{ $kpis['hoursPct'] === null ? 'no target' : 'target '.number_format($kpis['annualTargetHours']).' hrs' }}
                 </span>
             </div>
-            <p class="dash-kpi-value" style="color:#003599">{{ number_format($kpis['trainingHours']) }}</p>
+            <p class="dash-kpi-value">{{ number_format($kpis['trainingHours']) }}</p>
             <p class="dash-kpi-label">Training Hours Rendered</p>
             <div class="dash-kpi-foot">
                 @if ($kpis['hasTarget'])
@@ -91,14 +97,14 @@
                     </p>
                 @endif
             </div>
-        </div>
+        </x-sc.color-card>
 
         {{-- Budget vs allocation --}}
-        <div class="dash-panel dash-kpi">
+        <x-sc.color-card tone="gold" class="dash-panel dash-kpi dash-kpi--budget">
             <div class="dash-kpi-top">
                 <span class="dash-kpi-icon bg-gold-50 text-gold-700"><x-sc.icon name="wallet" class="w-5 h-5" /></span>
                 @if ($kpis['budgetPct'] !== null)
-                    <span class="badge badge-yellow">{{ (int) round($kpis['budgetPct']) }}% utilized</span>
+                    <span class="dash-kpi-chip dash-kpi-chip--gold"><span class="dash-kpi-chip-dot"></span>{{ (int) round($kpis['budgetPct']) }}% utilized</span>
                 @endif
             </div>
             <p class="dash-kpi-value is-money">₱{{ number_format($kpis['budgetUsed']) }}</p>
@@ -115,15 +121,15 @@
                     {{ (int) round($kpis['budgetPct'] ?? 0) }}% of the allocated budget, summed from each project's own
                 </p>
             </div>
-        </div>
+        </x-sc.color-card>
 
         {{-- Pending approvals --}}
-        <div class="dash-panel dash-kpi !border-gold-200 !bg-gradient-to-br !from-white !to-gold-50">
+        <x-sc.color-card tone="indigo" class="dash-panel dash-kpi dash-kpi--pending">
             <div class="dash-kpi-top">
                 <span class="dash-kpi-icon bg-gold-100 text-gold-700"><x-sc.icon name="clock" class="w-5 h-5" /></span>
-                <span class="badge badge-red">action needed</span>
+                <span class="dash-kpi-chip dash-kpi-chip--red"><span class="dash-kpi-chip-dot"></span>action needed</span>
             </div>
-            <p class="dash-kpi-value" style="color:#b8860b">{{ $kpis['pendingApprovals'] }}</p>
+            <p class="dash-kpi-value">{{ $kpis['pendingApprovals'] }}</p>
             <p class="dash-kpi-label">Pending Approvals</p>
             <div class="dash-kpi-foot">
                 <p class="dash-note">{{ $kpis['pendingProposals'] }} proposals · {{ $kpis['pendingAvailability'] }} availability · {{ $kpis['pendingHours'] }} rendered hours</p>
@@ -131,7 +137,7 @@
                     <a href="{{ route('ai-analysis.index') }}" class="dash-head-link inline-block mt-2">{{ $kpis['pendingAnalyses'] }} AI analysis{{ $kpis['pendingAnalyses'] === 1 ? '' : 'es' }} awaiting approval →</a>
                 @endif
             </div>
-        </div>
+        </x-sc.color-card>
     </div>
 </section>
 
@@ -139,82 +145,141 @@
 <section class="dash-section">
     <div class="dash-sec-head">
         <div>
-            <p class="dash-sec-eyebrow">Trends</p>
             <h3 class="dash-sec-title">Hours &amp; budget against target</h3>
         </div>
-        <span class="dash-sec-note">Targets exist at university and project level only</span>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="reveal-item dash-panel">
-            <div class="dash-head">
+        <div class="reveal-item dash-panel dash-trend-panel dash-hours-panel">
+            <div class="dash-trend-head">
                 <h4 class="dash-head-title">Training Hours vs Target</h4>
-                <span class="dash-note">by project</span>
             </div>
-            <div class="dash-chart h-56"><canvas x-data x-init="
+
+            <div class="dash-chart-well">
+                <div class="dash-chart dash-hours-chart dash-hours-chart--vertical"><canvas role="img" aria-label="Training hours rendered compared with annual target for each project" x-data x-init="
                 if (Chart.getChart($refs.c)) Chart.getChart($refs.c).destroy();
                 new Chart($refs.c, {
                     type: 'bar',
                     data: {
                         labels: @js($hoursChart['labels']),
                         datasets: [
-                            { label: 'Annual target', data: @js($hoursChart['target']), backgroundColor: '#dbe6fe', borderRadius: 5, maxBarThickness: 16 },
-                            { label: 'Rendered', data: @js($hoursChart['rendered']), backgroundColor: '#003599', borderRadius: 5, maxBarThickness: 16 }
+                            {
+                                label: 'Target',
+                                data: @js($hoursChartRows->pluck('target')->values()),
+                                backgroundColor: '#dbe6fe',
+                                borderColor: '#b9cdf4',
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                borderSkipped: false,
+                                barThickness: 16,
+                                grouped: false,
+                                order: 1
+                            },
+                            {
+                                label: 'Attained',
+                                data: @js($hoursChartRows->pluck('rendered')->values()),
+                                backgroundColor: @js($hoursAttainedColors),
+                                borderRadius: 8,
+                                borderSkipped: false,
+                                barThickness: 9,
+                                grouped: false,
+                                order: 0
+                            }
                         ]
                     },
                     options: {
                         maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        layout: { padding: { top: 4, right: 8, bottom: 0, left: 0 } },
                         scales: {
-                            y: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('en-PH') + ' hrs' }, grid: { drawTicks: false } },
-                            x: { grid: { display: false } }
+                            y: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('en-PH') + ' hrs', font: { size: 10 } }, grid: { color: '#eef1f6', drawTicks: false } },
+                            x: { grid: { display: false, drawTicks: false }, ticks: { color: '#4b5563', font: { size: 9.5, weight: '600' }, autoSkip: true, maxTicksLimit: 12, maxRotation: 38, minRotation: 0 } }
                         },
                         plugins: {
-                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10.5 } } },
-                            tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('en-PH')} hrs` } }
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#0b255b',
+                                titleColor: '#fff',
+                                bodyColor: 'rgba(255,255,255,.82)',
+                                footerColor: '#fff1a8',
+                                displayColors: true,
+                                padding: 10,
+                                callbacks: {
+                                    title: items => items[0]?.label || '',
+                                    label: ctx => ctx.parsed.y === null
+                                        ? ` ${ctx.dataset.label}: no target`
+                                        : ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('en-PH')} hrs`,
+                                    footer: items => {
+                                        const index = items[0]?.dataIndex;
+                                        const target = @js($hoursChartRows->pluck('target')->values())[index];
+                                        const attained = @js($hoursChartRows->pluck('rendered')->values())[index] ?? 0;
+
+                                        if (target === null || target === undefined || target <= 0) {
+                                            return ' No annual target set';
+                                        }
+
+                                        const pct = Math.round(attained / target * 100);
+                                        const remaining = Math.max(target - attained, 0);
+
+                                        return ` ${pct}% attained · ${remaining.toLocaleString('en-PH')} hrs remaining`;
+                                    }
+                                },
+                                footerFont: { weight: '700' }
+                            }
                         }
                     }
                 })
-            " x-ref="c"></canvas></div>
-            <p class="dash-note mt-3">Rendered hours against each project's annual target — project level only, as no per-program target exists. Projects with no target show a rendered bar only.</p>
+                " x-ref="c"></canvas></div>
+            </div>
+            <div class="dash-hours-foot">
+                <span><span class="legend-dot" style="background:#003599"></span>Attained hours</span>
+                <span><span class="legend-dot" style="background:#dbe6fe"></span>Target track</span>
+                <span class="dash-hours-foot-note">Hover a project for its attainment and remaining hours.</span>
+            </div>
         </div>
 
-        <div class="reveal-item dash-panel lg:col-span-2">
-            <div class="dash-head">
+        <div class="reveal-item dash-panel dash-trend-panel dash-budget-panel lg:col-span-2">
+            <div class="dash-trend-head">
                 <h4 class="dash-head-title">Budget Utilized vs Allocated Budget</h4>
-                <div class="flex items-center gap-4 flex-wrap">
-                    <span class="dash-note inline-flex items-center gap-1.5"><span class="legend-dot" style="background:#dbe6fe"></span>Allocated budget</span>
-                    <span class="dash-note inline-flex items-center gap-1.5"><span class="legend-dot bg-gold-500"></span>Utilized</span>
-                    <span class="dash-note inline-flex items-center gap-1.5"><span class="legend-dot bg-red-500"></span>Over allocation</span>
-                </div>
             </div>
-            {{-- Compact bullet rows (owner request 2026-09-25): the full project
-                 TITLE, a utilization bar per row with a tick at 100%, and the
-                 amounts inline. Replaces a grouped bar chart whose x-axis could
-                 only carry project codes — a vertical axis has no room for a
-                 title, and a code tells the Director nothing. --}}
-            <div class="space-y-2.5">
+
+            <div class="dash-budget-list">
                 @forelse ($budgetRows as $row)
-                    <div class="flex items-center gap-3" wire:key="dash-budget-{{ $loop->index }}">
-                        <span class="min-w-0 flex-1 text-[12px] font-semibold text-charcoal truncate"
-                              title="{{ $row['title'] }}">{{ $row['title'] }}</span>
-                        <span class="bullet-track w-[150px] shrink-0">
-                            <span class="bullet-fill {{ $row['over'] ? 'is-over' : '' }}"
+                    <div class="dash-budget-row" wire:key="dash-budget-{{ $loop->index }}">
+                        <div class="dash-budget-row-head">
+                            <div class="dash-budget-row-title-wrap">
+                                <span class="dash-budget-index">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
+                                <span class="dash-budget-title" title="{{ $row['title'] }}">{{ $row['title'] }}</span>
+                            </div>
+                            @if ($row['pct'] === null)
+                                <span class="dash-budget-percent dash-budget-percent--muted">No allocation</span>
+                            @elseif ($row['over'])
+                                <span class="dash-budget-percent dash-budget-percent--over">{{ (int) round($row['pct']) }}% over</span>
+                            @else
+                                <span class="dash-budget-percent">{{ (int) round($row['pct']) }}%</span>
+                            @endif
+                        </div>
+                        <div class="dash-budget-track">
+                            <span class="dash-budget-fill {{ $row['over'] ? 'is-over' : '' }}"
                                   style="width:{{ min((float) ($row['pct'] ?? 0), 100) }}%"></span>
-                            <span class="bullet-tick"></span>
-                        </span>
-                        <span class="w-[118px] shrink-0 text-right text-[11px] text-gray-400 font-medium tabular-nums">
-                            ₱{{ number_format($row['actual']) }} / ₱{{ number_format($row['allocated']) }}
-                        </span>
+                            <span class="dash-budget-tick"></span>
+                        </div>
+                        <div class="dash-budget-row-meta">
+                            <span><strong>₱{{ number_format($row['actual']) }}</strong> utilized</span>
+                            <span>of <strong>₱{{ number_format($row['allocated']) }}</strong> allocated</span>
+                        </div>
                     </div>
                 @empty
-                    <p class="dash-note italic">No projects yet.</p>
+                    <div class="dash-budget-empty"><x-sc.icon name="wallet" class="w-4 h-4" />No projects yet.</div>
                 @endforelse
             </div>
 
-            <p class="dash-note mt-3">
-                The bar is utilization against each project's allocated budget; the tick marks 100%.
-                Budget has no annual target — the allocation is the figure every project is measured against.
-            </p>
+            <div class="dash-budget-legend">
+                <span><span class="legend-dot" style="background:#dbe6fe"></span>Allocation track</span>
+                <span><span class="legend-dot" style="background:#d99a06"></span>Utilized</span>
+                <span><span class="legend-dot" style="background:#ef4444"></span>Over allocation</span>
+                <span class="dash-budget-legend-note"><span class="dash-budget-legend-tick"></span>100% mark</span>
+            </div>
         </div>
 
     </div>
@@ -224,10 +289,8 @@
 <section class="dash-section">
     <div class="dash-sec-head">
         <div>
-            <p class="dash-sec-eyebrow">Performance</p>
             <h3 class="dash-sec-title">Performance Leaders</h3>
         </div>
-        <span class="dash-sec-note">Ranked by training hours rendered and activities delivered</span>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -325,11 +388,7 @@
 <section class="dash-section">
     <div class="dash-sec-head">
         <div>
-            <p class="dash-sec-eyebrow">Intelligence</p>
-            <h3 class="dash-sec-title">
-                AI Decision Support
-                <span class="badge badge-blue">Director-only · aggregated inputs only</span>
-            </h3>
+            <h3 class="dash-sec-title">AI Decision Support</h3>
         </div>
         <a href="{{ route('ai-analysis.index') }}" class="dash-head-link">Open AI workspace →</a>
     </div>

@@ -1,33 +1,32 @@
-<div>
+<div class="secretary-calendar-page faculty-calendar-page">
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">
-        {{ $isFaculty ? 'Your extension schedule — items marked "You" involve you directly' : 'Office-wide schedule of activities, accepted availability, deadlines, and conflict alerts' }}
-    </p>
-    <div class="reveal-item flex flex-wrap items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-4">
-            <h2 class="font-extrabold text-[17px] tracking-tight">{{ Carbon\Carbon::createFromDate($year, $month, 1)->format('F Y') }}</h2>
-            <div class="flex flex-wrap items-center gap-3 text-[11.5px] font-semibold">
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lnu-600"></span>Activity</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold-500"></span>Availability</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full border-2 border-red-500 bg-white"></span>Deadline</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>Conflict</span>
+    <div class="reveal-item calendar-toolbar sc-card p-4">
+        <div class="calendar-toolbar-main">
+            <div class="calendar-month-heading">
+                <span class="calendar-month-icon"><x-sc.icon name="calendar" class="h-5 w-5" /></span>
+                <div>
+                    <p class="calendar-eyebrow">Schedule</p>
+                    <h2 class="calendar-month-title">{{ Carbon\Carbon::createFromDate($year, $month, 1)->format('F Y') }}</h2>
+                </div>
+            </div>
+            <div class="calendar-legend" aria-label="Calendar legend">
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--activity"></span>Activity</span>
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--availability"></span>Availability</span>
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--deadline"></span>Deadline</span>
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--conflict"></span>Conflict</span>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <div class="flex bg-gray-100 rounded-xl p-1">
+        <div class="calendar-toolbar-actions">
+            <div class="calendar-view-switch" role="group" aria-label="Calendar view">
                 <button type="button" wire:click="$set('view', 'month')"
-                        @class(['w-max px-3 h-8 rounded-lg flex items-center justify-center text-[11.5px] font-bold transition',
-                                'bg-white shadow-sm text-lnu-800' => $view === 'month',
-                                'text-gray-400 hover:text-gray-600' => $view !== 'month'])>Month</button>
+                        @class(['calendar-view-button', 'is-active' => $view === 'month'])>Month</button>
                 <button type="button" wire:click="$set('view', 'list')"
-                        @class(['w-max px-3 h-8 rounded-lg flex items-center justify-center text-[11.5px] font-bold transition',
-                                'bg-white shadow-sm text-lnu-800' => $view === 'list',
-                                'text-gray-400 hover:text-gray-600' => $view !== 'list'])>Next 60 days</button>
+                        @class(['calendar-view-button', 'is-active' => $view === 'list'])>Next 60 days</button>
             </div>
-            <div class="flex items-center gap-1">
-                <button type="button" wire:click="prevMonth" title="Previous month" class="btn btn-ghost !p-2 rounded-xl"><x-sc.icon name="chevron" class="w-4 h-4 rotate-90" /></button>
-                <button type="button" wire:click="goToday" class="btn btn-outline !px-3 !py-1.5 text-[11.5px]">Today</button>
-                <button type="button" wire:click="nextMonth" title="Next month" class="btn btn-ghost !p-2 rounded-xl"><x-sc.icon name="chevron" class="w-4 h-4 -rotate-90" /></button>
+            <div class="calendar-nav">
+                <button type="button" wire:click="prevMonth" title="Previous month" class="calendar-nav-button"><x-sc.icon name="chevron" class="w-4 h-4 rotate-90" /></button>
+                <button type="button" wire:click="goToday" class="calendar-today-button">Today</button>
+                <button type="button" wire:click="nextMonth" title="Next month" class="calendar-nav-button"><x-sc.icon name="chevron" class="w-4 h-4 -rotate-90" /></button>
             </div>
         </div>
     </div>
@@ -36,13 +35,13 @@
 @if ($view === 'month')
 <section class="mt-4 grid lg:grid-cols-[1fr_20rem] gap-4 items-start">
     {{-- Month grid --}}
-    <div class="reveal-item min-w-0">
-        <div class="grid grid-cols-7 gap-2 mb-2">
+    <div class="reveal-item calendar-month-board min-w-0">
+        <div class="calendar-weekdays">
             @foreach (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $d)
-                <p class="text-center text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ $d }}</p>
+                <p>{{ $d }}</p>
             @endforeach
         </div>
-        <div class="grid grid-cols-7 gap-2">
+        <div class="calendar-grid">
             @foreach ($cells as $cell)
                 @php($dayStr = $cell->format('Y-m-d'))
                 @php($inMonth = $cell->month === $month && $cell->year === $year)
@@ -52,32 +51,30 @@
                 <button type="button" wire:click="selectDay('{{ $dayStr }}')" wire:key="cal-cell-{{ $dayStr }}"
                         title="{{ $cell->format('l, F j, Y') }} — click to view"
                         @class([
-                            'text-left min-h-[96px] rounded-lg border p-2 transition cursor-pointer overflow-hidden',
-                            $isToday ? 'ring-2 ring-gold-500 border-gold-200 bg-white hover:bg-lnu-50' : 'border-gray-200',
-                            $isSel ? '!bg-lnu-50 !border-lnu-300' : '',
-                            $inMonth ? 'bg-white hover:bg-lnu-50' : 'bg-gray-50/60 hover:bg-gray-100',
+                            'calendar-cell',
+                            'is-today' => $isToday,
+                            'is-selected' => $isSel,
+                            'is-outside' => ! $inMonth,
                         ])>
                     <span @class([
-                            'inline-flex w-6 h-6 rounded-full items-center justify-center text-[12px]',
-                            $isToday ? 'bg-gold-500 text-charcoal font-bold' : '',
-                            ! $isToday && $inMonth ? 'font-semibold text-charcoal' : '',
-                            ! $inMonth ? 'text-gray-300' : '',
+                            'calendar-day-number',
+                            'is-today' => $isToday,
+                            'is-outside' => ! $inMonth,
                         ])>{{ $cell->format('j') }}</span>
-                    <span class="block mt-1 space-y-1">
+                    <span class="calendar-cell-events">
                         @foreach ($cellEvents->take(2) as $e)
                             <span @class([
-                                    'block truncate text-[10px] font-semibold px-1.5 py-[3px] rounded-md',
-                                    $e['conflict'] ? '!border !border-red-300 !text-red-600' : match ($e['type']) {
-                                        'activity' => 'bg-lnu-50 text-lnu-700',
-                                        'availability' => 'bg-gold-50 text-gold-800',
-                                        default => 'bg-red-50 !border !border-red-200 text-red-600',
-                                    },
+                                    'calendar-event-pill',
+                                    'is-conflict' => $e['conflict'],
+                                    'is-activity' => ! $e['conflict'] && $e['type'] === 'activity',
+                                    'is-availability' => ! $e['conflict'] && $e['type'] === 'availability',
+                                    'is-deadline' => ! $e['conflict'] && $e['type'] === 'deadline',
                                 ]) title="{{ $e['title'] }}{{ $e['conflict'] ? ' — CONFLICT' : '' }}">
-                                @if ($e['conflict'])<x-sc.icon name="alert" class="w-3 h-3" /> @endif{{ $e['title'] }}
+                                @if ($e['conflict'])<x-sc.icon name="alert" class="w-3 h-3 shrink-0" /> @endif<span class="truncate">{{ $e['title'] }}</span>
                             </span>
                         @endforeach
                         @if ($cellEvents->count() > 2)
-                            <span class="block text-[10px] font-semibold text-gray-400 pl-1">+{{ $cellEvents->count() - 2 }} more</span>
+                            <span class="calendar-more-events">+{{ $cellEvents->count() - 2 }} more</span>
                         @endif
                     </span>
                 </button>
@@ -86,26 +83,26 @@
     </div>
 
     {{-- Day panel --}}
-    <aside class="reveal-item w-full lg:w-80 lg:sticky lg:top-24">
-        <div class="sc-card p-5">
-            <div class="flex items-center justify-between gap-2 pb-3 border-b border-gray-100">
+    <aside class="reveal-item calendar-day-panel-wrap w-full lg:w-80 lg:sticky lg:top-24">
+        <div class="calendar-day-panel sc-card p-5">
+            <div class="calendar-day-panel-head">
                 <div>
-                    <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">{{ Carbon\Carbon::parse($selectedDate)->format('l') }}</p>
-                    <h3 class="font-extrabold text-[15px] tracking-tight">{{ Carbon\Carbon::parse($selectedDate)->format('M j, Y') }}</h3>
+                    <p class="calendar-eyebrow">Selected day</p>
+                    <h3 class="calendar-day-title">{{ Carbon\Carbon::parse($selectedDate)->format('l, M j, Y') }}</h3>
                 </div>
-                <span class="badge {{ $dayEvents->count() ? 'badge-blue' : 'badge-gray' }}">{{ $dayEvents->count() ?: 'No' }} event{{ $dayEvents->count() === 1 ? '' : 's' }}</span>
+                <span class="calendar-event-count {{ $dayEvents->count() ? 'has-events' : '' }}">{{ $dayEvents->count() ?: 'No' }} event{{ $dayEvents->count() === 1 ? '' : 's' }}</span>
             </div>
             @forelse ($dayEvents as $e)
-                <ul class="mt-3 space-y-2.5" wire:key="cal-day-{{ $e['type'] }}-{{ $loop->index }}">
-                    <li class="flex gap-3 p-3 rounded-xl border {{ $e['conflict'] ? 'border-red-200 bg-red-50/40' : 'border-gray-100 hover:border-lnu-200 hover:bg-lnu-50/40 transition' }}">
-                        <span class="mt-1 w-2.5 h-2.5 rounded-full shrink-0 {{ $e['conflict'] ? 'bg-red-500' : match ($e['type']) { 'activity' => 'bg-lnu-600', 'availability' => 'bg-gold-500', default => 'bg-red-500' } }}"></span>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-[12.5px] font-bold leading-snug">
+                <ul class="calendar-day-events" wire:key="cal-day-{{ $e['type'] }}-{{ $loop->index }}">
+                    <li class="calendar-event-card {{ $e['conflict'] ? 'is-conflict' : '' }}">
+                        <span class="calendar-event-dot {{ $e['conflict'] ? 'is-conflict' : match ($e['type']) { 'activity' => 'is-activity', 'availability' => 'is-availability', default => 'is-deadline' } }}"></span>
+                        <div class="calendar-event-body">
+                            <p class="calendar-event-title">
                                 {{ $e['title'] }}
                                 @if ($e['mine'])<span class="badge badge-gold !text-[9.5px] !px-2 !py-0.5">(You)</span>@endif
                                 @if ($e['conflict'])<span class="conflict-marker">conflict</span>@endif
                             </p>
-                            <p class="text-[11px] text-gray-400 mt-0.5">
+                            <p class="calendar-event-meta">
                                 @if ($e['type'] === 'activity')
                                     {{ \Illuminate\Support\Str::before($e['model']->program?->title ?? 'Activity', ':') }} · {{ $e['model']->venue ?? ucfirst($e['status']) }}
                                 @elseif ($e['type'] === 'availability')
@@ -114,26 +111,26 @@
                                     {{ \Illuminate\Support\Str::before($e['model']['program']->title ?? 'Program', ':') }} · objective target date
                                 @endif
                             </p>
-                            <div class="mt-1.5 flex items-center gap-2.5 flex-wrap">
+                            <div class="calendar-event-actions">
                                 @if ($e['time'])
-                                    <span class="inline-flex items-center gap-1 text-[10.5px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md"><x-sc.icon name="clock" class="w-3 h-3" /> {{ $e['time'] }}</span>
+                                    <span class="calendar-time-chip"><x-sc.icon name="clock" class="w-3 h-3" /> {{ $e['time'] }}</span>
                                 @endif
                                 @if ($e['type'] === 'deadline')
-                                    <a href="{{ route('projects.show', $e['model']['program']) }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open deadline →</a>
+                                    <a href="{{ route('projects.show', $e['model']['program']) }}" class="calendar-event-link">Open deadline <span aria-hidden="true">→</span></a>
                                 @elseif ($e['type'] === 'availability')
-                                    <a href="{{ route('availability.index') }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open availability →</a>
+                                    <a href="{{ route('availability.index') }}" class="calendar-event-link">Open availability <span aria-hidden="true">→</span></a>
                                 @else
-                                    <a href="{{ route('projects.show', $e['model']->program) }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition">Open activity →</a>
+                                    <a href="{{ route('projects.show', $e['model']->program) }}" class="calendar-event-link">Open activity <span aria-hidden="true">→</span></a>
                                 @endif
                             </div>
                         </div>
                     </li>
                 </ul>
             @empty
-                <div class="text-center py-7">
-                    <span class="mx-auto w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center"><x-sc.icon name="check" class="w-5 h-5" /></span>
-                    <p class="mt-3 font-bold text-[13px]">Nothing scheduled</p>
-                    <p class="text-[11.5px] text-gray-400 mt-1">Enjoy the breather — no activities or deadlines on this day.</p>
+                <div class="calendar-empty-day">
+                    <span class="calendar-empty-icon"><x-sc.icon name="check" class="w-5 h-5" /></span>
+                    <p class="calendar-empty-title">Nothing scheduled</p>
+                    <p class="calendar-empty-note">Enjoy the breather — no activities or deadlines on this day.</p>
                 </div>
             @endforelse
         </div>
@@ -141,26 +138,28 @@
 </section>
 @else
 {{-- 60-day grouped list --}}
-<section class="mt-4 space-y-3">
+<section class="mt-4 calendar-list-view space-y-3">
     @forelse ($next60->groupBy('date') as $dateKey => $dayGroup)
         @php($isToday = $dateKey === now()->format('Y-m-d'))
-        <div class="reveal-item sc-card p-0 overflow-hidden" wire:key="cal60-group-{{ $dateKey }}">
-            <div class="flex items-center gap-2.5 px-4 py-2.5 {{ $isToday ? 'bg-gold-50/70' : 'bg-gray-50/60' }}">
-                <p class="text-[10.5px] font-bold uppercase tracking-wider text-gray-400">{{ Carbon\Carbon::parse($dateKey)->format('l') }}</p>
-                <p class="text-[13px] font-extrabold tracking-tight">{{ Carbon\Carbon::parse($dateKey)->format('F j, Y') }}</p>
-                @if ($isToday)<span class="badge badge-gold !text-[10px]">today</span>@endif
+        <div class="reveal-item calendar-list-group sc-card p-0 overflow-hidden" wire:key="cal60-group-{{ $dateKey }}">
+            <div class="calendar-list-date {{ $isToday ? 'is-today' : '' }}">
+                <div>
+                    <p class="calendar-eyebrow">{{ Carbon\Carbon::parse($dateKey)->format('l') }}</p>
+                    <p class="calendar-list-date-title">{{ Carbon\Carbon::parse($dateKey)->format('F j, Y') }}</p>
+                </div>
+                @if ($isToday)<span class="calendar-event-count has-events">today</span>@endif
             </div>
-            <ul class="px-4 divide-y divide-gray-50">
+            <ul class="calendar-list-events px-4">
                 @foreach ($dayGroup as $e)
-                    <li class="flex items-center gap-3 py-2.5" wire:key="cal60-{{ $e['type'] }}-{{ $dateKey }}-{{ $loop->index }}">
-                        <span class="w-2 h-2 rounded-full shrink-0 {{ $e['conflict'] ? 'bg-red-500' : match ($e['type']) { 'activity' => 'bg-lnu-600', 'availability' => 'bg-gold-500', default => 'bg-red-500' } }}"></span>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-[12.5px] font-bold truncate">
+                    <li class="calendar-list-event {{ $e['conflict'] ? 'is-conflict' : '' }}" wire:key="cal60-{{ $e['type'] }}-{{ $dateKey }}-{{ $loop->index }}">
+                        <span class="calendar-event-dot {{ $e['conflict'] ? 'is-conflict' : match ($e['type']) { 'activity' => 'is-activity', 'availability' => 'is-availability', default => 'is-deadline' } }}"></span>
+                        <div class="calendar-event-body">
+                            <p class="calendar-event-title truncate">
                                 {{ $e['title'] }}
                                 @if ($e['mine'])<span class="badge badge-gold !text-[9.5px] !px-2 !py-0.5">(You)</span>@endif
                                 @if ($e['conflict'])<span class="conflict-marker">conflict</span>@endif
                             </p>
-                            <p class="text-[11px] text-gray-400">
+                            <p class="calendar-event-meta">
                                 @if ($e['type'] === 'activity')
                                     {{ \Illuminate\Support\Str::before($e['model']->program?->title ?? 'Activity', ':') }} · {{ $e['model']->venue ?? ucfirst($e['status']) }} · {{ $e['time'] }}
                                 @elseif ($e['type'] === 'availability')
@@ -171,15 +170,16 @@
                             </p>
                         </div>
                         <a href="{{ $e['type'] === 'availability' ? route('availability.index') : route('projects.show', $e['model']['program'] ?? $e['model']->program) }}"
-                           class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 shrink-0">Open →</a>
+                           class="calendar-event-link shrink-0">Open <span aria-hidden="true">→</span></a>
                     </li>
                 @endforeach
             </ul>
         </div>
     @empty
-        <div class="sc-card p-10 text-center">
-            <p class="font-bold text-[13.5px]">Nothing scheduled in the next 60 days</p>
-            <p class="text-[12px] text-gray-400 mt-1">Accept an availability request or check the month grid.</p>
+        <div class="calendar-empty-list sc-card p-10 text-center">
+            <span class="calendar-empty-icon"><x-sc.icon name="calendar" class="w-5 h-5" /></span>
+            <p class="calendar-empty-title">Nothing scheduled in the next 60 days</p>
+            <p class="calendar-empty-note">Accept an availability request or check the month grid.</p>
         </div>
     @endforelse
 </section>

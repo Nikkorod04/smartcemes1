@@ -1,34 +1,34 @@
-<div>
+<div class="faculty-rendered-hours-page">
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">My rendered hours · adjust down for partial participation (with a note) · approved entries are locked</p>
+    <p class="faculty-page-hint mb-3">My rendered hours · adjust down for partial participation (with a note) · approved entries are locked</p>
 </section>
 
 <section class="mt-2 grid grid-cols-4 gap-4">
-    <div class="sc-card p-5">
-        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Approved total</p>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-emerald-600">{{ number_format((float) $approvedTotal, 2) }} hrs</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1">count toward your faculty contribution</p>
-    </div>
-    <div class="sc-card p-5">
-        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Pending</p>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none">{{ $entries->where('status', 'pending')->count() }}</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1">awaiting Director approval</p>
-    </div>
-    <div class="sc-card p-5">
-        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Rejected</p>
-        <p class="mt-3 text-[22px] font-extrabold tracking-tight leading-none text-red-600">{{ $entries->where('status', 'rejected')->count() }}</p>
-        <p class="text-[11px] text-gray-400 font-medium mt-1">see remarks</p>
-    </div>
-    <div class="sc-card p-5 !border-lnu-100 !bg-gradient-to-br !from-white !to-lnu-50/40">
-        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Auto-draft rule</p>
-        <p class="text-[12.5px] text-gray-600 mt-2 leading-relaxed">Drafts are auto-created when an activity is marked Completed (hours = activity duration). Overnight schedules skip the auto-draft — record those manually.</p>
+    <x-sc.color-card tone="teal" class="faculty-hours-kpi flex h-full flex-col p-5">
+        <p class="faculty-kpi-label">Approved total</p>
+        <p class="faculty-kpi-value mt-3">{{ number_format((float) $approvedTotal, 2) }} <span class="faculty-kpi-unit">hrs</span></p>
+        <p class="faculty-kpi-sub">count toward your faculty contribution</p>
+    </x-sc.color-card>
+    <x-sc.color-card tone="gold" class="faculty-hours-kpi flex h-full flex-col p-5">
+        <p class="faculty-kpi-label">Pending</p>
+        <p class="faculty-kpi-value mt-3">{{ $entries->where('status', 'pending')->count() }}</p>
+        <p class="faculty-kpi-sub">awaiting Director approval</p>
+    </x-sc.color-card>
+    <x-sc.color-card tone="indigo" class="faculty-hours-kpi flex h-full flex-col p-5">
+        <p class="faculty-kpi-label">Rejected</p>
+        <p class="faculty-kpi-value mt-3">{{ $entries->where('status', 'rejected')->count() }}</p>
+        <p class="faculty-kpi-sub">see remarks</p>
+    </x-sc.color-card>
+    <div class="faculty-info-card sc-card p-5">
+        <p class="faculty-info-label">Auto-draft rule</p>
+        <p class="faculty-info-copy">Drafts are auto-created when an activity is marked Completed (hours = activity duration). Overnight schedules skip the auto-draft — record those manually.</p>
     </div>
 </section>
 
 <section class="mt-4">
     <div class="sc-card p-0 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100">
-            <h3 class="font-extrabold text-[15px] tracking-tight flex items-center gap-2">My Rendered Hours</h3>
+            <h3 class="faculty-section-title flex items-center gap-2">My Rendered Hours</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="sc-table">

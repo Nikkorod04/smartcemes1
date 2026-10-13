@@ -1,9 +1,9 @@
-<div>
+<div class="faculty-proposals-page">
 <section class="pt-6">
     <div class="sc-card rh-filter-panel p-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <p class="rh-filter-label">Proposal status</p>
+                <p class="proposal-filter-label">Proposal status</p>
                 <div class="chip-group mt-2">
                     @foreach ([
                         '' => 'All proposals',
@@ -19,7 +19,7 @@
                 </div>
             </div>
             <div class="relative flex-1 min-w-[260px] max-w-[420px]">
-                <span class="rh-filter-label block mb-2">Search proposals</span>
+                <span class="proposal-filter-label block mb-2">Search proposals</span>
                 <div class="sc-search">
                     <span class="sc-search__icon"><x-sc.icon name="search" class="w-4 h-4" /></span>
                     <input wire:model.live.debounce.300ms="search" aria-label="Search proposals" class="input !w-full !min-w-0" placeholder="Title, faculty, project, or community…">
@@ -30,8 +30,8 @@
             </div>
         </div>
         <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
-            <p class="text-[11.5px] text-gray-400 font-medium"><span wire:loading wire:target="search,status,sortBy" class="rh-spinner mr-1.5"></span>{{ $proposals->total() }} result{{ $proposals->total() === 1 ? '' : 's' }} · page {{ $proposals->currentPage() }} of {{ $proposals->lastPage() }}</p>
-            <p class="text-[11px] text-gray-400">Click a column heading to sort the queue.</p>
+            <p class="proposal-result-summary"><span wire:loading wire:target="search,status,sortBy" class="rh-spinner mr-1.5"></span>{{ $proposals->total() }} result{{ $proposals->total() === 1 ? '' : 's' }} · page {{ $proposals->currentPage() }} of {{ $proposals->lastPage() }}</p>
+            <p class="proposal-sort-hint">Click a column heading to sort the queue.</p>
         </div>
     </div>
 </section>
@@ -40,8 +40,8 @@
     <div class="sc-card p-0 overflow-hidden">
         <div class="rh-queue-head px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
             <div>
-                <h3 class="font-extrabold text-[15px] tracking-tight">Proposal queue</h3>
-                <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">{{ $proposals->total() }} matching proposal{{ $proposals->total() === 1 ? '' : 's' }}</p>
+                    <h3 class="proposal-section-title">Proposal queue</h3>
+                    <p class="proposal-section-meta">{{ $proposals->total() }} matching proposal{{ $proposals->total() === 1 ? '' : 's' }}</p>
             </div>
             <div class="flex items-center gap-2">
                 <span class="badge badge-{{ $status === 'pending' ? 'yellow' : 'blue' }}">{{ $status === '' ? 'All proposals' : ucfirst($status) }}</span>
@@ -68,15 +68,15 @@
                 <tbody>
                     @forelse ($proposals as $p)
                         <tr wire:key="prop-{{ $p->id }}" class="rh-row rh-row--{{ $p->status }}">
-                            <td><p class="font-semibold text-charcoal">{{ $p->title }}</p>
+                            <td><p class="proposal-row-title">{{ $p->title }}</p>
                                 <div class="flex flex-wrap items-center gap-1.5 mt-1">
                                     <span class="text-[11px] text-gray-400">{{ $p->program?->code ?? 'Unassigned project' }}</span>
                                     @if ($p->documents->count())<span class="badge badge-gray !text-[10px]">{{ $p->documents->count() }} attachment{{ $p->documents->count() === 1 ? '' : 's' }}</span>@endif
                                     @if ($p->special_order_path)<span class="badge badge-gold !text-[10px]">SO attached</span>@endif
                                 </div>
                             </td>
-                            <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="font-semibold text-charcoal">{{ $p->faculty?->user?->name ?? '—' }}</span></div></td>
-                            <td><p class="font-semibold text-charcoal">{{ $p->program?->code ?? '—' }}</p><p class="text-[11px] text-gray-400">{{ $p->community?->name ?? 'No community' }}</p></td>
+                            <td><div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="people" class="w-3.5 h-3.5" /></span><span class="proposal-row-person">{{ $p->faculty?->user?->name ?? '—' }}</span></div></td>
+                            <td><p class="proposal-row-project">{{ $p->program?->code ?? '—' }}</p><p class="proposal-row-subtext">{{ $p->community?->name ?? 'No community' }}</p></td>
                             <td class="whitespace-nowrap"><span class="inline-flex items-center gap-1.5 text-gray-600"><x-sc.icon name="calendar" class="w-3.5 h-3.5 text-gray-400" />{{ $p->proposed_start_date->format('M j, Y') }} – {{ $p->proposed_end_date->format('M j, Y') }}</span><p class="text-[11px] text-gray-400 mt-1">Submitted {{ $p->submitted_at?->format('M j, Y') ?? '—' }}</p>
                                 @if ($p->violatesProgramRange())<span class="conflict-marker ml-1"><x-sc.icon name="alert" class="w-3 h-3" /> out of range</span>@endif
                             </td>

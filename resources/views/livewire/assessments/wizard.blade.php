@@ -1,4 +1,4 @@
-<div>
+<div class="secretary-assessment-wizard-page faculty-assessment-wizard-page">
 @php
     $communityOptions = $communities->mapWithKeys(fn ($c) => [$c->id => $c->name.' · '.$c->municipality])->all();
     $quarterOptions = [1 => 'Q1 · Jan–Mar', 2 => 'Q2 · Apr–Jun', 3 => 'Q3 · Jul–Sep', 4 => 'Q4 · Oct–Dec'];
@@ -23,7 +23,7 @@
     ];
 @endphp
 <section class="pt-6">
-    <p class="text-[13px] text-gray-400 font-medium mb-3">Encode needs-assessment responses · Sections I–IX · routed to the CESO Secretary for validation</p>
+    <p class="secretary-form-subtitle mb-3">Encode needs-assessment responses · Sections I–IX · routed to the CESO Secretary for validation</p>
     <div class="reveal-item flex flex-wrap items-center gap-3">
         <a href="{{ route('assessments.template') }}" class="btn btn-outline !py-2 !px-3 text-[12px]"><x-sc.icon name="download" class="w-4 h-4" /> Download official template</a>
         <a href="{{ route('assessments.import') }}" class="btn btn-outline !py-2 !px-3 text-[12px]"><x-sc.icon name="doc" class="w-4 h-4" /> Import from template</a>

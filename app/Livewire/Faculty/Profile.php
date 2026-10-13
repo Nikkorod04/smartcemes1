@@ -290,8 +290,11 @@ class Profile extends Component
             ->where('faculty_id', $this->faculty->id)
             ->with('activity')
             ->latest()
-            ->limit(10)
+            ->limit(5)
             ->get();
+        $proposalTotal = ActivityProposal::query()
+            ->where('faculty_id', $this->faculty->id)
+            ->count();
 
         $projects = $this->faculty->ledPrograms()->with('college')->get()
             ->map(fn ($project) => ['project' => $project, 'role' => 'Lead']);
@@ -310,11 +313,20 @@ class Profile extends Component
             ->get()
             ->map(fn ($project) => ['project' => $project, 'role' => 'Co-Lead']);
 
+        $allProjects = $projects->concat($assigned)
+            ->unique(fn ($entry) => $entry['project']->id)
+            ->sortByDesc(fn ($entry) => $entry['project']->updated_at?->timestamp ?? 0)
+            ->sortByDesc(fn ($entry) => $entry['project']->status === 'active')
+            ->values();
+        $projectsTotal = $allProjects->count();
+
         return view('livewire.faculty.profile', [
             'record' => $record,
-            'projects' => $projects->concat($assigned)->values(),
+            'projects' => $allProjects->take(5)->values(),
+            'projectsTotal' => $projectsTotal,
             'hoursBySemester' => $hoursBySemester,
             'proposals' => $proposals,
+            'proposalTotal' => $proposalTotal,
             'flags' => $this->flags($record),
             'contribution' => $contribution,
             'trend' => $trend,

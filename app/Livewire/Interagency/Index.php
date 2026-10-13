@@ -3,10 +3,13 @@
 namespace App\Livewire\Interagency;
 
 use App\Models\InteragencyAgency;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 /**
  * Interagency Catalogue (revision §5 Phase R6 / §4.6 / D-R10).
@@ -17,7 +20,7 @@ use Livewire\Component;
  * medical missions, roads, water systems. The AI now hands those off as Tier-2
  * referrals instead of dressing them up as CESO recommendations. But a referral
  * is only defensible if the agency it names is real, which means the agency list
- * has to be something the Director can see, edit and retire.
+ * has to be something the Director can see, edit and archive.
  *
  * This page is that list. `PromptV2` injects exactly the active rows, so editing
  * a row here changes what the model is allowed to cite — the catalogue is the
@@ -40,7 +43,7 @@ use Livewire\Component;
  *     something the mandate does not support; and MOA tracking was never in the
  *     approved scope. The code column replaces `abbr` (the code *is* the
  *     abbreviation) and `sort_order` replaces hand-dragged ordering.
- *  2. **Retire, not delete.** Preferring `active = false` (plus the soft delete)
+ *  2. **Archive, not delete.** Preferring `active = false` (plus the soft delete)
  *     keeps historical referrals resolvable. A hard delete would make past
  *     analyses look like they cited a hallucinated agency.
  *  3. **Scope wording, not tier chips (2026-10-02).** The UI labels the two AI
@@ -56,9 +59,13 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use WithPagination;
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
+
+    public ?int $confirmingToggleId = null;
 
     public array $form = [
         'agency_code' => '',
@@ -162,13 +169,13 @@ class Index extends Component
             $agency = InteragencyAgency::withTrashed()->findOrFail($this->editingId);
             $wasActive = (bool) $agency->active;
 
-            // Editing a retired row re-activates it — that is the restore path.
+            // Editing an archived row re-activates it — that is the restore path.
             $agency->deleted_at = null;
             $agency->fill($payload)->save();
 
             $note = $payload['active']
                 ? ($wasActive ? '' : ' · now available for AI referrals')
-                : ' · retired from AI referrals';
+                : ' · archived from AI referrals';
 
             $this->dispatch('sc-toast', message: "Agency {$agency->agency_code} updated{$note}", type: 'success');
         } else {
@@ -181,32 +188,51 @@ class Index extends Component
     }
 
     /**
-     * Retire or restore an agency.
+     * Archive or restore an agency.
      *
-     * Retiring flips `active` to false rather than deleting the row, because
+     * Archiving flips `active` to false rather than deleting the row, because
      * `AssessmentAnalysis::resolvedReferrals()` resolves against the current
      * catalogue: a hard delete would retroactively turn every past referral to
      * this agency into an "unverified citation", which is a false alarm. A
-     * retired row still loses `PromptV2` access immediately, which is the
+     * archived row still loses `PromptV2` access immediately, which is the
      * behaviour that actually matters for the guardrail.
      */
     public function toggleActive(int $id): void
     {
         Gate::authorize('manage', InteragencyAgency::class);
 
-        $agency = InteragencyAgency::withTrashed()->findOrFail($id);
+        try {
+            $agency = InteragencyAgency::withTrashed()->findOrFail($id);
 
-        $agency->active = ! $agency->active;
-        $agency->deleted_at = null;
-        $agency->save();
+            $agency->active = ! $agency->active;
+            $agency->deleted_at = null;
+            $agency->save();
 
-        $this->dispatch(
-            'sc-toast',
-            message: $agency->active
-                ? "Agency {$agency->agency_code} restored — citable by the AI again"
-                : "Agency {$agency->agency_code} retired — no longer citable by the AI",
-            type: $agency->active ? 'success' : 'warn',
-        );
+            $this->confirmingToggleId = null;
+            $this->dispatch(
+                'sc-toast',
+                message: $agency->active
+                    ? "Agency {$agency->agency_code} restored — citable by the AI again"
+                    : "Agency {$agency->agency_code} archived — no longer citable by the AI",
+                type: 'success',
+            );
+        } catch (\Throwable $e) {
+            $this->confirmingToggleId = null;
+            report($e);
+            $this->dispatch('sc-toast', message: 'The agency status could not be updated. Please try again.', type: 'error');
+        }
+    }
+
+    public function confirmToggleActive(int $id): void
+    {
+        Gate::authorize('manage', InteragencyAgency::class);
+
+        $this->confirmingToggleId = InteragencyAgency::withTrashed()->findOrFail($id)->id;
+    }
+
+    public function cancelToggleActive(): void
+    {
+        $this->confirmingToggleId = null;
     }
 
     public function closeForm(): void
@@ -220,6 +246,22 @@ class Index extends Component
         $this->search = '';
         $this->categoryFilter = '';
         $this->statusFilter = '';
+        $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
     }
 
     /* ------------------------------------------------------------------ */
@@ -228,7 +270,7 @@ class Index extends Component
 
     public function render()
     {
-        // Every row, including retired ones — the Director needs to see what
+        // Every row, including archived ones — the Director needs to see what
         // has been taken out of the AI's vocabulary, not just what is left.
         $agencies = InteragencyAgency::withTrashed()
             ->ordered()
@@ -243,7 +285,8 @@ class Index extends Component
                 return false;
             }
 
-            if ($this->statusFilter === 'retired' && $a->active) {
+            // Keep accepting the old URL value for shared/bookmarked links.
+            if (in_array($this->statusFilter, ['archived', 'retired'], true) && $a->active) {
                 return false;
             }
 
@@ -263,12 +306,25 @@ class Index extends Component
             return str_contains($haystack, strtolower(trim($this->search)));
         })->values();
 
+        $page = Paginator::resolveCurrentPage('page');
+        $perPage = 10;
+        $agenciesPage = new LengthAwarePaginator(
+            $filtered->slice(($page - 1) * $perPage, $perPage)->all(),
+            $filtered->count(),
+            $perPage,
+            $page,
+            ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page']
+        );
+
         return view('livewire.interagency.index', [
-            'agencies' => $filtered,
+            'agencies' => $agenciesPage,
             'totalCount' => $agencies->count(),
             'activeCount' => $agencies->where('active', true)->count(),
             'categories' => $agencies->pluck('need_category')->filter()->unique()->sort()->values(),
             'categoryCount' => $agencies->pluck('need_category')->filter()->unique()->count(),
+            'confirmingAgency' => $this->confirmingToggleId
+                ? InteragencyAgency::withTrashed()->find($this->confirmingToggleId)
+                : null,
         ]);
     }
 

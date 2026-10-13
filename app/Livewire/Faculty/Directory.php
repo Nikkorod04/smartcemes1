@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -92,6 +93,11 @@ class Directory extends Component
     }
 
     public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSort(): void
     {
         $this->resetPage();
     }
@@ -350,8 +356,20 @@ class Directory extends Component
             default => $rows->sortBy('name'),
         };
 
+        $rows = $rows->values();
+        $perPage = 9;
+        $currentPage = $this->getPage();
+        $facultyPaginator = new LengthAwarePaginator(
+            $rows->forPage($currentPage, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'pageName' => 'page']
+        );
+
         return view('livewire.faculty.directory', [
-            'rows' => $rows->values(),
+            'rows' => $facultyPaginator->getCollection(),
+            'facultyPaginator' => $facultyPaginator,
             'colleges' => College::ordered()->get(),
             'expertiseOptions' => config('smartcemes.expertise_options', []),
             'positionLadder' => config('smartcemes.position_ladder', []),

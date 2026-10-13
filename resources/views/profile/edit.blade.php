@@ -1,29 +1,30 @@
+@php
+    $profileInitials = \App\View\Components\Initials::for($user->name);
+    $profileRole = ucfirst($user->role ?? 'user');
+@endphp
+
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
+    <div class="profile-page">
+        <section class="profile-identity" aria-labelledby="profile-identity-title">
+            <div class="profile-identity-glow"></div>
+            <div class="profile-avatar">{{ $profileInitials }}</div>
+            <div class="profile-identity-copy">
+                <p class="profile-eyebrow profile-eyebrow--light">SmartCEMES account</p>
+                <h1 id="profile-identity-title">{{ $user->name }}</h1>
+                <p>{{ $user->email }}</p>
+                <div class="profile-chip-row">
+                    <span class="profile-chip profile-chip--role"><x-sc.icon name="shield" class="h-3.5 w-3.5" />{{ $profileRole }}</span>
                 </div>
             </div>
-
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
+            <div class="profile-identity-aside">
+                <span class="profile-identity-aside-label">Community Extension Services Office</span>
+                <span class="profile-identity-aside-mark">LNU</span>
             </div>
+        </section>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
-            </div>
+        <div class="profile-settings-grid">
+            @include('profile.partials.update-profile-information-form')
+            @include('profile.partials.update-password-form')
         </div>
     </div>
 </x-app-layout>

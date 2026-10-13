@@ -30,7 +30,7 @@
 ])
 
 <div>
-    <section class="reveal-item sc-card p-0 overflow-hidden">
+    <section class="reveal-item ai-analysis-queue sc-card p-0 overflow-hidden">
         {{-- ===================== CONTROLS ===================== --}}
         <div class="px-5 py-4 border-b border-gray-100 space-y-3">
             {{-- Search — the page groups by community, so this is how you find one
@@ -53,7 +53,7 @@
                 </div>
 
                 {{-- The pager's "of N" counts COMMUNITIES, so label the totals. --}}
-                <span class="ml-auto text-[11px] text-gray-400 font-semibold whitespace-nowrap">
+                <span class="ai-queue-summary ml-auto whitespace-nowrap">
                     {{ $communityCount }} {{ \Illuminate\Support\Str::plural('community', $communityCount) }} ·
                     {{ $rowCount }} {{ \Illuminate\Support\Str::plural('row', $rowCount) }}
                 </span>
@@ -78,14 +78,14 @@
                      with group-level pagination its rows can sit on any page. --}}
                 @if ($communityId !== null)
                     <a href="{{ route('ai-analysis.community', ['community' => $communityId]) }}"
-                       class="group/link flex items-center gap-1.5 min-w-0 text-[12.5px] font-extrabold tracking-tight hover:text-lnu-800 transition">
+                       class="ai-community-title group/link flex items-center gap-1.5 min-w-0 hover:text-lnu-800 transition">
                         <span class="truncate">{{ $community }}</span>
                         <x-sc.icon name="chevron-right" class="w-3.5 h-3.5 shrink-0 text-gray-300 group-hover/link:text-lnu-800 transition" />
                     </a>
                 @else
-                    <h2 class="text-[12.5px] font-extrabold tracking-tight truncate">{{ $community }}</h2>
+                    <h2 class="ai-community-title truncate">{{ $community }}</h2>
                 @endif
-                <span class="text-[11px] text-gray-400 font-semibold shrink-0">
+                <span class="ai-community-count shrink-0">
                     {{ $rows->count() }} {{ \Illuminate\Support\Str::plural('row', $rows->count()) }}
                 </span>
             </div>
@@ -99,8 +99,8 @@
                         <div class="group flex items-center gap-3 flex-wrap px-5 py-3.5 transition hover:bg-gray-50/60"
                              wire:key="ai-await-{{ $row['summary']->id }}">
                             <span class="badge {{ $meta[0] }}">{{ $meta[1] }}</span>
-                            <span class="text-[12.5px] font-semibold">{{ $row['period'] }}</span>
-                            <span class="text-[11.5px] text-gray-400">{{ $row['summary']->total_responses }} validated responses</span>
+                            <span class="ai-row-period">{{ $row['period'] }}</span>
+                            <span class="ai-row-meta">{{ $row['summary']->total_responses }} validated responses</span>
                             <span class="hover-reveal ml-auto flex items-center gap-3 shrink-0">
                                 <button wire:click="generate({{ $row['summary']->id }})"
                                         wire:target="generate({{ $row['summary']->id }})" wire:loading.attr="disabled"
@@ -120,10 +120,10 @@
                                 @endif
                                 {{ $meta[1] }}
                             </span>
-                            <span class="text-[12.5px] font-semibold">{{ $row['period'] }}</span>
+                            <span class="ai-row-period">{{ $row['period'] }}</span>
 
                             @if ($a->generationCount() > 1)
-                                <span class="text-[11.5px] text-gray-400 font-semibold">gen {{ $a->generationIndex() }} of {{ $a->generationCount() }}</span>
+                                <span class="ai-row-meta font-semibold">gen {{ $a->generationIndex() }} of {{ $a->generationCount() }}</span>
                                 @if ($a->isCurrent())
                                     <span class="badge badge-green">current</span>
                                 @elseif ($a->isSuperseded())
@@ -133,14 +133,14 @@
 
                             @if ($row['state'] === 'failed')
                                 {{-- The provider's raw body is kept in the title; this is the readable form. --}}
-                                <span class="text-[11.5px] text-red-600 font-semibold" title="{{ $a->error_message }}">{{ $a->failureSummary() }}</span>
+                                <span class="ai-row-error" title="{{ $a->error_message }}">{{ $a->failureSummary() }}</span>
                             @elseif ($row['state'] === 'approved' && $a->approver)
-                                <span class="text-[11.5px] text-gray-400">Approved by {{ $a->approver->name }}</span>
+                                <span class="ai-row-meta">Approved by {{ $a->approver->name }}</span>
                             @endif
 
                             <span class="ml-auto flex items-center gap-3 shrink-0">
-                                <span class="text-[11.5px] text-gray-400 whitespace-nowrap hidden md:inline">{{ $a->created_at->format('M j, Y g:i A') }}</span>
-                                <span class="font-mono text-[11px] text-gray-400 hidden xl:inline">{{ $a->metadata['model'] ?? '—' }}</span>
+                                <span class="ai-row-date whitespace-nowrap hidden md:inline">{{ $a->created_at->format('M j, Y g:i A') }}</span>
+                                <span class="ai-row-model hidden xl:inline">{{ $a->metadata['model'] ?? '—' }}</span>
 
                                 {{-- Opening an analysis is the PRIMARY action, so it stays visible.
                                      Only the secondary action is revealed on hover. --}}
@@ -167,7 +167,7 @@
                                         <span class="text-[11px] text-gray-400">generating…</span>
                                     @endif
                                 @else
-                                    <a href="{{ route('ai-analysis.show', ['analysis' => $a]) }}" class="text-[12px] font-bold text-lnu-800 whitespace-nowrap">
+                                    <a href="{{ route('ai-analysis.show', ['analysis' => $a]) }}" class="ai-row-link whitespace-nowrap">
                                         {{ $row['state'] === 'awaiting_review' ? 'Review →' : 'View →' }}
                                     </a>
                                 @endif
@@ -182,8 +182,8 @@
                 @if ($search !== '')
                     {{-- Distinguish "your search found nothing" from "this state is
                          empty" — they need different fixes. --}}
-                    <h2 class="mt-4 font-extrabold text-[16px] tracking-tight">No community matches “{{ $search }}”</h2>
-                    <p class="mt-1.5 text-[12.5px] text-gray-500 max-w-md mx-auto leading-relaxed">
+                    <h2 class="ai-empty-title mt-4">No community matches “{{ $search }}”</h2>
+                    <p class="ai-empty-note mt-1.5 max-w-md mx-auto">
                         No community in the queue has a name containing that.
                         @if ($state !== '')
                             It is also filtered to <b>{{ $filters[$state] ?? $state }}</b>.
@@ -196,8 +196,8 @@
                         @endif
                     </div>
                 @else
-                    <h2 class="mt-4 font-extrabold text-[16px] tracking-tight">Nothing in this state</h2>
-                    <p class="mt-1.5 text-[12.5px] text-gray-500 max-w-md mx-auto leading-relaxed">
+                    <h2 class="ai-empty-title mt-4">Nothing in this state</h2>
+                    <p class="ai-empty-note mt-1.5 max-w-md mx-auto">
                         No analysis matches this filter. Choose <b>All</b> to see the whole queue.
                     </p>
                 @endif
@@ -213,7 +213,7 @@
     </section>
 
     {{-- ===================== PIPELINE LEGEND ===================== --}}
-    <p class="reveal-item mt-4 text-[11.5px] text-gray-400 leading-relaxed max-w-4xl">
+    <p class="ai-pipeline-note reveal-item mt-4 max-w-4xl">
         Pipeline states are first-class UI states: <span class="badge badge-gray !text-[10px]">pending</span> generating ·
         <span class="badge badge-yellow !text-[10px]">awaiting review</span> draft ·
         <span class="badge badge-green !text-[10px]">approved</span> citable ·
