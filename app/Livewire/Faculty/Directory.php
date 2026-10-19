@@ -10,6 +10,7 @@ use App\Services\FacultyContributionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Layout;
@@ -51,7 +52,23 @@ class Directory extends Component
 
     public bool $showForm = false;
 
+    public bool $showResetConfirm = false;
+
+    public bool $showCredentials = false;
+
     public ?int $editingId = null;
+
+    public ?int $resettingId = null;
+
+    public string $resettingName = '';
+
+    public ?string $generatedPassword = null;
+
+    public string $generatedAccountName = '';
+
+    public string $generatedAccountEmail = '';
+
+    public string $credentialAction = 'created';
 
     /** @var array<string, mixed> */
     public array $form = [
@@ -153,11 +170,13 @@ class Directory extends Component
             ? FacultyModel::with('user')->findOrFail($this->editingId)
             : null;
 
+        $temporaryPassword = $editing ? null : Str::password(16);
+
         Gate::authorize($editing ? 'update' : 'create', $editing ?? FacultyModel::class);
 
         $this->validate($this->rules($editing), [], $this->attributes());
 
-        DB::transaction(function () use ($editing) {
+        DB::transaction(function () use ($editing, $temporaryPassword) {
             if ($editing) {
                 $editing->user->update([
                     'name' => $this->form['name'],
@@ -177,15 +196,12 @@ class Directory extends Component
 
                 $faculty = $editing;
             } else {
-                // Account provisioning is Admin-only (§5.1). The password is a
-                // deliberate demo default, matching the seeded accounts, so a
-                // freshly created profile can actually be logged into during
-                // the defense walkthrough.
                 $user = User::create([
                     'name' => $this->form['name'],
                     'email' => $this->form['email'],
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make($temporaryPassword),
                     'role' => User::ROLE_FACULTY,
+                    'must_change_password' => true,
                 ]);
 
                 $faculty = FacultyModel::create([
@@ -204,9 +220,90 @@ class Directory extends Component
             $faculty->syncExpertise($this->form['expertise'], FacultyModel::expertiseCategoryMap());
         });
 
-        $this->dispatch('sc-toast', message: $editing ? 'Faculty profile updated' : 'Faculty profile created', type: 'success');
+        $wasCreated = ! $editing;
+
+        if ($wasCreated) {
+            $this->generatedPassword = $temporaryPassword;
+            $this->generatedAccountName = $this->form['name'];
+            $this->generatedAccountEmail = $this->form['email'];
+            $this->credentialAction = 'created';
+        }
+
+        $this->dispatch('sc-toast', message: $wasCreated
+            ? 'Faculty profile created — temporary credentials are ready to share'
+            : 'Faculty profile updated', type: 'success');
 
         $this->closeForm();
+
+        if ($wasCreated) {
+            $this->showCredentials = true;
+        }
+    }
+
+    public function prepareReset(int $id): void
+    {
+        $faculty = FacultyModel::with('user')->findOrFail($id);
+
+        Gate::authorize('resetPassword', $faculty);
+
+        $this->resettingId = $faculty->id;
+        $this->resettingName = $faculty->user?->name ?? 'this faculty account';
+        $this->showForm = false;
+        $this->showResetConfirm = true;
+    }
+
+    public function cancelReset(): void
+    {
+        $this->showResetConfirm = false;
+        $this->resettingId = null;
+        $this->resettingName = '';
+
+        if ($this->editingId) {
+            $this->showForm = true;
+        }
+    }
+
+    public function resetFacultyPassword(): void
+    {
+        $faculty = FacultyModel::with('user')->findOrFail($this->resettingId);
+
+        Gate::authorize('resetPassword', $faculty);
+
+        $temporaryPassword = Str::password(16);
+
+        DB::transaction(function () use ($faculty, $temporaryPassword) {
+            $faculty->user->update([
+                'password' => Hash::make($temporaryPassword),
+                'must_change_password' => true,
+            ]);
+
+            // The production app uses database sessions. Removing the target
+            // account's sessions makes the reset take effect everywhere while
+            // keeping the test session driver and other deployments safe.
+            if (config('session.driver') === 'database') {
+                DB::table(config('session.table', 'sessions'))
+                    ->where('user_id', $faculty->user_id)
+                    ->delete();
+            }
+        });
+
+        $this->generatedPassword = $temporaryPassword;
+        $this->generatedAccountName = $faculty->user->name;
+        $this->generatedAccountEmail = $faculty->user->email;
+        $this->credentialAction = 'reset';
+        $this->showResetConfirm = false;
+        $this->resettingId = null;
+        $this->dispatch('sc-toast', message: 'Temporary password generated — share it securely with the faculty member', type: 'success');
+        $this->showCredentials = true;
+    }
+
+    public function closeCredentials(): void
+    {
+        $this->showCredentials = false;
+        $this->generatedPassword = null;
+        $this->generatedAccountName = '';
+        $this->generatedAccountEmail = '';
+        $this->credentialAction = 'created';
     }
 
     /**

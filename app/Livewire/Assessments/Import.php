@@ -4,11 +4,14 @@ namespace App\Livewire\Assessments;
 
 use App\Models\Community;
 use App\Models\NeedsAssessment;
-use App\Services\AssessmentTemplate;
+use App\Services\AssessmentImportParser;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 #[Layout('layouts.app')]
 class Import extends Component
@@ -17,7 +20,13 @@ class Import extends Component
 
     public string $step = 'upload'; // upload | preview
 
+    /** Legacy single-file property kept for the existing import path/tests. */
     public $file;
+
+    /** Multiple official templates uploaded for one batch. */
+    public array $files = [];
+
+    public bool $batchMode = false;
 
     public int $communityId = 0;
 
@@ -25,7 +34,7 @@ class Import extends Component
 
     public int $year = 0;
 
-    /** Parsed record values keyed by field name. */
+    /** Parsed single-record values keyed by field name. */
     public array $record = [];
 
     /** field => [raw strings auto-mapped to "Other"] */
@@ -34,13 +43,36 @@ class Import extends Component
     /** field => error string (on-screen only, never persisted) */
     public array $fieldErrors = [];
 
-    protected function rules(): array
+    /** @var array<int, array<string, mixed>> */
+    public array $batchResults = [];
+
+    /** Uploaded file indexes selected for confirmation. */
+    public array $selectedBatchFiles = [];
+
+    public bool $showBatchConfirm = false;
+
+    public bool $showBatchResult = false;
+
+    public string $batchResultType = '';
+
+    /** @var array<string, int> */
+    public array $batchResultSummary = [];
+
+    public const MAX_BATCH_FILES = 20;
+
+    public const MAX_BATCH_KB = 51200;
+
+    protected function singleFileRules(): array
     {
         return [
-            'file' => 'required|file|mimes:'.implode(',', config('smartcemes.uploads.mimes')).'|max:'.config('smartcemes.uploads.max_kb'),
-            'communityId' => 'required|exists:communities,id',
-            'quarter' => 'required|integer|between:1,4',
-            'year' => 'required|integer|min:2020|max:2100',
+            'file' => 'required|file|mimes:xlsx|max:'.config('smartcemes.uploads.max_kb'),
+        ];
+    }
+
+    protected function batchFileRules(): array
+    {
+        return [
+            'files' => 'required|array|min:1|max:'.self::MAX_BATCH_FILES,
         ];
     }
 
@@ -49,128 +81,159 @@ class Import extends Component
         $this->resetErrorBag('file');
     }
 
+    public function updatedFiles(): void
+    {
+        $this->resetErrorBag('files');
+        $this->resetErrorBag('batch');
+    }
+
+    public function enableBatchMode(): void
+    {
+        $this->resetErrorBag();
+        $this->batchMode = true;
+        $this->step = 'upload';
+        $this->file = null;
+        $this->resetBatchState();
+    }
+
+    public function enableSingleMode(): void
+    {
+        $this->resetErrorBag();
+        $this->batchMode = false;
+        $this->step = 'upload';
+        $this->files = [];
+        $this->resetBatchState();
+    }
+
     public function parse(): void
     {
-        // Validate the file only — the template's context header (D11) may
-        // supply community/quarter/year; the form fields remain the fallback
-        // and are checked after parsing below.
-        $this->validateOnly('file');
-
-        // Livewire tmp paths can exceed Windows MAX_PATH (uploads encode
-        // metadata in the filename) and PhpSpreadsheet's ZipArchive cannot
-        // read those — copy to a short temp path first (§14 gotcha).
-        $tmp = tempnam(sys_get_temp_dir(), 'sc_assessment_').'.xlsx';
-        $spreadsheet = null;
-        try {
-            copy($this->file->getRealPath(), $tmp);
-            $spreadsheet = IOFactory::load($tmp);
-        } catch (\Throwable) {
-            $spreadsheet = null;
-        } finally {
-            @unlink($tmp);
-        }
-
-        if ($spreadsheet === null) {
-            $this->addError('file', 'Could not read the file as an XLSX workbook.');
+        if ($this->batchMode) {
+            $this->parseBatch();
 
             return;
         }
 
-        $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+        $this->parseSingle();
+    }
 
-        // Vertical template (v2): column A carries the fixed field labels,
-        // column B the answers. Section separators, title rows, and the
-        // guide column (C) are ignored — only exact label matches map to
-        // fields. First occurrence of a label wins.
-        $fieldByLabel = [];
-        foreach (AssessmentTemplate::COLUMNS as $field => $col) {
-            $fieldByLabel[$col['label']] = $field;
-        }
+    protected function parseSingle(): void
+    {
+        $this->validate($this->singleFileRules());
 
-        $rowByField = [];
-        foreach ($rows as $row) {
-            $label = trim((string) ($row['A'] ?? ''));
+        $result = app(AssessmentImportParser::class)->parse(
+            $this->file,
+            $this->communityId,
+            $this->quarter,
+            $this->year,
+        );
 
-            if ($label === '' || ! isset($fieldByLabel[$label])) {
-                continue;
+        if ($result['file_errors'] !== []) {
+            $this->record = [];
+            $this->otherMapped = [];
+            $this->fieldErrors = $result['field_errors'];
+
+            if ($this->missingContext($result)) {
+                $this->addError('communityId', 'Community and Year are required — pick them above (the template context header was blank).');
+            } else {
+                $this->addError('file', implode(' ', $result['file_errors']));
             }
 
-            $rowByField[$fieldByLabel[$label]] ??= trim((string) ($row['B'] ?? ''));
+            return;
         }
 
-        if (count($rowByField) < 20) {
-            $this->addError('file', 'This file does not use the official template labels. Download the current template (vertical form) and fill column B — older horizontal templates are no longer supported.');
+        $this->communityId = (int) $result['community_id'];
+        $this->quarter = (int) $result['quarter'];
+        $this->year = (int) $result['year'];
+        $this->record = $result['record'];
+        $this->otherMapped = $result['other_mapped'];
+        $this->fieldErrors = $result['field_errors'];
+        $this->step = 'preview';
+    }
+
+    protected function parseBatch(): void
+    {
+        $this->validate($this->batchFileRules());
+
+        $totalKb = collect($this->files)->sum(fn ($file) => (int) ceil(($file->getSize() ?: 0) / 1024));
+        if ($totalKb > self::MAX_BATCH_KB) {
+            $this->addError('files', 'This batch is too large. Select files totalling no more than 50 MB.');
 
             return;
         }
 
-        if (trim(implode('', $rowByField)) === '') {
-            $this->addError('file', 'No answers found — fill the shaded answer cells in column B of the template.');
+        $this->resetErrorBag('batch');
+        $this->batchResults = [];
+        $this->selectedBatchFiles = [];
+        $seenHashes = [];
+        $parser = app(AssessmentImportParser::class);
 
-            return;
-        }
+        foreach (array_values($this->files) as $index => $file) {
+            $fileValidation = Validator::make(
+                ['file' => $file],
+                ['file' => 'required|file|mimes:xlsx|max:'.config('smartcemes.uploads.max_kb')],
+            );
 
-        $this->record = [];
-        $this->otherMapped = [];
-        $this->fieldErrors = [];
-
-        foreach (AssessmentTemplate::COLUMNS as $field => $col) {
-            $raw = $rowByField[$field] ?? '';
-
-            if ($col['type'] === 'context') {
-                if ($field === 'community_name' && $raw !== '') {
-                    $match = Community::whereRaw('lower(name) = ?', [mb_strtolower($raw)])->first()
-                        ?? Community::where('name', 'like', "%{$raw}%")->orderBy('name')->first();
-                    if ($match) {
-                        $this->communityId = $match->id;
-                        $this->record['community_name'] = $match->name;
-                    }
-                }
-                if ($field === 'quarter' && $raw !== '') {
-                    $this->quarter = max(1, min(4, (int) $raw));
-                }
-                if ($field === 'year' && $raw !== '') {
-                    $this->year = (int) $raw;
-                }
+            if ($fileValidation->fails()) {
+                $this->batchResults[] = $this->invalidBatchFileResult($file, $index, $fileValidation->errors()->first('file'));
 
                 continue;
             }
 
-            $result = AssessmentTemplate::normalize($field, $raw, []);
+            $result = $parser->parse($file, $this->communityId, $this->quarter, $this->year);
+            $result['index'] = $index;
 
-            if ($result['error'] !== null) {
-                $this->fieldErrors[$field] = $result['error'];
+            if ($result['hash'] !== null && isset($seenHashes[$result['hash']])) {
+                $result['status'] = 'failed';
+                $result['file_errors'] = ['This file is a duplicate of another file in this batch.'];
+            } elseif ($result['hash'] !== null) {
+                $seenHashes[$result['hash']] = $index;
             }
 
-            if ($result['other'] !== null) {
-                foreach ($result['other'] as $otherField => $texts) {
-                    $this->otherMapped[$otherField] = array_merge($this->otherMapped[$otherField] ?? [], $texts);
-                }
+            $this->batchResults[] = $result;
+
+            if (in_array($result['status'], ['ready', 'warning'], true)) {
+                $this->selectedBatchFiles[] = (string) $index;
             }
-
-            if ($result['value'] === null) {
-                if ($col['type'] === 'yesno' || $result['error'] !== null) {
-                    $this->fieldErrors[$field] = $this->fieldErrors[$field]
-                        ?? $result['error']
-                        ?? 'Missing value (shown on screen only — not persisted)';
-                }
-
-                continue;
-            }
-
-            $this->record[$field] = $result['value'];
-        }
-
-        // Context fallbacks when the template's context header was left blank:
-        // stay on the upload step so the selects (which render the errors)
-        // stay visible — the uploader fixes them and re-parses.
-        if ($this->communityId === 0 || $this->year === 0) {
-            $this->addError('communityId', 'Community and Year are required — pick them above (the template context header was blank).');
-
-            return;
         }
 
         $this->step = 'preview';
+
+        if ($this->selectedBatchFiles === []) {
+            $this->batchResultType = 'error';
+            $this->batchResultSummary = [
+                'total' => count($this->batchResults),
+                'selected' => 0,
+                'imported' => 0,
+                'failed' => count($this->batchResults),
+                'skipped' => count($this->batchResults),
+            ];
+            $this->showBatchResult = true;
+        }
+    }
+
+    protected function invalidBatchFileResult(mixed $file, int $index, string $message): array
+    {
+        return [
+            'filename' => $file instanceof UploadedFile ? $file->getClientOriginalName() : 'Unknown file',
+            'size' => $file instanceof UploadedFile ? (int) ($file->getSize() ?: 0) : 0,
+            'hash' => null,
+            'status' => 'failed',
+            'record' => [],
+            'other_mapped' => [],
+            'field_errors' => [],
+            'file_errors' => [$message],
+            'community_id' => $this->communityId,
+            'quarter' => $this->quarter,
+            'year' => $this->year,
+            'community_name' => null,
+            'index' => $index,
+        ];
+    }
+
+    protected function missingContext(array $result): bool
+    {
+        return collect($result['file_errors'])
+            ->contains(fn (string $error) => str_starts_with($error, 'Community and Year are required'));
     }
 
     /** D10: record is only created when the uploader confirms the preview. */
@@ -188,20 +251,20 @@ class Import extends Component
             return;
         }
 
-        // Archive the source file (audit only — never machine-read, 6.9).
-        $path = $this->file->store('needs-assessments/'.now()->format('Y/m'), 'public');
+        try {
+            $this->persistAssessment($this->file, [
+                'record' => $this->record,
+                'other_mapped' => $this->otherMapped,
+                'community_id' => $this->communityId,
+                'quarter' => $this->quarter,
+                'year' => $this->year,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Assessment XLSX import could not be saved', ['exception' => $e]);
+            $this->addError('file', 'The assessment could not be saved. Please try again.');
 
-        NeedsAssessment::create([
-            ...$this->record,
-            'barangay_service_ratings' => $this->record['barangay_service_ratings'] ?? ['overall' => null],
-            'other_text' => $this->otherMapped ?: null,
-            'community_id' => $this->communityId,
-            'quarter' => $this->quarter,
-            'year' => $this->year,
-            'file_path' => $path,
-            'uploaded_by' => auth()->id(),
-            'review_status' => 'pending',
-        ]);
+            return;
+        }
 
         activity()->event('assessment_import')
             ->log('Needs assessment imported from XLSX template (pending validation)');
@@ -212,6 +275,182 @@ class Import extends Component
         $this->record = [];
         $this->otherMapped = [];
         $this->fieldErrors = [];
+    }
+
+    public function openBatchConfirm(): void
+    {
+        $selected = $this->selectedIndexes();
+
+        if ($selected === []) {
+            $this->addError('batch', 'Select at least one valid file to import.');
+
+            return;
+        }
+
+        $this->showBatchConfirm = true;
+    }
+
+    public function cancelBatchConfirm(): void
+    {
+        $this->showBatchConfirm = false;
+    }
+
+    public function confirmBatch(): void
+    {
+        $this->showBatchConfirm = false;
+        $selected = $this->selectedIndexes();
+        $imported = 0;
+
+        foreach ($this->batchResults as $resultIndex => &$result) {
+            $fileIndex = (int) ($result['index'] ?? $resultIndex);
+
+            if (! in_array($fileIndex, $selected, true)) {
+                continue;
+            }
+
+            $file = $this->files[$fileIndex] ?? null;
+            if (! $file instanceof UploadedFile || ! in_array($result['status'], ['ready', 'warning'], true)) {
+                continue;
+            }
+
+            try {
+                $this->persistAssessment($file, [
+                    'record' => $result['record'],
+                    'other_mapped' => $result['other_mapped'],
+                    'community_id' => $result['community_id'],
+                    'quarter' => $result['quarter'],
+                    'year' => $result['year'],
+                ]);
+                $result['status'] = 'imported';
+                $imported++;
+            } catch (\Throwable $e) {
+                Log::error('Assessment batch item could not be saved', [
+                    'filename' => $result['filename'],
+                    'exception' => $e,
+                ]);
+                $result['status'] = 'failed';
+                $result['file_errors'][] = 'The record could not be saved. Please retry this file.';
+            }
+        }
+        unset($result);
+
+        $failed = collect($this->batchResults)->where('status', 'failed')->count();
+        $selectedCount = count($selected);
+        $this->batchResultType = $imported === $selectedCount
+            ? 'success'
+            : ($imported > 0 ? 'partial' : 'error');
+        $this->batchResultSummary = [
+            'total' => count($this->batchResults),
+            'selected' => $selectedCount,
+            'imported' => $imported,
+            'failed' => $failed,
+            'skipped' => max(0, count($this->batchResults) - $selectedCount),
+        ];
+        $this->showBatchResult = true;
+
+        if ($imported > 0) {
+            activity()->event('assessment_import')
+                ->log("Assessment batch imported: {$imported} record(s) created as pending");
+            $this->dispatch('sc-toast', message: "{$imported} assessment record(s) imported", type: 'success');
+        }
+    }
+
+    public function backToBatchUpload(): void
+    {
+        $this->step = 'upload';
+        $this->batchResults = [];
+        $this->selectedBatchFiles = [];
+        $this->resetErrorBag();
+    }
+
+    public function closeBatchResult(): void
+    {
+        $this->showBatchResult = false;
+    }
+
+    public function resetBatch(): void
+    {
+        $this->files = [];
+        $this->batchResults = [];
+        $this->selectedBatchFiles = [];
+        $this->batchMode = true;
+        $this->step = 'upload';
+        $this->showBatchConfirm = false;
+        $this->showBatchResult = false;
+        $this->batchResultType = '';
+        $this->batchResultSummary = [];
+        $this->resetErrorBag();
+    }
+
+    public function downloadBatchErrors()
+    {
+        $errors = collect($this->batchResults)
+            ->filter(fn (array $result) => $result['status'] === 'failed')
+            ->values();
+
+        if ($errors->isEmpty()) {
+            return null;
+        }
+
+        return response()->streamDownload(function () use ($errors): void {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['File', 'Status', 'Errors']);
+
+            foreach ($errors as $result) {
+                fputcsv($handle, [
+                    $result['filename'],
+                    'Failed',
+                    implode(' | ', $result['file_errors'] ?? []),
+                ]);
+            }
+
+            fclose($handle);
+        }, 'assessment-batch-errors-'.now()->format('Ymd-His').'.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    /** @return array<int, int> */
+    protected function selectedIndexes(): array
+    {
+        return collect($this->selectedBatchFiles)
+            ->map(fn ($index) => (int) $index)
+            ->filter(fn (int $index) => isset($this->batchResults[$index]) && in_array($this->batchResults[$index]['status'], ['ready', 'warning'], true))
+            ->values()
+            ->all();
+    }
+
+    protected function persistAssessment(UploadedFile $file, array $parsed): NeedsAssessment
+    {
+        $path = $file->store('needs-assessments/'.now()->format('Y/m'), 'public');
+
+        try {
+            return NeedsAssessment::create([
+                ...$parsed['record'],
+                'barangay_service_ratings' => $parsed['record']['barangay_service_ratings'] ?? ['overall' => null],
+                'other_text' => $parsed['other_mapped'] ?: null,
+                'community_id' => $parsed['community_id'],
+                'quarter' => $parsed['quarter'],
+                'year' => $parsed['year'],
+                'file_path' => $path,
+                'uploaded_by' => auth()->id(),
+                'review_status' => 'pending',
+            ]);
+        } catch (\Throwable $e) {
+            Storage::disk('public')->delete($path);
+
+            throw $e;
+        }
+    }
+
+    protected function resetBatchState(): void
+    {
+        $this->batchResults = [];
+        $this->selectedBatchFiles = [];
+        $this->showBatchConfirm = false;
+        $this->showBatchResult = false;
+        $this->batchResultType = '';
+        $this->batchResultSummary = [];
     }
 
     public function render()

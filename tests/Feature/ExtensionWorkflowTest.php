@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
-class Phase3WorkflowTest extends TestCase
+class ExtensionWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 

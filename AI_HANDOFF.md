@@ -600,7 +600,7 @@ points at a route that exists — historically some did not, and the sidebar sil
     implode-regression, search/quarter filters, validate modal flow, already-
     reviewed 422, return remarks required, role 403s, 10-per-page pagination
     (distinct created_at stamps — sqlite timestamps share one second),
-    filter-change page reset, year-then-quarter sort cycle); Phase3WorkflowTest
+    filter-change page reset, year-then-quarter sort cycle); ExtensionWorkflowTest
     updated to the new validate flow.
 - **SESSION 10 — DRIFT-PROOF CODE GENERATION (2026-09-15, owner-reported bug
   during manual testing)** — all verified, 169/169 tests green (722
@@ -936,7 +936,7 @@ points at a route that exists — historically some did not, and the sidebar sil
     correct xref offsets) so seeded rows download real files — also fixed
     `file_type` hardcoded 'pdf' for an xlsx row. Old demo rows were backfilled
     without a DB reset; fresh seeds self-contained. Tests: attachment/SO link
-    rendering (2 in Phase3WorkflowTest).
+    rendering (2 in ExtensionWorkflowTest).
   - **AI admin pages visual redesign** (`ai-analysis.blade.php`,
     `program-narratives.blade.php` — pure Blade/markup, zero behavior change):
     picker card w/ icon + D3 helper text; NEW empty state w/ 3-step flow when no
@@ -1338,7 +1338,7 @@ work**, and the "Phase 6" label is effectively retired.
   the Analytics page itself was REMOVED in v4.20, `revisions.md` §21.)*
 - **Phase 5 — AI: COMPLETE.** Gemini pipeline (see §1.1). *(Later guardrailed — see R6.)*
 - **Phase 6 — Hardening: RETIRED / ABSORBED INTO R7.** The feature tests it listed were written
-  (`Phase3WorkflowTest` covers the approval workflows). Production deploy and the nightly backup script
+  (`ExtensionWorkflowTest` covers the approval workflows). Production deploy and the nightly backup script
   remain **outstanding deployment items** — see §15.
 
 ### 7.2 Adviser revision — R1–R6 complete, R7 in progress

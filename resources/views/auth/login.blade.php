@@ -26,9 +26,7 @@
         <div x-data="{ show: false }">
             <div class="flex items-center justify-between">
                 <label for="password" class="label">{{ __('Password') }}</label>
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="text-[11px] font-bold text-lnu-800 hover:text-lnu-600 transition mb-1">Forgot password?</a>
-                @endif
+                <span class="text-[10.5px] font-semibold text-gray-400 mb-1">Contact the administrator to reset access</span>
             </div>
             <div class="relative mt-1.5">
                 <input id="password" x-ref="pw"

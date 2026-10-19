@@ -30,6 +30,31 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
+    public function test_temporary_password_accounts_are_sent_to_password_setup(): void
+    {
+        $user = User::factory()->faculty()->create([
+            'must_change_password' => true,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('password.first'));
+        $this->assertAuthenticatedAs($user);
+
+        $this->get('/dashboard')->assertRedirect(route('password.first'));
+
+        $this->post('/change-password', [
+            'current_password' => 'password',
+            'password' => 'new-secure-password',
+            'password_confirmation' => 'new-secure-password',
+        ])->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertFalse($user->refresh()->must_change_password);
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();

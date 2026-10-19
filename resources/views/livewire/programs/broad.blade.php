@@ -140,7 +140,7 @@
                         <div class="relative h-14 shrink-0 overflow-hidden" style="background:linear-gradient(135deg, {{ $accent }} 0%, color-mix(in srgb, {{ $accent }} 72%, #172b6a) 100%)">
                             <span class="absolute -right-5 -top-12 h-28 w-28 rounded-full bg-white/10"></span>
                             <span class="absolute bottom-2 left-5 text-[10px] font-extrabold uppercase tracking-[0.15em] text-white/75">{{ ucfirst($row->pillar) }} pillar</span>
-                            <span class="absolute -bottom-4 right-3 select-none text-[50px] font-black leading-none text-white/10">{{ strtoupper(IlluminateSupportStr::substr($row->code, 0, 3)) }}</span>
+                            <span class="absolute -bottom-4 right-3 select-none text-[50px] font-black leading-none text-white/10">{{ strtoupper(\Illuminate\Support\Str::substr($row->code, 0, 3)) }}</span>
                         </div>
                         <div class="p-5 flex flex-col flex-1">
 

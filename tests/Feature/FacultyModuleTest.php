@@ -21,6 +21,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -479,6 +480,27 @@ class FacultyModuleTest extends TestCase
 
         // Employee ID is auto-generated when left blank.
         $this->assertMatchesRegularExpression('/^LNU-\d{4}-\d{4}$/', $faculty->employee_id);
+        $this->assertTrue($faculty->user->must_change_password);
+    }
+
+    public function test_admin_can_reset_a_faculty_password_and_receive_a_one_time_credential(): void
+    {
+        $faculty = Faculty::factory()->create();
+
+        $component = Livewire::actingAs($this->admin())
+            ->test(Directory::class)
+            ->call('prepareReset', $faculty->id)
+            ->assertSet('showResetConfirm', true)
+            ->call('resetFacultyPassword')
+            ->assertSet('showCredentials', true);
+
+        $temporaryPassword = $component->get('generatedPassword');
+        $user = $faculty->user->refresh();
+
+        $this->assertIsString($temporaryPassword);
+        $this->assertNotSame('password', $temporaryPassword);
+        $this->assertTrue(Hash::check($temporaryPassword, $user->password));
+        $this->assertTrue($user->must_change_password);
     }
 
     public function test_the_profile_form_requires_a_name_and_email(): void

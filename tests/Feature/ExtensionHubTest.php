@@ -166,7 +166,7 @@ class ExtensionHubTest extends TestCase
 
         $this->assertStringContainsString('All colleges', $html, 'View 2 must offer the back control.');
         $this->assertStringContainsString('CAS extension programs', $html);
-        $this->assertStringContainsString('Faculty &amp; expertise', $html);
+        $this->assertStringContainsString('Faculty assigned to CAS', $html);
 
         // The projects grid moved to view 3, so view 2 must not render it.
         $this->assertStringNotContainsString('proj-card', $html);
@@ -404,7 +404,7 @@ class ExtensionHubTest extends TestCase
 
         $this->assertSame(0, substr_count($view2, 'Training hours'), 'View 2 must not label training hours.');
         $this->assertStringContainsString(
-            'hrs rendered',
+            'hours rendered',
             $view2,
             'A program\'s hours must read as RENDERED, never as a target.'
         );

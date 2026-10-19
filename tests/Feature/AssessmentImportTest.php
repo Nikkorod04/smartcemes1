@@ -434,6 +434,97 @@ class AssessmentImportTest extends TestCase
             ->assertSet('step', 'upload');
     }
 
+    public function test_batch_parse_keeps_file_results_separate_and_excludes_unsupported_files(): void
+    {
+        $faculty = User::factory()->create(['role' => 'faculty']);
+        $community = Community::factory()->create(['name' => 'Brgy. Batch']);
+
+        $valid = $this->makeXlsx([
+            'community_name' => $community->name,
+            'quarter' => '2',
+            'year' => '2026',
+            'respondent_first_name' => 'Batch',
+            'respondent_last_name' => 'One',
+            'respondent_sex' => 'Male',
+        ]);
+
+        $spreadsheet = new Spreadsheet;
+        $spreadsheet->getActiveSheet()->fromArray([
+            ['Community', 'Quarter', 'Year'],
+            [$community->name, '2', '2026'],
+        ]);
+        $path = tempnam(sys_get_temp_dir(), 'sc_batch_bad_').'.xlsx';
+        (new XlsxWriter($spreadsheet))->save($path);
+        $contents = file_get_contents($path);
+        unlink($path);
+        $unsupported = UploadedFile::fake()->createWithContent('old-template.xlsx', $contents);
+
+        Livewire::actingAs($faculty)
+            ->test(Import::class)
+            ->call('enableBatchMode')
+            ->set('files', [$valid, $unsupported])
+            ->call('parse')
+            ->assertSet('step', 'preview')
+            ->assertCount('batchResults', 2)
+            ->assertSet('selectedBatchFiles', ['0'])
+            ->assertSet('batchResults.0.status', 'warning')
+            ->assertSet('batchResults.1.status', 'failed')
+            ->assertSee('old-template.xlsx')
+            ->assertSee('Failed')
+            ->assertSee('Import 1 selected');
+    }
+
+    public function test_batch_confirmation_imports_selected_records_as_pending(): void
+    {
+        $faculty = User::factory()->create(['role' => 'faculty']);
+        $community = Community::factory()->create(['name' => 'Brgy. Batch']);
+
+        $first = $this->makeXlsx([
+            'community_name' => $community->name,
+            'quarter' => '2',
+            'year' => '2026',
+            'respondent_first_name' => 'Batch',
+            'respondent_last_name' => 'One',
+        ]);
+        $second = $this->makeXlsx([
+            'community_name' => $community->name,
+            'quarter' => '2',
+            'year' => '2026',
+            'respondent_first_name' => 'Batch',
+            'respondent_last_name' => 'Two',
+        ]);
+
+        Livewire::actingAs($faculty)
+            ->test(Import::class)
+            ->call('enableBatchMode')
+            ->set('files', [$first, $second])
+            ->call('parse')
+            ->call('openBatchConfirm')
+            ->assertSet('showBatchConfirm', true)
+            ->call('confirmBatch')
+            ->assertSet('showBatchConfirm', false)
+            ->assertSet('showBatchResult', true)
+            ->assertSet('batchResultType', 'success')
+            ->assertSet('batchResultSummary.imported', 2)
+            ->assertSet('batchResults.0.status', 'imported')
+            ->assertSet('batchResults.1.status', 'imported');
+
+        $this->assertDatabaseCount('needs_assessments', 2);
+        $this->assertDatabaseMissing('needs_assessments', ['review_status' => 'validated']);
+        $this->assertDatabaseHas('needs_assessments', [
+            'respondent_first_name' => 'Batch',
+            'respondent_last_name' => 'One',
+            'review_status' => 'pending',
+            'uploaded_by' => $faculty->id,
+        ]);
+        $this->assertDatabaseHas('needs_assessments', [
+            'respondent_first_name' => 'Batch',
+            'respondent_last_name' => 'Two',
+            'review_status' => 'pending',
+            'uploaded_by' => $faculty->id,
+        ]);
+    }
+
     /* ==================== template download ==================== */
 
     public function test_downloaded_template_is_vertical_with_guides_and_dropdowns(): void

@@ -189,7 +189,7 @@
                 <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
                     <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-lnu-100 bg-lnu-50/70 px-3.5 py-3 text-[11px] leading-relaxed text-lnu-900">
                         <x-sc.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-700" />
-                        <p><span class="font-extrabold">Profile note.</span> The account uses the email address for sign-in. Employee ID is generated automatically when it is left blank.</p>
+                        <p><span class="font-extrabold">Access note.</span> The email address is used for sign-in. New accounts receive a secure temporary password that is shown once after creation.</p>
                     </div>
 
                     <div class="space-y-6">
@@ -304,7 +304,12 @@
                 <div class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
                     <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <p class="text-[10.5px] font-medium text-gray-400"><span class="text-red-500">*</span> Required fields</p>
-                        <div class="flex justify-end gap-2">
+                        <div class="flex flex-wrap justify-end gap-2">
+                            @if ($editingId)
+                                <button type="button" wire:click="prepareReset({{ $editingId }})" class="btn btn-outline !border-amber-200 !text-amber-800 hover:!bg-amber-50">
+                                    <x-sc.icon name="shield" class="h-4 w-4" />Reset account password
+                                </button>
+                            @endif
                             <button type="button" wire:click="closeForm" class="btn btn-ghost">Cancel</button>
                             <button type="submit" class="btn btn-primary min-w-[132px]" wire:loading.attr="disabled" wire:target="save">
                                 <span wire:loading.remove wire:target="save">{{ $editingId ? 'Save changes' : 'Create profile' }}</span>
@@ -314,6 +319,87 @@
                     </div>
                 </div>
             </form>
+        </div>
+    @endif
+
+    @if ($showResetConfirm)
+        <div x-data @keydown.escape.window="$wire.cancelReset()"
+             class="fixed inset-0 z-[60] flex items-center justify-center p-4 no-print"
+             role="dialog" aria-modal="true" aria-labelledby="faculty-reset-title">
+            <div class="fixed inset-0 bg-charcoal/55 backdrop-blur-[3px]" wire:click="cancelReset"></div>
+            <div class="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-pop">
+                <div class="border-b border-amber-100 bg-gradient-to-br from-amber-700 to-amber-600 px-5 py-5 text-white sm:px-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20"><x-sc.icon name="shield" class="h-5 w-5" /></span>
+                            <div>
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/70">Account access</p>
+                                <h3 id="faculty-reset-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Reset faculty password</h3>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="cancelReset" aria-label="Close reset confirmation" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/15 hover:text-white"><x-sc.icon name="x" class="h-4 w-4" /></button>
+                    </div>
+                </div>
+                <div class="px-5 py-5 sm:px-6">
+                    <p class="text-[13px] leading-relaxed text-gray-600">This will invalidate the current password for <span class="font-extrabold text-charcoal">{{ $resettingName }}</span> and generate a new temporary password.</p>
+                    <div class="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-[11px] leading-relaxed text-amber-900">
+                        <x-sc.icon name="alert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                        <p>The new password will be shown once. Share it securely with the faculty member.</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                    <button type="button" wire:click="cancelReset" class="btn btn-ghost">Cancel</button>
+                    <button type="button" wire:click="resetFacultyPassword" class="btn !bg-amber-700 !text-white hover:!bg-amber-800" wire:loading.attr="disabled" wire:target="resetFacultyPassword">
+                        <span wire:loading.remove wire:target="resetFacultyPassword"><x-sc.icon name="shield" class="h-4 w-4" />Reset password</span>
+                        <span wire:loading wire:target="resetFacultyPassword" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Generating…</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($showCredentials && $generatedPassword)
+        <div x-data="{ copied: false, copyPassword() { navigator.clipboard?.writeText(@js($generatedPassword)); this.copied = true; setTimeout(() => this.copied = false, 1600); } }"
+             @keydown.escape.window="$wire.closeCredentials()"
+             class="fixed inset-0 z-[70] flex items-center justify-center p-4 no-print"
+             role="dialog" aria-modal="true" aria-labelledby="faculty-credentials-title">
+            <div class="fixed inset-0 bg-charcoal/55 backdrop-blur-[3px]" wire:click="closeCredentials"></div>
+            <div class="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-pop">
+                <div class="border-b border-emerald-100 bg-gradient-to-br from-emerald-700 to-emerald-600 px-5 py-5 text-white sm:px-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20"><x-sc.icon name="check" class="h-5 w-5" /></span>
+                            <div>
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/70">Credentials ready</p>
+                                <h3 id="faculty-credentials-title" class="mt-1 text-[18px] font-extrabold tracking-tight">{{ $credentialAction === 'reset' ? 'Password reset complete' : 'Faculty account created' }}</h3>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="closeCredentials" aria-label="Close credentials" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/15 hover:text-white"><x-sc.icon name="x" class="h-4 w-4" /></button>
+                    </div>
+                </div>
+                <div class="space-y-4 px-5 py-5 sm:px-6">
+                    <div>
+                        <p class="text-[13px] font-extrabold text-charcoal">{{ $generatedAccountName }}</p>
+                        <p class="mt-0.5 text-[12px] font-medium text-gray-500">{{ $generatedAccountEmail }}</p>
+                    </div>
+                    <div class="rounded-xl border border-lnu-100 bg-lnu-50/70 p-3.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-lnu-700">Temporary password</p>
+                                <p class="mt-1 break-all font-mono text-[15px] font-extrabold tracking-wide text-lnu-900">{{ $generatedPassword }}</p>
+                            </div>
+                            <button type="button" @click="copyPassword" class="btn btn-outline shrink-0 !px-3 !py-2 !text-[11px]" x-text="copied ? 'Copied' : 'Copy'"></button>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-[11px] leading-relaxed text-amber-900">
+                        <x-sc.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                        <p><span class="font-extrabold">Share securely.</span> This password is temporary and the faculty member will be required to create a personal password after signing in.</p>
+                    </div>
+                </div>
+                <div class="flex justify-end border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                    <button type="button" wire:click="closeCredentials" class="btn btn-primary">Done</button>
+                </div>
+            </div>
         </div>
     @endif
 </div>
