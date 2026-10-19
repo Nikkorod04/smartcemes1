@@ -7,11 +7,13 @@ use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\InteragencyAgency;
 use App\Models\Program;
+use App\Models\User;
 use App\Policies\BroadProgramPolicy;
 use App\Policies\CollegePolicy;
 use App\Policies\FacultyPolicy;
 use App\Policies\InteragencyAgencyPolicy;
 use App\Policies\ProgramPolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,5 +37,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Program::class, BroadProgramPolicy::class);
         Gate::policy(Faculty::class, FacultyPolicy::class);
         Gate::policy(InteragencyAgency::class, InteragencyAgencyPolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
     }
 }

@@ -32,6 +32,7 @@ use App\Livewire\Programs\MyPrograms;
 use App\Livewire\Proposals\Create;
 use App\Livewire\RenderedHours\My;
 use App\Livewire\Targets;
+use App\Livewire\Users\Index as UsersIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -153,6 +154,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/faculty', EngagementBoard::class)->name('faculty.index');
     Route::get('/faculty/directory', Directory::class)->name('faculty.directory');
+    Route::get('/users', UsersIndex::class)->name('users.index');
 });
 
 // A faculty member's own profile — policy-scoped, not role-scoped: the

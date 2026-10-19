@@ -38,6 +38,7 @@ class User extends Authenticatable
         'password',
         'role',
         'must_change_password',
+        'is_active',
     ];
 
     /**
@@ -61,6 +62,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -82,5 +84,10 @@ class User extends Authenticatable
     public function isFaculty(): bool
     {
         return $this->role === self::ROLE_FACULTY;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
     }
 }
