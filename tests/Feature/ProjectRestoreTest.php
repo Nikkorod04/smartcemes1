@@ -144,8 +144,17 @@ class ProjectRestoreTest extends TestCase
 
         $html = $this->hubFor($project)->set('projectStatus', 'Archived')->html();
 
-        $this->assertStringContainsString('restoreProject('.$project->id.')', $html);
+        // dd25631 standardized the archive/restore pair: the button opens the
+        // component's server-rendered confirmation, whose confirm button then
+        // carries `restoreProject()`. Assert both steps.
+        $this->assertStringContainsString('openRestoreProjectConfirmation('.$project->id.')', $html);
         $this->assertStringContainsString('Restore', $html);
+
+        $this->hubFor($project)
+            ->set('projectStatus', 'Archived')
+            ->call('openRestoreProjectConfirmation', $project->id)
+            ->assertSee('Restore project?')
+            ->assertSee('restoreProject('.$project->id.')');
 
         // The card must not link to the hub — `projects.show` binds through the
         // soft-delete scope and would 404 on an archived project.

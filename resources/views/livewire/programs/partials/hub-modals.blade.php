@@ -334,6 +334,46 @@
             <div><label class="label" for="budget-item-name">Item name <span class="text-red-500">*</span></label><input id="budget-item-name" maxlength="255" class="input" wire:model="budgetForm.item_name" placeholder="e.g. Training materials" aria-invalid="{{ $errors->has('budgetForm.item_name') ? 'true' : 'false' }}">@error('budgetForm.item_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
             <div class="grid grid-cols-2 gap-3"><div><label class="label" for="budget-amount">Amount (₱) <span class="text-red-500">*</span></label><input id="budget-amount" type="number" min="0" step="0.01" class="input" wire:model="budgetForm.amount" aria-invalid="{{ $errors->has('budgetForm.amount') ? 'true' : 'false' }}">@error('budgetForm.amount') <p class="sc-field-error">{{ $message }}</p> @enderror</div><div><label class="label" for="budget-date-used">Date used <span class="text-red-500">*</span></label><input id="budget-date-used" type="date" class="input" wire:model="budgetForm.date_used" aria-invalid="{{ $errors->has('budgetForm.date_used') ? 'true' : 'false' }}">@error('budgetForm.date_used') <p class="sc-field-error">{{ $message }}</p> @enderror</div></div>
             <div><label class="label" for="budget-activity">Charge against activity</label><x-sc.select id="budget-activity" model="budgetForm.activity_id" :value="$budgetForm['activity_id'] ?? null" :options="$program->activities->mapWithKeys(fn ($a) => [$a->id => $a->title])->all()" placeholder="Project-level (no specific activity)" :search="$program->activities->count() > 12" :clearable="true" /></div>
+            <div>
+                <label class="label">Proof of expense</label>
+                <label class="group block cursor-pointer">
+                    <input type="file" wire:model="budgetForm.attachments" multiple accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx" class="hidden">
+                    @php
+                        $budgetAttachmentClasses = $errors->has('budgetForm.attachments') || $errors->has('budgetForm.attachments.*')
+                            ? 'border-red-300 bg-red-50/40'
+                            : 'border-gray-200 bg-gray-50/50 group-hover:border-lnu-300 group-hover:bg-lnu-50/30';
+                    @endphp
+                    <div @class(['border-2 border-dashed rounded-xl px-4 py-4 text-center transition', $budgetAttachmentClasses])>
+                        <span class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-lnu-50 text-lnu-700"><x-sc.icon name="upload" class="h-5 w-5" /></span>
+                        <p class="mt-2 text-[13px] font-bold">Click to attach proof of expense</p>
+                        <p class="mt-0.5 text-[11px] text-gray-400">Up to 5 files · PDF / JPG / PNG / DOCX / XLSX · max 10 MB each</p>
+                    </div>
+                </label>
+                @php
+                    $budgetAttachmentErrors = collect($errors->getMessages())
+                        ->filter(fn ($messages, $key) => str_starts_with((string) $key, 'budgetForm.attachments'))
+                        ->flatten();
+                @endphp
+                @if ($budgetAttachmentErrors->isNotEmpty())
+                    <p class="sc-field-error">{{ $budgetAttachmentErrors->first() }}</p>
+                @endif
+                @if (collect($budgetForm['attachments'] ?? [])->filter()->isNotEmpty())
+                    <div class="mt-2 divide-y divide-gray-100 rounded-xl border border-gray-100 bg-gray-50/70">
+                        @foreach ($budgetForm['attachments'] as $index => $uploadedFile)
+                            @if ($uploadedFile)
+                                <div class="flex items-center justify-between gap-3 px-3 py-2 text-[12px]" wire:key="budget-attachment-{{ $index }}">
+                                    <div class="flex min-w-0 items-center gap-2"><x-sc.icon name="doc" class="h-4 w-4 shrink-0 text-lnu-600" /><span class="truncate font-semibold text-charcoal">{{ $uploadedFile->getClientOriginalName() }}</span></div>
+                                    <div class="flex shrink-0 items-center gap-2">
+                                        <span class="text-[11px] text-gray-400">{{ number_format($uploadedFile->getSize() / 1048576, 2) }} MB</span>
+                                        <button type="button" wire:click="removeBudgetAttachment({{ $index }})" class="text-gray-300 transition hover:text-red-600" aria-label="Remove attachment"><x-sc.icon name="x" class="h-4 w-4" /></button>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+                <p class="mt-1 text-[11px] text-gray-400">Saved files download automatically when opened — they are never rendered in the browser.</p>
+            </div>
             <p class="text-[11.5px] text-gray-400">Exceeding the allocation still saves — a persistent warning badge appears and the entry is written to the activity log (D7).</p>
         </div>
         </div>

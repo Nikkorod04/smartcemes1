@@ -19,8 +19,12 @@ use Tests\TestCase;
  *
  * The Director had no way to remove a project, so the demo's weaker entries
  * could only be deleted with DB surgery. `/colleges` view 3 now carries an
- * archive action per project card, confirmed with Livewire's `wire:confirm`
- * (the same convention `Communities\Index::confirmDelete()` uses).
+ * archive action per project card. It was originally confirmed with Livewire's
+ * `wire:confirm` (the same convention `Communities\Index::confirmDelete()`
+ * uses); dd25631 standardized the pair into the component's own
+ * server-rendered confirmation modal (`openArchiveProjectConfirmation()`)
+ * so there is no second transient browser dialog — the archive is still
+ * two-step, just through component state now.
  *
  * WHY THESE TESTS ARE SHAPED THE WAY THEY ARE
  * -------------------------------------------
@@ -298,16 +302,30 @@ class ProjectDeleteTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // One archive button per project card, and the confirmation is
-        // `wire:confirm` — NOT a hand-rolled modal (§14/§25 record three bugs
-        // where a watcher bridge failed to open one).
+        // One archive button per project card, and the confirmation is the
+        // component's OWN server-rendered modal (dd25631) — the click opens
+        // `openArchiveProjectConfirmation()` rather than a browser dialog, so
+        // the archive is still two-step and no watcher bridge is involved
+        // (§14/§25 record three bugs where a watcher bridge failed to open one).
         $this->assertSame(
             substr_count($html, 'proj-card-stripe'),
             substr_count($html, 'proj-archive-btn'),
             'Every project card must carry exactly one archive action.'
         );
 
-        $this->assertStringContainsString('wire:confirm="Archive ', $html);
+        $this->assertSame(
+            substr_count($html, 'proj-archive-btn'),
+            substr_count($html, 'openArchiveProjectConfirmation('),
+            'Every archive button must open the in-component confirmation.'
+        );
+
+        // And the confirmation is real: opening it renders the modal, whose
+        // confirm button carries the destructive call — not a silent archive.
+        Livewire::actingAs($this->admin())
+            ->test(CollegesIndex::class)
+            ->call('openArchiveProjectConfirmation', $project->id)
+            ->assertSee('Archive project?')
+            ->assertSee('archiveProject(');
     }
 
     /**
@@ -326,7 +344,7 @@ class ProjectDeleteTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $cardStart = strpos($html, 'proj-card reveal-item');
+        $cardStart = strpos($html, 'proj-card program-project-card reveal-item');
         $this->assertNotFalse($cardStart, 'View 3 must render the project cards.');
 
         // A generous window — a single card's markup is a few thousand

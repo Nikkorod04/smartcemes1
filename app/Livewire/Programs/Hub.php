@@ -19,8 +19,10 @@ use App\Services\BeneficiaryTemplate;
 use App\Services\KpiService;
 use App\Services\ProgramNarrativeService;
 use App\Services\TrainingHoursService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -89,6 +91,15 @@ class Hub extends Component
 
     /* ---------------- activity records: attendance + evaluation XLSX (v4.13) ---------------- */
     public ?int $recordsActivityId = null;
+
+    /**
+     * The Activities tab renders either the sc-table grid or the read-only
+     * Gantt timeline (D-G1): both share the same filtered dataset.
+     */
+    public string $activitiesView = 'grid';
+
+    /** Gantt column scale — weeks give day-level steering, months the overview. */
+    public string $ganttScale = 'month';
 
     public string $recordsTab = 'attendance';
 
@@ -169,7 +180,7 @@ class Hub extends Component
 
     public array $budgetForm = [
         'item_name' => '', 'description' => '', 'amount' => '',
-        'date_used' => '', 'activity_id' => '', 'receipt_reference' => '',
+        'date_used' => '', 'activity_id' => '', 'attachments' => [],
     ];
 
     /**
@@ -913,6 +924,26 @@ class Hub extends Component
         $this->resetErrorBag();
     }
 
+    /** Grid ↔ Gantt view switch for the Activities tab; unknown values ignored. */
+    public function setActivitiesView(string $view): void
+    {
+        if (! in_array($view, ['grid', 'gantt'], true)) {
+            return;
+        }
+
+        $this->activitiesView = $view;
+    }
+
+    /** Month or week columns for the Gantt timeline. */
+    public function setGanttScale(string $scale): void
+    {
+        if (! in_array($scale, ['month', 'week'], true)) {
+            return;
+        }
+
+        $this->ganttScale = $scale;
+    }
+
     public function updatedAttendanceImportFile(): void
     {
         $this->resetErrorBag('attendanceImportFile');
@@ -1545,7 +1576,7 @@ class Hub extends Component
         $this->abortUnlessManage();
         $this->budgetForm = [
             'item_name' => '', 'description' => '', 'amount' => '',
-            'date_used' => now()->format('Y-m-d'), 'activity_id' => '', 'receipt_reference' => '',
+            'date_used' => now()->format('Y-m-d'), 'activity_id' => '', 'attachments' => [],
         ];
         $this->showBudgetForm = true;
         $this->resetErrorBag('budgetForm.*');
@@ -1650,17 +1681,58 @@ class Hub extends Component
         $this->dispatch('sc-toast', message: 'Program updated', type: 'success');
     }
 
-    public function saveBudgetEntry(): void
+    /**
+     * The budget-entry validation ruleset, extracted so the size/type limits
+     * can be pinned by BudgetAttachmentTest without driving a 10 MB upload
+     * through Livewire's test file pipeline (which re-synthesizes uploads and
+     * loses the real size).
+     */
+    protected function budgetFormRules(): array
     {
-        $this->abortUnlessManage();
-
-        $this->validate([
+        return [
             'budgetForm.item_name' => 'required|string|max:255',
             'budgetForm.amount' => 'required|numeric|min:0.01',
             'budgetForm.date_used' => 'required|date',
             'budgetForm.activity_id' => 'nullable|exists:activities,id',
-            'budgetForm.receipt_reference' => 'nullable|string|max:100',
-        ]);
+            'budgetForm.attachments' => 'nullable|array|max:5',
+            'budgetForm.attachments.*' => 'file|max:10240|mimes:pdf,jpg,jpeg,png,docx,xlsx',
+        ];
+    }
+
+    /**
+     * The budget-entry validation messages, shared with budgetFormRules().
+     */
+    protected function budgetFormMessages(): array
+    {
+        return [
+            'budgetForm.attachments.max' => 'You can attach up to 5 files per expense entry.',
+            'budgetForm.attachments.*.file' => 'Each attachment must be a valid uploaded file.',
+            'budgetForm.attachments.*.max' => 'Each attachment may not exceed 10 MB.',
+            'budgetForm.attachments.*.mimes' => 'Attachments must be a PDF, JPG, PNG, DOCX or XLSX file.',
+        ];
+    }
+
+    public function saveBudgetEntry(): void
+    {
+        $this->abortUnlessManage();
+
+        $this->validate($this->budgetFormRules(), $this->budgetFormMessages());
+
+        // Proof of expense: each file is stored on the public disk under a dated
+        // folder and recorded with its original name and size (mirror of the
+        // proposal-document convention). Livewire hands these over as uploaded
+        // file objects; anything else in the array is not a file and is skipped.
+        $attachments = [];
+        foreach ($this->budgetForm['attachments'] ?? [] as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+            $attachments[] = [
+                'path' => $file->store('budget-attachments/'.now()->format('Y/m'), 'public'),
+                'name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+            ];
+        }
 
         $entry = new BudgetUtilization([
             'item_name' => $this->budgetForm['item_name'],
@@ -1668,7 +1740,7 @@ class Hub extends Component
             'amount' => $this->budgetForm['amount'],
             'date_used' => $this->budgetForm['date_used'],
             'activity_id' => $this->budgetForm['activity_id'] ?: null,
-            'receipt_reference' => $this->budgetForm['receipt_reference'] ?: 'REC-'.now()->format('Y').'-'.str_pad((string) ($this->program->budgetUtilizations()->count() + 1), 4, '0', STR_PAD_LEFT),
+            'attachments' => $attachments,
         ]);
         $entry->extension_project_id = $this->program->id;
         $entry->save();
@@ -1686,10 +1758,30 @@ class Hub extends Component
         $this->showBudgetForm = false;
     }
 
+    public function removeBudgetAttachment(int $index): void
+    {
+        $files = array_values($this->budgetForm['attachments'] ?? []);
+        if (isset($files[$index])) {
+            unset($files[$index]);
+            $this->budgetForm['attachments'] = array_values($files);
+        }
+    }
+
     public function deleteBudgetEntry(int $id): void
     {
         $this->abortUnlessManage();
-        BudgetUtilization::findOrFail($id)->delete();
+
+        $entry = BudgetUtilization::findOrFail($id);
+
+        // The attachments are the proof of expense — they are deleted with the
+        // row so no orphaned file is left behind on the disk.
+        foreach ((array) $entry->attachments as $attachment) {
+            if (! empty($attachment['path'])) {
+                Storage::disk('public')->delete($attachment['path']);
+            }
+        }
+
+        $entry->delete();
         $this->dispatch('sc-toast', message: 'Entry removed', type: 'warn');
     }
 

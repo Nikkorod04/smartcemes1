@@ -181,11 +181,14 @@ class ReportMetricDictionaryTest extends TestCase
         $response = $this->actingAs($this->admin())->get('/reports')->assertOk();
 
         $body = $response->getContent();
+        // The cards were shortened (60d6698) — the full names ("…Report",
+        // "…Summary") still live in the print layouts and the preview titles,
+        // but the index tile titles are the short forms.
         foreach ([
-            'Annual Extension Performance Report',
-            'Project Performance Report',
+            'Annual Extension Performance',
+            'Project Performance',
             'Faculty Rendered Hours',
-            'Community Partner Impact Summary',
+            'Community Partner Impact',
         ] as $title) {
             $this->assertStringContainsString($title, $body, "the index does not offer \"{$title}\"");
         }

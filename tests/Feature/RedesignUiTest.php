@@ -145,8 +145,10 @@ class RedesignUiTest extends TestCase
             /* The over-allocation colour moved OUT of the inline Chart.js config and
                into the stylesheet (owner request 2026-09-25) — the bullet row now
                marks the state with a class, so assert the STATE, not the hex.
-               HANDA is seeded over its allocated budget, so it must appear. */
-            ->assertSee('bullet-fill is-over', false)
+               dd25631 rebuilt the bullet rows as dash-budget-* rows, but kept the
+               `is-over` state class on the fill. HANDA is seeded over its
+               allocated budget, so it must appear. */
+            ->assertSee('dash-budget-fill is-over', false)
             /* Stage 3 (owner request 2026-09-25): every leaderboard row now carries
                a magnitude bar, and the 🥇🥈🥉 medals are gone — the rank is `#N`. */
             ->assertSee('leader-bar-fill', false)

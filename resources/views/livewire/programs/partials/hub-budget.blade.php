@@ -41,7 +41,7 @@
             @endif
         </div>
         <table class="sc-table">
-            <thead><tr><th>Item</th><th>Charged to</th><th class="!text-right">Amount</th><th>Date used</th><th>Receipt</th></tr></thead>
+            <thead><tr><th>Item</th><th>Charged to</th><th class="!text-right">Amount</th><th>Date used</th><th>Attachments</th></tr></thead>
             <tbody>
                 @forelse ($entries as $e)
                     <tr wire:key="bud-{{ $e->id }}">
@@ -50,7 +50,21 @@
                         <td class="!text-right font-bold whitespace-nowrap">₱{{ number_format((float) $e->amount, 2) }}</td>
                         <td class="text-gray-500">{{ $e->date_used->format('M j, Y') }}</td>
                         <td class="!text-right row-actions">
-                            <span class="text-[11.5px] text-gray-400">{{ $e->receipt_reference }}</span>
+                            @if (collect($e->attachments ?? [])->isEmpty())
+                                <span class="text-[11.5px] text-gray-300">—</span>
+                            @else
+                                <div class="flex flex-col items-end gap-1">
+                                    @foreach ($e->attachments as $attachment)
+                                        <a href="{{ Storage::disk('public')->url($attachment['path']) }}" download
+                                           title="{{ $attachment['name'] }} — downloads automatically"
+                                           class="inline-flex max-w-[200px] items-center gap-1 rounded-md border border-gray-100 px-1.5 py-0.5 text-[11px] font-medium text-lnu-700 transition hover:border-lnu-200 hover:bg-blue-50/60" wire:key="bud-file-{{ $e->id }}-{{ $loop->index }}">
+                                            <x-sc.icon name="download" class="h-3 w-3 shrink-0" />
+                                            <span class="truncate">{{ $attachment['name'] }}</span>
+                                            <span class="shrink-0 text-gray-400">{{ number_format(($attachment['size'] ?? 0) / 1024, 0) }} KB</span>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
                             @if ($canManage)
                                 <button wire:click="deleteBudgetEntry({{ $e->id }})" wire:confirm="Delete this budget entry?" class="ml-2 btn btn-danger-soft !px-2 !py-1 !text-[11px]"><x-sc.icon name="trash" class="w-3.5 h-3.5" /></button>
                             @endif

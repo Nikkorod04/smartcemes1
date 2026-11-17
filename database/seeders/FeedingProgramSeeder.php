@@ -229,14 +229,13 @@ class FeedingProgramSeeder extends Seeder
                 ['activity' => null, 'item' => 'Transportation & logistics', 'amount' => 8300, 'date' => '2026-09-12'],
             ];
 
-            foreach ($budgetRows as $index => $row) {
+            foreach ($budgetRows as $row) {
                 BudgetUtilization::create([
                     'extension_project_id' => $program->id,
                     'activity_id' => $row['activity'] ? $activities[$row['activity']]->id : null,
                     'item_name' => $row['item'],
                     'amount' => $row['amount'],
                     'date_used' => $row['date'],
-                    'receipt_reference' => 'REC-2026-'.str_pad((string) (301 + $index), 4, '0', STR_PAD_LEFT),
                 ]);
             }
 

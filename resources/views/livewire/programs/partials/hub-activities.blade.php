@@ -5,10 +5,20 @@
                 <h3 class="font-bold text-[14px]">Project Activities</h3>
                 <p class="text-[11.5px] text-gray-400 font-medium mt-0.5">Planned dates must fall within <span class="font-semibold">{{ $program->planned_start_date->format('M j, Y') }} – {{ $program->planned_end_date->format('M j, Y') }}</span></p>
             </div>
+            <div class="flex shrink-0 items-center gap-2">
+                {{-- D-G1: the same dataset as a read-only timeline. --}}
+                <div class="flex overflow-hidden rounded-lg border border-gray-200 bg-gray-50/60 p-0.5">
+                    <button type="button" wire:click="setActivitiesView('grid')" @class(['px-2.5 py-1 text-[11px] font-bold rounded-md transition', $activitiesView === 'grid' ? 'bg-white text-charcoal shadow-sm' : 'text-gray-400 hover:text-gray-600'])>Grid</button>
+                    <button type="button" wire:click="setActivitiesView('gantt')" @class(['px-2.5 py-1 text-[11px] font-bold rounded-md transition', $activitiesView === 'gantt' ? 'bg-white text-charcoal shadow-sm' : 'text-gray-400 hover:text-gray-600'])>Gantt</button>
+                </div>
             @if ($canManage)
                 <button wire:click="openActivityForm(null)" class="btn btn-primary"><x-sc.icon name="calendar" class="w-4 h-4" /> Add Activity</button>
             @endif
+            </div>
         </div>
+        @if ($activitiesView === 'gantt')
+            @include('livewire.programs.partials.hub-activities-gantt')
+        @else
         <div class="overflow-x-auto">
             <table class="sc-table">
                 <thead><tr><th>Activity</th><th>Date</th><th>Time</th><th>Venue</th><th class="!text-right">Trainors</th><th class="!text-right">Trainees</th><th class="!text-right">Days</th><th class="!text-right">Training Hrs</th><th>Status</th><th class="!text-right">Actions</th></tr></thead>
@@ -71,5 +81,6 @@
                 </tbody>
             </table>
         </div>
+        @endif
     </div>
 </div>

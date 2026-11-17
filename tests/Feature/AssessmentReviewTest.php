@@ -50,6 +50,9 @@ class AssessmentReviewTest extends TestCase
         // v4.9 regression: education / livelihood / water / house were once
         // JSON arrays but are now single-select STRINGS — the old detail row
         // called implode() on them and the render 500'd with a TypeError.
+        // (assertSee is case-sensitive: the drawer eyebrow is sentence-case
+        // "Encoded response dossier" since the 60d6698 view redesign — the
+        // CSS uppercases it visually, the HTML stays as written.)
         $a = $this->makeAssessment([
             'respondent_educational_attainment' => 'College Graduate',
             'livelihood_options' => 'Farming',
@@ -64,7 +67,7 @@ class AssessmentReviewTest extends TestCase
             ->test(Review::class)
             ->call('openDrawer', $a->id)
             ->assertSet('showDrawer', true)
-            ->assertSee('Encoded Response Dossier')
+            ->assertSee('Encoded response dossier')
             ->assertSee('College Graduate')
             ->assertSee('Farming')
             ->assertSee('Deep well')
@@ -106,10 +109,12 @@ class AssessmentReviewTest extends TestCase
 
         $test = Livewire::actingAs($this->secretary())->test(Review::class);
 
+        // The confirmation modal's h3 title is sentence-case "Validate
+        // submission" since the 60d6698 view redesign.
         $test->call('openDrawer', $a->id)
             ->call('openValidate', $a->id)
             ->assertSet('showValidate', true)
-            ->assertSee('Validate Submission')
+            ->assertSee('Validate submission')
             ->assertSee('On confirm:')
             ->assertSee($a->community->name);
 

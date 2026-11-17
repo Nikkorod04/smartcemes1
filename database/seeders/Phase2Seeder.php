@@ -432,14 +432,13 @@ class Phase2Seeder extends Seeder
             ['program' => 'EXT-2026-005', 'activity' => null, 'item' => 'Wellness talk materials', 'amount' => 8300, 'date' => '2026-07-13'],
         ];
 
-        foreach ($rows as $i => $row) {
+        foreach ($rows as $row) {
             BudgetUtilization::create([
                 'extension_project_id' => $programIds[$row['program']],
                 'activity_id' => $row['activity'] ? $activityKeys[$row['activity']] ?? null : null,
                 'item_name' => $row['item'],
                 'amount' => $row['amount'],
                 'date_used' => $row['date'],
-                'receipt_reference' => 'REC-2026-'.str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT),
             ]);
         }
 

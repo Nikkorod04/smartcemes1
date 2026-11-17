@@ -58,9 +58,15 @@ class CommunitiesPartnerSchoolsTest extends TestCase
         $this->seed();
         $admin = User::where('email', 'admin@lnu.com')->first();
 
+        /* The directory paginates 10 per page (§ Latest October polish), so the
+           fixture community is located through the search control while the
+           type filter stays applied; the record count proves the filter's
+           scope (58 seeded, 46 of them communities). */
         Livewire::actingAs($admin)
             ->test(CommunitiesIndex::class)
             ->set('type', 'community')
+            ->assertSee('46 records')
+            ->set('search', 'Suhi')
             ->assertSee('Brgy. Suhi')
             ->assertDontSee('Caibaan Elementary School');
     }
@@ -185,9 +191,14 @@ class CommunitiesPartnerSchoolsTest extends TestCase
         $community = Community::where('name', 'Brgy. Suhi')->first();
         $community->delete();
 
+        /* The default list paginates 10 per page, so the restored record is
+           located through the search control — the point is that it left the
+           archived set and is listed again by default (status ''), not that
+           it lands on page 1. */
         Livewire::actingAs($admin)
             ->test(CommunitiesIndex::class)
             ->call('restore', $community->id)
+            ->set('search', 'Suhi')
             ->assertSee('Brgy. Suhi');
 
         $this->assertFalse(Community::withTrashed()->findOrFail($community->id)->trashed());

@@ -488,14 +488,13 @@ class SafeZoneProjectSeeder extends Seeder
             ['activity' => null, 'item' => 'Certificates, tarpaulin & documentation', 'amount' => round($spec['budget'] * 0.14), 'date' => $spec['end']],
         ];
 
-        foreach ($rows as $i => $row) {
+        foreach ($rows as $row) {
             BudgetUtilization::create([
                 'extension_project_id' => $project->id,
                 'activity_id' => $row['activity'] === null ? null : ($activityIds[$row['activity']] ?? null),
                 'item_name' => $row['item'],
                 'amount' => $row['amount'],
                 'date_used' => $row['date'],
-                'receipt_reference' => 'REC-2026-'.$project->id.'-'.str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT),
             ]);
         }
     }

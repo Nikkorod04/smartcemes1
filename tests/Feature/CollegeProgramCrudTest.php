@@ -379,7 +379,9 @@ class CollegeProgramCrudTest extends TestCase
     /** The rendered <aside> sidebar, so nav assertions cannot match page body text. */
     private function sidebarHtml(string $html): string
     {
-        preg_match('/<aside class="fixed inset-y-0 left-0[^"]*">(.*?)<\/aside>/s', $html, $matches);
+        /* dd25631 branded the shell: the aside now carries `sc-sidebar` before
+           the position classes, so match on the marker, not the class order. */
+        preg_match('/<aside\b[^>]*class="[^"]*\bsc-sidebar\b[^"]*">(.*?)<\/aside>/s', $html, $matches);
 
         return $matches[1] ?? '';
     }

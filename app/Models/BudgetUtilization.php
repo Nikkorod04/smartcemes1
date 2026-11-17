@@ -17,12 +17,14 @@ class BudgetUtilization extends Model
         'description',
         'amount',
         'date_used',
-        'receipt_reference',
+        'attachments',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'date_used' => 'date',
+        // Each row: ['path' => ..., 'name' => ..., 'size' => ...]
+        'attachments' => 'array',
     ];
 
     public function program()
