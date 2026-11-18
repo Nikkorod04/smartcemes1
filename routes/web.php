@@ -7,6 +7,7 @@ use App\Http\Controllers\BeneficiaryExportController;
 use App\Http\Controllers\BeneficiaryTemplateController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicAssessmentController;
 use App\Http\Controllers\ReportController;
 use App\Livewire\AiAnalysis;
 use App\Livewire\AiAnalysisCommunity;
@@ -40,6 +41,19 @@ Route::get('/', function () {
         ? redirect()->route('dashboard')
         : redirect()->route('login');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Public needs-assessment form (after-defense revision, Item 1)
+|--------------------------------------------------------------------------
+| Token-scoped and unauthenticated ON PURPOSE: the token in the URL is the
+| authorization, so this sits outside every `auth` group. The token is stored
+| (not a signed URL) so the office can revoke it, extend it, and keep a
+| printed QR working. The submission handler joins this route in Step 3.
+*/
+Route::get('/a/{token}', [PublicAssessmentController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('assessment.public');
 
 // Role dashboards (12.1) — one component, three role views
 Route::get('/dashboard', Dashboard::class)

@@ -1,2 +1,4 @@
 User-agent: *
-Disallow:
+# Public assessment links are tokenised; keep them out of search indexes.
+# (The pages also send a noindex meta tag.)
+Disallow: /a/

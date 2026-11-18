@@ -5013,6 +5013,95 @@ generic institutional phrasing, not a reference to a specific entity.
 
 ---
 
+## 36. PUBLIC NEEDS-ASSESSMENT LINKS — THE ENTRY SURFACE (2026-11-18)
+
+First build step of the after-defense revision (Item 1 of `docs/AFTER-DEFENSE-REVISION-PLAN.md`). The
+questionnaire itself is the **next** step; this section covers only the door — because the door is the one
+part that can fail for infrastructure reasons (DNS, TLS termination, `APP_URL`), and it must be proven on a
+real phone before sixty fields are built behind it.
+
+### 36.1 A token, not a signed URL
+
+The obvious implementation is a Laravel **signed** URL (`URL::temporarySignedRoute`). It was rejected:
+
+| Signed URL | Stored token |
+|---|---|
+| Cannot be revoked before it expires (only rotating `APP_KEY` kills it — which kills every other link) | `revoked_at` kills one link instantly |
+| Cannot be extended; a new expiry means a new URL, so every **printed QR is dead** | Extend `expires_at`; the same URL and QR keep working |
+| ~120 characters — unusable on a poster, miserable to type | `Str::random(32)` — 32 characters |
+| No record of who opened what | `created_by`, `community_id`, `quarter`, `year` are queryable |
+
+Lifetime is **1–5 days chosen at generation, default 5**, expiring at **end-of-day** rather than
+`now()->addDays()` to the minute — people reason in dates, not stopwatches, and a poster that dies at
+2:47 PM is a support call. `AssessmentLink::expiryFor()` clamps the value so a hand-edited form cannot
+mint a year-long link.
+
+`expires_at` + `revoked_at` are both timestamp columns; `isActive()` is the single predicate the controller,
+and later the submit endpoint, ask.
+
+### 36.2 What exists now
+
+| Layer | File | Note |
+|---|---|---|
+| Table | `database/migrations/2026_11_18_000100_create_assessment_links_table.php` | `cascadeOnDelete` on community; `nullOnDelete` on the creator so deleting a user does not orphan links |
+| Model | `app/Models/AssessmentLink.php` | `newToken()`, `expiryFor()`, `isActive()`, route key = `token` |
+| Factory | `database/factories/AssessmentLinkFactory.php` | `expired()` / `revoked()` / `forPeriod()` states |
+| Route | `routes/web.php` — `GET /a/{token}` | **outside** every `auth` group, `throttle:60,1` |
+| Controller | `app/Http/Controllers/PublicAssessmentController.php` | state machine → view |
+| Layout | `resources/views/layouts/public.blade.php` | mobile-first, `max-w-2xl`, `noindex, nofollow` |
+| Views | `assessments/public-intro.blade.php`, `assessments/public-inactive.blade.php` | |
+| Bundle | `resources/js/public.js` + a third Vite input | Alpine only |
+| Console | `php artisan assessment:link {community} --days=5` | mints a link until the share sheet (Step 4) exists |
+| Tests | `tests/Feature/PublicAssessmentFormTest.php` | 9 cases |
+
+### 36.3 Decisions worth remembering
+
+**`/a/{token}`, not `/assess/{community}`.** The community is a property of the link, not of the URL. A
+link that names its community can be edited by a respondent; a token cannot.
+
+**Unknown → 404, expired/revoked → 410, both rendered.** All three land on the same courteous page
+("This link is no longer active… contact the CESO office"), because a raw Symfony 404 in front of a
+barangay respondent is a dead end. The HTTP status stays honest for monitoring (`404` = never existed,
+`410` = existed and was withdrawn), which is also what makes the two distinguishable in logs later.
+
+**A separate Vite entry, `public.js`.** `resources/js/app.js` deliberately does *not* call
+`Alpine.start()` — Livewire does that on staff pages. The public page has no Livewire, so something must
+start Alpine, and importing `app.js` to get it would drag Chart.js and the staff bundle onto a phone on
+mobile data. A 12-line entry is the cheap honest answer.
+
+**`withoutVite()` in the test.** The manifest is a build artifact (`public/build` is gitignored), so tests
+must not depend on having run `npm run build`. The access rules are what is under test, not the CSS.
+
+**`public/robots.txt` now disallows `/a/`.** It previously allowed everything, which is fine for a login
+page and wrong for a tokenised respondent form. The `noindex` meta tag is the belt; `robots.txt` is the
+braces.
+
+### 36.4 Tests
+
+`PublicAssessmentFormTest` — **9 passed, 22 assertions**: active link opens **as a guest** and shows the
+community and period; no session required; unknown token → 404; expired → 410; revoked → 410; expiry
+lands at end-of-day; the 1–5 clamp holds at both ends; the console command mints an active link; the
+console command refuses `--days=9`.
+
+`RouteSurfaceTest` re-run untouched (every nav item still resolves). Pint clean on all new files.
+`npm run build` green with the new entry (`public-*.js`, 54.9 kB / 19.5 kB gzip).
+
+### 36.5 ⚠️ What is NOT proven yet
+
+**Nothing has been exercised on the live VM.** Local `php artisan migrate` cannot run (no MySQL on this
+machine — `SQLSTATE[HY000] [2002] connection refused`); the migration is exercised only through the
+SQLite in-memory test database. The deploy must run `php artisan migrate --force` and then mint a link on
+the VM.
+
+The acceptance check that actually matters: **open the link on a phone over mobile data**, not campus
+Wi-Fi. It is the only way to see whether TLS termination, the proxy, and `APP_URL` produce a link that
+works outside the office — and if they do not, it is better to find out now than after sixty fields exist.
+
+Still placeholders on purpose: `public-intro.blade.php` says *"This form is not yet open"*, and there is no
+POST route, no `source`/`client_uuid`/`captured_at` migration, no share sheet, no QR, no draft autosave.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 
