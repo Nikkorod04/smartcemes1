@@ -145,7 +145,10 @@
             <p class="text-[10.5px] font-semibold text-gray-400" x-text="steps[step - 1].blurb"></p>
 
             <button type="button" class="btn btn-primary" x-show="step < 5" x-on:click="next()">Next →</button>
-            <button type="submit" class="btn btn-primary" x-show="step === 5">Send answers</button>
+            {{-- `type="button"` on purpose: this nav bar sits outside the <form>,
+                 so a submit button here would have no form to submit. Enter in a
+                 text field still submits through the form's own handler. --}}
+            <button type="button" class="btn btn-primary" x-show="step === 5" x-on:click="submit()">Send answers</button>
         </div>
     </div>
 

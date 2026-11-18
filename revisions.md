@@ -5164,7 +5164,21 @@ There is **no POST route yet**. Pressing *Send answers* validates the form and s
 device — nothing has been sent." Step 3 adds the endpoint, the provenance columns (`source`,
 `client_uuid`, `captured_at`), the review badge and the duplicate warning.
 
-### 37.6 Tests
+### 37.6 The send button did nothing (fixed)
+
+The first build put *Send answers* in the sticky navigation bar, which sits **outside** the `<form>`. It was
+also `type="submit"` — and a submit button with no owning form submits nothing, so tapping it did exactly
+nothing. No error, no console warning, no request: the most invisible class of bug.
+
+It was found by hand on the deployed page, not by the tests, because the earlier test called `submit()`
+directly on the component — which is precisely the thing the button was *supposed* to do. A test that
+bypasses the control proves nothing about the control.
+
+Now the button is `type="button"` with `x-on:click="submit()"`, and
+`test_the_send_control_is_wired_to_the_form_handler` asserts the page carries that binding, carries no
+`type="submit"`, and still submits on Enter through the form's own handler.
+
+### 37.7 Tests
 
 - `PublicAssessmentFormTest` — **17 passed, 358 assertions**: access rules (9), every section rendered, no
   Livewire on the page, tricky fields (identity, capped multi, conditional, rating, feedback, consent),

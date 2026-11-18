@@ -167,6 +167,22 @@ class PublicAssessmentFormTest extends TestCase
         $response->assertSee('of 5', false);
     }
 
+    public function test_the_send_control_is_wired_to_the_form_handler(): void
+    {
+        $link = AssessmentLink::factory()->create();
+
+        $response = $this->get(route('assessment.public', ['token' => $link->token]));
+
+        // The navigation bar sits outside <form>, so a `type="submit"` button
+        // there submits nothing at all and taps silently do nothing. Keep the
+        // send control bound to the component's own handler.
+        $response->assertSee('x-on:click="submit()"', false);
+        $response->assertDontSee('type="submit"', false);
+
+        // Enter inside a text field still goes through the form itself.
+        $response->assertSee('x-on:submit.prevent="submit()"', false);
+    }
+
     public function test_the_form_renders_the_tricky_fields(): void
     {
         $link = AssessmentLink::factory()->create();
