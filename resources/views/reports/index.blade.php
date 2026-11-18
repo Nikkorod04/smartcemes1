@@ -1,7 +1,10 @@
 <x-app-layout>
 <div x-data="{ previewOpen: false, previewUrl: '', previewTitle: '' }" @keydown.escape.window="previewOpen = false">
     <section class="pt-6 grid gap-4 md:grid-cols-2">
-        <article class="sc-card group relative overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-pop">
+        {{-- Annual Extension Performance card — hidden from the index for now.
+             The /reports/annual route and page still exist; re-enable by
+             uncommenting. --}}
+        {{-- <article class="sc-card group relative overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-pop">
             <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-lnu-50/80"></div>
             <div class="relative flex h-full flex-col justify-between gap-6">
                 <div>
@@ -17,7 +20,7 @@
                     <a href="{{ route('reports.annual') }}" target="_blank" rel="noopener" class="btn btn-primary !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="link" class="w-3.5 h-3.5" />Open report</a>
                 </div>
             </div>
-        </article>
+        </article> --}}
 
         <article class="sc-card group relative overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:border-gold-200 hover:shadow-pop">
             <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gold-50/80"></div>

@@ -172,7 +172,7 @@ class ReportMetricDictionaryTest extends TestCase
         $this->assertNull($project->fresh()->hoursTarget(), 'the fixture genuinely has no target');
     }
 
-    public function test_the_reports_index_lists_all_four_reports(): void
+    public function test_the_reports_index_lists_the_three_active_reports(): void
     {
         // The Project Performance card links per-project, so a project must
         // exist for the fourth report to be reachable from the index.
@@ -183,14 +183,19 @@ class ReportMetricDictionaryTest extends TestCase
         $body = $response->getContent();
         // The cards were shortened (60d6698) — the full names ("…Report",
         // "…Summary") still live in the print layouts and the preview titles,
-        // but the index tile titles are the short forms.
+        // but the index tile titles are the short forms. The Annual Extension
+        // Performance card is temporarily commented out of the index (kept as
+        // a Blade comment in the view); the report itself must stay reachable
+        // by direct URL.
         foreach ([
-            'Annual Extension Performance',
             'Project Performance',
             'Faculty Rendered Hours',
             'Community Partner Impact',
         ] as $title) {
             $this->assertStringContainsString($title, $body, "the index does not offer \"{$title}\"");
         }
+        $this->assertStringNotContainsString('Annual Extension Performance', $body);
+
+        $this->actingAs($this->admin())->get('/reports/annual')->assertOk();
     }
 }
