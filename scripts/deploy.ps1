@@ -45,9 +45,31 @@ function Invoke-Remote {
     $normalised = $Script -replace "`r`n", "`n"
     $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($normalised))
 
-    $output = & ssh -o BatchMode=yes -o IdentitiesOnly=yes -i $Key $Target "echo $b64 | base64 -d | bash" 2>&1
-    $script:LastRemoteExit = $LASTEXITCODE
-    $output | ForEach-Object { Write-Host "    $_" }
+    # Native commands write progress to stderr, and with ErrorActionPreference
+    # = Stop PowerShell 5.1 turns the merged 2>&1 records into terminating
+    # errors ("NativeCommandError") — which is how a perfectly good `git pull`
+    # failed the whole deploy. Scope the preference down for this call.
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+
+    try {
+        $output = & ssh -o BatchMode=yes -o IdentitiesOnly=yes -i $Key $Target "echo $b64 | base64 -d | bash" 2>&1
+        $script:LastRemoteExit = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previous
+    }
+
+    foreach ($line in $output) {
+        $text = if ($line -is [System.Management.Automation.ErrorRecord]) {
+            $line.Exception.Message
+        }
+        else {
+            [string]$line
+        }
+
+        Write-Host "    $text"
+    }
 
     if ($script:LastRemoteExit -ne 0 -and -not $AllowFailure) {
         throw "Remote command failed with exit code $script:LastRemoteExit"
