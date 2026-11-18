@@ -212,6 +212,18 @@ class Index extends Component
 
         $user->update(['is_active' => ! $user->is_active]);
 
+        // Faculty mirror: the directory has its own status column, so a
+        // deactivated login must read "Inactive" there too (not silently
+        // "Active"). Re-activation only flips it back if THIS is what set it
+        // — a faculty member marked "On Leave" by the directory keeps that.
+        if ($user->isFaculty() && ($faculty = $user->faculty)) {
+            if (! $user->is_active) {
+                $faculty->update(['status' => Faculty::STATUS_INACTIVE]);
+            } elseif ($faculty->status === Faculty::STATUS_INACTIVE) {
+                $faculty->update(['status' => Faculty::STATUS_ACTIVE]);
+            }
+        }
+
         if (! $user->is_active && config('session.driver') === 'database') {
             DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
         }

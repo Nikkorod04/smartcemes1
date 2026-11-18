@@ -183,6 +183,14 @@ class Directory extends Component
                     'email' => $this->form['email'],
                 ]);
 
+                // Account mirror: the login gate lives on users.is_active, so a
+                // faculty member moved to "Inactive" here loses their login,
+                // and one moved OUT of "Inactive" gets it back. "On Leave" is a
+                // departmental state, not an account lock — it never touches
+                // the account. (The User Management side mirrors back the same
+                // way in Users\Index::changeStatus.)
+                $wasInactive = $editing->status === FacultyModel::STATUS_INACTIVE;
+
                 $editing->update([
                     'employee_id' => $this->form['employee_id'],
                     'college_id' => $this->form['college_id'] ?: null,
@@ -194,6 +202,15 @@ class Directory extends Component
                     'address' => $this->form['address'] ?: null,
                 ]);
 
+                $nowInactive = $editing->status === FacultyModel::STATUS_INACTIVE;
+                if ($nowInactive !== $wasInactive) {
+                    $editing->user->update(['is_active' => ! $nowInactive]);
+
+                    if ($nowInactive && config('session.driver') === 'database') {
+                        DB::table(config('session.table', 'sessions'))->where('user_id', $editing->user->id)->delete();
+                    }
+                }
+
                 $faculty = $editing;
             } else {
                 $user = User::create([
@@ -202,6 +219,9 @@ class Directory extends Component
                     'password' => Hash::make($temporaryPassword),
                     'role' => User::ROLE_FACULTY,
                     'must_change_password' => true,
+                    // Creating the profile as "Inactive" starts the account
+                    // locked — same account↔faculty mirror as the edit path.
+                    'is_active' => $this->form['status'] !== FacultyModel::STATUS_INACTIVE,
                 ]);
 
                 $faculty = FacultyModel::create([
