@@ -4,6 +4,7 @@ namespace App\Livewire\Assessments;
 
 use App\Models\Community;
 use App\Models\NeedsAssessment;
+use App\Services\AssessmentRules;
 use App\Services\AssessmentTemplate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -118,43 +119,15 @@ class Wizard extends Component
 
     protected function rules(): array
     {
-        $rules = [
+        // The instrument rules live in one service because the public form
+        // validates the same fields (after-defense revision, Item 1). Keeping a
+        // second copy here is what would let the two instruments drift.
+        return [
             'communityId' => 'required|exists:communities,id',
             'quarter' => 'required|integer|between:1,4',
             'year' => 'required|integer|min:2020|max:2100',
-            'form.respondent_first_name' => 'required|string|max:255',
-            'form.respondent_last_name' => 'required|string|max:255',
-            'form.respondent_age' => 'nullable|integer|between:15,120',
-        ];
-
-        foreach (AssessmentTemplate::COLUMNS as $field => $col) {
-            if (in_array($col['type'], ['context', 'text', 'number'], true)) {
-                continue;
-            }
-
-            if ($col['type'] === 'yesno') {
-                $rules["form.$field"] = 'nullable|in:Yes,No';
-
-                continue;
-            }
-
-            $vocab = config('smartcemes.vocab.'.$col['vocab']);
-
-            if ($col['type'] === 'single') {
-                $rules["form.$field"] = $field === 'barangay_service_ratings'
-                    ? 'nullable'
-                    : 'nullable|in:'.implode(',', $vocab);
-            } else {
-                $rules["form.$field"] = 'array'.(isset($col['max']) ? '|max:'.$col['max'] : '');
-                $rules["form.$field".'.*'] = 'in:'.implode(',', $vocab);
-            }
-
-            if ($col['type'] !== 'yesno' && in_array('Other', $vocab ?? [], true)) {
-                $rules["form.$field".'_other'] = 'nullable|string|max:500';
-            }
-        }
-
-        return $rules;
+        ] + AssessmentRules::respondent('form')
+          + AssessmentRules::forForm('form');
     }
 
     public function save(): void

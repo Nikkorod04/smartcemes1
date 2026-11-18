@@ -5102,6 +5102,81 @@ POST route, no `source`/`client_uuid`/`captured_at` migration, no share sheet, n
 
 ---
 
+## 37. THE PUBLIC QUESTIONNAIRE (2026-11-18)
+
+Item 1, Step 2. The staff wizard is untouched; the public form is a second
+instrument over the same schema and the same rules.
+
+### 37.1 Why it is not a Livewire component
+
+Every chip in the staff wizard costs a server round trip
+(`wire:click="$set(...)"` in `livewire/assessments/partials/field.blade.php:13-17`), and every conditional
+section is decided server-side (`@if ($show[...])`). In the office that is invisible. On barangay mobile
+data it is ~60 requests per respondent, and it makes offline impossible.
+
+The public form therefore holds all answers in the browser: conditional follow-ups are computed in Alpine,
+nothing is sent until submit, and a dropped signal mid-form costs nothing.
+
+That decision creates exactly one new obligation — the browser has to know what the instrument is. So
+`App\Services\AssessmentFormSchema` exposes the field types, the multi-select caps, the exclusive options,
+the "Other" fields and the conditional-visibility map as data, all derived from
+`AssessmentTemplate::COLUMNS`. Adding a field to the template still adds it to both instruments.
+
+### 37.2 One rule set, proven
+
+`Wizard::rules()` was extracted to `App\Services\AssessmentRules` and the wizard now calls it. This is the
+same drift risk as a duplicated vocabulary, one level up: two instruments writing to `needs_assessments`
+must not disagree about what an acceptable answer is.
+
+`PublicAssessmentFormTest::test_the_wizard_and_the_public_form_share_one_rule_set` reflects into the
+private `rules()` method and asserts the wizard still carries **every** shared rule, value for value. If
+someone later "fixes" one side only, that test fails.
+
+### 37.3 The form
+
+| Behaviour | Implementation |
+|---|---|
+| Five steps | `AssessmentFormSchema::STEPS` — same grouping as the wizard (I–II, III–IV, V–VI, VII–VIII, IX) |
+| Context | Community, quarter and year come from the link and are not editable |
+| Conditional follow-ups | `visibility()` map → Alpine `show()`, mirroring the wizard's `$show` |
+| Hidden answers cleared | `applyRules()` mirrors `Wizard::updated()` exactly, so a submitted record is internally consistent |
+| Multi-select caps | `max` from the template (problems: 3), shown as "2/3", extra taps ignored |
+| Exclusive options | "Flexible" and "No supplies" replace the selection |
+| "Other" | Only where the vocabulary contains it; the free-text box appears with the choice |
+| Names | Same letters-only sanitiser as the wizard |
+| Consent | Checkbox on step 5, required before submitting |
+
+### 37.4 The draft survives the phone
+
+Every answer is written to `localStorage` under `sc.assess.<token>` (debounced 400 ms, plus on step change,
+`pagehide` and `visibilitychange` — mobile browsers kill background tabs without warning). On reopen the
+form restores answers, step and consent, and says when they were saved.
+
+`client_uuid` is generated per respondent and travels with the draft, so the eventual retry cannot create a
+duplicate row. "Start over" clears the draft and mints a new id.
+
+**Honest limitation:** clearing browser data, private mode or switching phones loses the draft. There is no
+account to recover from. The form says answers are stored on this device; that is the whole promise.
+
+### 37.5 What this step does NOT do
+
+There is **no POST route yet**. Pressing *Send answers* validates the form and shows "Answers saved on this
+device — nothing has been sent." Step 3 adds the endpoint, the provenance columns (`source`,
+`client_uuid`, `captured_at`), the review badge and the duplicate warning.
+
+### 37.6 Tests
+
+- `PublicAssessmentFormTest` — **17 passed, 358 assertions**: access rules (9), every section rendered, no
+  Livewire on the page, tricky fields (identity, capped multi, conditional, rating, feedback, consent),
+  schema coverage of every template field, "Other" fields, caps and exclusives, rules parity with the wizard.
+- `AssessmentWizardConditionalTest` + `AssessmentWizardOtherTest` + `AssessmentReviewTest` — **29 passed**
+  after the extraction, unchanged. That is the evidence the refactor was behaviour-preserving.
+- `AssessmentImportTest` + `RouteSurfaceTest` — **23 passed**.
+- Manual in the browser: conditional show/hide, cap behaviour, draft write → reload → restore (answers,
+  step and timestamp), empty submit blocked with three errors, valid submit reaches the saved state.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 
