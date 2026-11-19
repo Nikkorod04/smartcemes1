@@ -5623,6 +5623,9 @@ is `404`; the roster shows Edit to the Secretary only.
 Manual on localhost: from the Abucay project roster, edited Adelaida Abad's phone, the row and toast
 updated immediately, then reverted the value through the same modal.
 
+Production: the Secretary edited and reverted a beneficiary's phone from the Abucay project roster; the
+Admin saw no beneficiary Edit action (only the project's own Edit), and kept Unenroll.
+
 Full suite after Item 3: **727 passed, 4,201 assertions**.
 
 ---

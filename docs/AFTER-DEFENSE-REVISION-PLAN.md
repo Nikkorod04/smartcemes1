@@ -160,7 +160,7 @@ If green, offline is additive: service worker for the public shell, pending coun
 
 ---
 
-## 4. Item 3 — Edit beneficiary information (Secretary)
+## 4. Item 3 — Edit beneficiary information (Secretary) (implemented 2026-11-19 — `revisions.md` §42)
 
 **Goal:** correct a beneficiary profile after registration.
 
