@@ -212,6 +212,7 @@ class Index extends Component
             'detail' => $detail,
             'detailPrograms' => $detail?->extensionPrograms()->get() ?? collect(),
             'detailSummaries' => $detail?->assessmentSummaries()->orderBy('year')->orderBy('quarter')->get() ?? collect(),
+            'detailAssessmentCount' => $detail?->needsAssessments()->count() ?? 0,
             'communityCount' => $typeCounts['community'] ?? 0,
             'schoolCount' => $typeCounts['school'] ?? 0,
         ]);

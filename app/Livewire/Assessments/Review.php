@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Assessments;
 
+use App\Models\Community;
 use App\Models\NeedsAssessment;
 use App\Notifications\SmartCemesNotification;
 use App\Services\AssessmentTemplate;
@@ -28,6 +29,25 @@ class Review extends Component
     /** Queue period sort: 'default' (pending-first) | 'asc' | 'desc' (year, then quarter). */
     #[Url(except: 'default')]
     public string $sortPeriod = 'default';
+
+    #[Url(except: 'all')]
+    public string $year = 'all';
+
+    #[Url(except: 'all')]
+    public string $status = 'all';
+
+    /**
+     * Set when the same queue is opened for one community (Item 2). The list,
+     * KPIs and actions all stay inside that community.
+     */
+    public ?int $communityId = null;
+
+    public ?string $communityName = null;
+
+    public ?string $communitySubtitle = null;
+
+    /** Admin may read the community directory, but only the Secretary validates. */
+    public bool $readOnly = false;
 
     public ?int $drawerId = null;
 
@@ -164,9 +184,52 @@ class Review extends Component
         ],
     ];
 
+    /**
+     * The global queue passes no community. The Item 2 directory binds one and
+     * locks the whole page to it; Admin gets a read-only view there.
+     */
+    public function mount(?Community $community = null): void
+    {
+        if ($community === null) {
+            return;
+        }
+
+        $this->communityId = $community->id;
+        $this->communityName = $community->name;
+        $this->communitySubtitle = collect([$community->municipality, $community->province])
+            ->filter()
+            ->implode(', ');
+        $this->readOnly = ! auth()->user()->isSecretary();
+    }
+
+    /**
+     * Every query the page acts on. Scoping here — not only in render — is what
+     * stops a tampered id from opening, validating or returning another
+     * community's assessment from the directory.
+     */
+    private function assessments()
+    {
+        return NeedsAssessment::query()
+            ->when($this->communityId !== null, fn ($query) => $query->where('community_id', $this->communityId));
+    }
+
+    /**
+     * Scoped lookup. `abort(404)` rather than `findOrFail` so a tampered id is
+     * a handled 404 (the Livewire test harness and the browser both see it as
+     * "not found"), not an uncaught model exception.
+     */
+    private function findAssessment(?int $id, array $with = []): NeedsAssessment
+    {
+        $assessment = $id === null ? null : $this->assessments()->with($with)->find($id);
+
+        abort_if($assessment === null, 404);
+
+        return $assessment;
+    }
+
     public function openDrawer(int $id): void
     {
-        $this->drawerId = $id;
+        $this->drawerId = $this->findAssessment($id)->id;
         $this->showDrawer = true;
     }
 
@@ -188,6 +251,16 @@ class Review extends Component
     }
 
     public function updatedQuarter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedYear(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatus(): void
     {
         $this->resetPage();
     }
@@ -272,7 +345,9 @@ class Review extends Component
 
     public function openValidate(int $id): void
     {
-        $this->validatingId = $id;
+        abort_unless(auth()->user()->isSecretary(), 403, 'Separation of duties — only the Secretary validates assessments.');
+
+        $this->validatingId = $this->findAssessment($id)->id;
         $this->showValidate = true;
     }
 
@@ -281,7 +356,7 @@ class Review extends Component
     {
         abort_unless(auth()->user()->isSecretary(), 403, 'Separation of duties — only the Secretary validates assessments.');
 
-        $assessment = NeedsAssessment::with(['community', 'uploader'])->findOrFail($this->validatingId);
+        $assessment = $this->findAssessment($this->validatingId, ['community', 'uploader']);
         abort_unless($assessment->review_status === 'pending', 422, 'Already reviewed.');
 
         $assessment->update([
@@ -306,7 +381,9 @@ class Review extends Component
 
     public function openReturn(int $id): void
     {
-        $this->returningId = $id;
+        abort_unless(auth()->user()->isSecretary(), 403, 'Separation of duties — only the Secretary validates assessments.');
+
+        $this->returningId = $this->findAssessment($id)->id;
         $this->returnRemarks = '';
         $this->showReturn = true;
         $this->resetErrorBag();
@@ -321,7 +398,7 @@ class Review extends Component
             'returnRemarks' => 'required|string|min:5|max:2000',
         ]);
 
-        $assessment = NeedsAssessment::with(['community', 'uploader'])->findOrFail($this->returningId);
+        $assessment = $this->findAssessment($this->returningId, ['community', 'uploader']);
         abort_unless($assessment->review_status === 'pending', 422, 'Already reviewed.');
 
         $assessment->update([
@@ -347,7 +424,7 @@ class Review extends Component
 
     public function render()
     {
-        $stats = NeedsAssessment::query()
+        $stats = $this->assessments()
             ->selectRaw('count(*) as total')
             ->selectRaw("sum(case when review_status = 'pending' then 1 else 0 end) as pending")
             ->selectRaw("sum(case when review_status = 'validated' then 1 else 0 end) as validated")
@@ -355,6 +432,8 @@ class Review extends Component
             ->first();
 
         $quarter = in_array($this->quarter, ['1', '2', '3', '4'], true) ? (int) $this->quarter : null;
+        $year = preg_match('/^\d{4}$/', $this->year) ? (int) $this->year : null;
+        $status = in_array($this->status, ['pending', 'validated', 'returned'], true) ? $this->status : null;
 
         $periodDir = match ($this->sortPeriod) {
             'asc' => 'asc',
@@ -362,7 +441,7 @@ class Review extends Component
             default => null,
         };
 
-        $queue = NeedsAssessment::query()
+        $queue = $this->assessments()
             ->with(['community', 'uploader', 'reviewer'])
             ->when($this->search !== '', function ($query) {
                 $term = '%'.str_replace(['%', '_'], ['\%', '\_'], trim($this->search)).'%';
@@ -375,6 +454,8 @@ class Review extends Component
                 });
             })
             ->when($quarter !== null, fn ($query) => $query->where('quarter', $quarter))
+            ->when($year !== null, fn ($query) => $query->where('year', $year))
+            ->when($status !== null, fn ($query) => $query->where('review_status', $status))
             ->when(
                 in_array($this->source, ['staff', 'public', 'import'], true),
                 fn ($query) => $query->where('source', $this->source)
@@ -389,14 +470,15 @@ class Review extends Component
         return view('livewire.assessments.review', [
             'queue' => $queue,
             'stats' => $stats,
+            'years' => $this->assessments()->select('year')->distinct()->orderByDesc('year')->pluck('year'),
             'selected' => $this->drawerId
-                ? NeedsAssessment::with(['community', 'uploader', 'reviewer'])->find($this->drawerId)
+                ? $this->assessments()->with(['community', 'uploader', 'reviewer'])->find($this->drawerId)
                 : null,
             'validating' => $this->validatingId
-                ? NeedsAssessment::with('community')->find($this->validatingId)
+                ? $this->assessments()->with('community')->find($this->validatingId)
                 : null,
             'returning' => $this->returningId
-                ? NeedsAssessment::with('community')->find($this->returningId)
+                ? $this->assessments()->with('community')->find($this->returningId)
                 : null,
             'sections' => self::SECTIONS,
         ]);

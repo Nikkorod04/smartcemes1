@@ -378,7 +378,14 @@
                     </section>
 
                     <section class="mt-5">
-                        <div class="mb-3 flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lnu-50 text-lnu-800"><x-sc.icon name="clipboard" class="h-3.5 w-3.5" /></span><h4 class="text-[13px] font-extrabold tracking-tight">Needs-Assessment History</h4></div>
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lnu-50 text-lnu-800"><x-sc.icon name="clipboard" class="h-3.5 w-3.5" /></span><h4 class="text-[13px] font-extrabold tracking-tight">Needs-Assessment History</h4></div>
+                            @if ($detailAssessmentCount > 0)
+                                <a href="{{ route('communities.assessments', $detail) }}" class="whitespace-nowrap text-[11px] font-bold text-lnu-700 underline decoration-lnu-200 underline-offset-2 transition hover:text-lnu-900">
+                                    View all {{ $detailAssessmentCount }} →
+                                </a>
+                            @endif
+                        </div>
                         <div class="rounded-xl border border-gray-100 bg-white px-4">
                             @if ($detailSummaries->isEmpty())
                                 <p class="py-4 text-[12.5px] font-medium italic text-gray-400">No needs-assessment encoded yet.</p>

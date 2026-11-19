@@ -1,9 +1,30 @@
 <div class="secretary-assessment-review-page">
 <section class="pt-6">
-    <div class="flex items-end justify-between mb-3">
-        <p class="secretary-page-eyebrow">Needs-assessment validation queue · pending → validated | returned (with remarks)</p>
-        <p class="secretary-page-hint">Validations stamp your name &amp; timestamp to the audit trail</p>
-    </div>
+    @if ($communityId)
+        <a href="{{ $readOnly ? route('communities.index') : route('assessments.review') }}"
+           class="inline-flex items-center gap-1 text-[11.5px] font-bold text-lnu-700 transition hover:text-lnu-900">
+            ← {{ $readOnly ? 'Back to communities' : 'Back to the review queue' }}
+        </a>
+        <div class="mt-2 mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div class="min-w-0">
+                <h1 class="secretary-form-title">{{ $communityName }}</h1>
+                <p class="secretary-form-subtitle">
+                    {{ $communitySubtitle ? $communitySubtitle.' · ' : '' }}every needs assessment submitted for this barangay
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                @if ($readOnly)
+                    <span class="badge badge-gray">Read-only · the Secretary validates</span>
+                @endif
+                <span class="badge badge-blue">{{ (int) $stats->total }} submission{{ (int) $stats->total === 1 ? '' : 's' }}</span>
+            </div>
+        </div>
+    @else
+        <div class="flex items-end justify-between mb-3">
+            <p class="secretary-page-eyebrow">Needs-assessment validation queue · pending → validated | returned (with remarks)</p>
+            <p class="secretary-page-hint">Validations stamp your name &amp; timestamp to the audit trail</p>
+        </div>
+    @endif
     <div class="reveal-item grid grid-cols-2 lg:grid-cols-4 gap-4">
 
         <x-sc.color-card tone="gold" class="secretary-review-kpi reveal-item flex h-full flex-col p-5">
@@ -58,15 +79,29 @@
                 <option value="3">Q3 · Jul–Sep</option>
                 <option value="4">Q4 · Oct–Dec</option>
             </select>
+            <select wire:model.live="year" class="input !w-32 !py-2" aria-label="Filter by year">
+                <option value="all">All years</option>
+                @foreach ($years as $y)
+                    <option value="{{ $y }}">{{ $y }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="status" class="input !w-36 !py-2" aria-label="Filter by review status">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="validated">Validated</option>
+                <option value="returned">Returned</option>
+            </select>
             <select wire:model.live="source" class="input !w-40 !py-2" aria-label="Filter by how the assessment was submitted">
                 <option value="all">All sources</option>
                 <option value="public">Public form</option>
                 <option value="staff">Staff entry</option>
                 <option value="import">XLSX import</option>
             </select>
-            <a href="{{ route('assessments.share') }}" class="btn btn-outline !py-2 !px-3 text-[12px]">
-                <x-sc.icon name="qr" class="h-4 w-4" /> Share form
-            </a>
+            @if (! $readOnly)
+                <a href="{{ route('assessments.share') }}" class="btn btn-outline !py-2 !px-3 text-[12px]">
+                    <x-sc.icon name="qr" class="h-4 w-4" /> Share form
+                </a>
+            @endif
             <span class="ml-auto text-[11.5px] text-gray-400 font-medium whitespace-nowrap">{{ $queue->total() }} submission{{ $queue->total() === 1 ? '' : 's' }}</span>
         </div>
         <div class="overflow-x-auto">
@@ -143,7 +178,7 @@
                             </td>
                             <td class="!p-2 text-right whitespace-nowrap">
                                 <div class="row-actions inline-flex items-center gap-1.5">
-                                    @if ($a->review_status === 'pending')
+                                    @if (! $readOnly && $a->review_status === 'pending')
                                         <button wire:click.stop="openValidate({{ $a->id }})" class="btn btn-success-soft !px-2.5 !py-1.5 !text-[11px]">Validate</button>
                                         <button wire:click.stop="openReturn({{ $a->id }})" class="btn btn-danger-soft !px-2.5 !py-1.5 !text-[11px]">Return</button>
                                     @endif
@@ -213,6 +248,12 @@
                             · Reviewed by {{ $selected->reviewer?->name }} on {{ $selected->reviewed_at->format('M j, Y') }}
                         @endif
                     </p>
+                    @if (! $communityId)
+                        <a href="{{ route('communities.assessments', $selected->community) }}"
+                           class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-white/80 underline decoration-white/30 underline-offset-2 transition hover:text-white">
+                            See every assessment for {{ $selected->community->name }} →
+                        </a>
+                    @endif
                 </div>
                 </div>
             </header>
@@ -272,11 +313,15 @@
                     <p class="font-semibold {{ $pct < 80 ? 'text-red-500' : 'text-lnu-800' }}">{{ $pct }}% fields answered</p>
                 </div>
                 <div class="progress mt-1.5"><span style="width: {{ $pct }}%" class="{{ $pct < 80 ? 'bg-red-400' : 'bg-lnu' }}"></span></div>
-                @if ($selected->review_status === 'pending')
+                @if (! $readOnly && $selected->review_status === 'pending')
                     <div class="mt-3 flex items-center gap-2">
                         <button wire:click="openValidate({{ $selected->id }})" class="btn btn-primary flex-1 !py-2.5">Validate Assessment</button>
                         <button wire:click="openReturn({{ $selected->id }})" class="btn btn-danger-soft flex-1 !py-2.5">Return with Remarks</button>
                     </div>
+                @elseif ($readOnly && $selected->review_status === 'pending')
+                    <p class="mt-3 rounded-lg bg-white px-3 py-2 text-[11px] font-medium leading-relaxed text-gray-500 ring-1 ring-gray-100">
+                        Read-only view. Only the Secretary can validate or return this assessment.
+                    </p>
                 @endif
             </footer>
         </aside>

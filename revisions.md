@@ -5501,6 +5501,72 @@ until the tab was focused. Always focus the tab before judging DOM state.
 
 ---
 
+## 41. THE COMMUNITY ASSESSMENT DIRECTORY (2026-11-19)
+
+Item 2. The public form can now collect assessments; this is where the office inspects all of them for
+one barangay, in one place.
+
+### 41.1 The queue is the directory
+
+`GET /communities/{community}/assessments` (`communities.assessments`), allowed to **Admin and Secretary**,
+binds the community and renders the existing `Assessments\Review` component with that scope.
+
+Building a second table was the obvious alternative and the wrong one: the dossier, the 9 instrument
+sections, completeness calculation, pagination and validation dialogs are ~400 lines that would have been
+copied. The existing `AssessmentReviewTest` cases did not move, because the component's defaults are
+unchanged when no community is bound.
+
+### 41.2 Scope is enforced in queries, not in the view
+
+One private `assessments()` helper applies the community filter to every query the page uses: KPIs, the
+queue, the dossier, and the validate/return lookups. A tampered `openDrawer(123)` from another community is
+therefore a `404`, not a read.
+
+That lookup deliberately uses `find()` + `abort(404)` rather than `findOrFail()`. Livewire's test harness
+converts `HttpException` to a response but lets `ModelNotFoundException` escape — and in the real app a
+scoped `findOrFail` is fine, but the distinction matters for testing tampering honestly. `abort(404)` keeps
+the failure a normal "not found" in both worlds.
+
+`readOnly` is a **UI** convenience. The server still calls `isSecretary()` before opening or confirming a
+validation, so flipping the public property in the browser cannot validate anything.
+
+### 41.3 Filters
+
+Year and status join quarter and source in the toolbar; all default to `all`, and each resets pagination.
+The KPI cards stay community-wide (they ignore the filters), matching the global queue's existing
+behaviour.
+
+### 41.4 Read-only Admin
+
+Admin sees the list and the full dossier, with no Validate/Return buttons in the rows or the drawer; the
+drawer says "Read-only view. Only the Secretary can validate or return this assessment." The **Share form**
+button is hidden too — Admin is not in D6 and would get a 403.
+
+Faculty is refused by the route, guests go to login, an unknown community is `404`.
+
+### 41.5 Entry points
+
+- **Admin**: the community detail drawer gains **View all N →**. N is the true submission count
+  (`needsAssessments`), which can differ from the summary line's "N responses" because summaries count
+  validated rows only. Seeing both on one screen is the point of D7.
+- **Secretary**: `/communities` is Admin-only, so the dossier in the review queue gains
+  **See every assessment for Brgy. X →**. Both roles otherwise share the same page; the back link
+  returns Admin to Communities and the Secretary to the review queue.
+
+### 41.6 Tests and manual verification
+
+`CommunityAssessmentDirectoryTest` — **13 passed, 41 assertions**: secretary and admin open; faculty 403;
+guest redirected; unknown community 404; only the community's rows; KPIs scoped; admin read-only with no
+controls; admin's `openValidate`/`confirmValidate` 403; secretary validates from the directory; a tampered
+id cannot reach another community; year/status filters; both entry links.
+
+Manual on localhost: Admin → Abucay drawer → **View all 1** → read-only page (no Validate, dossier note);
+Secretary → same URL → Validate/Return and **Share form** present.
+
+Full suite after Item 2: **718 passed, 4,158 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

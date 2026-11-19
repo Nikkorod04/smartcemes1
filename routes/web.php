@@ -237,6 +237,10 @@ Route::get('/assessments/import', Import::class)
 Route::get('/assessments/review', Review::class)
     ->middleware(['auth', 'role:secretary'])->name('assessments.review');
 
+// Item 2: the same queue locked to one community. Admin reads; Secretary validates.
+Route::get('/communities/{community}/assessments', Review::class)
+    ->middleware(['auth', 'role:admin,secretary'])->name('communities.assessments');
+
 // Share links/QR for the public form — Secretary + Faculty (after-defense D6).
 Route::get('/assessments/share', ShareLinks::class)
     ->middleware(['auth', 'role:faculty,secretary'])->name('assessments.share');
