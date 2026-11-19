@@ -12,6 +12,7 @@ use App\Http\Controllers\PublicAssessmentController;
 use App\Http\Controllers\ReportController;
 use App\Livewire\AiAnalysis;
 use App\Livewire\AiAnalysisCommunity;
+use App\Livewire\Activities\TakeAttendance;
 use App\Livewire\AiAnalysisReview;
 use App\Livewire\Assessments\Import;
 use App\Livewire\Assessments\Review;
@@ -207,6 +208,10 @@ Route::get('/my-profile', Profile::class)
 // The {project} parameter binds the ExtensionProject model.
 Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{project}', Hub::class)->name('projects.show');
+
+// Tablet-first attendance roster for one activity (Phase 1 of the attendance/evaluation streamlining).
+Route::get('/activities/{activity}/attendance', TakeAttendance::class)
+    ->middleware(['auth', 'role:admin,secretary'])->name('activities.attendance');
     Route::get('/my-projects', MyPrograms::class)->name('projects.my');
 
     // Availability — admin creates; faculty responds (5.8)

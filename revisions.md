@@ -5839,6 +5839,55 @@ Full suite after the status rules: **745 passed, 4,309 assertions**.
 
 ---
 
+## 49. THE ACTIVITY ATTENDANCE ROSTER (2026-11-19)
+
+Phase 1 of the attendance/evaluation streamlining. The normal case was still an XLSX round-trip: export
+the roster, mark paper, edit the sheet, upload, preview, confirm. The roster page removes that for the
+session that is happening now.
+
+### 49.1 The page
+
+`GET /activities/{activity}/attendance` (`activities.attendance`), **Admin and Secretary** (the same roles
+that already record attendance). It is a tablet-first Livewire page:
+
+- the project's **enrolled beneficiaries**, ordered by surname;
+- existing attendance for the activity date is **preloaded**;
+- one tap sets Present/Late/Absent/Excused; tapping the active status clears it;
+- **Mark all present** then correct the exceptions, or Clear all;
+- search by name or barangay without losing hidden statuses;
+- a sticky save bar with live counts.
+
+The entry point is **Take attendance** on the activity row, next to Records, visible to Admin/Secretary.
+The XLSX import remains the bulk/legacy path.
+
+### 49.2 Same rows as the import
+
+The roster writes the same `Attendance` rows with the same `attendance_date` (the activity's planned
+start date) and the same status vocabulary as `ActivityAttendanceImport`. It uses `updateOrCreate` on
+(activity, beneficiary, date), so re-saving updates instead of duplicating; clearing a status deletes that
+row. Training-hours and trainee counts therefore update exactly as they do after an import. Each save
+writes an `attendance_recorded` activity-log entry.
+
+No migration was needed; the existing table has no unique index, so `updateOrCreate` is the guard.
+
+### 49.3 Tests
+
+`AttendanceRosterTest` — **12 passed, 38 assertions**: admin/secretary can open; faculty 403; guests
+redirect; unknown activity 404; only enrolled beneficiaries; existing statuses preloaded; save writes the
+activity date; reopening updates without duplicate rows; tapping the active status clears; mark all
+present / clear all; attendance feeds the trainee count and source; an invalid status is rejected; search
+filters without losing statuses.
+
+Manual on localhost: the Abucay project activity opened with 24 enrolled beneficiaries and its existing
+22 present / 2 late statuses; toggling, saving and restoring a row updated the counts and wrote the same
+rows.
+
+Full suite after the roster: **757 passed, 4,347 assertions**.
+
+Phase 2 (the anonymous evaluation QR) is not built yet.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

@@ -65,6 +65,9 @@
                             <td class="!text-right font-bold text-lnu-700">{{ number_format($aHours) }}</td>
                             <td><span class="badge badge-{{ config('smartcemes.status_colors')[$a->status] ?? 'gray' }}">{{ ucfirst($a->status) }}</span></td>
                             <td class="!text-right row-actions whitespace-nowrap">
+                                @if ($canManageBeneficiaries)
+                                    <a href="{{ route('activities.attendance', $a) }}" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Take attendance</a>
+                                @endif
                                 <button wire:click="openRecords({{ $a->id }})" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Records</button>
                                 @if ($canManage)
                                     <button wire:click="openActivityForm({{ $a->id }})" class="btn btn-outline !px-2 !py-1 !text-[11px]">Edit</button>
