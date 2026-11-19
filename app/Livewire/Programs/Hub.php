@@ -793,7 +793,7 @@ class Hub extends Component
 
         $this->validate([
             'activityForm.title' => 'required|string|max:255',
-            'activityForm.venue' => 'nullable|string|max:255',
+            'activityForm.venue' => 'required|string|max:255',
             'activityForm.planned_start_date' => "required|date|after_or_equal:$startMin|before_or_equal:$endMax",
             'activityForm.planned_end_date' => "required|date|after_or_equal:activityForm.planned_start_date|before_or_equal:$endMax",
             'activityForm.start_time' => 'required',
@@ -804,7 +804,7 @@ class Hub extends Component
             'activityForm.no_of_days' => 'required|numeric|min:0.5|max:60|multiple_of:0.5',
             'activityForm.participants' => 'nullable|integer|min:0|max:10000',
             'activityForm.trainors_snapshot' => 'nullable|integer|min:0|max:200',
-            'activityForm.allocated_budget' => 'nullable|numeric|min:0',
+            'activityForm.allocated_budget' => 'required|numeric|min:0',
             'activityForm.status' => 'required|in:draft,ongoing,completed,cancelled',
             'activityForm.faculty_ids' => 'array',
         ], [
@@ -1326,7 +1326,9 @@ class Hub extends Component
         $this->validate([
             'registerForm.first_name' => 'required|string|max:255',
             'registerForm.last_name' => 'required|string|max:255',
+            'registerForm.age' => 'required|integer|min:0|max:120',
             'registerForm.barangay' => 'required|string|max:255',
+            'registerForm.municipality' => 'required|string|max:255',
             'registerForm.phone' => 'nullable|string|max:20',
             'registerForm.beneficiary_category' => 'required|in:'.implode(',', config('smartcemes.beneficiary_categories')),
         ]);
@@ -1521,9 +1523,10 @@ class Hub extends Component
         return [
             'beneficiaryEditForm.first_name' => 'required|string|max:255',
             'beneficiaryEditForm.last_name' => 'required|string|max:255',
+            'beneficiaryEditForm.age' => 'required|integer|min:0|max:120',
             'beneficiaryEditForm.barangay' => 'required|string|max:255',
+            'beneficiaryEditForm.municipality' => 'required|string|max:255',
             'beneficiaryEditForm.phone' => 'nullable|string|max:20',
-            'beneficiaryEditForm.age' => 'nullable|integer|min:0|max:120',
             'beneficiaryEditForm.beneficiary_category' => 'required|in:'.implode(',', config('smartcemes.beneficiary_categories')),
         ];
     }

@@ -35,12 +35,12 @@ class Create extends Component
 
         $this->validate([
             'form.title' => 'required|string|max:255',
-            'form.description' => 'nullable|string|max:4000',
+            'form.description' => 'required|string|min:20|max:4000',
             'form.extension_project_id' => 'required|exists:extension_projects,id',
             'form.community_id' => 'required|exists:communities,id',
             'form.proposed_start_date' => 'required|date',
             'form.proposed_end_date' => 'required|date|after_or_equal:form.proposed_start_date',
-            'form.budget_estimate' => 'nullable|numeric|min:0',
+            'form.budget_estimate' => 'required|numeric|min:0',
             'attachments' => 'array|max:5',
             'attachments.*' => 'file|mimes:'.implode(',', config('smartcemes.uploads.mimes')).'|max:'.config('smartcemes.uploads.max_kb'),
         ]);

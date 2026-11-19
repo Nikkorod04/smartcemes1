@@ -349,6 +349,7 @@ class ProgramHubTest extends TestCase
             'name' => 'Brgy. Sagkahan', 'municipality' => 'Tacloban City',
             'province' => 'Leyte', 'status' => 'active',
         ]);
+        $lead = Faculty::factory()->create();
 
         $college = College::where('code', 'CAS')->first();
         $broadProgram = Program::where('title', 'Information, Communication & Education')->first();
@@ -366,6 +367,7 @@ class ProgramHubTest extends TestCase
             ->set('projectForm.target_beneficiaries', '20')
             ->set('projectForm.allocated_budget', '20000')
             ->set('projectForm.annual_target_hours', '80')
+            ->set('projectForm.program_lead_id', (string) $lead->id)
             ->set('projectForm.status', 'ongoing')
             ->call('toggleProjectFormArray', 'community_ids', $community->id)
             ->call('toggleProjectFormArray', 'beneficiary_categories', 'Parent')
@@ -407,6 +409,7 @@ class ProgramHubTest extends TestCase
 
         $college = College::where('code', 'CAS')->first();
         $broadProgram = Program::where('title', 'Information, Communication & Education')->first();
+        $lead = Faculty::factory()->create();
 
         Livewire::actingAs($admin)
             ->test(CollegesIndex::class)
@@ -414,8 +417,12 @@ class ProgramHubTest extends TestCase
             ->set('projectForm.college_id', (string) $college->id)
             ->set('projectForm.program_id', (string) $broadProgram->id)
             ->set('projectForm.title', 'Multiple Link Regression Project')
+            ->set('projectForm.description', 'A project used to prove multiple community links persist.')
             ->set('projectForm.planned_start_date', '2026-09-01')
             ->set('projectForm.planned_end_date', '2026-12-31')
+            ->set('projectForm.target_beneficiaries', '30')
+            ->set('projectForm.allocated_budget', '15000')
+            ->set('projectForm.program_lead_id', (string) $lead->id)
             ->set('projectForm.status', 'draft')
             ->set('projectForm.community_ids', $communities->pluck('id')->map(fn ($id) => (string) $id)->all())
             ->set('projectForm.beneficiary_categories', ['Parent', 'Student', 'Out-of-School Youth'])

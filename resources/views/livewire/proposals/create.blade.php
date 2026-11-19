@@ -42,13 +42,15 @@
                 @error('form.proposed_end_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
             <div class="col-span-2">
-                <label class="label">Budget estimate (₱)</label>
-                <input type="number" min="0" step="0.01" class="input" wire:model="form.budget_estimate" placeholder="e.g. 36500">
+                <label class="label">Budget estimate <span class="text-red-500">*</span> <span class="font-medium text-gray-400">(₱)</span></label>
+                <input required type="number" min="0" step="0.01" class="input" wire:model="form.budget_estimate" placeholder="e.g. 36500">
                 @error('form.budget_estimate') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
             <div class="col-span-2">
-                <label class="label">Description</label>
-                <textarea rows="3" class="input" wire:model="form.description" placeholder="What will this activity deliver?"></textarea>
+                <label class="label">Description <span class="text-red-500">*</span></label>
+                <textarea rows="3" required minlength="20" class="input" wire:model="form.description" placeholder="What will this activity deliver?"></textarea>
+                <p class="field-hint">At least 20 characters.</p>
+                @error('form.description') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
             <div class="col-span-2">
                 <label class="label">Attachments (up to 5 · pdf/jpg/png/docx/xlsx · max 10 MB each)</label>

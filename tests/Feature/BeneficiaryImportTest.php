@@ -201,6 +201,8 @@ class BeneficiaryImportTest extends TestCase
             ->set('registerForm.first_name', 'Carlo')
             ->set('registerForm.last_name', 'Magbanua')
             ->set('registerForm.barangay', 'San Jose')
+            ->set('registerForm.age', '35')
+            ->set('registerForm.municipality', 'Tacloban City')
             ->set('registerForm.beneficiary_category', 'Farmer')
             ->set('registerForm.phone', '09181112222')
             ->call('saveRegister')
@@ -221,6 +223,8 @@ class BeneficiaryImportTest extends TestCase
             ->set('registerForm.first_name', 'Ada')
             ->set('registerForm.last_name', 'Lorente')
             ->set('registerForm.barangay', 'San Jose')
+            ->set('registerForm.age', '35')
+            ->set('registerForm.municipality', 'Tacloban City')
             ->set('registerForm.beneficiary_category', 'Vendor')
             ->set('registerForm.phone', '')
             ->call('saveRegister');

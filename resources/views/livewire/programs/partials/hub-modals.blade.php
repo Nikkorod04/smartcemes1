@@ -63,8 +63,9 @@
                             @error('activityForm.title') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="label" for="activity-venue">Venue</label>
-                            <input id="activity-venue" class="input" wire:model="activityForm.venue" placeholder="Venue / site">
+                            <label class="label" for="activity-venue">Venue <span class="text-red-500">*</span></label>
+                            <input id="activity-venue" required class="input" wire:model="activityForm.venue" placeholder="Venue / site">
+                            @error('activityForm.venue') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="grid gap-3 sm:grid-cols-2">
                             <div>
@@ -129,8 +130,9 @@
                     </div>
                     <div class="grid gap-3 sm:grid-cols-2">
                         <div>
-                            <label class="label" for="activity-budget">Allocated budget <span class="font-medium text-gray-400">(₱)</span></label>
-                            <input id="activity-budget" type="number" min="0" step="0.01" class="input" wire:model="activityForm.allocated_budget" placeholder="0.00">
+                            <label class="label" for="activity-budget">Allocated budget <span class="text-red-500">*</span> <span class="font-medium text-gray-400">(₱)</span></label>
+                            <input id="activity-budget" required type="number" min="0" step="0.01" class="input" wire:model="activityForm.allocated_budget" placeholder="0.00">
+                            @error('activityForm.allocated_budget') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="label" for="activity-status">Status</label>
@@ -223,14 +225,14 @@
             <div><label class="label" for="register-last-name">Last name <span class="text-red-500">*</span></label><input id="register-last-name" maxlength="100" class="input" wire:model="registerForm.last_name" aria-invalid="{{ $errors->has('registerForm.last_name') ? 'true' : 'false' }}">@error('registerForm.last_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
         <div class="grid grid-cols-3 gap-3 mt-4">
-            <div><label class="label" for="register-age">Age</label><input id="register-age" type="number" min="0" max="120" class="input" wire:model="registerForm.age"></div>
+            <div><label class="label" for="register-age">Age <span class="text-red-500">*</span></label><input id="register-age" required type="number" min="0" max="120" class="input" wire:model="registerForm.age">@error('registerForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
             <div><label class="label" for="register-gender">Sex</label><x-sc.select id="register-gender" model="registerForm.gender" :value="$registerForm['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
             <div><label class="label" for="register-category">Category <span class="text-red-500">*</span></label><x-sc.select id="register-category" model="registerForm.beneficiary_category" :value="$registerForm['beneficiary_category'] ?? null" :options="collect(config('smartcemes.beneficiary_categories'))->mapWithKeys(fn ($cat) => [$cat => $cat])->all()" placeholder="Select category" :invalid="$errors->has('registerForm.beneficiary_category')" />@error('registerForm.beneficiary_category') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
         <div class="grid grid-cols-3 gap-3 mt-4">
             <div><label class="label" for="register-phone">Contact number</label><input id="register-phone" maxlength="30" class="input" wire:model="registerForm.phone" placeholder="0912…"></div>
             <div><label class="label" for="register-barangay">Barangay <span class="text-red-500">*</span></label><input id="register-barangay" maxlength="150" class="input" wire:model="registerForm.barangay" aria-invalid="{{ $errors->has('registerForm.barangay') ? 'true' : 'false' }}">@error('registerForm.barangay') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
-            <div><label class="label" for="register-municipality">Municipality</label><input id="register-municipality" maxlength="150" class="input" wire:model="registerForm.municipality"></div>
+            <div><label class="label" for="register-municipality">Municipality <span class="text-red-500">*</span></label><input id="register-municipality" required maxlength="150" class="input" wire:model="registerForm.municipality">@error('registerForm.municipality') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
 
         @if ($dedupWarning !== '' && ! $registerConfirmed)
@@ -264,14 +266,14 @@
             <div><label class="label" for="edit-last-name">Last name <span class="text-red-500">*</span></label><input id="edit-last-name" maxlength="100" class="input" wire:model="beneficiaryEditForm.last_name" aria-invalid="{{ $errors->has('beneficiaryEditForm.last_name') ? 'true' : 'false' }}">@error('beneficiaryEditForm.last_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
         <div class="grid grid-cols-3 gap-3 mt-4">
-            <div><label class="label" for="edit-age">Age</label><input id="edit-age" type="number" min="0" max="120" class="input" wire:model="beneficiaryEditForm.age">@error('beneficiaryEditForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="edit-age">Age <span class="text-red-500">*</span></label><input id="edit-age" required type="number" min="0" max="120" class="input" wire:model="beneficiaryEditForm.age">@error('beneficiaryEditForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
             <div><label class="label" for="edit-gender">Sex</label><x-sc.select id="edit-gender" model="beneficiaryEditForm.gender" :value="$beneficiaryEditForm['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
             <div><label class="label" for="edit-category">Category <span class="text-red-500">*</span></label><x-sc.select id="edit-category" model="beneficiaryEditForm.beneficiary_category" :value="$beneficiaryEditForm['beneficiary_category'] ?? null" :options="collect(config('smartcemes.beneficiary_categories'))->mapWithKeys(fn ($cat) => [$cat => $cat])->all()" placeholder="Select category" :invalid="$errors->has('beneficiaryEditForm.beneficiary_category')" />@error('beneficiaryEditForm.beneficiary_category') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
         <div class="grid grid-cols-3 gap-3 mt-4">
             <div><label class="label" for="edit-phone">Contact number</label><input id="edit-phone" maxlength="30" class="input" wire:model="beneficiaryEditForm.phone" placeholder="0912…">@error('beneficiaryEditForm.phone') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
             <div><label class="label" for="edit-barangay">Barangay <span class="text-red-500">*</span></label><input id="edit-barangay" maxlength="150" class="input" wire:model="beneficiaryEditForm.barangay" aria-invalid="{{ $errors->has('beneficiaryEditForm.barangay') ? 'true' : 'false' }}">@error('beneficiaryEditForm.barangay') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
-            <div><label class="label" for="edit-municipality">Municipality</label><input id="edit-municipality" maxlength="150" class="input" wire:model="beneficiaryEditForm.municipality"></div>
+            <div><label class="label" for="edit-municipality">Municipality <span class="text-red-500">*</span></label><input id="edit-municipality" required maxlength="150" class="input" wire:model="beneficiaryEditForm.municipality">@error('beneficiaryEditForm.municipality') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
 
         @if ($editDedupWarning !== '' && ! $editConfirmed)

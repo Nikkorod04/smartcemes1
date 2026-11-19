@@ -595,11 +595,13 @@ class TrainingHoursTest extends TestCase
         Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
             ->call('openActivityForm')
             ->set('activityForm.title', 'Half-day training')
+            ->set('activityForm.venue', 'Barangay Hall')
             ->set('activityForm.planned_start_date', '2026-03-10')
             ->set('activityForm.planned_end_date', '2026-03-10')
             ->set('activityForm.no_of_days', '0.5')
             ->set('activityForm.participants', '141')
             ->set('activityForm.trainors_snapshot', '3')
+            ->set('activityForm.allocated_budget', '5000')
             ->call('saveActivity')
             ->assertHasNoErrors();
 
@@ -652,10 +654,12 @@ class TrainingHoursTest extends TestCase
         Livewire::actingAs($admin)->test(Hub::class, ['project' => $program])
             ->call('openActivityForm')
             ->set('activityForm.title', 'No manual count')
+            ->set('activityForm.venue', 'Barangay Hall')
             ->set('activityForm.planned_start_date', '2026-03-10')
             ->set('activityForm.planned_end_date', '2026-03-10')
             ->set('activityForm.no_of_days', '1')
             ->set('activityForm.participants', '')
+            ->set('activityForm.allocated_budget', '2500')
             ->call('saveActivity')
             ->assertHasNoErrors();
 

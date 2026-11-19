@@ -5709,6 +5709,51 @@ white, and the rule is present in the built CSS. No PHP changed.
 
 ---
 
+## 45. THE VALIDATION AUDIT (D9) (2026-11-19)
+
+Item 5. The forms now say what they mean: required fields are marked and enforced, and the fields that are
+deliberately optional stay optional with a reason.
+
+### 45.1 Decisions
+
+- **Project creation (D9):** at least one community, target beneficiaries, allocated budget, project lead,
+  and a description of at least 20 characters. Status was already required; it now has its `*`.
+- **Project edit:** creation only. Older projects are not forced to fill the new fields when edited.
+- **Activity:** venue and allocated budget required. Participants and trainers stay optional because they
+  are fallback/auto figures and null means “not recorded”.
+- **Proposal:** description (≥20 characters) and budget estimate required.
+- **Beneficiary register/edit:** age and municipality required; phone stays optional.
+- **Assessment:** names only (plus consent on the public form). Demographics stay optional so the public
+  form remains completable on a shared phone.
+- **Targets:** both figures optional by design.
+- **Program creation:** unchanged.
+
+The full matrix is in `docs/VALIDATION-AUDIT.md`.
+
+### 45.2 What changed
+
+- Project creation: rules tightened in `Colleges\Index::saveProject`; UI gains `*` on description,
+  target beneficiaries, budget, status, lead, and linked communities, plus the 20-character hint.
+- Activity: `venue` and `allocated_budget` required in `Hub::saveActivity`; `*` added in the modal.
+- Proposal: `description` (min 20) and `budget_estimate` required in `Proposals\Create`; `*` and hint added.
+- Beneficiary register and edit: age and municipality required, mirrored in both modals.
+- No change to the assessment rules, targets, project edit, or the XLSX beneficiary import. The import
+  keeps its own template validation so a legacy sheet without age/municipality still imports.
+
+### 45.3 Tests and fixtures
+
+`ValidationAuditTest` — **8 passed, 52 assertions**: the D9 required set, a complete project, activity
+venue/budget with blank counts allowed, proposal description/budget, beneficiary register and edit
+age/municipality, the lenient project-edit path, and the assessment demographics staying optional.
+
+Updated for the new rules: `ProgramHubTest` (project creation), `DefenceWalkthroughTest` (community link +
+activity venue/budget), `TrainingHoursTest` (venue/budget, while the “cleared participants = null” test
+stays), `BeneficiaryManagementTest` and `BeneficiaryImportTest` (age/municipality).
+
+Full suite after Item 5: **735 passed, 4,253 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

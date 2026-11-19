@@ -8,6 +8,7 @@ use App\Models\Activity;
 use App\Models\Attendance;
 use App\Models\Beneficiary;
 use App\Models\College;
+use App\Models\Community;
 use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\Program;
@@ -67,6 +68,11 @@ class DefenceWalkthroughTest extends TestCase
         $kent = Faculty::whereHas('user', fn ($q) => $q->where('name', 'like', '%Naputo%'))->firstOrFail();
         $nikko = Faculty::whereHas('user', fn ($q) => $q->where('name', 'like', '%Villas%'))->firstOrFail();
 
+        $walkCommunity = Community::create([
+            'name' => 'Brgy. Sagkahan', 'municipality' => 'Tacloban City',
+            'province' => 'Leyte', 'status' => 'active',
+        ]);
+
         /* ---------------- Step 2: create the project ----------------
            Creation moved to the hub (§25) — `/projects` is a read-only list now,
            so the walkthrough creates the project where a Director would. */
@@ -84,6 +90,7 @@ class DefenceWalkthroughTest extends TestCase
             ->set('projectForm.annual_target_hours', 40)
             ->set('projectForm.program_lead_id', $kent->id)
             ->set('projectForm.status', 'ongoing')
+            ->call('toggleProjectFormArray', 'community_ids', $walkCommunity->id)
             ->call('saveProject')
             ->assertHasNoErrors();
 
@@ -337,11 +344,13 @@ class DefenceWalkthroughTest extends TestCase
             ->test(Hub::class, ['project' => $project])
             ->call('openActivityForm')
             ->set('activityForm.title', 'A clashing session')
+            ->set('activityForm.venue', 'Sagkahan Barangay Hall')
             ->set('activityForm.planned_start_date', '2026-08-22')
             ->set('activityForm.planned_end_date', '2026-08-22')
             ->set('activityForm.start_time', '08:00')
             ->set('activityForm.end_time', '12:00')
             ->set('activityForm.no_of_days', '1')
+            ->set('activityForm.allocated_budget', '1000')
             ->set('activityForm.faculty_ids', [$nikko->id])
             ->call('saveActivity');
 

@@ -770,9 +770,9 @@
                                     @error('projectForm.title') <p id="project-title-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
                                 </div>
                                 <div class="sm:col-span-2" x-data="{ length: {{ strlen($projectForm['description'] ?? '') }} }">
-                                    <label class="label" for="project-description">Description</label>
-                                    <textarea id="project-description" rows="4" maxlength="4000" class="input resize-y" wire:model="projectForm.description" x-on:input="length = $event.target.value.length" aria-invalid="{{ $errors->has('projectForm.description') ? 'true' : 'false' }}" aria-describedby="project-description-count project-description-error" placeholder="Short narrative description"></textarea>
-                                    <p id="project-description-count" class="sc-character-count"><span x-text="length"></span>/4,000 characters</p>
+                                    <label class="label" for="project-description">Description <span class="text-red-500">*</span></label>
+                                    <textarea id="project-description" rows="4" maxlength="4000" minlength="20" required class="input resize-y" wire:model="projectForm.description" x-on:input="length = $event.target.value.length" aria-invalid="{{ $errors->has('projectForm.description') ? 'true' : 'false' }}" aria-describedby="project-description-count project-description-error" placeholder="Short narrative description"></textarea>
+                                    <p id="project-description-count" class="sc-character-count"><span x-text="length"></span>/4,000 characters · at least 20</p>
                                     @error('projectForm.description') <p id="project-description-error" class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
                                 </div>
                             </div>
@@ -800,13 +800,13 @@
                                     @error('projectForm.planned_end_date') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="label" for="project-beneficiaries">Target beneficiaries</label>
-                                    <input id="project-beneficiaries" type="number" inputmode="numeric" min="1" step="1" class="input" wire:model="projectForm.target_beneficiaries" aria-invalid="{{ $errors->has('projectForm.target_beneficiaries') ? 'true' : 'false' }}" placeholder="e.g. 250">
+                                    <label class="label" for="project-beneficiaries">Target beneficiaries <span class="text-red-500">*</span></label>
+                                    <input id="project-beneficiaries" required type="number" inputmode="numeric" min="1" step="1" class="input" wire:model="projectForm.target_beneficiaries" aria-invalid="{{ $errors->has('projectForm.target_beneficiaries') ? 'true' : 'false' }}" placeholder="e.g. 250">
                                     @error('projectForm.target_beneficiaries') <p class="sc-field-error">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="label" for="project-budget">Allocated budget <span class="font-medium text-gray-400">(₱)</span></label>
-                                    <input id="project-budget" type="number" inputmode="decimal" min="0" step="0.01" class="input" wire:model="projectForm.allocated_budget" aria-invalid="{{ $errors->has('projectForm.allocated_budget') ? 'true' : 'false' }}" placeholder="e.g. 48000">
+                                    <label class="label" for="project-budget">Allocated budget <span class="text-red-500">*</span> <span class="font-medium text-gray-400">(₱)</span></label>
+                                    <input id="project-budget" required type="number" inputmode="decimal" min="0" step="0.01" class="input" wire:model="projectForm.allocated_budget" aria-invalid="{{ $errors->has('projectForm.allocated_budget') ? 'true' : 'false' }}" placeholder="e.g. 48000">
                                     @error('projectForm.allocated_budget') <p class="sc-field-error">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
@@ -815,7 +815,7 @@
                                     @error('projectForm.annual_target_hours') <p class="sc-field-error">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="label" for="project-status">Status</label>
+                                    <label class="label" for="project-status">Status <span class="text-red-500">*</span></label>
                                     <x-sc.select id="project-status" model="projectForm.status" :value="$projectForm['status']" :options="$formProjectStatuses" placeholder="— select a status —" :search="false" :required="true" :invalid="$errors->has('projectForm.status')" />
                                     @error('projectForm.status') <p class="sc-field-error">{{ $message }}</p> @enderror
                                 </div>
@@ -832,12 +832,12 @@
                             </div>
                             <div class="space-y-3">
                                 <div>
-                                    <label class="label" for="project-lead">Project lead</label>
-                                    <x-sc.select id="project-lead" model="projectForm.program_lead_id" :value="$projectForm['program_lead_id']" :options="$formFaculties->mapWithKeys(fn ($f) => [$f->id => $f->user->name.' · '.$f->department])->all()" placeholder="— not assigned yet —" :search="true" :clearable="true" :invalid="$errors->has('projectForm.program_lead_id')" />
+                                    <label class="label" for="project-lead">Project lead <span class="text-red-500">*</span></label>
+                                    <x-sc.select id="project-lead" model="projectForm.program_lead_id" :value="$projectForm['program_lead_id']" :options="$formFaculties->mapWithKeys(fn ($f) => [$f->id => $f->user->name.' · '.$f->department])->all()" placeholder="— select a project lead —" :search="true" :required="true" :invalid="$errors->has('projectForm.program_lead_id')" />
                                     @error('projectForm.program_lead_id') <p class="sc-field-error">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="label">Linked communities</label>
+                                    <label class="label">Linked communities <span class="text-red-500">*</span></label>
                                     <x-sc.multi-select
                                         :options="$formCommunities->map(fn ($c) => ['id' => $c->id, 'label' => $c->name.' · '.$c->municipality.($c->isSchool() ? ' · School' : '')])->all()"
                                         :selected="$projectForm['community_ids'] ?? []"
@@ -846,7 +846,8 @@
                                         key="community_ids"
                                         id="project-communities"
                                         :invalid="$errors->has('projectForm.community_ids')"
-                                        placeholder="— select communities —" />
+                                        placeholder="— select at least one community —" />
+                                    <p class="field-hint">At least one community or partner school is required.</p>
                                     @error('projectForm.community_ids') <p class="sc-field-error">{{ $message }}</p> @enderror
                                 </div>
                                 <div>

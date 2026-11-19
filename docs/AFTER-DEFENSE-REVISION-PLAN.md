@@ -31,7 +31,7 @@ Status legend: **LOCKED** = agreed, safe to build against. **PROPOSED** = recomm
 | D6 | Who can generate share links | **Secretary + Faculty**, any community (parity with the encode wizard). Admin not included. Every generation is logged. | LOCKED |
 | D7 | AI/summary input | Summaries aggregate **validated** assessments only (implemented 2026-11-19; live totals 663 → 151). | LOCKED |
 | D8 | Beneficiary edit scope | Secretary only; Admin keeps create/enroll/import. | LOCKED (implemented 2026-11-19) |
-| D9 | Project-creation required set | ≥1 community, target beneficiaries, allocated budget, project lead, description (min ~20 chars). | PROPOSED |
+| D9 | Project-creation required set | ≥1 community, target beneficiaries, allocated budget, project lead, description (min ~20 chars). | LOCKED (implemented 2026-11-19) |
 | D10 | Manuscript scope | Restructure Results & Discussion per Specific Objective **and** correct the factual contradictions (stack, hierarchy, import scope, test counts). | LOCKED (implemented 2026-11-19) |
 
 ### Why D3 matters
@@ -200,7 +200,7 @@ If green, offline is additive: service worker for the public shell, pending coun
 
 ---
 
-## 6. Item 5 — System-wide form validation audit
+## 6. Item 5 - System-wide form validation audit (implemented 2026-11-19 — `docs/VALIDATION-AUDIT.md`, `revisions.md` §45)
 
 **Goal:** essential fields are marked and enforced on the client and the server.
 
