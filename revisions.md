@@ -5180,14 +5180,95 @@ Now the button is `type="button"` with `x-on:click="submit()"`, and
 
 ### 37.7 Tests
 
-- `PublicAssessmentFormTest` — **17 passed, 358 assertions**: access rules (9), every section rendered, no
-  Livewire on the page, tricky fields (identity, capped multi, conditional, rating, feedback, consent),
-  schema coverage of every template field, "Other" fields, caps and exclusives, rules parity with the wizard.
+- `PublicAssessmentFormTest` — **18 passed, 361 assertions**: access rules (9), every section rendered, no
+  Livewire on the page, the send control's binding, tricky fields (identity, capped multi, conditional,
+  rating, feedback, consent), schema coverage of every template field, "Other" fields, caps and exclusives,
+  rules parity with the wizard.
 - `AssessmentWizardConditionalTest` + `AssessmentWizardOtherTest` + `AssessmentReviewTest` — **29 passed**
   after the extraction, unchanged. That is the evidence the refactor was behaviour-preserving.
 - `AssessmentImportTest` + `RouteSurfaceTest` — **23 passed**.
 - Manual in the browser: conditional show/hide, cap behaviour, draft write → reload → restore (answers,
-  step and timestamp), empty submit blocked with three errors, valid submit reaches the saved state.
+  step and timestamp), empty submit blocked with three errors, valid submit reaches the confirmed state.
+
+---
+
+## 38. THE PUBLIC SUBMISSION ENDPOINT (2026-11-19)
+
+Item 1, Step 3. The form now sends, and the office can tell what it is looking at.
+
+### 38.1 Three instruments, one row shape
+
+`Wizard::save()` used to end in a 30-line block that filtered the service rating and folded every
+`<field>_other` key into `other_text`. The public endpoint needed exactly that. Copying it would have made
+"what a stored submission looks like" a thing that exists twice, which is the same drift risk as a copied
+vocabulary — only harder to notice, because both copies would keep working until one of them changed.
+
+It is now `App\Services\AssessmentSubmission`, called by both. The wizard's behaviour is unchanged (its
+tests did not move), and a public row is the same shape by construction, which is why the review drawer
+renders it with no special cases.
+
+### 38.2 Provenance
+
+Migration `2026_11_18_000100` adds three columns to `needs_assessments`:
+
+| Column | Why |
+|---|---|
+| `source` (`staff` / `import` / `public`) | the queue can say how the row got here; existing import rows were backfilled from `file_path` |
+| `client_uuid` (unique, nullable) | the browser's draft id — makes the POST idempotent |
+| `captured_at` | when the answers were written, which can precede the request |
+
+`client_uuid` is what makes a flaky-signal retry safe: the same draft posted twice returns
+`already-recorded` with the original id instead of creating a second respondent. The unique index means the
+guarantee does not depend on the check-then-insert window.
+
+The device's clock is trusted only loosely. A `captured_at` in the future, or before the link was printed, is
+replaced with the server's time — a wrong phone calendar must not put a submission in 2038.
+
+### 38.3 What the endpoint refuses
+
+- unknown token → `404`
+- expired or revoked link → `410` with `expired` / `revoked`, and the page swaps to a "this link is no longer
+  open" card instead of pretending to save
+- missing consent → `422`
+- a name, a yes/no, a vocabulary value or a capped multi-select that the instrument does not allow → `422`
+  with field-level messages, and the browser jumps to the first step that has a problem
+- a filled honeypot → `201` and **no row**, so a bot has no way to tell it was ignored
+
+Rate limit is 20 posts per minute per IP, and the route is CSRF-exempt (`a/*` only — the respondent has no
+session to hold a token).
+
+### 38.4 Validation only returns what it has a rule for
+
+A trap worth recording: `$request->validate()` returns **only the validated keys**, so any payload field
+without a rule is silently dropped. `general_feedback` and `respondent_middle_name` have no vocabulary, so
+they were being accepted, validated as part of `form`, and then thrown away — the row saved with a null
+middle name. The endpoint now declares both explicitly. A deferred free-text field added later will hit the
+same trap, so: if it must be stored, it must have a rule.
+
+### 38.5 The review queue
+
+- The source column became a badge: **Public form** / **XLSX** / **Manual**.
+- A public row shows **Respondent · public link** instead of an uploader avatar — there is no encoder.
+- A source filter sits next to the quarter filter, so the secretary can pull up only what came in through
+  links. The drawer header says "Submitted through a public link" for the same reason.
+
+### 38.6 What this step does NOT do
+
+- No notification to the secretary when a public submission arrives (the queue order puts pending first).
+- No share sheet / QR in the app — links are still minted with `php artisan assessment:link` on the VM.
+- No offline queue: if the send fails the answers stay in `localStorage` and the respondent retries by hand.
+- Summaries still aggregate every row regardless of `review_status` (see D7 in the plan document).
+
+### 38.7 Tests
+
+`PublicAssessmentSubmitTest` — **16 passed, 66 assertions**: a full submission lands with the right
+community/period/source and no uploader; retry with the same draft id does not duplicate; expired, revoked
+and unknown links refuse; consent, names and vocabulary are enforced; `_other` folding works both ways; a
+future device clock is distrusted; the honeypot stores nothing; the queue labels and filters public rows.
+
+Manual on localhost: filled the form with real clicks, sent → `201`, `Answers sent` with reference 25, draft
+cleared, no console errors; the row appeared in the review queue with the right badge, and the drawer opened
+on it.
 
 ---
 

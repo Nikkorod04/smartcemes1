@@ -434,6 +434,7 @@ class Import extends Component
                 'year' => $parsed['year'],
                 'file_path' => $path,
                 'uploaded_by' => auth()->id(),
+                'source' => NeedsAssessment::SOURCE_IMPORT,
                 'review_status' => 'pending',
             ]);
         } catch (\Throwable $e) {

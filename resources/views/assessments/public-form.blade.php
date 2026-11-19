@@ -35,7 +35,7 @@
     </div>
 
     {{-- Progress --}}
-    <div class="sc-card px-4 py-3" x-show="!done">
+    <div class="sc-card px-4 py-3" x-show="!done && !closed">
         <div class="flex items-center justify-between gap-3">
             <span class="text-[10.5px] font-extrabold uppercase tracking-wide text-gray-400">
                 Step <span x-text="step"></span> of 5
@@ -48,7 +48,12 @@
         </div>
     </div>
 
-    <form x-on:submit.prevent="submit()" novalidate class="space-y-4">
+    <form x-on:submit.prevent="submit()" novalidate class="space-y-4" x-show="!closed">
+        {{-- Bot trap: no person can see or reach this. Answered 201 without a
+             row, so a script has no way to tell it was ignored. --}}
+        <div class="hidden" aria-hidden="true">
+            <label>Website <input type="text" tabindex="-1" autocomplete="off" x-model="honeypot"></label>
+        </div>
         @foreach ($sections as $section)
             <div x-show="step === {{ $stepOf[$section['key']] }}" class="sc-card p-5 sm:p-6">
                 <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-gray-400">Section {{ $section['key'] }}</p>
@@ -121,22 +126,50 @@
             </div>
         @endforeach
 
-        {{-- Submitted state (the POST endpoint arrives with the next step). --}}
-        <div x-show="done" class="sc-card p-7 text-center">
+        {{-- Submitted --}}
+        <div x-show="done" x-cloak class="sc-card p-7 text-center">
             <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                 <x-sc.icon name="check" class="h-7 w-7" />
             </span>
-            <h2 class="mt-4 text-[19px] font-extrabold tracking-tight text-charcoal">Answers saved on this device</h2>
+            <h2 class="mt-4 text-[19px] font-extrabold tracking-tight text-charcoal">Answers sent</h2>
             <p class="mx-auto mt-2 max-w-md text-[12.5px] leading-relaxed text-gray-500">
-                This link is still being set up, so nothing has been sent to the CESO office yet.
-                Your answers are kept on this phone and will not be lost if you close the page.
+                Thank you. A staff member of the CESO office will review your answers before they are used
+                for community planning.
             </p>
-            <button type="button" class="btn btn-outline mt-5" x-on:click="resumeFromDone()">Back to my answers</button>
+            <p class="mt-3 text-[11px] font-semibold text-gray-400" x-show="reference">
+                Reference: <span x-text="reference"></span>
+            </p>
+            <p class="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-gray-400">
+                You can close this page now. Your answers are no longer stored on this phone.
+            </p>
+        </div>
+
+        {{-- The link was closed or expired while the form was being filled. --}}
+        <div x-show="closed" x-cloak class="sc-card p-7 text-center">
+            <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                <x-sc.icon name="clock" class="h-7 w-7" />
+            </span>
+            <h2 class="mt-4 text-[19px] font-extrabold tracking-tight text-charcoal">This link is no longer open</h2>
+            <p class="mx-auto mt-2 max-w-md text-[12.5px] leading-relaxed text-gray-500" x-text="submitError"></p>
+            <p class="mx-auto mt-3 max-w-md text-[11.5px] leading-relaxed text-gray-400">
+                Your answers were not sent. Please ask the CESO office for a new link if you would still like to take part.
+            </p>
         </div>
     </form>
 
+    {{-- Failed send: answers are safe on the device, so offer a retry. --}}
+    <div x-show="submitError && !closed && !done" x-cloak
+         class="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+        <x-sc.icon name="alert" class="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+        <div class="min-w-0 flex-1">
+            <p class="text-[11.5px] font-semibold leading-relaxed text-red-800" x-text="submitError"></p>
+            <button type="button" class="mt-1.5 text-[11px] font-bold text-red-700 underline"
+                    x-on:click="submit()" x-bind:disabled="submitting">Try again</button>
+        </div>
+    </div>
+
     {{-- Navigation --}}
-    <div class="sticky bottom-3 z-10" x-show="!done">
+    <div class="sticky bottom-3 z-10" x-show="!done && !closed">
         <div class="sc-card flex items-center justify-between gap-3 px-4 py-3">
             <button type="button" class="btn btn-outline"
                     x-bind:class="step === 1 ? 'opacity-40 pointer-events-none' : ''"
@@ -148,7 +181,11 @@
             {{-- `type="button"` on purpose: this nav bar sits outside the <form>,
                  so a submit button here would have no form to submit. Enter in a
                  text field still submits through the form's own handler. --}}
-            <button type="button" class="btn btn-primary" x-show="step === 5" x-on:click="submit()">Send answers</button>
+            <button type="button" class="btn btn-primary" x-show="step === 5"
+                    x-on:click="submit()" x-bind:disabled="submitting">
+                <span x-show="!submitting">Send answers</span>
+                <span x-show="submitting" x-cloak>Sending…</span>
+            </button>
         </div>
     </div>
 

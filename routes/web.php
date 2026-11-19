@@ -49,11 +49,16 @@ Route::get('/', function () {
 | Token-scoped and unauthenticated ON PURPOSE: the token in the URL is the
 | authorization, so this sits outside every `auth` group. The token is stored
 | (not a signed URL) so the office can revoke it, extend it, and keep a
-| printed QR working. The submission handler joins this route in Step 3.
+| printed QR working. The GET renders the form; the POST is the one write the
+| public surface performs.
 */
 Route::get('/a/{token}', [PublicAssessmentController::class, 'show'])
     ->middleware('throttle:60,1')
     ->name('assessment.public');
+
+Route::post('/a/{token}', [PublicAssessmentController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('assessment.public.submit');
 
 // Role dashboards (12.1) — one component, three role views
 Route::get('/dashboard', Dashboard::class)

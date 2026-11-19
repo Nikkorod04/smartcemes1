@@ -201,6 +201,35 @@ class AssessmentFormSchema
         return 1;
     }
 
+    /**
+     * Field => display step. Used by the browser to jump to the first step that
+     * a server-side validation error refers to.
+     *
+     * @return array<string, int>
+     */
+    public static function fieldSteps(): array
+    {
+        $map = [];
+
+        foreach (config('smartcemes.assessment_sections') as $section) {
+            $step = self::stepForSection($section['key']);
+
+            foreach ($section['fields'] as $field => $type) {
+                $map[$field] = $step;
+            }
+        }
+
+        // Not in the section map: rendered in step 1, and the free text in 5.
+        $map['respondent_first_name'] = 1;
+        $map['respondent_middle_name'] = 1;
+        $map['respondent_last_name'] = 1;
+        $map['respondent_age'] = 1;
+        $map['general_feedback'] = 5;
+        $map['consent'] = 5;
+
+        return $map;
+    }
+
     /** Public label for a field, falling back to the template label. */
     public static function labelFor(string $field): string
     {

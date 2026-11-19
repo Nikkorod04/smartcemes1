@@ -21,6 +21,10 @@ class Review extends Component
     #[Url(except: 'all')]
     public string $quarter = 'all';
 
+    /** Queue source filter: all | staff | public | import. */
+    #[Url(except: 'all')]
+    public string $source = 'all';
+
     /** Queue period sort: 'default' (pending-first) | 'asc' | 'desc' (year, then quarter). */
     #[Url(except: 'default')]
     public string $sortPeriod = 'default';
@@ -371,6 +375,10 @@ class Review extends Component
                 });
             })
             ->when($quarter !== null, fn ($query) => $query->where('quarter', $quarter))
+            ->when(
+                in_array($this->source, ['staff', 'public', 'import'], true),
+                fn ($query) => $query->where('source', $this->source)
+            )
             ->when(
                 $periodDir !== null,
                 fn ($query) => $query->orderBy('year', $periodDir)->orderBy('quarter', $periodDir)->orderByDesc('created_at'),

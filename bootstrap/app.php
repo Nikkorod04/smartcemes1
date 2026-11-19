@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\EnsureRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+
+        // The public assessment form has no session: a respondent standing in a
+        // barangay hall has no CSRF token to send, and the token in the URL is
+        // the authorization. Kept to the single public prefix rather than the
+        // whole app.
+        $middleware->validateCsrfTokens(except: ['a/*']);
 
         $middleware->web(append: [
             EnsurePasswordChanged::class,

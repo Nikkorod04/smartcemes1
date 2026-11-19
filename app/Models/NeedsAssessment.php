@@ -11,6 +11,23 @@ class NeedsAssessment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /** How the row was captured. */
+    public const SOURCE_STAFF = 'staff';
+
+    public const SOURCE_IMPORT = 'import';
+
+    public const SOURCE_PUBLIC = 'public';
+
+    /** Human label for the queue. */
+    public static function sourceLabel(?string $source): string
+    {
+        return match ($source) {
+            self::SOURCE_PUBLIC => 'Public form',
+            self::SOURCE_IMPORT => 'XLSX',
+            default => 'Manual',
+        };
+    }
+
     /** Single-select yes/no fields per Section 7. */
     public const YES_NO_FIELDS = [
         'household_member_currently_studying',
@@ -31,6 +48,9 @@ class NeedsAssessment extends Model
         'file_path',
         'uploaded_by',
         'review_status',
+        'source',
+        'client_uuid',
+        'captured_at',
         'reviewed_by',
         'reviewed_at',
         'review_remarks',
@@ -112,6 +132,7 @@ class NeedsAssessment extends Model
         'barangay_service_ratings' => 'array',
         'other_text' => 'array',
         'reviewed_at' => 'datetime',
+        'captured_at' => 'datetime',
     ];
 
     public function community()

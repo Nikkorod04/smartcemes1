@@ -5,6 +5,7 @@ namespace App\Livewire\Assessments;
 use App\Models\Community;
 use App\Models\NeedsAssessment;
 use App\Services\AssessmentRules;
+use App\Services\AssessmentSubmission;
 use App\Services\AssessmentTemplate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -134,43 +135,12 @@ class Wizard extends Component
     {
         $this->validate();
 
-        $data = $this->form;
-        $data['barangay_service_ratings'] = array_filter(
-            $data['barangay_service_ratings'] ?? [],
-            fn ($v) => $v !== null && $v !== ''
-        );
-
-        $otherText = [];
-        foreach ($data as $field => $value) {
-            if (! str_ends_with($field, '_other')) {
-                continue;
-            }
-
-            unset($data[$field]);
-
-            $base = substr($field, 0, -strlen('_other'));
-            $text = trim((string) $value);
-            $baseValue = $data[$base] ?? '';
-            $selected = is_array($baseValue)
-                ? in_array('Other', $baseValue, true)
-                : $baseValue === 'Other';
-
-            if ($text !== '' && $selected) {
-                $otherText[$base] = [$text];
-            }
-        }
-
-        if ($otherText !== []) {
-            $data['other_text'] = $otherText;
-        }
-
-        NeedsAssessment::create([
-            ...$data,
+        AssessmentSubmission::create($this->form, [
             'community_id' => $this->communityId,
             'quarter' => $this->quarter,
             'year' => $this->year,
+            'source' => NeedsAssessment::SOURCE_STAFF,
             'uploaded_by' => auth()->id(),
-            'review_status' => 'pending',
         ]);
 
         activity()->event('assessment_submit')

@@ -58,6 +58,12 @@
                 <option value="3">Q3 · Jul–Sep</option>
                 <option value="4">Q4 · Oct–Dec</option>
             </select>
+            <select wire:model.live="source" class="input !w-40 !py-2" aria-label="Filter by how the assessment was submitted">
+                <option value="all">All sources</option>
+                <option value="public">Public form</option>
+                <option value="staff">Staff entry</option>
+                <option value="import">XLSX import</option>
+            </select>
             <span class="ml-auto text-[11.5px] text-gray-400 font-medium whitespace-nowrap">{{ $queue->total() }} submission{{ $queue->total() === 1 ? '' : 's' }}</span>
         </div>
         <div class="overflow-x-auto">
@@ -88,7 +94,9 @@
                             <td>
                                 <p class="text-[12.5px] font-semibold text-charcoal whitespace-nowrap">{{ $a->respondent_last_name }}, {{ $a->respondent_first_name }}</p>
                                 <p class="mt-0.5">
-                                    @if ($a->file_path)
+                                    @if ($a->source === 'public')
+                                        <span class="badge badge-blue !px-1.5 !py-0 !text-[10px]">Public form</span>
+                                    @elseif ($a->source === 'import' || $a->file_path)
                                         <span class="badge badge-gold !px-1.5 !py-0 !text-[10px]">XLSX</span>
                                     @else
                                         <span class="badge badge-gray !px-1.5 !py-0 !text-[10px]">Manual</span>
@@ -96,6 +104,15 @@
                                 </p>
                             </td>
                             <td>
+                                @if ($a->source === 'public')
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="avatar w-8 h-8 text-[9px] bg-lnu-50 text-lnu-700">WEB</span>
+                                        <div class="min-w-0">
+                                            <p class="text-[12.5px] font-semibold truncate">Respondent</p>
+                                            <p class="text-[11px] text-gray-400 truncate">public link</p>
+                                        </div>
+                                    </div>
+                                @else
                                 <div class="flex items-center gap-2.5">
                                     <span class="avatar w-8 h-8 text-[10px]">{{ $initials }}</span>
                                     <div class="min-w-0">
@@ -103,6 +120,7 @@
                                         <p class="text-[11px] text-gray-400 truncate">{{ $a->uploader ? ucfirst($a->uploader->role) : '' }}</p>
                                     </div>
                                 </div>
+                                @endif
                             </td>
                             <td class="text-[12.5px] text-gray-500 whitespace-nowrap">{{ $a->created_at->format('M j, Y') }}</td>
                             <td>
@@ -178,13 +196,16 @@
                             <span class="badge badge-red">Returned</span>
                         @endif
                         <span class="badge badge-blue">Q{{ $selected->quarter }} · {{ $selected->year }}</span>
-                        @if ($selected->file_path)
+                        @if ($selected->source === 'public')
+                            <span class="badge badge-blue">Public form</span>
+                        @elseif ($selected->source === 'import' || $selected->file_path)
                             <span class="badge badge-gold">XLSX import</span>
                         @endif
                     </div>
                     <p class="mt-2 text-[11.5px] text-white/70 leading-snug">
                         Respondent: <span class="font-semibold text-white/85">{{ $this->answer($selected, 'respondent_full_name') ?? '—' }}</span>
-                        · Encoded by {{ $selected->uploader?->name ?? '—' }} · {{ $selected->created_at->format('M j, Y') }}
+                        · {{ $selected->source === 'public' ? 'Submitted through a public link' : 'Encoded by '.($selected->uploader?->name ?? '—') }}
+                        · {{ $selected->created_at->format('M j, Y') }}
                         @if ($selected->reviewed_at)
                             · Reviewed by {{ $selected->reviewer?->name }} on {{ $selected->reviewed_at->format('M j, Y') }}
                         @endif

@@ -27,16 +27,25 @@ window.assessmentForm = function (config) {
         // ---- state ---------------------------------------------------------
         step: 1,
         done: false,
+        closed: false,
         consent: false,
+        submitting: false,
+        submitted: false,
+        submitError: '',
+        honeypot: '',
         errors: {},
         restoredAt: null,
+        savedAt: null,
+        reference: null,
         form: clone(config.form),
         types: config.types || {},
         otherFields: config.otherFields || [],
         maxCaps: config.max || {},
         exclusives: config.exclusive || {},
         steps: config.steps || [],
+        fieldSteps: config.fieldSteps || {},
         token: config.token,
+        submitUrl: config.submitUrl,
         clientUuid: config.clientUuid,
 
         // ---- lifecycle -----------------------------------------------------
@@ -76,14 +85,22 @@ window.assessmentForm = function (config) {
         },
 
         saveNow() {
+            // Once the office has the answers there is nothing left to draft;
+            // re-saving here would resurrect a submitted form on the next open.
+            if (this.submitted) {
+                return;
+            }
+
+            this.savedAt = Date.now();
+
             try {
                 localStorage.setItem(this.draftKey, JSON.stringify({
-                    version: 1,
+                    version: 2,
                     clientUuid: this.clientUuid,
                     step: Math.min(this.step, 5),
                     answers: this.form,
                     consent: this.consent,
-                    saved_at: Date.now(),
+                    saved_at: this.savedAt,
                 }));
             } catch (e) {
                 // Private mode or a full quota: the form still works, drafts
@@ -120,6 +137,7 @@ window.assessmentForm = function (config) {
                 }
 
                 this.restoredAt = draft.saved_at ? new Date(draft.saved_at) : new Date();
+                this.savedAt = draft.saved_at || null;
             } catch (e) {
                 // Corrupt draft: start clean rather than trap the respondent in
                 // a half-restored form.
@@ -139,6 +157,9 @@ window.assessmentForm = function (config) {
             this.errors = {};
             this.restoredAt = null;
             this.done = false;
+            this.submitted = false;
+            this.savedAt = null;
+            this.submitError = '';
             this.clientUuid = this.uuid();
         },
 
@@ -340,14 +361,10 @@ window.assessmentForm = function (config) {
             }
         },
 
-        resumeFromDone() {
-            this.done = false;
-            this.step = 5;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        },
-
         validate() {
             const errors = {};
+
+            this.submitError = '';
 
             if (!String(this.form.respondent_first_name || '').trim()) {
                 errors.respondent_first_name = 'Please enter the first name.';
@@ -390,13 +407,119 @@ window.assessmentForm = function (config) {
         },
 
         submit() {
+            if (this.submitting || this.submitted) {
+                return;
+            }
+
             if (!this.validate()) {
                 return;
             }
 
-            // Answers stay on the device until the office accepts them.
+            this.post();
+        },
+
+        /**
+         * The only network call the public form makes. Everything before this
+         * point happened in the browser; if this fails, the answers are still
+         * on the device and the respondent can simply tap again.
+         */
+        async post() {
+            this.submitting = true;
+            this.submitError = '';
             this.saveNow();
+
+            try {
+                const response = await fetch(this.submitUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        client_uuid: this.clientUuid,
+                        captured_at: new Date(this.savedAt || Date.now()).toISOString(),
+                        consent: this.consent === true,
+                        form: this.form,
+                        website: this.honeypot,
+                    }),
+                });
+
+                const payload = await response.json().catch(() => ({}));
+
+                if (response.ok) {
+                    this.onSubmitted(payload);
+                    return;
+                }
+
+                if (response.status === 422) {
+                    this.applyServerErrors(payload.errors || {});
+                    return;
+                }
+
+                if (response.status === 410 || response.status === 404) {
+                    // The office closed or expired the link between opening
+                    // the page and pressing send.
+                    this.closed = true;
+                    this.submitError = payload.message || 'This link is no longer open.';
+                    return;
+                }
+
+                this.submitError = 'The office could not accept your answers just now. Please try again in a moment.';
+            } catch (e) {
+                // Offline, DNS, a dropped mobile connection: nothing is lost.
+                this.submitError = 'No connection. Your answers are saved on this phone — check your signal and try again.';
+            } finally {
+                this.submitting = false;
+            }
+        },
+
+        onSubmitted(payload) {
+            this.submitted = true;
             this.done = true;
+            this.errors = {};
+
+            try {
+                localStorage.removeItem(this.draftKey);
+            } catch (e) {
+                // Nothing to clean up.
+            }
+
+            this.restoredAt = null;
+            this.savedAt = null;
+            this.reference = payload && payload.id ? payload.id : null;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
+        /**
+         * Laravel returns `{ form.has_electricity: [...] }`. Map the keys back
+         * onto field names so the existing inline error slots show them, then
+         * send the respondent to the first step that has a problem.
+         */
+        applyServerErrors(errors) {
+            const mapped = {};
+
+            Object.keys(errors).forEach((key) => {
+                const message = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
+                const field = key.replace(/^form\./, '').replace(/\.\d+$/, '');
+
+                if (!mapped[field]) {
+                    mapped[field] = message;
+                }
+            });
+
+            this.errors = mapped;
+
+            if (mapped.consent) {
+                this.step = 5;
+            } else {
+                const first = Object.keys(mapped).find((field) => this.fieldSteps[field]);
+
+                if (first) {
+                    this.step = this.fieldSteps[first];
+                }
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
     };
