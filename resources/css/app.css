@@ -67,6 +67,12 @@
   box-shadow:0 24px 70px -28px rgba(15,23,42,.38);
 }
 .sc-modal-backdrop { background:rgba(15,23,42,.48); backdrop-filter:blur(3px); }
+
+/* A modal header on the brand gradient declares `text-white`, but page-level
+   rules such as `.project-detail-page h3` or `.faculty-...-page h3` target
+   every h3 in the page and override the inherited white with dark navy. Keep
+   the title white wherever the header itself is white. */
+header.text-white h3 { color:#fff; }
 .sc-modal-header {
   display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
   padding-bottom:16px; border-bottom:1px solid #f0f1f4;

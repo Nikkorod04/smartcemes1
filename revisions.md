@@ -5688,6 +5688,27 @@ untouched.
 
 ---
 
+## 44. MODAL TITLES ON THE BRAND HEADER (2026-11-19)
+
+The project-hub wrapper `.project-detail-page` sets `h3 { color:#172f5f }` for in-page section
+headings. That selector also matched the `<h3>` inside the modal header, which was relying on the
+header's `text-white` inheritance — so titles such as **Edit beneficiary** and **Register new
+beneficiary** rendered dark navy on the dark blue gradient. The secretary and faculty page wrappers
+have the same `h3` rule, so other modals were affected too.
+
+Fixed at the root in `app.css`:
+
+```css
+header.text-white h3 { color:#fff; }
+```
+
+The page-scoped rules still style in-page headings dark navy, and light modal headers (the AI result
+modals use tinted backgrounds and a dark title) are unaffected. Verified on the project hub's Edit
+beneficiary and Register new modals and the review Validate submission modal: all titles compute to
+white, and the rule is present in the built CSS. No PHP changed.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 
