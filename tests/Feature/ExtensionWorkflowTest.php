@@ -364,9 +364,11 @@ class ExtensionWorkflowTest extends TestCase
             'community_id' => $data['community']->id, 'quarter' => 2, 'year' => 2026,
         ])->first();
 
-        // 6.10: recompute fires on review_status change — same batch count,
-        // freshly stamped last_calculated_at.
-        $this->assertSame($summaryBefore->total_responses, $summaryAfter->total_responses);
+        // 6.10: recompute fires on review_status change. Since D7 the summary
+        // counts validated rows only, so validating this pending row is exactly
+        // the moment it enters the batch: one more response than before.
+        $this->assertSame($summaryBefore->total_responses + 1, $summaryAfter->total_responses);
+        $this->assertSame(1, $summaryAfter->total_responses);
         $this->assertTrue($summaryAfter->last_calculated_at >= $summaryBefore->last_calculated_at);
     }
 

@@ -32,10 +32,15 @@ class AssessmentSummaryService
      */
     public function recomputeFor(int $communityId, int $quarter, int $year): AssessmentSummary
     {
+        // D7 (after-defense revision): only validated rows are authoritative.
+        // A public submission, or a staff encode, sits in the review queue until
+        // the secretary approves it — the published figures must not move while
+        // it waits, and a returned row must not prop them up.
         $batch = NeedsAssessment::query()
             ->where('community_id', $communityId)
             ->where('quarter', $quarter)
             ->where('year', $year)
+            ->where('review_status', 'validated')
             ->get();
 
         $summary = AssessmentSummary::query()->firstOrCreate([

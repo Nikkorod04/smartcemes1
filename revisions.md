@@ -5252,14 +5252,29 @@ same trap, so: if it must be stored, it must have a rule.
 - A source filter sits next to the quarter filter, so the secretary can pull up only what came in through
   links. The drawer header says "Submitted through a public link" for the same reason.
 
-### 38.6 What this step does NOT do
+### 38.6 Summaries now count validated rows only (D7, confirmed 2026-11-19)
+
+Your Step 3 acceptance criterion said *"pending row does not move the summary"*, so D7 is now implemented:
+`AssessmentSummaryService::recomputeFor()` aggregates `review_status = 'validated'` only.
+
+That is the rule the workflow implies — a submission is data once the secretary approves it — and it closes a
+hole the public form would otherwise open: an unreviewed, possibly duplicate or joke submission would have
+moved a community's published figures the moment it was sent.
+
+Because the rule changed, every stored summary was stale until recomputed. `assessment:summaries`
+recomputes every community/period batch in place (with `--dry-run`), and was run on the VM.
+
+**Impact on the live database:** summaries counted 663 responses (151 validated + 510 pending + 2 returned).
+They now count **151**. This is the correct number under the new rule, but it is a large visible drop, so
+expect the dashboard and community pages to look emptier until pending rows are validated.
+
+### 38.7 What this step does NOT do
 
 - No notification to the secretary when a public submission arrives (the queue order puts pending first).
 - No share sheet / QR in the app — links are still minted with `php artisan assessment:link` on the VM.
 - No offline queue: if the send fails the answers stay in `localStorage` and the respondent retries by hand.
-- Summaries still aggregate every row regardless of `review_status` (see D7 in the plan document).
 
-### 38.7 Tests
+### 38.8 Tests
 
 `PublicAssessmentSubmitTest` — **16 passed, 66 assertions**: a full submission lands with the right
 community/period/source and no uploader; retry with the same draft id does not duplicate; expired, revoked
@@ -5269,6 +5284,11 @@ future device clock is distrusted; the honeypot stores nothing; the queue labels
 Manual on localhost: filled the form with real clicks, sent → `201`, `Answers sent` with reference 25, draft
 cleared, no console errors; the row appeared in the review queue with the right badge, and the drawer opened
 on it.
+
+`AssessmentSummaryValidatedOnlyTest` — **6 passed, 12 assertions**: pending and returned rows do not move a
+summary; validating adds one; returning a validated row removes it; a public submission stays out until it is
+validated; the console command repairs a stale summary. `ExtensionWorkflowTest::test_secretary_validation_recomputes_summary`
+asserted the old rule (count unchanged on validation) and was updated to assert the new one (+1).
 
 ---
 
