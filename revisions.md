@@ -5754,6 +5754,33 @@ Full suite after Item 5: **735 passed, 4,253 assertions**.
 
 ---
 
+## 46. PROPOSAL → ACTIVITY HANDOFF (2026-11-19)
+
+A small follow-up to Item 5. Approval used to create a draft activity with only the title, description and
+dates: the budget from the proposal was not copied, the proposing faculty was not assigned, and the day
+count was null (which the hours formula reads as one day). The Director had to retype the budget and
+assign themselves to every approved proposal.
+
+`Proposals\Index::approve()` now carries the request into the plan:
+
+- `allocated_budget` ← the proposal's budget estimate;
+- the proposing faculty is synced to the activity, so the draft appears in their list and the trainer
+  count resolves from the assignment;
+- `no_of_days` is the inclusive proposed window (at least 1, capped at the activity form's 60). A
+  month-long window can still be corrected by the Director; the point is to stop a multi-day proposal
+  from looking like a one-day activity by default.
+
+Venue and the exact times still come from the Director, because the proposal does not capture them; the
+draft is a plan that is now mostly filled in. The SO remains optional at approval — that is still the
+open policy decision.
+
+`ExtensionWorkflowTest` now asserts the handoff (budget, proposer assignment, 30-day and 3-day windows),
+and the existing approval test was extended rather than duplicated.
+
+Full suite after the handoff: **736 passed, 4,258 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

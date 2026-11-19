@@ -80,6 +80,34 @@ class ExtensionWorkflowTest extends TestCase
         $this->assertSame('draft', $activity->status);
         $this->assertSame($proposal->title, $activity->title);
         $this->assertSame($proposal->extension_project_id, $activity->extension_project_id);
+
+        // The handoff carries the plan, not just the title: the proposed window
+        // becomes the day count and the proposer is assigned as a trainer.
+        $this->assertSame(30.0, (float) $activity->no_of_days);
+        $this->assertTrue(
+            $activity->faculty()->whereKey($data['faculty']->id)->exists(),
+            'The proposing faculty should be assigned to the draft activity.'
+        );
+    }
+
+    public function test_approval_carries_the_budget_and_proposed_window_into_the_activity(): void
+    {
+        $data = $this->seedBase();
+        $proposal = $this->makeProposal($data, [
+            'budget_estimate' => 12000,
+            'proposed_start_date' => '2026-06-01',
+            'proposed_end_date' => '2026-06-03',
+        ]);
+
+        Livewire::actingAs($data['admin'])
+            ->test(ProposalsIndex::class)
+            ->call('approve', $proposal->id);
+
+        $activity = Activity::find($proposal->fresh()->created_activity_id);
+
+        $this->assertSame(12000.0, (float) $activity->allocated_budget);
+        $this->assertSame(3.0, (float) $activity->no_of_days);
+        $this->assertTrue($activity->faculty()->whereKey($data['faculty']->id)->exists());
     }
 
     public function test_proposal_action_modal_does_not_render_the_detail_modal_at_the_same_time(): void

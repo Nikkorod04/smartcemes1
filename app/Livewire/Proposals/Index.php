@@ -127,7 +127,12 @@ class Index extends Component
         ]);
 
         // ON APPROVAL: auto-create the linked Activity in draft status (5.12),
-        // copying title and dates, and stamp created_activity_id.
+        // copying the request into the plan. Budget and the proposing faculty
+        // are carried over so the Director does not retype them; the day count
+        // starts from the proposed window (inclusive) and can be adjusted.
+        $days = (int) $proposal->proposed_start_date->diffInDays($proposal->proposed_end_date) + 1;
+        $days = max(1, min(60, $days));
+
         $activity = Activity::create([
             'extension_project_id' => $proposal->extension_project_id,
             'activity_proposal_id' => $proposal->id,
@@ -137,8 +142,12 @@ class Index extends Component
             'planned_end_date' => $proposal->proposed_end_date,
             'start_time' => '08:00:00',
             'end_time' => '12:00:00',
+            'no_of_days' => $days,
+            'allocated_budget' => $proposal->budget_estimate,
             'status' => 'draft',
         ]);
+
+        $activity->faculty()->sync([$proposal->faculty_id]);
 
         $proposal->update(['created_activity_id' => $activity->id]);
 
