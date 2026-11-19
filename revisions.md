@@ -5699,13 +5699,16 @@ have the same `h3` rule, so other modals were affected too.
 Fixed at the root in `app.css`:
 
 ```css
-header.text-white h3 { color:#fff; }
+header.text-white h3,
+[role="dialog"] .text-white h3 { color:#fff; }
 ```
 
-The page-scoped rules still style in-page headings dark navy, and light modal headers (the AI result
-modals use tinted backgrounds and a dark title) are unaffected. Verified on the project hub's Edit
-beneficiary and Register new modals and the review Validate submission modal: all titles compute to
-white, and the rule is present in the built CSS. No PHP changed.
+The first selector covers semantic headers. Some modals (the Activity workspace modal, for example) use a
+`div` for the gradient header, so the second selector matches the same shape inside a dialog. The
+page-scoped rules still style in-page headings dark navy, and light modal headers (the AI result modals
+use tinted backgrounds and a dark title) are unaffected. Verified on the project hub's Edit beneficiary
+and Register new modals, the review Validate submission modal, and the activity **Add activity** title:
+all compute to white, and the rule is present in the built CSS. No PHP changed.
 
 ---
 
