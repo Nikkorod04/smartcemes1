@@ -141,7 +141,7 @@ If green, offline is additive: service worker for the public shell, pending coun
 
 ---
 
-## 3. Item 2 — Community needs-assessment directory
+## 3. Item 2 — Community needs-assessment directory (implemented 2026-11-19 — `revisions.md` §41)
 
 **Goal:** inspect every submitted assessment for one community.
 
