@@ -5408,6 +5408,17 @@ layout: QR 200×200, URL input full width, no horizontal table scroll at 912px.
 Affected suites: 139 tests / 1,853 assertions across the public form, public submit, route surface,
 validated-only summaries, wizard, import and review.
 
+### 39.8 Deploying a new npm dependency
+
+The first deploy failed: the VM already had `node_modules` from an earlier build, and the deploy script
+only ran `npm ci` when that directory was **missing** — so Rollup could not resolve `qrcode`. The error is
+clear (`Rollup failed to resolve import "qrcode"`), but it is a deploy-script bug, not a code bug: pulling a
+new lockfile must reinstall.
+
+The condition is now `[ ! -d node_modules ] || [ package-lock.json -nt node_modules/.package-lock.json ]`
+— npm keeps its own copy of the lockfile inside `node_modules`, and a fresh `git pull` makes the real one
+newer. A lockfile change therefore reinstalls; an ordinary code deploy still skips the install.
+
 ---
 
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,

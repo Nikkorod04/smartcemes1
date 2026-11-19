@@ -111,7 +111,7 @@ else {
         Invoke-Remote @"
 set -e
 cd $RemotePath
-if [ ! -d node_modules ]; then
+if [ ! -d node_modules ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then
     echo "installing dependencies..."
     npm ci --no-audit --no-fund
 fi
