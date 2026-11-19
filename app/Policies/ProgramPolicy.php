@@ -85,4 +85,17 @@ class ProgramPolicy
     {
         return $user->isAdmin() || $user->isSecretary();
     }
+
+    /**
+     * Correct a beneficiary profile (D8, after-defense Item 3).
+     *
+     * Deliberately narrower than manageBeneficiaries: Admin keeps
+     * create/enroll/import, and only the Secretary may edit an existing
+     * profile. Its own ability so the asymmetry is assertable and can be
+     * stated as a decision, not read as an oversight.
+     */
+    public function editBeneficiary(User $user, ExtensionProject $program): bool
+    {
+        return $user->isSecretary();
+    }
 }

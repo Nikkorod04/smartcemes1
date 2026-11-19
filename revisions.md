@@ -5567,6 +5567,66 @@ Full suite after Item 2: **718 passed, 4,158 assertions**.
 
 ---
 
+## 42. CORRECTING A BENEFICIARY (D8) (2026-11-19)
+
+Item 3. The registry could be created, enrolled and imported into, but a misspelled name or a changed
+phone number had no correction path in the app.
+
+### 42.1 The asymmetry is the decision
+
+D8 is now implemented: **only the Secretary edits a beneficiary profile**; Admin keeps create, enroll and
+import. That is a new `editBeneficiary` ability in `ProgramPolicy`, separate from `manageBeneficiaries`, so
+the boundary is assertable and can be stated in the manuscript as a decision rather than read as an
+oversight.
+
+The distinction is defensible: creating/enrolling is a program operation; correcting a shared registry
+profile is a data-quality act with an audit trail.
+
+### 42.2 One row, not a copy
+
+The project-hub roster gains **Edit**, visible only to the Secretary. The modal updates the `Beneficiary`
+record itself, so the change is visible on every surface that reads the profile — the global registry, the
+project roster, exports — because there is only one row. The modal says so explicitly.
+
+Only a beneficiary enrolled in the current project can be opened from its roster (`enrolledBeneficiary()`
+returns `404` otherwise), so the action cannot be pointed at an arbitrary registry id.
+
+### 42.3 Dedup without matching yourself
+
+The edit reuses `Beneficiary::duplicatesFor()` (first + last + barangay), excluding the row being edited.
+Two refinements matter:
+
+- the identity key is captured when the modal opens; if it does not change, the save skips the dedup pass,
+  so correcting a phone number does not warn about the person's own record;
+- if the name/barangay *does* change into an existing profile, the save stops, shows the warning, and
+  requires **This is a different person — save anyway**. The confirmation is tied to the exact values
+  checked, so editing after the warning forces a fresh pass. Records are never auto-merged.
+
+### 42.4 Validation and audit
+
+Required: first name, last name, barangay, category. Age is `0–120`, phone ≤ 20 characters. The
+`Beneficiary` model already logs its fillable changes; the save also writes a project-level
+`beneficiary_updated` entry with the beneficiary id, mirroring registration so the project history shows it.
+
+While in this area, `abortUnlessBeneficiaryManage()` was changed to check the **policy** instead of the
+public `$canManageBeneficiaries` property. Livewire actions are callable from the browser, and a tampered
+boolean must not be able to enroll. The property remains for the UI only.
+
+### 42.5 Tests and manual verification
+
+`BeneficiaryEditTest` — **9 passed, 41 assertions**: the Secretary edits an enrolled profile and the roster
+shows it; both activity entries are written; Admin can manage but not edit (action 403, no Edit button); a
+project-lead Faculty still cannot edit; renaming into another profile warns and only saves after
+confirmation; a phone-only correction does not warn; required fields are enforced; a registry-only profile
+is `404`; the roster shows Edit to the Secretary only.
+
+Manual on localhost: from the Abucay project roster, edited Adelaida Abad's phone, the row and toast
+updated immediately, then reverted the value through the same modal.
+
+Full suite after Item 3: **727 passed, 4,201 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

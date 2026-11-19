@@ -44,9 +44,14 @@
                             <td class="text-gray-500">{{ $b->age ?? '—' }} · {{ $b->gender ?? '—' }}</td>
                             <td class="text-gray-500">{{ $b->phone ?? '—' }}</td>
                             <td class="!text-right row-actions">
+                                @if ($canEditBeneficiaries)
+                                    <button wire:click="openBeneficiaryEdit({{ $b->id }})" class="btn btn-ghost !px-2 !py-1 !text-[11px]">
+                                        <x-sc.icon name="edit" class="w-3.5 h-3.5" /> Edit
+                                    </button>
+                                @endif
                                 @if ($canManageBeneficiaries)
                                     <button wire:click="unenroll({{ $b->id }})" wire:confirm="Unenroll this beneficiary from this project?" class="btn btn-danger-soft !px-2 !py-1 !text-[11px]">Unenroll</button>
-                                @else
+                                @elseif (! $canEditBeneficiaries)
                                     <span class="text-[11.5px] text-gray-300">—</span>
                                 @endif
                             </td>

@@ -46,6 +46,9 @@ class Hub extends Component
     /** v4.12: beneficiary + attendance actions (Admin or Secretary). */
     public bool $canManageBeneficiaries = false;
 
+    /** D8: correcting an existing profile is Secretary-only. */
+    public bool $canEditBeneficiaries = false;
+
     /* ---------------- project narrative modal (5.15) ---------------- */
     public bool $showNarrativeModal = false;
 
@@ -148,6 +151,26 @@ class Hub extends Component
         'beneficiary_category' => '', 'barangay' => '', 'municipality' => '',
     ];
 
+    /* ---------------- beneficiary edit (Secretary only, D8) ---------------- */
+    public bool $showBeneficiaryEdit = false;
+
+    public ?int $editingBeneficiaryId = null;
+
+    public bool $editConfirmed = false;
+
+    public string $editDedupWarning = '';
+
+    /** The first|last|barangay key when the modal opened; unchanged means no dedup pass. */
+    public string $editOriginalKey = '';
+
+    public string $editCheckedKey = '';
+
+    public array $beneficiaryEditForm = [
+        'first_name' => '', 'middle_name' => '', 'last_name' => '',
+        'age' => '', 'gender' => '', 'phone' => '',
+        'beneficiary_category' => '', 'barangay' => '', 'municipality' => '',
+    ];
+
     /* ---------------- beneficiary XLSX import ---------------- */
     public bool $showImport = false;
 
@@ -203,6 +226,7 @@ class Hub extends Component
         $this->program = $project;
         $this->canManage = auth()->user()->can('manage', $project);
         $this->canManageBeneficiaries = auth()->user()->can('manageBeneficiaries', $project);
+        $this->canEditBeneficiaries = auth()->user()->can('editBeneficiary', $project);
     }
 
     public function render()
@@ -1362,6 +1386,162 @@ class Hub extends Component
         );
     }
 
+    /* ==================== BENEFICIARY EDIT (D8, Secretary only) ==================== */
+
+    public function openBeneficiaryEdit(int $beneficiaryId): void
+    {
+        $this->abortUnlessBeneficiaryEdit();
+
+        $beneficiary = $this->enrolledBeneficiary($beneficiaryId);
+
+        $this->editingBeneficiaryId = $beneficiary->id;
+        $this->beneficiaryEditForm = [
+            'first_name' => $beneficiary->first_name ?? '',
+            'middle_name' => $beneficiary->middle_name ?? '',
+            'last_name' => $beneficiary->last_name ?? '',
+            'age' => $beneficiary->age ?? '',
+            'gender' => $beneficiary->gender ?? '',
+            'phone' => $beneficiary->phone ?? '',
+            'beneficiary_category' => $beneficiary->beneficiary_category ?? '',
+            'barangay' => $beneficiary->barangay ?? '',
+            'municipality' => $beneficiary->municipality ?? '',
+        ];
+
+        // The identity key at open time. If it does not change, the save skips
+        // the duplicate pass — a phone correction should not warn about the
+        // person's own record.
+        $this->editOriginalKey = $this->editKey();
+        $this->editCheckedKey = '';
+        $this->editConfirmed = false;
+        $this->editDedupWarning = '';
+        $this->resetErrorBag();
+        $this->showBeneficiaryEdit = true;
+    }
+
+    public function checkEditDedup(): void
+    {
+        $this->abortUnlessBeneficiaryEdit();
+
+        $this->editConfirmed = false;
+        $this->editDedupWarning = '';
+
+        $this->trimBeneficiaryEditForm();
+
+        $this->validate($this->editRules());
+
+        $dupes = Beneficiary::duplicatesFor(
+            $this->beneficiaryEditForm['first_name'],
+            $this->beneficiaryEditForm['last_name'],
+            $this->beneficiaryEditForm['barangay']
+        )->reject(fn (Beneficiary $dupe) => $dupe->id === $this->editingBeneficiaryId);
+
+        $this->editCheckedKey = $this->editKey();
+
+        if ($dupes->isNotEmpty()) {
+            $names = $dupes->map(fn ($dupe) => $dupe->fullName())->implode(', ');
+            $this->editDedupWarning = 'Another beneficiary with the same first name, last name, and barangay already exists: '.$names.'.';
+        }
+    }
+
+    /** Confirmation covers the exact values that were checked; editing after it requires a fresh pass. */
+    public function editConfirmedSave(): void
+    {
+        $this->abortUnlessBeneficiaryEdit();
+        $this->editConfirmed = true;
+        $this->saveBeneficiaryEdit();
+    }
+
+    public function saveBeneficiaryEdit(): void
+    {
+        $this->abortUnlessBeneficiaryEdit();
+
+        $beneficiary = $this->enrolledBeneficiary($this->editingBeneficiaryId);
+
+        $this->trimBeneficiaryEditForm();
+
+        $this->validate($this->editRules());
+
+        if ($this->editCheckedKey !== $this->editKey()) {
+            $this->editConfirmed = false;
+        }
+
+        if (! $this->editConfirmed && $this->editKey() !== $this->editOriginalKey) {
+            $this->checkEditDedup();
+
+            if ($this->editDedupWarning !== '') {
+                return;
+            }
+        }
+
+        $form = $this->beneficiaryEditForm;
+
+        $beneficiary->update([
+            'first_name' => $form['first_name'],
+            'middle_name' => $form['middle_name'] ?: null,
+            'last_name' => $form['last_name'],
+            'age' => ($form['age'] === '' || $form['age'] === null) ? null : (int) $form['age'],
+            'gender' => $form['gender'] ?: null,
+            'phone' => $form['phone'] ?: null,
+            'barangay' => $form['barangay'],
+            'municipality' => $form['municipality'] ?: null,
+            'beneficiary_category' => $form['beneficiary_category'],
+        ]);
+
+        // The Beneficiary model logs its own fillable changes; this project-level
+        // entry mirrors registration so the project history shows the edit.
+        activity()->performedOn($this->program)->event('beneficiary_updated')
+            ->withProperties(['beneficiary_id' => $beneficiary->id])
+            ->log("Beneficiary '{$beneficiary->fullName()}' updated from the project roster");
+
+        $this->showBeneficiaryEdit = false;
+        $this->editingBeneficiaryId = null;
+        $this->editConfirmed = false;
+        $this->editDedupWarning = '';
+        $this->editCheckedKey = '';
+        $this->editOriginalKey = '';
+
+        $this->dispatch('sc-toast', message: 'Beneficiary updated', type: 'success');
+    }
+
+    /** Only a profile enrolled in this project can be edited from its roster. */
+    protected function enrolledBeneficiary(?int $beneficiaryId): Beneficiary
+    {
+        $beneficiary = $beneficiaryId === null
+            ? null
+            : $this->program->beneficiaries()->whereKey($beneficiaryId)->first();
+
+        abort_if($beneficiary === null, 404);
+
+        return $beneficiary;
+    }
+
+    /** @return array<string, string> */
+    protected function editRules(): array
+    {
+        return [
+            'beneficiaryEditForm.first_name' => 'required|string|max:255',
+            'beneficiaryEditForm.last_name' => 'required|string|max:255',
+            'beneficiaryEditForm.barangay' => 'required|string|max:255',
+            'beneficiaryEditForm.phone' => 'nullable|string|max:20',
+            'beneficiaryEditForm.age' => 'nullable|integer|min:0|max:120',
+            'beneficiaryEditForm.beneficiary_category' => 'required|in:'.implode(',', config('smartcemes.beneficiary_categories')),
+        ];
+    }
+
+    protected function trimBeneficiaryEditForm(): void
+    {
+        foreach (['first_name', 'middle_name', 'last_name', 'phone', 'barangay', 'municipality'] as $field) {
+            $this->beneficiaryEditForm[$field] = trim((string) ($this->beneficiaryEditForm[$field] ?? ''));
+        }
+    }
+
+    protected function editKey(): string
+    {
+        return mb_strtolower(
+            $this->beneficiaryEditForm['first_name'].'|'.$this->beneficiaryEditForm['last_name'].'|'.$this->beneficiaryEditForm['barangay']
+        );
+    }
+
     /** 5.4 (blueprint v4.7): bulk XLSX import — upload → preview → confirm. */
     public function openImport(): void
     {
@@ -1798,7 +1978,14 @@ class Hub extends Component
      */
     protected function abortUnlessBeneficiaryManage(): void
     {
-        abort_unless($this->canManageBeneficiaries, 403, 'Only the Admin or Secretary can manage beneficiaries and attendance.');
+        // Check the policy, not the public UI flag: Livewire actions are
+        // callable from the browser, and a tampered property must not enroll.
+        abort_unless(auth()->user()->can('manageBeneficiaries', $this->program), 403, 'Only the Admin or Secretary can manage beneficiaries and attendance.');
+    }
+
+    protected function abortUnlessBeneficiaryEdit(): void
+    {
+        abort_unless(auth()->user()->can('editBeneficiary', $this->program), 403, 'Only the Secretary can edit a beneficiary profile.');
     }
 
     protected function registryResults()

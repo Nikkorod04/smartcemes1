@@ -250,6 +250,47 @@
     </form>
 </div>
 
+{{-- Beneficiary edit (D8 — Secretary only) --}}
+<div x-data="{ open: false }" x-init="$wire.$watch('showBeneficiaryEdit', v => open = v)" @keydown.escape.window="$wire.set('showBeneficiaryEdit', false)"
+     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="edit-beneficiary-title">
+    <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showBeneficiaryEdit', false)"></div>
+    <form wire:submit="saveBeneficiaryEdit" class="sc-modal relative z-10 flex w-full max-w-3xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="edit" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="edit-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Edit beneficiary</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Correct the registry profile. The change is visible everywhere this person appears.</p></div></div><button type="button" wire:click="$set('showBeneficiaryEdit', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close edit beneficiary dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
+        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+        <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-[11px] leading-relaxed text-blue-900"><x-sc.icon name="edit" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-600" /><p>This updates the shared registry profile, not a copy. Edits are audited; only the Secretary can change a beneficiary.</p></div>
+        <div class="grid grid-cols-3 gap-3">
+            <div><label class="label" for="edit-first-name">First name <span class="text-red-500">*</span></label><input id="edit-first-name" maxlength="100" class="input" wire:model="beneficiaryEditForm.first_name" aria-invalid="{{ $errors->has('beneficiaryEditForm.first_name') ? 'true' : 'false' }}">@error('beneficiaryEditForm.first_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="edit-middle-name">Middle name</label><input id="edit-middle-name" maxlength="100" class="input" wire:model="beneficiaryEditForm.middle_name"></div>
+            <div><label class="label" for="edit-last-name">Last name <span class="text-red-500">*</span></label><input id="edit-last-name" maxlength="100" class="input" wire:model="beneficiaryEditForm.last_name" aria-invalid="{{ $errors->has('beneficiaryEditForm.last_name') ? 'true' : 'false' }}">@error('beneficiaryEditForm.last_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mt-4">
+            <div><label class="label" for="edit-age">Age</label><input id="edit-age" type="number" min="0" max="120" class="input" wire:model="beneficiaryEditForm.age">@error('beneficiaryEditForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="edit-gender">Sex</label><x-sc.select id="edit-gender" model="beneficiaryEditForm.gender" :value="$beneficiaryEditForm['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
+            <div><label class="label" for="edit-category">Category <span class="text-red-500">*</span></label><x-sc.select id="edit-category" model="beneficiaryEditForm.beneficiary_category" :value="$beneficiaryEditForm['beneficiary_category'] ?? null" :options="collect(config('smartcemes.beneficiary_categories'))->mapWithKeys(fn ($cat) => [$cat => $cat])->all()" placeholder="Select category" :invalid="$errors->has('beneficiaryEditForm.beneficiary_category')" />@error('beneficiaryEditForm.beneficiary_category') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mt-4">
+            <div><label class="label" for="edit-phone">Contact number</label><input id="edit-phone" maxlength="30" class="input" wire:model="beneficiaryEditForm.phone" placeholder="0912…">@error('beneficiaryEditForm.phone') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="edit-barangay">Barangay <span class="text-red-500">*</span></label><input id="edit-barangay" maxlength="150" class="input" wire:model="beneficiaryEditForm.barangay" aria-invalid="{{ $errors->has('beneficiaryEditForm.barangay') ? 'true' : 'false' }}">@error('beneficiaryEditForm.barangay') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="edit-municipality">Municipality</label><input id="edit-municipality" maxlength="150" class="input" wire:model="beneficiaryEditForm.municipality"></div>
+        </div>
+
+        @if ($editDedupWarning !== '' && ! $editConfirmed)
+            <div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+                <p class="text-[12.5px] font-bold text-red-700">Possible duplicate found</p>
+                <p class="text-[12px] text-red-600 mt-1">{{ $editDedupWarning }}</p>
+                <p class="text-[11.5px] text-red-500 mt-2">Saving is not blocked — but you must confirm this is a different person. Records are never silently merged.</p>
+                <div class="flex gap-2 mt-3">
+                    <button type="button" wire:click="$set('editDedupWarning', '')" class="btn btn-outline !py-1.5 !text-[11.5px]">Go back and edit</button>
+                    <button type="button" wire:click="editConfirmedSave" class="btn btn-danger-soft !py-1.5 !text-[11.5px]">This is a different person — save anyway</button>
+                </div>
+            </div>
+        @endif
+
+        </div>
+        <footer class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6"><div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"><p class="text-[10.5px] font-medium text-gray-400"><span class="text-red-500">*</span> Required fields</p><div class="flex justify-end gap-2"><button type="button" class="btn btn-ghost" wire:click="$set('showBeneficiaryEdit', false)">Cancel</button><button type="submit" class="btn btn-primary min-w-[142px]" wire:loading.attr="disabled" wire:target="saveBeneficiaryEdit"><span wire:loading.remove wire:target="saveBeneficiaryEdit">Save changes</span><span wire:loading wire:target="saveBeneficiaryEdit" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Saving.</span></button></div></div></footer>
+    </form>
+</div>
+
 {{-- Beneficiary XLSX import (upload → preview → confirm) --}}
 <div x-data="{ open: false }" x-init="$wire.$watch('showImport', v => open = v)" @keydown.escape.window="$wire.set('showImport', false)"
      x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="import-beneficiary-title">
