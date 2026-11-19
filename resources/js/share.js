@@ -19,11 +19,13 @@ window.scDrawQr = function (canvas, text) {
         errorCorrectionLevel: 'M',
         color: { dark: '#0a2a66', light: '#ffffff' },
     }).then(() => {
-        // Drawn at 2x for print sharpness, shown at 200px. Set it here rather
+        // Drawn at 2x for print sharpness, then shown at the requested size —
+        // 200px on the share screen, 280px on the A4 sheet. Set it here rather
         // than in CSS: the library owns the canvas attributes, and an explicit
         // inline size cannot be lost to attribute precedence.
-        canvas.style.width = '200px';
-        canvas.style.height = '200px';
+        const size = Number(canvas.dataset.qrSize) || 200;
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
     }).catch(() => {
         // A failed draw leaves a blank square; the URL beside it is the fallback.
     });

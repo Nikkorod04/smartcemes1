@@ -178,6 +178,9 @@
                                 <a href="{{ $selectedUrl }}" target="_blank" rel="noopener" class="btn btn-primary !py-2 !px-3 text-[12px]">
                                     <x-sc.icon name="eye" class="h-4 w-4" /> Open form
                                 </a>
+                                <a href="{{ route('assessments.share.sheet', $selected) }}" target="_blank" rel="noopener" class="btn btn-outline !py-2 !px-3 text-[12px]">
+                                    <x-sc.icon name="doc" class="h-4 w-4" /> Print sheet
+                                </a>
                                 @if ($selected->isActive())
                                     <button type="button" wire:click="openExtend({{ $selected->id }})" class="btn btn-outline !py-2 !px-3 text-[12px]">
                                         <x-sc.icon name="clock" class="h-4 w-4" /> Extend
@@ -190,6 +193,12 @@
                                         <x-sc.icon name="clock" class="h-4 w-4" /> Reopen
                                     </button>
                                 @endif
+                            </div>
+
+                            {{-- Live arrivals for this link. A child component, so the
+                                 15s poll cannot redraw the QR above. --}}
+                            <div class="mt-3">
+                                <livewire:assessments.share-link-arrivals :link-id="$selected->id" wire:key="arrivals-{{ $selected->id }}" />
                             </div>
                         </div>
                     </div>

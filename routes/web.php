@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityAttendanceTemplateController;
 use App\Http\Controllers\ActivityEvaluationTemplateController;
+use App\Http\Controllers\AssessmentShareSheetController;
 use App\Http\Controllers\AssessmentTemplateController;
 use App\Http\Controllers\BeneficiaryExportController;
 use App\Http\Controllers\BeneficiaryTemplateController;
@@ -239,6 +240,10 @@ Route::get('/assessments/review', Review::class)
 // Share links/QR for the public form — Secretary + Faculty (after-defense D6).
 Route::get('/assessments/share', ShareLinks::class)
     ->middleware(['auth', 'role:faculty,secretary'])->name('assessments.share');
+
+// Printable A4 sheet for one link (Step 4b). Same roles as the share screen.
+Route::get('/assessments/share/{link}/sheet', AssessmentShareSheetController::class)
+    ->middleware(['auth', 'role:faculty,secretary'])->name('assessments.share.sheet');
 
 Route::get('/assessments/template', AssessmentTemplateController::class)
     ->middleware(['auth'])->name('assessments.template');

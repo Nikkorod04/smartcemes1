@@ -142,6 +142,13 @@
             <p class="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-gray-400">
                 You can close this page now. Your answers are no longer stored on this phone.
             </p>
+
+            <button type="button" class="btn btn-outline mt-5" x-on:click="startOver()">
+                Answer for another household
+            </button>
+            <p class="mt-2 text-[10.5px] leading-relaxed text-gray-400">
+                Opens a blank form for the same barangay on this phone.
+            </p>
         </div>
 
         {{-- The link was closed or expired while the form was being filled. --}}

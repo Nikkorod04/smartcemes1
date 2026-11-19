@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Assessments\ShareLinkArrivals;
 use App\Livewire\Assessments\ShareLinks;
 use App\Models\AssessmentLink;
 use App\Models\Community;
@@ -14,7 +15,7 @@ use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 /**
- * The staff-facing share screen (after-defense revision, Item 1, Step 4a).
+ * The staff-facing share screen (after-defense revision, Item 1, Steps 4a/4b).
  *
  * The link is the credential: if it is minted, extended or revoked wrongly,
  * either strangers can submit or the field team's printed sheet stops working
@@ -352,5 +353,131 @@ class AssessmentLinkTest extends TestCase
         // The audit trail is readable by more people than the field team; the
         // token is the credential and must not be written into it.
         $this->assertStringNotContainsString($link->token, json_encode($created->properties));
+    }
+
+    // -----------------------------------------------------------------------
+    // Step 4b — live arrivals, printable sheet, entry points
+    // -----------------------------------------------------------------------
+
+    protected function answer(AssessmentLink $link, $capturedAt = null): NeedsAssessment
+    {
+        return NeedsAssessment::create([
+            'assessment_link_id' => $link->id,
+            'community_id' => $link->community_id,
+            'quarter' => $link->quarter,
+            'year' => $link->year,
+            'source' => NeedsAssessment::SOURCE_PUBLIC,
+            'captured_at' => $capturedAt ?? now(),
+            'respondent_first_name' => 'Maria',
+            'respondent_last_name' => 'Santos',
+        ]);
+    }
+
+    public function test_the_arrivals_strip_counts_only_this_links_answers(): void
+    {
+        $link = AssessmentLink::factory()->create();
+        $other = AssessmentLink::factory()->create();
+
+        $this->answer($link, now()->subHours(2));
+        $this->answer($link, now()->subHours(2));
+        $this->answer($other);
+
+        Livewire::actingAs($this->faculty())
+            ->test(ShareLinkArrivals::class, ['linkId' => $link->id])
+            ->assertSeeHtml('tabular-nums">2</span>')
+            ->assertSee('answers received')
+            ->assertSee('last 2 hours ago')
+            ->assertDontSee('Review in queue');
+    }
+
+    public function test_only_the_secretary_gets_the_review_link_in_the_arrivals_strip(): void
+    {
+        $link = AssessmentLink::factory()->create();
+        $this->answer($link);
+
+        Livewire::actingAs($this->secretary())
+            ->test(ShareLinkArrivals::class, ['linkId' => $link->id])
+            ->assertSee('Review in queue')
+            ->assertSee(route('assessments.review', ['source' => 'public']), false);
+
+        Livewire::actingAs($this->faculty())
+            ->test(ShareLinkArrivals::class, ['linkId' => $link->id])
+            ->assertDontSee('Review in queue');
+    }
+
+    public function test_arrivals_are_not_readable_by_other_roles(): void
+    {
+        $link = AssessmentLink::factory()->create();
+
+        Livewire::actingAs(User::factory()->create(['role' => User::ROLE_ADMIN]))
+            ->test(ShareLinkArrivals::class, ['linkId' => $link->id])
+            ->assertForbidden();
+    }
+
+    public function test_the_printable_sheet_carries_the_qr_url_and_community(): void
+    {
+        $link = AssessmentLink::factory()->create();
+        $link->community->update(['name' => 'Brgy. Printed']);
+
+        $this->actingAs($this->faculty())
+            ->get(route('assessments.share.sheet', $link))
+            ->assertOk()
+            ->assertSee('Brgy. Printed')
+            ->assertSee(route('assessment.public', ['token' => $link->token]), false)
+            ->assertSee('data-qr', false)
+            ->assertSee('Print this sheet')
+            ->assertSee($link->expires_at->format('F j, Y'))
+            ->assertDontSee('wire:', false);
+    }
+
+    public function test_only_faculty_and_secretary_can_open_a_printable_sheet(): void
+    {
+        $link = AssessmentLink::factory()->create();
+
+        $this->actingAs($this->secretary())
+            ->get(route('assessments.share.sheet', $link))
+            ->assertOk();
+
+        $this->actingAs(User::factory()->create(['role' => User::ROLE_ADMIN]))
+            ->get(route('assessments.share.sheet', $link))
+            ->assertForbidden();
+    }
+
+    public function test_guests_are_sent_to_the_login_page_for_a_printable_sheet(): void
+    {
+        $link = AssessmentLink::factory()->create();
+
+        $this->get(route('assessments.share.sheet', $link))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_a_revoked_links_sheet_says_the_qr_no_longer_works(): void
+    {
+        $link = AssessmentLink::factory()->revoked()->create();
+
+        $this->actingAs($this->faculty())
+            ->get(route('assessments.share.sheet', $link))
+            ->assertOk()
+            ->assertSee('This link was revoked');
+    }
+
+    public function test_an_unknown_sheet_token_is_not_found(): void
+    {
+        $this->actingAs($this->faculty())
+            ->get('/assessments/share/does-not-exist/sheet')
+            ->assertNotFound();
+    }
+
+    public function test_the_wizard_and_review_pages_link_to_the_share_screen(): void
+    {
+        $this->actingAs($this->faculty())
+            ->get(route('assessments.create'))
+            ->assertOk()
+            ->assertSee(route('assessments.share'), false);
+
+        $this->actingAs($this->secretary())
+            ->get(route('assessments.review'))
+            ->assertOk()
+            ->assertSee(route('assessments.share'), false);
     }
 }

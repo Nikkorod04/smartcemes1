@@ -160,6 +160,7 @@ window.assessmentForm = function (config) {
             this.submitted = false;
             this.savedAt = null;
             this.submitError = '';
+            this.reference = null;
             this.clientUuid = this.uuid();
         },
 

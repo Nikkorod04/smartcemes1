@@ -27,6 +27,7 @@
     <div class="reveal-item flex flex-wrap items-center gap-3">
         <a href="{{ route('assessments.template') }}" class="btn btn-outline !py-2 !px-3 text-[12px]"><x-sc.icon name="download" class="w-4 h-4" /> Download official template</a>
         <a href="{{ route('assessments.import') }}" class="btn btn-outline !py-2 !px-3 text-[12px]"><x-sc.icon name="doc" class="w-4 h-4" /> Import from template</a>
+        <a href="{{ route('assessments.share') }}" class="btn btn-outline !py-2 !px-3 text-[12px]"><x-sc.icon name="qr" class="w-4 h-4" /> Share the form</a>
     </div>
 </section>
 

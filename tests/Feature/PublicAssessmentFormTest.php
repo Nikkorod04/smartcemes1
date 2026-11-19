@@ -183,6 +183,18 @@ class PublicAssessmentFormTest extends TestCase
         $response->assertSee('x-on:submit.prevent="submit()"', false);
     }
 
+    public function test_the_success_card_offers_another_household(): void
+    {
+        $link = AssessmentLink::factory()->create();
+
+        $response = $this->get(route('assessment.public', ['token' => $link->token]));
+
+        // One phone is often shared by a household (or passed around a purok).
+        // The button must exist and reuse the reset that rotates the draft id.
+        $response->assertSee('Answer for another household');
+        $response->assertSee('x-on:click="startOver()"', false);
+    }
+
     public function test_the_form_renders_the_tricky_fields(): void
     {
         $link = AssessmentLink::factory()->create();

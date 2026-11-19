@@ -64,6 +64,9 @@
                 <option value="staff">Staff entry</option>
                 <option value="import">XLSX import</option>
             </select>
+            <a href="{{ route('assessments.share') }}" class="btn btn-outline !py-2 !px-3 text-[12px]">
+                <x-sc.icon name="qr" class="h-4 w-4" /> Share form
+            </a>
             <span class="ml-auto text-[11.5px] text-gray-400 font-medium whitespace-nowrap">{{ $queue->total() }} submission{{ $queue->total() === 1 ? '' : 's' }}</span>
         </div>
         <div class="overflow-x-auto">

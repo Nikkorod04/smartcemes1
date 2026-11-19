@@ -5421,6 +5421,86 @@ newer. A lockfile change therefore reinstalls; an ordinary code deploy still ski
 
 ---
 
+## 40. LIVE ARRIVALS, THE PRINT SHEET, AND THE SECOND HOUSEHOLD (2026-11-19)
+
+Item 1, Step 4b. The link could be generated and managed; the field team still could not tell whether
+anyone was answering, could not print a sheet without a screenshot, and a shared phone could not be handed
+to the next household without a reload.
+
+### 40.1 The arrivals strip is a child component
+
+`App\Livewire\Assessments\ShareLinkArrivals` renders one line under the selected link:
+
+> ● **2** answers received · last 3 minutes ago — *Review in queue →* (secretary only)
+
+The count comes from `assessment_link_id`, so it is exact per sheet — that is why the column landed in 4a
+rather than 4b. "Last answer" is `max(coalesce(captured_at, created_at))` in the same query.
+
+It is deliberately a **child** component with `wire:poll.15s.visible`. Putting `wire:poll` on the share page
+would re-render the whole page every cycle, including the QR canvas somebody may be pointing a phone at.
+Verified in the browser: the canvas was tagged, the strip went 0 → 1 after an insert, and the tag survived
+the poll — the code is not redrawn. `.visible` pauses the timer when the strip is scrolled out of view,
+and Livewire already throttles background tabs.
+
+Faculty see only the count and time. Respondent names stay in the review queue, behind the secretary's
+role; the share screen is held up in front of a barangay. The secretary's link goes to
+`assessments.review?source=public`.
+
+The component re-checks the role in `mount()` and every render, because Livewire update requests do not pass
+the page's route middleware, and `#[Locked]` stops the browser from changing which link is counted.
+
+### 40.2 The A4 sheet
+
+`GET /assessments/share/{link}/sheet` (`assessments.share.sheet`), same roles as the screen, bound by token.
+A small controller loads the community and hands the view the public URL.
+
+The sheet is a standalone print view, not a Livewire page: A4 (`@page { size: A4; margin: 12mm }`), a
+`no-print` toolbar with **Print this sheet**, the CESO header, barangay and period, a 280 px QR (drawn at
+440 px and scaled down), the URL as a fallback, "How to answer" steps, a "Good to know" column with the
+closing date, and a footer naming the creator.
+
+`scDrawQr` now reads `data-qr-size`, so the same helper serves the 200 px screen card and the 280 px sheet.
+The QR stays client-side: a print service would receive the token.
+
+A revoked or expired link still opens its sheet, with a red/amber banner saying the QR no longer works —
+printing a dead code silently would be worse than refusing.
+
+### 40.3 A second household on the same phone
+
+The success card gains **Answer for another household**, calling the existing `startOver()`. That method
+already rotated `client_uuid` (so the next submission is a new row, not an idempotent replay), cleared the
+draft and reset the form; it now also clears `reference`.
+
+Verified through the form: after sending, the button returned the form to step 1, blanked both names,
+unchecked consent, cleared the draft keys, rotated the UUID and hid the success card.
+
+### 40.4 Entry points
+
+- **Encode Assessment** toolbar: *Share the form*.
+- **Assessment Review** toolbar: *Share form* (secretary only, like the page).
+
+Both are plain links; no new state.
+
+### 40.5 Tests and manual verification
+
+Ten new tests in `AssessmentLinkTest` cover the arrivals count (and that it ignores another link's rows),
+the last-answer time, the secretary-only review link, the role guard on the child, the sheet's content and
+`data-qr` URL, sheet access (secretary yes, admin 403, guest redirected), the revoked banner, an unknown
+token (`404`), and both entry points. `PublicAssessmentFormTest` asserts the second-household control.
+
+Manual on localhost: the strip went **0 → 1 → 2** as rows arrived, with the QR canvas untouched across
+polls; the sheet rendered at A4 width (793.7 px) with a 280 px QR, the right barangay/period/date and no
+Livewire; the success card's button reset the form and rotated the draft id. Test rows 26 and 27 were
+deleted and summaries recomputed afterwards.
+
+Full suite after 4b: **705 passed, 4,119 assertions**.
+
+One harness note worth keeping: Alpine's effects are flushed on animation frames, so a **backgrounded tab**
+can show stale `x-show` state while its data has already changed. The public form looked stuck on step 1
+until the tab was focused. Always focus the tab before judging DOM state.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 
