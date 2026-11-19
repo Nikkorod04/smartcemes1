@@ -5662,20 +5662,28 @@ Vertex/OpenAI wrapper, multi-format assessment uploads, and a duplicated Chapter
 - **Recommendations:** no longer claim that fuzzy matching and saved mapping profiles already exist;
   they are listed as future work.
 
-### 43.2 What remains manual
+### 43.2 The Table of Contents and the lists
 
-The Table of Contents is a manual field with cached text. Updating it in Word wipes it, because the
-chapter headings are direct-formatted rather than Heading styles. Adding the new section shifted the
-later pages, so the TOC and the lists of figures/tables need a final manual page-number pass; a
-"Results and Discussion" entry should be added (it starts around page 100). Figure and table numbering
-was left untouched.
+The Table of Contents and the List of Figures were Word TOC fields. Because the chapter headings are
+direct-formatted rather than Heading styles, updating them produces an empty list — Word reports "No
+table of contents entries found." The fields were therefore **unlinked** (converted to plain text) so the
+cached entries stay stable, and the page numbers were updated from the body:
+
+- chapter-level entries, the section entries that could be matched to a body heading, and every
+  figure/table caption;
+- a **Results and Discussion** entry added at page 99.
+
+A few sub-entries whose headings are not standalone paragraphs (GANTT, PERT, Development, Deployment,
+Peopleware, Context Diagram) were left at their original numbers. Figure and table numbering was left
+untouched.
 
 ### 43.3 Verification
 
 - Original preserved as `docs/capstone_paper.backup-2026-11-19.docx`.
-- Word opened the final file: **18,178 words, 128 pages**; the TOC text is intact; the new section's
-  headings are bold, body paragraphs justified with a first-line indent, and the five part labels are
-  bold. The two final fixes (project creation, Gemini parenthetical) are present.
+- Word opened the final file: **18,183 words, 129 pages**; the TOC and both lists are intact, no "No table
+  of contents entries found", one `CHAPTER IV`, and no Vue.js, Vertex AI, or OpenAI strings. The new
+  section's headings are bold, body paragraphs justified with a first-line indent, and the five part
+  labels are bold. The two final fixes (project creation, Gemini parenthetical) are present.
 - No code tests were affected. The `.docx` files stay untracked.
 
 ---
