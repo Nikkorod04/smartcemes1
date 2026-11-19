@@ -92,6 +92,9 @@ class Hub extends Component
 
     public string $facultyConflict = '';
 
+    /** Past-dated activities are allowed only after this acknowledgement. */
+    public bool $activityPastConfirmed = false;
+
     /* ---------------- activity records: attendance + evaluation XLSX (v4.13) ---------------- */
     public ?int $recordsActivityId = null;
 
@@ -735,6 +738,7 @@ class Hub extends Component
     {
         $this->abortUnlessManage();
         $this->facultyConflict = '';
+        $this->activityPastConfirmed = false;
 
         if ($id) {
             $activity = $this->program->activities()->findOrFail($id);
@@ -791,7 +795,7 @@ class Hub extends Component
         $startMin = $this->program->planned_start_date->format('Y-m-d');
         $endMax = $this->program->planned_end_date->format('Y-m-d');
 
-        $this->validate([
+        $rules = [
             'activityForm.title' => 'required|string|max:255',
             'activityForm.venue' => 'required|string|max:255',
             'activityForm.planned_start_date' => "required|date|after_or_equal:$startMin|before_or_equal:$endMax",
@@ -807,13 +811,25 @@ class Hub extends Component
             'activityForm.allocated_budget' => 'required|numeric|min:0',
             'activityForm.status' => 'required|in:draft,ongoing,completed,cancelled',
             'activityForm.faculty_ids' => 'array',
-        ], [
+        ];
+
+        $messages = [
             'activityForm.planned_start_date.after_or_equal' => "Activity dates must fall within the program range ($startMin – $endMax).",
             'activityForm.planned_start_date.before_or_equal' => "Activity dates must fall within the program range ($startMin – $endMax).",
             'activityForm.planned_end_date.before_or_equal' => "Activity dates must fall within the program range ($startMin – $endMax).",
             'activityForm.no_of_days.multiple_of' => 'Days must be in 0.5 increments — 0.5 for a half day, 1 for a full day.',
             'activityForm.no_of_days.min' => 'Days must be at least 0.5 (a half day).',
-        ]);
+        ];
+
+        // Past dates stay allowed for recording, but they must be deliberate:
+        // the form shows a confirmation checkbox and this rule enforces it.
+        if ($this->activityForm['planned_start_date'] !== ''
+            && $this->activityForm['planned_start_date'] < today()->toDateString()) {
+            $rules['activityPastConfirmed'] = 'accepted';
+            $messages['activityPastConfirmed.accepted'] = 'Tick the confirmation to record an activity that already happened.';
+        }
+
+        $this->validate($rules, $messages);
 
         // 8.8 hard constraint: faculty assignment refused on schedule overlap.
         $conflicts = [];
@@ -1822,6 +1838,16 @@ class Hub extends Component
             'editForm.beneficiary_categories.*' => 'string',
             'editForm.status' => 'required|in:draft,ongoing,completed,cancelled',
         ]);
+
+        // Protect an existing past start: an ongoing project may keep the date
+        // it already has, but a start cannot be moved into the past.
+        $newStart = (string) $this->editForm['planned_start_date'];
+        if ($newStart !== $this->program->planned_start_date->format('Y-m-d')
+            && $newStart < today()->toDateString()) {
+            $this->addError('editForm.planned_start_date', 'The start date cannot be moved into the past.');
+
+            return;
+        }
 
         // 8.8 backstop: existing activities must still fall within the new range.
         $outside = $this->program->activities()

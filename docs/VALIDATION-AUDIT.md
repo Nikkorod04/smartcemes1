@@ -90,10 +90,27 @@ deliberately so the public form remains completable on a shared or borrowed phon
 
 Both figures stay optional, intentionally: the UI and reports distinguish "no target" from a target of 0.
 
+## Date policy
+
+The panel saw a project created with a planned start a day before today. The rule is now context-aware:
+
+| Form | Rule |
+|---|---|
+| Project creation | `planned_start_date >= today` (`after_or_equal:today`), with a `min` on the date input and a “Cannot be earlier than today” hint. |
+| Project edit | An existing past start can be kept; a start cannot be **moved** into the past. The edit modal says so. |
+| Proposal | `proposed_start_date >= today`; a proposal is for a future activity. |
+| Activity | Past dates are allowed for recording, but the form shows a confirmation checkbox (“This planned date is in the past…”) and the server requires it (`accepted`). |
+| Availability / attendance / evaluation / rendered hours | Unchanged; these are historical records. |
+
+Dates are compared in the application timezone (Asia/Manila). Seeded and existing rows are untouched —
+the rules apply to new saves.
+
 ## Tests and fixtures
 
-- `tests/Feature/ValidationAuditTest.php` — pins the required sets, the lenient project-edit path, and the
-  still-optional activity counts.
+- `tests/Feature/ValidationAuditTest.php` — pins the required sets, the lenient project-edit path, the
+  still-optional activity counts, the past-date rules, and the activity past-date confirmation.
+- Date-rule fixtures freeze the clock at 2026-01-01 where the 2026 dates are the subject; the past-activity
+  test freezes at 2026-11-19 and uses the day before.
 - Updated for the new rules: `ProgramHubTest` (project creation), `DefenceWalkthroughTest` (project
   community + activity venue/budget), `TrainingHoursTest` (activity venue/budget), `BeneficiaryManagementTest`
   and `BeneficiaryImportTest` (register age/municipality).

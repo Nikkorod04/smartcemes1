@@ -32,8 +32,9 @@
                 @error('form.community_id') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="label">Proposed start *</label>
-                <input required type="date" class="input" wire:model="form.proposed_start_date">
+                <label class="label">Proposed start <span class="text-red-500">*</span></label>
+                <input required type="date" min="{{ now()->toDateString() }}" class="input" wire:model="form.proposed_start_date">
+                <p class="field-hint">Cannot be earlier than today.</p>
                 @error('form.proposed_start_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
             <div>

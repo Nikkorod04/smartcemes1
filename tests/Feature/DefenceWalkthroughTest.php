@@ -61,6 +61,7 @@ class DefenceWalkthroughTest extends TestCase
      */
     public function test_the_walkthrough_pipeline_produces_the_documented_figures(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $admin = $this->admin();
         $college = College::where('code', 'CME')->firstOrFail();
         $program = Program::where('title', 'like', 'Livelihood%')->firstOrFail();
@@ -324,6 +325,7 @@ class DefenceWalkthroughTest extends TestCase
      */
     public function test_the_schedule_guard_refuses_a_clashing_assignment_with_a_message(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $admin = $this->admin();
 
         /* The LINIS safe-zone project (CAS) books Nikko Villas on 2026-08-22.

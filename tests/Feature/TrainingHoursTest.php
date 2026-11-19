@@ -589,6 +589,7 @@ class TrainingHoursTest extends TestCase
 
     public function test_the_activity_form_accepts_days_and_participants(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $admin = User::factory()->create(['role' => 'admin']);
         $program = $this->program();
 
@@ -648,6 +649,7 @@ class TrainingHoursTest extends TestCase
 
     public function test_clearing_participants_writes_null_not_zero(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $admin = User::factory()->create(['role' => 'admin']);
         $program = $this->program();
 

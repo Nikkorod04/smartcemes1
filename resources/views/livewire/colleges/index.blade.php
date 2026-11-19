@@ -789,8 +789,8 @@
                             <div class="grid gap-3 sm:grid-cols-2">
                                 <div>
                                     <label class="label" for="project-start">Planned start <span class="text-red-500">*</span></label>
-                                    <input id="project-start" required type="date" class="input" wire:model.live="projectForm.planned_start_date" aria-invalid="{{ $errors->has('projectForm.planned_start_date') ? 'true' : 'false' }}">
-                                    <p class="field-hint">Choose the first day of project delivery.</p>
+                                    <input id="project-start" required type="date" min="{{ now()->toDateString() }}" class="input" wire:model.live="projectForm.planned_start_date" aria-invalid="{{ $errors->has('projectForm.planned_start_date') ? 'true' : 'false' }}">
+                                    <p class="field-hint">Cannot be earlier than today.</p>
                                     @error('projectForm.planned_start_date') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
                                 </div>
                                 <div>

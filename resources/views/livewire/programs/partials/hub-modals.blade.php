@@ -70,7 +70,7 @@
                         <div class="grid gap-3 sm:grid-cols-2">
                             <div>
                                 <label class="label" for="activity-start-date">Planned start <span class="text-red-500">*</span></label>
-                                <input id="activity-start-date" type="date" class="input" wire:model="activityForm.planned_start_date" min="{{ $program->planned_start_date->format('Y-m-d') }}" max="{{ $program->planned_end_date->format('Y-m-d') }}">
+                                <input id="activity-start-date" type="date" class="input" wire:model.live="activityForm.planned_start_date" min="{{ $program->planned_start_date->format('Y-m-d') }}" max="{{ $program->planned_end_date->format('Y-m-d') }}">
                                 @error('activityForm.planned_start_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
@@ -79,6 +79,16 @@
                                 @error('activityForm.planned_end_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
+
+                        @if ($activityForm['planned_start_date'] !== '' && $activityForm['planned_start_date'] < now()->toDateString())
+                            <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3">
+                                <label class="flex items-start gap-2 text-[11.5px] font-medium leading-relaxed text-amber-900">
+                                    <input type="checkbox" wire:model="activityPastConfirmed" class="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-300 text-amber-600">
+                                    <span>This planned date is in the past. Tick to confirm you are recording an activity that already happened.</span>
+                                </label>
+                                @error('activityPastConfirmed') <p class="mt-1 text-[11px] font-semibold text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
                         <div class="grid gap-3 sm:grid-cols-2">
                             <div>
                                 <label class="label" for="activity-start-time">Start time</label>
@@ -487,6 +497,7 @@
                         <div>
                             <label class="label" for="edit-project-start">Planned start <span class="text-red-500">*</span></label>
                             <input id="edit-project-start" required type="date" class="input" wire:model="editForm.planned_start_date">
+                            <p class="field-hint">An existing past start can be kept; a new start cannot be moved into the past.</p>
                             @error('editForm.planned_start_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>

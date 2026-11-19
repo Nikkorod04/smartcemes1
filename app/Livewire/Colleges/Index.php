@@ -378,7 +378,7 @@ class Index extends Component
             'projectForm.program_id' => 'required|exists:programs,id',
             'projectForm.title' => 'required|string|max:255',
             'projectForm.description' => 'required|string|min:20|max:4000',
-            'projectForm.planned_start_date' => 'required|date',
+            'projectForm.planned_start_date' => 'required|date|after_or_equal:today',
             'projectForm.planned_end_date' => 'required|date|after_or_equal:projectForm.planned_start_date',
             'projectForm.target_beneficiaries' => 'required|integer|min:1',
             'projectForm.allocated_budget' => 'required|numeric|min:0',

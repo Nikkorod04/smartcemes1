@@ -52,6 +52,7 @@ class ValidationAuditTest extends TestCase
 
     public function test_project_creation_requires_the_d9_set(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $admin = $this->admin();
         $college = College::where('code', 'CAS')->firstOrFail();
         $program = Program::where('title', 'Information, Communication & Education')->firstOrFail();
@@ -79,6 +80,7 @@ class ValidationAuditTest extends TestCase
 
     public function test_project_creation_accepts_the_d9_set(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $admin = $this->admin();
         $college = College::where('code', 'CAS')->firstOrFail();
         $program = Program::where('title', 'Information, Communication & Education')->firstOrFail();
@@ -113,8 +115,119 @@ class ValidationAuditTest extends TestCase
         $this->assertSame([$community->id], $project->communities()->pluck('communities.id')->all());
     }
 
+    public function test_project_creation_rejects_a_start_before_today(): void
+    {
+        $this->travelTo('2026-01-01 00:00:00');
+        $admin = $this->admin();
+        $college = College::where('code', 'CAS')->firstOrFail();
+        $program = Program::where('title', 'Information, Communication & Education')->firstOrFail();
+        $lead = Faculty::factory()->create();
+        $community = Community::create([
+            'name' => 'Brgy. Past Start', 'municipality' => 'Tacloban City',
+            'province' => 'Leyte', 'status' => 'active',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(CollegesIndex::class)
+            ->call('openProjectCreate')
+            ->set('projectForm.college_id', (string) $college->id)
+            ->set('projectForm.program_id', (string) $program->id)
+            ->set('projectForm.title', 'Backdated project')
+            ->set('projectForm.description', 'A description that is long enough to pass validation.')
+            ->set('projectForm.planned_start_date', '2025-12-31')
+            ->set('projectForm.planned_end_date', '2026-12-31')
+            ->set('projectForm.target_beneficiaries', '25')
+            ->set('projectForm.allocated_budget', '10000')
+            ->set('projectForm.program_lead_id', (string) $lead->id)
+            ->set('projectForm.status', 'ongoing')
+            ->call('toggleProjectFormArray', 'community_ids', $community->id)
+            ->call('saveProject')
+            ->assertHasErrors('projectForm.planned_start_date');
+
+        $this->assertNull(ExtensionProject::where('title', 'Backdated project')->first());
+    }
+
+    public function test_project_edit_cannot_move_a_start_into_the_past(): void
+    {
+        $admin = $this->admin();
+        $project = $this->project(); // starts 2026-01-01, already in the past
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $project])
+            ->call('openProgramEdit')
+            ->set('editForm.planned_start_date', '2025-12-31')
+            ->call('saveProgramEdit')
+            ->assertHasErrors('editForm.planned_start_date');
+
+        $this->assertSame('2026-01-01', $project->fresh()->planned_start_date->format('Y-m-d'));
+    }
+
+    public function test_proposal_rejects_a_start_before_today(): void
+    {
+        $this->travelTo('2026-01-01 00:00:00');
+        $user = User::factory()->create(['role' => User::ROLE_FACULTY]);
+        Faculty::factory()->create(['user_id' => $user->id]);
+        $project = $this->project();
+        $community = Community::create([
+            'name' => 'Brgy. Past Proposal', 'municipality' => 'Tacloban City',
+            'province' => 'Leyte', 'status' => 'active',
+        ]);
+
+        $component = Livewire::actingAs($user)
+            ->test(ProposalCreate::class)
+            ->set('form.title', 'Backdated proposal')
+            ->set('form.description', 'A proposal description long enough to pass the audit.')
+            ->set('form.extension_project_id', $project->id)
+            ->set('form.community_id', $community->id)
+            ->set('form.proposed_start_date', '2025-12-31')
+            ->set('form.proposed_end_date', '2026-01-01')
+            ->set('form.budget_estimate', '5000')
+            ->call('save')
+            ->assertHasErrors('form.proposed_start_date');
+
+        $component
+            ->set('form.proposed_start_date', '2026-03-01')
+            ->set('form.proposed_end_date', '2026-03-02')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('activity_proposals', ['title' => 'Backdated proposal']);
+    }
+
+    public function test_activity_past_date_requires_confirmation(): void
+    {
+        $this->travelTo('2026-11-19 12:00:00');
+        $admin = $this->admin();
+        $project = $this->project();
+
+        $component = Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $project])
+            ->call('openActivityForm')
+            ->set('activityForm.title', 'Recorded activity')
+            ->set('activityForm.venue', 'Barangay Hall')
+            ->set('activityForm.planned_start_date', '2026-11-18')
+            ->set('activityForm.planned_end_date', '2026-11-18')
+            ->set('activityForm.start_time', '08:00')
+            ->set('activityForm.end_time', '12:00')
+            ->set('activityForm.no_of_days', '1')
+            ->set('activityForm.allocated_budget', '1000')
+            ->set('activityForm.status', 'completed')
+            ->call('saveActivity')
+            ->assertHasErrors('activityPastConfirmed');
+
+        $this->assertDatabaseMissing('activities', ['title' => 'Recorded activity']);
+
+        $component
+            ->set('activityPastConfirmed', true)
+            ->call('saveActivity')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('activities', ['title' => 'Recorded activity']);
+    }
+
     public function test_activity_requires_venue_and_budget_but_allows_blank_counts(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $admin = $this->admin();
         $project = $this->project();
 
@@ -149,6 +262,7 @@ class ValidationAuditTest extends TestCase
 
     public function test_proposal_requires_description_and_budget(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $user = User::factory()->create(['role' => User::ROLE_FACULTY]);
         Faculty::factory()->create(['user_id' => $user->id]);
         $project = $this->project();

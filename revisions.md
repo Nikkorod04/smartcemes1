@@ -5781,6 +5781,31 @@ Full suite after the handoff: **736 passed, 4,258 assertions**.
 
 ---
 
+## 47. DATES THAT CANNOT BE IN THE PAST (2026-11-19)
+
+The panel saw a project created with a planned start a day before today. The fix is context-aware, because
+the system also records history: attendance, evaluations and rendered hours are entered after the fact.
+
+- **Project creation:** `planned_start_date` is now `after_or_equal:today`, with a `min` on the input and a
+  “Cannot be earlier than today” hint.
+- **Proposal:** `proposed_start_date` is also `after_or_equal:today`; a proposal is for a future activity.
+- **Project edit:** an existing past start may be kept (ongoing projects must remain editable), but a start
+  cannot be **moved** into the past. The edit modal explains the distinction.
+- **Activity:** past dates remain allowed for recording, but the form shows a confirmation checkbox (“This
+  planned date is in the past…”) and the server requires it (`accepted`). Without it the save is refused.
+- **Availability, attendance, evaluation, rendered hours:** unchanged.
+
+The rules use the app timezone (Asia/Manila) and apply to new saves; seeded and existing rows are untouched.
+No migration was needed.
+
+`ValidationAuditTest` covers: past project start rejected, past proposal start rejected, moving a project start
+into the past rejected, and a past activity requiring the confirmation before it can be saved. The form
+fixtures freeze the clock at 2026-01-01 where their 2026 dates would otherwise be in the past.
+
+Full suite after the date rules: **740 passed, 4,277 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

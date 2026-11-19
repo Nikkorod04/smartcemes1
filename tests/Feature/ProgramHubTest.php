@@ -340,6 +340,7 @@ class ProgramHubTest extends TestCase
 
     public function test_admin_creates_project_via_form_with_auto_code(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $this->seed(UserSeeder::class);
         $this->seed(CollegeSeeder::class);
         $this->seed(ProgramSeeder::class);
@@ -393,6 +394,7 @@ class ProgramHubTest extends TestCase
 
     public function test_project_form_preserves_multiple_communities_and_beneficiary_categories(): void
     {
+        $this->travelTo('2026-01-01 00:00:00');
         $this->seed(UserSeeder::class);
         $this->seed(CollegeSeeder::class);
         $this->seed(ProgramSeeder::class);
