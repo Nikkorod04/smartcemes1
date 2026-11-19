@@ -32,7 +32,7 @@ Status legend: **LOCKED** = agreed, safe to build against. **PROPOSED** = recomm
 | D7 | AI/summary input | Summaries aggregate **validated** assessments only (implemented 2026-11-19; live totals 663 → 151). | LOCKED |
 | D8 | Beneficiary edit scope | Secretary only; Admin keeps create/enroll/import. | LOCKED (implemented 2026-11-19) |
 | D9 | Project-creation required set | ≥1 community, target beneficiaries, allocated budget, project lead, description (min ~20 chars). | PROPOSED |
-| D10 | Manuscript scope | Restructure Results & Discussion per Specific Objective **and** correct the factual contradictions (stack, hierarchy, import scope, test counts). | PROPOSED |
+| D10 | Manuscript scope | Restructure Results & Discussion per Specific Objective **and** correct the factual contradictions (stack, hierarchy, import scope, test counts). | LOCKED (implemented 2026-11-19) |
 
 ### Why D3 matters
 
@@ -224,7 +224,7 @@ If green, offline is additive: service worker for the public shell, pending coun
 
 ---
 
-## 7. Item 6 — Manuscript: Results & Discussion per objective
+## 7. Item 6 - Manuscript: Results & Discussion per objective (implemented 2026-11-19 — `revisions.md` §43)
 
 **Goal:** the chapter answers each Specific Objective explicitly (Section 1.3 lists six).
 

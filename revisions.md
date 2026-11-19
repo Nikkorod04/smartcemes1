@@ -5630,6 +5630,56 @@ Full suite after Item 3: **727 passed, 4,201 assertions**.
 
 ---
 
+## 43. MANUSCRIPT: RESULTS BY OBJECTIVE, AND THE FACTUAL CORRECTIONS (2026-11-19)
+
+Item 6 / D10. The system was ahead of the paper: the manuscript still described Vue.js, a
+Vertex/OpenAI wrapper, multi-format assessment uploads, and a duplicated Chapter IV.
+
+### 43.1 What changed in the document
+
+- **Deleted the duplicate Chapter IV** that sat after the References. It was an older draft
+  (~6,800 words) without the current testing section. The paper went from 23,370 to about 18,200
+  words; this is the removal of a copy, not of the current chapter.
+- **Added a Results and Discussion section** before Ethical Consideration, with one subsection per
+  Specific Objective and the same five parts: Requirement, Implementation, Evidence, Discussion,
+  Limitation. It cites the deployed system, the 28 black-box cases, the automated suite, and the
+  features added in this revision.
+- **Stack:** Vue.js → **Livewire 3 + Blade + Alpine.js** in the technology table, purpose,
+  implementation result, and conclusion.
+- **AI provider:** Google Cloud Vertex AI / OpenAI → **Google Gemini (flash-class model)**, including
+  the technology table, data-protection plan, and informed-consent text.
+- **Import scope:** XLSX only. Removed the CSV, multi-format, PDF, and image claims; the limitation now
+  states that there is no CSV ingestion, fuzzy header matching, saved mapping profile, or OCR.
+- **SDG claims:** removed from the performance/safety requirements (literature mentions of SDG studies
+  remain, because they are citations, not system claims).
+- **Test evidence:** the 28 black-box cases are now described as representative, alongside **727
+  automated test methods and 4,201 assertions (19 November 2026)**.
+- **Hierarchy:** added a terminology paragraph (College → Program → Project → Activity; the narrow
+  entity is a *project*) and changed "program creation" to "project creation" where the system is meant.
+- **This revision's features** were added to the scope, implementation result, results, and conclusion:
+  the public form, short-lived links/QR, printable A4 sheet, community directory, live arrival counts,
+  Secretary-only beneficiary edit, and validated-only summaries.
+- **Recommendations:** no longer claim that fuzzy matching and saved mapping profiles already exist;
+  they are listed as future work.
+
+### 43.2 What remains manual
+
+The Table of Contents is a manual field with cached text. Updating it in Word wipes it, because the
+chapter headings are direct-formatted rather than Heading styles. Adding the new section shifted the
+later pages, so the TOC and the lists of figures/tables need a final manual page-number pass; a
+"Results and Discussion" entry should be added (it starts around page 100). Figure and table numbering
+was left untouched.
+
+### 43.3 Verification
+
+- Original preserved as `docs/capstone_paper.backup-2026-11-19.docx`.
+- Word opened the final file: **18,178 words, 128 pages**; the TOC text is intact; the new section's
+  headings are bold, body paragraphs justified with a first-line indent, and the five part labels are
+  bold. The two final fixes (project creation, Gemini parenthetical) are present.
+- No code tests were affected. The `.docx` files stay untracked.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 
