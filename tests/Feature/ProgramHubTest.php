@@ -369,7 +369,7 @@ class ProgramHubTest extends TestCase
             ->set('projectForm.allocated_budget', '20000')
             ->set('projectForm.annual_target_hours', '80')
             ->set('projectForm.program_lead_id', (string) $lead->id)
-            ->set('projectForm.status', 'ongoing')
+            ->set('projectForm.status', 'draft')
             ->call('toggleProjectFormArray', 'community_ids', $community->id)
             ->call('toggleProjectFormArray', 'beneficiary_categories', 'Parent')
             ->call('saveProject')

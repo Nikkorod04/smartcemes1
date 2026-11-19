@@ -68,7 +68,7 @@
                                 <button wire:click="openRecords({{ $a->id }})" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Records</button>
                                 @if ($canManage)
                                     <button wire:click="openActivityForm({{ $a->id }})" class="btn btn-outline !px-2 !py-1 !text-[11px]">Edit</button>
-                                    @if (in_array($a->status, ['draft', 'ongoing']))
+                                    @if (in_array($a->status, ['draft', 'ongoing']) && ! $a->planned_start_date->isFuture())
                                         <button wire:click="completeActivity({{ $a->id }})" wire:confirm="Mark activity as completed? This writes an activity log entry." class="btn btn-success-soft !px-2 !py-1 !text-[11px]">Complete</button>
                                     @endif
                                 @endif

@@ -817,6 +817,7 @@
                                 <div>
                                     <label class="label" for="project-status">Status <span class="text-red-500">*</span></label>
                                     <x-sc.select id="project-status" model="projectForm.status" :value="$projectForm['status']" :options="$formProjectStatuses" placeholder="— select a status —" :search="false" :required="true" :invalid="$errors->has('projectForm.status')" />
+                                    <p class="field-hint">Only Draft is available before the planned start date.</p>
                                     @error('projectForm.status') <p class="sc-field-error">{{ $message }}</p> @enderror
                                 </div>
                             </div>

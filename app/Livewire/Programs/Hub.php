@@ -19,6 +19,7 @@ use App\Services\BeneficiaryTemplate;
 use App\Services\KpiService;
 use App\Services\ProgramNarrativeService;
 use App\Services\TrainingHoursService;
+use App\Support\ScheduleStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -424,6 +425,16 @@ class Hub extends Component
         return view('livewire.programs.hub', [
             'latestNarrative' => $latestNarrative,
             'fullNarrative' => $fullNarrative,
+            'activityStatuses' => ScheduleStatus::selectable(
+                $this->activityForm['planned_start_date'] ?? '',
+                $this->activityForm['status'] ?? null,
+                config('smartcemes.statuses.activity')
+            ),
+            'editProjectStatuses' => ScheduleStatus::selectable(
+                $this->editForm['planned_start_date'] ?? '',
+                $this->editForm['status'] ?? null,
+                config('smartcemes.statuses.program')
+            ),
             'activities' => $activities,
             'attendancesByActivity' => $attendancesByActivity,
             'attendeesByActivity' => $attendeesByActivity,
@@ -831,6 +842,23 @@ class Hub extends Component
 
         $this->validate($rules, $messages);
 
+        $original = $this->editingActivityId
+            ? $this->program->activities()->find($this->editingActivityId)
+            : null;
+        $statusChanged = ! $original || $this->activityForm['status'] !== $original->status;
+        $startChanged = ! $original
+            || $this->activityForm['planned_start_date'] !== $original->planned_start_date->format('Y-m-d');
+
+        if (($statusChanged || $startChanged) && ($error = ScheduleStatus::error(
+            $this->activityForm['status'],
+            $this->activityForm['planned_start_date'],
+            'activity'
+        ))) {
+            $this->addError('activityForm.status', $error);
+
+            return;
+        }
+
         // 8.8 hard constraint: faculty assignment refused on schedule overlap.
         $conflicts = [];
         foreach ($this->activityForm['faculty_ids'] as $facultyId) {
@@ -885,6 +913,16 @@ class Hub extends Component
         $activity = $this->program->activities()->with('faculty.user')->findOrFail($id);
 
         if (! in_array($activity->status, ['draft', 'ongoing'])) {
+            return;
+        }
+
+        if ($activity->planned_start_date->isFuture()) {
+            $this->dispatch(
+                'sc-toast',
+                message: 'This activity is planned for a future date and cannot be completed yet.',
+                type: 'warn'
+            );
+
             return;
         }
 
@@ -1845,6 +1883,19 @@ class Hub extends Component
         if ($newStart !== $this->program->planned_start_date->format('Y-m-d')
             && $newStart < today()->toDateString()) {
             $this->addError('editForm.planned_start_date', 'The start date cannot be moved into the past.');
+
+            return;
+        }
+
+        $statusChanged = $this->editForm['status'] !== $this->program->status;
+        $startChanged = $newStart !== $this->program->planned_start_date->format('Y-m-d');
+
+        if (($statusChanged || $startChanged) && ($error = ScheduleStatus::error(
+            $this->editForm['status'],
+            $newStart,
+            'project'
+        ))) {
+            $this->addError('editForm.status', $error);
 
             return;
         }

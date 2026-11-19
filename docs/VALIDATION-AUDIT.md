@@ -105,10 +105,27 @@ The panel saw a project created with a planned start a day before today. The rul
 Dates are compared in the application timezone (Asia/Manila). Seeded and existing rows are untouched —
 the rules apply to new saves.
 
+## Status/date consistency
+
+A plan that has not started cannot carry an active or terminal status:
+
+| Situation | Selectable statuses |
+|---|---|
+| Before the planned start | **Draft only** |
+| On or after the planned start | Draft, Ongoing, Completed, Cancelled |
+| Legacy future-dated record already Ongoing/Completed/Cancelled | It may keep that status (and start) when other fields change; changing the status or the start to another invalid combination is blocked. |
+| Complete action on a future activity | Hidden in the table and refused server-side. |
+
+`App\Support\ScheduleStatus` holds the shared rule; the project and activity forms use it for both the
+select options and the server check. The status hints say “Only Draft is available before the planned start
+date.”
+
 ## Tests and fixtures
 
 - `tests/Feature/ValidationAuditTest.php` — pins the required sets, the lenient project-edit path, the
-  still-optional activity counts, the past-date rules, and the activity past-date confirmation.
+  still-optional activity counts, the past-date rules, the activity past-date confirmation, the
+  Draft-only-before-start rule for projects and activities, the legacy status exception, and the refused
+  completion of a future activity.
 - Date-rule fixtures freeze the clock at 2026-01-01 where the 2026 dates are the subject; the past-activity
   test freezes at 2026-11-19 and uses the day before.
 - Updated for the new rules: `ProgramHubTest` (project creation), `DefenceWalkthroughTest` (project

@@ -146,7 +146,8 @@
                         </div>
                         <div>
                             <label class="label" for="activity-status">Status</label>
-                            <x-sc.select id="activity-status" model="activityForm.status" :value="$activityForm['status']" :options="collect(config('smartcemes.statuses.activity'))->mapWithKeys(fn ($s) => [$s => ucfirst($s)])->all()" placeholder="— select status —" :search="false" :invalid="$errors->has('activityForm.status')" />
+                            <x-sc.select id="activity-status" model="activityForm.status" :value="$activityForm['status']" :options="collect($activityStatuses)->mapWithKeys(fn ($s) => [$s => ucfirst($s)])->all()" placeholder="— select status —" :search="false" :invalid="$errors->has('activityForm.status')" />
+                            <p class="field-hint">Only Draft is available before the planned start date.</p>
                             @error('activityForm.status') <p class="sc-field-error"><x-sc.icon name="alert" class="w-3.5 h-3.5 shrink-0" />{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -496,7 +497,7 @@
                     <div class="grid gap-3 sm:grid-cols-2">
                         <div>
                             <label class="label" for="edit-project-start">Planned start <span class="text-red-500">*</span></label>
-                            <input id="edit-project-start" required type="date" class="input" wire:model="editForm.planned_start_date">
+                            <input id="edit-project-start" required type="date" class="input" wire:model.live="editForm.planned_start_date">
                             <p class="field-hint">An existing past start can be kept; a new start cannot be moved into the past.</p>
                             @error('editForm.planned_start_date') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -522,7 +523,8 @@
                         </div>
                         <div>
                             <label class="label" for="edit-project-status">Status</label>
-                            <x-sc.select id="edit-project-status" model="editForm.status" :value="$editForm['status']" :options="collect(config('smartcemes.statuses.program'))->mapWithKeys(fn ($s) => [$s => ucfirst($s)])->all()" placeholder="— select status —" :search="false" :required="true" :invalid="$errors->has('editForm.status')" />
+                            <x-sc.select id="edit-project-status" model="editForm.status" :value="$editForm['status']" :options="collect($editProjectStatuses)->mapWithKeys(fn ($s) => [$s => ucfirst($s)])->all()" placeholder="— select status —" :search="false" :required="true" :invalid="$errors->has('editForm.status')" />
+                            <p class="field-hint">Only Draft is available before the planned start date; an existing status can be kept.</p>
                             @error('editForm.status') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>

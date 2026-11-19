@@ -90,7 +90,7 @@ class DefenceWalkthroughTest extends TestCase
             ->set('projectForm.allocated_budget', 30000)
             ->set('projectForm.annual_target_hours', 40)
             ->set('projectForm.program_lead_id', $kent->id)
-            ->set('projectForm.status', 'ongoing')
+            ->set('projectForm.status', 'draft')
             ->call('toggleProjectFormArray', 'community_ids', $walkCommunity->id)
             ->call('saveProject')
             ->assertHasNoErrors();
@@ -130,7 +130,7 @@ class DefenceWalkthroughTest extends TestCase
                 ->set('activityForm.participants', '5')
                 ->set('activityForm.faculty_ids', $activity['faculty'])
                 ->set('activityForm.allocated_budget', $activity['budget'])
-                ->set('activityForm.status', 'ongoing')
+                ->set('activityForm.status', 'draft')
                 ->call('saveActivity')
                 ->assertHasNoErrors();
 
@@ -211,6 +211,11 @@ class DefenceWalkthroughTest extends TestCase
         $this->assertSame(45.0, $rollup['budget_pct'], 'Step 6 promises 45 % of the ₱30,000 allocation.');
 
         /* ---------------- Step 7: completing drafts rendered hours ---------------- */
+
+        // The walkthrough froze the clock at the start so the project could be
+        // created in the future. Move to the end of the project before completing:
+        // a future activity is deliberately not completable.
+        $this->travelTo('2026-12-31 00:00:00');
 
         $draftsBefore = RenderedHours::count();
 

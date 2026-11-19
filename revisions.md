@@ -5809,6 +5809,36 @@ Full suite after the date rules: **740 passed, 4,277 assertions**.
 
 ---
 
+## 48. STATUS AND DATE CONSISTENCY (2026-11-19)
+
+A project or activity that starts on 25 November cannot be created as **Ongoing**, **Completed**, or
+**Cancelled** on 19 November. The status dropdown ignored the date entirely; this closes that.
+
+### 48.1 The rule
+
+- Before the planned start: **Draft only**.
+- From the planned start onward: Draft, Ongoing, Completed, Cancelled. (Today counts as started.)
+- Existing records that already carry one of the blocked statuses with a future start may keep it when
+  other fields change; changing the status or moving the start into a future date is blocked. This keeps
+  seeded and legacy rows editable.
+- The **Complete** action is hidden for future activities and the method refuses them server-side, so the
+  status cannot be reached around the form.
+
+The shared check lives in `App\Support\ScheduleStatus`; project create/edit and activity create/edit use it
+for both the select options and the server validation. The status hints say “Only Draft is available before
+the planned start date.”
+
+### 48.2 Tests and fixtures
+
+`ValidationAuditTest` now covers: future project and activity reject Ongoing/Completed/Cancelled and accept
+Draft; legacy future projects and activities keep their status on edit; completing a future activity is
+refused. The walkthrough now moves the clock to the end of the project before its completion step, because
+the activities are deliberately future-dated at the start of that test.
+
+Full suite after the status rules: **745 passed, 4,309 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

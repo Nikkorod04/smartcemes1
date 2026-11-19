@@ -10,6 +10,7 @@ use App\Models\Program;
 use App\Services\ProjectArchiveService;
 use App\Services\RankingService;
 use App\Services\TrainingHoursService;
+use App\Support\ScheduleStatus;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
@@ -391,6 +392,16 @@ class Index extends Component
             'projectForm.status' => 'required|in:draft,ongoing,completed,cancelled',
         ]);
 
+        if ($error = ScheduleStatus::error(
+            $this->projectForm['status'],
+            $this->projectForm['planned_start_date'],
+            'project'
+        )) {
+            $this->addError('projectForm.status', $error);
+
+            return;
+        }
+
         /* R-Q4: the code prefix comes from the selected college, so the code is
            generated AFTER the college is known. */
         $college = College::findOrFail($this->projectForm['college_id']);
@@ -638,7 +649,11 @@ class Index extends Component
             'formCategories' => config('smartcemes.beneficiary_categories'),
             'formPillars' => config('smartcemes.pillars'),
             'formProgramStatuses' => ['active', 'inactive'],
-            'formProjectStatuses' => config('smartcemes.statuses.program'),
+            'formProjectStatuses' => ScheduleStatus::selectable(
+                $this->projectForm['planned_start_date'] ?? '',
+                $this->projectForm['status'] ?? null,
+                config('smartcemes.statuses.program')
+            ),
             'confirmingProject' => $this->confirmingProjectId
                 ? ($this->confirmingProjectAction === 'restore'
                     ? ExtensionProject::onlyTrashed()->find($this->confirmingProjectId)

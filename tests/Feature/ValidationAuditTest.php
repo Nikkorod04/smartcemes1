@@ -65,7 +65,7 @@ class ValidationAuditTest extends TestCase
             ->set('projectForm.title', 'Missing D9 fields')
             ->set('projectForm.planned_start_date', '2026-09-01')
             ->set('projectForm.planned_end_date', '2026-12-31')
-            ->set('projectForm.status', 'ongoing')
+            ->set('projectForm.status', 'draft')
             ->call('saveProject')
             ->assertHasErrors([
                 'projectForm.description',
@@ -102,7 +102,7 @@ class ValidationAuditTest extends TestCase
             ->set('projectForm.target_beneficiaries', '25')
             ->set('projectForm.allocated_budget', '10000')
             ->set('projectForm.program_lead_id', (string) $lead->id)
-            ->set('projectForm.status', 'ongoing')
+            ->set('projectForm.status', 'draft')
             ->call('toggleProjectFormArray', 'community_ids', $community->id)
             ->call('saveProject')
             ->assertHasNoErrors();
@@ -145,6 +145,174 @@ class ValidationAuditTest extends TestCase
             ->assertHasErrors('projectForm.planned_start_date');
 
         $this->assertNull(ExtensionProject::where('title', 'Backdated project')->first());
+    }
+
+    public function test_future_project_only_allows_draft_before_start(): void
+    {
+        $this->travelTo('2026-01-01 00:00:00');
+        $admin = $this->admin();
+        $college = College::where('code', 'CAS')->firstOrFail();
+        $program = Program::where('title', 'Information, Communication & Education')->firstOrFail();
+        $lead = Faculty::factory()->create();
+        $community = Community::create([
+            'name' => 'Brgy. Future Status', 'municipality' => 'Tacloban City',
+            'province' => 'Leyte', 'status' => 'active',
+        ]);
+
+        $component = Livewire::actingAs($admin)
+            ->test(CollegesIndex::class)
+            ->call('openProjectCreate')
+            ->set('projectForm.college_id', (string) $college->id)
+            ->set('projectForm.program_id', (string) $program->id)
+            ->set('projectForm.title', 'Future status project')
+            ->set('projectForm.description', 'A project that has not started yet and must stay a draft.')
+            ->set('projectForm.planned_start_date', '2026-09-01')
+            ->set('projectForm.planned_end_date', '2026-12-31')
+            ->set('projectForm.target_beneficiaries', '25')
+            ->set('projectForm.allocated_budget', '10000')
+            ->set('projectForm.program_lead_id', (string) $lead->id)
+            ->call('toggleProjectFormArray', 'community_ids', $community->id);
+
+        foreach (['ongoing', 'completed', 'cancelled'] as $status) {
+            $component
+                ->set('projectForm.status', $status)
+                ->call('saveProject')
+                ->assertHasErrors('projectForm.status');
+        }
+
+        $this->assertNull(ExtensionProject::where('title', 'Future status project')->first());
+
+        $component
+            ->set('projectForm.status', 'draft')
+            ->call('saveProject')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('extension_projects', ['title' => 'Future status project']);
+    }
+
+    public function test_future_activity_only_allows_draft_before_start(): void
+    {
+        $this->travelTo('2026-01-01 00:00:00');
+        $admin = $this->admin();
+        $project = $this->project();
+
+        $component = Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $project])
+            ->call('openActivityForm')
+            ->set('activityForm.title', 'Future status activity')
+            ->set('activityForm.venue', 'Barangay Hall')
+            ->set('activityForm.planned_start_date', '2026-03-10')
+            ->set('activityForm.planned_end_date', '2026-03-10')
+            ->set('activityForm.start_time', '08:00')
+            ->set('activityForm.end_time', '12:00')
+            ->set('activityForm.no_of_days', '1')
+            ->set('activityForm.allocated_budget', '1000');
+
+        foreach (['ongoing', 'completed', 'cancelled'] as $status) {
+            $component
+                ->set('activityForm.status', $status)
+                ->call('saveActivity')
+                ->assertHasErrors('activityForm.status');
+        }
+
+        $this->assertDatabaseMissing('activities', ['title' => 'Future status activity']);
+
+        $component
+            ->set('activityForm.status', 'draft')
+            ->call('saveActivity')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('activities', ['title' => 'Future status activity']);
+    }
+
+    public function test_legacy_future_project_can_keep_its_status(): void
+    {
+        $admin = $this->admin();
+        $project = ExtensionProject::create([
+            'code' => 'VAL-2026-900',
+            'title' => 'Legacy future project',
+            'planned_start_date' => now()->addMonth()->toDateString(),
+            'planned_end_date' => now()->addMonths(2)->toDateString(),
+            'status' => 'ongoing',
+            'allocated_budget' => 10000,
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $project])
+            ->call('openProgramEdit')
+            ->set('editForm.title', 'Legacy future project renamed')
+            ->call('saveProgramEdit')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Legacy future project renamed', $project->fresh()->title);
+        $this->assertSame('ongoing', $project->fresh()->status);
+    }
+
+    public function test_legacy_future_activity_can_keep_its_status(): void
+    {
+        $admin = $this->admin();
+        $project = ExtensionProject::create([
+            'code' => 'VAL-2026-901',
+            'title' => 'Legacy future activity project',
+            'planned_start_date' => now()->subMonth()->toDateString(),
+            'planned_end_date' => now()->addMonths(2)->toDateString(),
+            'status' => 'ongoing',
+            'allocated_budget' => 10000,
+        ]);
+        $activity = Activity::create([
+            'extension_project_id' => $project->id,
+            'title' => 'Legacy future activity',
+            'venue' => 'Barangay Hall',
+            'planned_start_date' => now()->addMonth()->toDateString(),
+            'planned_end_date' => now()->addMonth()->toDateString(),
+            'start_time' => '08:00:00',
+            'end_time' => '12:00:00',
+            'no_of_days' => 1,
+            'allocated_budget' => 1000,
+            'status' => 'ongoing',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $project])
+            ->call('openActivityForm', $activity->id)
+            ->set('activityForm.title', 'Legacy future activity renamed')
+            ->call('saveActivity')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Legacy future activity renamed', $activity->fresh()->title);
+        $this->assertSame('ongoing', $activity->fresh()->status);
+    }
+
+    public function test_completing_a_future_activity_is_refused(): void
+    {
+        $admin = $this->admin();
+        $project = ExtensionProject::create([
+            'code' => 'VAL-2026-902',
+            'title' => 'Future completion project',
+            'planned_start_date' => now()->subMonth()->toDateString(),
+            'planned_end_date' => now()->addMonths(2)->toDateString(),
+            'status' => 'ongoing',
+            'allocated_budget' => 10000,
+        ]);
+        $activity = Activity::create([
+            'extension_project_id' => $project->id,
+            'title' => 'Future completion activity',
+            'venue' => 'Barangay Hall',
+            'planned_start_date' => now()->addMonth()->toDateString(),
+            'planned_end_date' => now()->addMonth()->toDateString(),
+            'start_time' => '08:00:00',
+            'end_time' => '12:00:00',
+            'no_of_days' => 1,
+            'allocated_budget' => 1000,
+            'status' => 'draft',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $project])
+            ->call('completeActivity', $activity->id);
+
+        $this->assertSame('draft', $activity->fresh()->status);
+        $this->assertNull($activity->fresh()->actual_end_date);
     }
 
     public function test_project_edit_cannot_move_a_start_into_the_past(): void
@@ -242,7 +410,7 @@ class ValidationAuditTest extends TestCase
             ->set('activityForm.no_of_days', '1')
             ->set('activityForm.participants', '')
             ->set('activityForm.trainors_snapshot', '')
-            ->set('activityForm.status', 'ongoing')
+            ->set('activityForm.status', 'draft')
             ->call('saveActivity')
             ->assertHasErrors(['activityForm.venue', 'activityForm.allocated_budget']);
 
