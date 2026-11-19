@@ -67,6 +67,7 @@
                             <td class="!text-right row-actions whitespace-nowrap">
                                 @if ($canManageBeneficiaries)
                                     <a href="{{ route('activities.attendance', $a) }}" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Take attendance</a>
+                                    <a href="{{ route('activities.evaluation', $a) }}" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Evaluation QR</a>
                                 @endif
                                 <button wire:click="openRecords({{ $a->id }})" class="btn btn-ghost !px-2 !py-1 !text-[11px]">Records</button>
                                 @if ($canManage)

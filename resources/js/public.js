@@ -526,4 +526,108 @@ window.assessmentForm = function (config) {
     };
 };
 
+/**
+ * The public activity evaluation form (Phase 2 of the attendance/evaluation
+ * streamlining).
+ *
+ * Much smaller than the needs assessment: one satisfaction score, an optional
+ * comment, and exactly one POST. The page is filled in at the end of a session
+ * on a shared phone, so there is no multi-step state and nothing to restore.
+ *
+ * If the request fails the answers stay in the DOM; the respondent can simply
+ * tap send again, and the client_uuid makes the retry idempotent.
+ */
+window.activityEvaluationForm = function (config) {
+    return {
+        satisfaction: 0,
+        comments: '',
+        honeypot: '',
+        clientUuid: config.clientUuid,
+        maxComments: config.maxComments || 1000,
+        labels: config.labels || {},
+        submitting: false,
+        submitted: false,
+        closed: false,
+        error: '',
+        reference: null,
+
+        get remaining() {
+            return Math.max(0, this.maxComments - this.comments.length);
+        },
+
+        choose(score) {
+            if (this.submitted || this.submitting) {
+                return;
+            }
+
+            this.satisfaction = score;
+            this.error = '';
+        },
+
+        async submit() {
+            if (this.submitting || this.submitted) {
+                return;
+            }
+
+            this.error = '';
+
+            if (!this.satisfaction) {
+                this.error = 'Choose a rating from 1 to 5, then send.';
+                return;
+            }
+
+            this.submitting = true;
+
+            try {
+                const response = await fetch(config.submitUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        satisfaction: this.satisfaction,
+                        comments: this.comments,
+                        client_uuid: this.clientUuid,
+                        captured_at: new Date().toISOString(),
+                        website: this.honeypot,
+                    }),
+                });
+
+                const payload = await response.json().catch(() => ({}));
+
+                if (response.ok) {
+                    this.submitted = true;
+                    this.reference = payload && payload.id ? payload.id : null;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    return;
+                }
+
+                if (response.status === 422) {
+                    const errors = payload.errors || {};
+                    const first = Object.values(errors)[0];
+                    this.error = Array.isArray(first) ? first[0] : 'Please check your answer and try again.';
+
+                    return;
+                }
+
+                if (response.status === 410 || response.status === 404) {
+                    this.closed = true;
+                    this.error = payload.message || 'This link is no longer open.';
+
+                    return;
+                }
+
+                this.error = 'The office could not accept your answer just now. Please try again in a moment.';
+            } catch (e) {
+                this.error = 'No connection. Your answer is still on this page - check your signal and tap send again.';
+            } finally {
+                this.submitting = false;
+            }
+        },
+    };
+};
+
 Alpine.start();

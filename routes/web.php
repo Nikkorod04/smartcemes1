@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityAttendanceTemplateController;
+use App\Http\Controllers\ActivityEvaluationSheetController;
 use App\Http\Controllers\ActivityEvaluationTemplateController;
 use App\Http\Controllers\AssessmentShareSheetController;
 use App\Http\Controllers\AssessmentTemplateController;
@@ -8,11 +9,13 @@ use App\Http\Controllers\BeneficiaryExportController;
 use App\Http\Controllers\BeneficiaryTemplateController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicActivityEvaluationController;
 use App\Http\Controllers\PublicAssessmentController;
 use App\Http\Controllers\ReportController;
+use App\Livewire\Activities\EvaluationLinks;
+use App\Livewire\Activities\TakeAttendance;
 use App\Livewire\AiAnalysis;
 use App\Livewire\AiAnalysisCommunity;
-use App\Livewire\Activities\TakeAttendance;
 use App\Livewire\AiAnalysisReview;
 use App\Livewire\Assessments\Import;
 use App\Livewire\Assessments\Review;
@@ -62,6 +65,26 @@ Route::get('/a/{token}', [PublicAssessmentController::class, 'show'])
 Route::post('/a/{token}', [PublicAssessmentController::class, 'store'])
     ->middleware('throttle:20,1')
     ->name('assessment.public.submit');
+
+/*
+| Public activity evaluation (after-defense revision, Phase 2)
+|---------------------------------------------------------------
+| Same credential model as the assessment link, but much shorter lived: it is
+| shown at the end of one session. Anonymous by design — one satisfaction score
+| and an optional comment, never a beneficiary identity.
+|
+| The limits are higher than the assessment form's: a room of respondents
+| usually shares one venue or carrier IP, and a 20/minute cap would refuse
+| legitimate scans at the end of a session. The 32-character token, the
+| honeypot, and the two-field payload carry the abuse protection.
+*/
+Route::get('/e/{token}', [PublicActivityEvaluationController::class, 'show'])
+    ->middleware('throttle:240,1')
+    ->name('activity.evaluation.public');
+
+Route::post('/e/{token}', [PublicActivityEvaluationController::class, 'store'])
+    ->middleware('throttle:120,1')
+    ->name('activity.evaluation.submit');
 
 // Role dashboards (12.1) — one component, three role views
 Route::get('/dashboard', Dashboard::class)
@@ -209,9 +232,17 @@ Route::get('/my-profile', Profile::class)
 Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{project}', Hub::class)->name('projects.show');
 
-// Tablet-first attendance roster for one activity (Phase 1 of the attendance/evaluation streamlining).
-Route::get('/activities/{activity}/attendance', TakeAttendance::class)
-    ->middleware(['auth', 'role:admin,secretary'])->name('activities.attendance');
+    // Tablet-first attendance roster for one activity (Phase 1 of the attendance/evaluation streamlining).
+    Route::get('/activities/{activity}/attendance', TakeAttendance::class)
+        ->middleware(['auth', 'role:admin,secretary'])->name('activities.attendance');
+
+    // Anonymous public evaluation QR for one activity (Phase 2).
+    Route::get('/activities/{activity}/evaluation', EvaluationLinks::class)
+        ->middleware(['auth', 'role:admin,secretary'])->name('activities.evaluation');
+
+    Route::get('/activities/{activity}/evaluation/{link}/sheet', ActivityEvaluationSheetController::class)
+        ->middleware(['auth', 'role:admin,secretary'])->name('activities.evaluation.sheet');
+
     Route::get('/my-projects', MyPrograms::class)->name('projects.my');
 
     // Availability — admin creates; faculty responds (5.8)

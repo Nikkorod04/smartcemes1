@@ -15,11 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
-        // The public assessment form has no session: a respondent standing in a
-        // barangay hall has no CSRF token to send, and the token in the URL is
-        // the authorization. Kept to the single public prefix rather than the
-        // whole app.
-        $middleware->validateCsrfTokens(except: ['a/*']);
+        // The public assessment and activity-evaluation forms have no session:
+        // a respondent standing in a barangay hall has no CSRF token to send,
+        // and the token in the URL is the authorization. Kept to the two public
+        // prefixes rather than the whole app.
+        $middleware->validateCsrfTokens(except: ['a/*', 'e/*']);
 
         $middleware->web(append: [
             EnsurePasswordChanged::class,

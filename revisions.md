@@ -5884,7 +5884,91 @@ rows.
 
 Full suite after the roster: **757 passed, 4,347 assertions**.
 
-Phase 2 (the anonymous evaluation QR) is not built yet.
+Phase 2 (the anonymous evaluation QR) is built — see §50.
+
+---
+
+## 50. THE ACTIVITY EVALUATION QR (2026-11-20)
+
+Phase 2 of the attendance/evaluation streamlining. Attendance is identity and presence; evaluation is
+feedback. Reusing the roster for evaluation would have forced names onto an instrument that does not need
+them, so this is deliberately a **separate, anonymous** path.
+
+### 50.1 What the office sees
+
+`GET /activities/{activity}/evaluation` (`activities.evaluation`), **Admin and Secretary** (the same roles
+as the roster). The screen:
+
+- generates a **session link** for 1–7 days, ending at 11:59 PM on the last day. If the link is created
+  before the activity date, the clock starts on the activity date so it cannot expire before the session;
+  a past-dated activity (backfilling) starts from now;
+- shows the **QR and URL** immediately (drawn in the browser, never sent to a QR service);
+- lists every link for the activity with status, expiry, and its response count;
+- has **Extend/Reopen** (same token, new expiry) and **Revoke** (immediate, irreversible);
+- shows a **printable A4 session card** with the activity, date, venue, and scan instructions;
+- shows the **public aggregate**: count, average, 1–5 distribution, and the latest comments;
+- has a live arrivals strip that polls every 10 seconds. It is a child component so the poll cannot
+  redraw the QR canvas somebody is pointing a phone at.
+
+The entry point is **Evaluation QR** on the activity row, next to Take attendance, visible to
+Admin/Secretary. Faculty do not mint links; they can still read the session card and show it.
+
+### 50.2 The public form
+
+`GET /e/{token}` is unauthenticated: the token is the credential, exactly like the assessment link.
+The form is a short Alpine page with **one POST**:
+
+- satisfaction **1–5**, required;
+- an optional comment (1,000 characters);
+- a hidden honeypot;
+- a per-page-load `client_uuid` so a retried send is idempotent;
+- `captured_at` trusted only loosely (never future, never before the link existed).
+
+Expired or revoked links return **410** with a plain "ask the CESO staff for a new link" page; an unknown
+token returns **404**. The POST is CSRF-exempt through the dedicated `e/*` prefix (the assessment form's
+`a/*` exception is unchanged) and rate-limited instead: 240/min for the page, 120/min for the submission.
+The limits are deliberately higher than the assessment form's because a room of respondents usually
+shares one venue or carrier IP; the token, honeypot, and two-field payload carry the abuse protection.
+
+### 50.3 The boundary that matters
+
+Public responses are **anonymous**. They are stored in `activity_evaluations` with no beneficiary,
+name, or contact detail, and they **never** write the activity's imported `satisfaction_rating`,
+`pre_assessment_score`, or `post_assessment_score`. The per-beneficiary XLSX evaluation import remains
+the only path for pre/post means. The screen labels the two sources separately: "Public feedback
+(anonymous)" versus the imported evaluation. Any later decision to blend them must be explicit; the
+current rule is keep them apart.
+
+### 50.4 Data model
+
+Two tables, no change to `attendances` or the activity columns:
+
+- `activity_evaluation_links` — activity, token, `expires_at`, `created_by`, `revoked_at`;
+- `activity_evaluations` — activity, link, `client_uuid` (unique, nullable), `satisfaction`,
+  `comments`, `captured_at`.
+
+Creating, extending, revoking, and receiving a response each write an activity-log entry. The log records
+the activity and the expiry, never the token.
+
+### 50.5 Tests
+
+`ActivityEvaluationQrTest` — **19 passed, 76 assertions**: public form renders; unknown 404, revoked/expired
+410; anonymous storage; no change to the imported aggregates; duplicate `client_uuid`; honeypot;
+validation (missing/out-of-range score, long comment); expired link cannot accept; staff generate and
+open; seven-day limit; a link generated before the activity stays open through it; faculty 403; guest
+redirect; unknown activity 404; admin access; revoke closes the public form; extend keeps the token and
+moves the expiry; revoked link cannot be reopened; extend limited to seven days; aggregate
+average/distribution; printable card renders and is role-gated.
+
+Manual on localhost: generated a link for activity 16 (KULTURA), opened `/e/{token}` on a phone-sized
+page, submitted 4/5 with a comment, and the staff screen showed 1 response, average 4.00, the 4-bar in the
+distribution, and the comment. The QR canvas drew (non-blank), and the activity row showed both Take
+attendance and Evaluation QR.
+
+Full suite after Phase 2: **776 passed, 4,423 assertions**.
+
+Phase 3 (one session screen and a written reporting rule for public vs imported satisfaction) is not
+built. The XLSX imports remain untouched.
 
 ---
 

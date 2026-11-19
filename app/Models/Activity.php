@@ -77,6 +77,18 @@ class Activity extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    /** Public evaluation links for this activity (Phase 2). */
+    public function evaluationLinks()
+    {
+        return $this->hasMany(ActivityEvaluationLink::class);
+    }
+
+    /** Anonymous public evaluation responses for this activity. */
+    public function evaluations()
+    {
+        return $this->hasMany(ActivityEvaluation::class);
+    }
+
     public function proposal()
     {
         return $this->belongsTo(ActivityProposal::class, 'activity_proposal_id');

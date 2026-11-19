@@ -255,6 +255,27 @@ Objectives: (1) centralized MySQL extension database; (2) spreadsheet import and
 
 ---
 
+## 7a. Item 7 - Attendance roster and anonymous evaluation QR (implemented 2026-11-20 - `revisions.md` 49-50)
+
+**Why:** attendance and evaluation were both XLSX round-trips for a session that is happening now.
+
+**Phase 1 - attendance roster.** `/activities/{activity}/attendance` for Admin/Secretary: the enrolled
+roster, preloaded statuses, tap Present/Late/Absent/Excused, mark all present, search, sticky save. It
+writes the same `Attendance` rows and date as the import, so trainee counts and training hours stay
+consistent. The import remains the bulk/legacy path.
+
+**Phase 2 - evaluation QR.** `/activities/{activity}/evaluation` for Admin/Secretary: a 1-7 day session
+link, QR and printable card, live count, extend, revoke, and the public aggregate. `/e/{token}` is the
+anonymous public form: satisfaction 1-5 plus an optional comment, one POST, honeypot, `client_uuid`
+idempotency, rate limits, 410 on expiry/revoke.
+
+**Boundary:** public feedback never writes the activity's imported satisfaction or pre/post means. The
+XLSX evaluation import stays the only per-beneficiary path. Phase 3 (one combined session screen and an
+explicit reporting rule for the two satisfaction sources) is still open; the working rule is keep them
+separate.
+
+---
+
 ## 8. Six-day schedule
 
 | Day | Track A — system | Track B — manuscript |
