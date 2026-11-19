@@ -72,6 +72,7 @@ class PublicAssessmentSubmitTest extends TestCase
         // Provenance: no user, and the queue can tell where it came from.
         $this->assertNull($assessment->uploaded_by);
         $this->assertSame(NeedsAssessment::SOURCE_PUBLIC, $assessment->source);
+        $this->assertSame($link->id, $assessment->assessment_link_id);
         $this->assertSame('pending', $assessment->review_status);
         $this->assertSame('9c3f0f0e-1d2a-4b3c-8d4e-5f60718293a4', $assessment->client_uuid);
         $this->assertNotNull($assessment->captured_at);

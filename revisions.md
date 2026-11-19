@@ -5290,6 +5290,124 @@ summary; validating adds one; returning a validated row removes it; a public sub
 validated; the console command repairs a stale summary. `ExtensionWorkflowTest::test_secretary_validation_recomputes_summary`
 asserted the old rule (count unchanged on validation) and was updated to assert the new one (+1).
 
+## 39. THE SHARE-LINK SCREEN (2026-11-19)
+
+Item 1, Step 4a. Links could already be minted on the VM with `php artisan assessment:link`; the
+office could not see them, print their QR, or take one back. This step puts that in the app.
+
+### 39.1 The screen
+
+`App\Livewire\Assessments\ShareLinks`, route `GET /assessments/share` (`assessments.share`), allowed to
+**secretary and faculty** (after-defense D6), linked from both sidebars. Three jobs, one page:
+
+- **Generate** — barangay, quarter, year, 1–5 days. Defaults are this quarter and today's year; 5 days is
+  preselected because a field sheet usually outlives the visit.
+- **Show** — the selected link's QR and URL, with copy, plus closes/creator/period dates. The newest live
+  link is selected on arrival, because on a field day this page is opened to show the QR, not to read a form.
+- **Manage** — every link, including other people's, created by name and role. Extend (or reopen, if it merely
+  expired) and revoke. The list marks each row **Open / Expired / Revoked**.
+
+Every action is logged with `assessment_link_created` / `_extended` / `_revoked` and community, period,
+expiry (and received count on revoke) — **never the token**. The audit log is readable by more people than
+the field team, and the token is the only thing between a stranger and the form.
+
+The role guard also runs inside the component (`mount()` and each action): Livewire update requests do not
+pass the route middleware, so a page-level check alone would be bypassable.
+
+### 39.2 The QR is drawn in the browser
+
+`resources/js/share.js` uses the `qrcode` npm package (`QRCode.toCanvas`). A QR-image web service would
+receive the share token in its URL — the token that is the credential — so the QR cannot be generated
+server-side by a third party. Error correction M, dark navy modules, drawn at 440px and displayed at
+200px so it stays sharp when printed. Copy prefers the async clipboard API and falls back to a hidden
+textarea when the API is missing **or refuses** — it rejects when the document is not focused, which is
+exactly what a click in an embedded webview can look like. Without that second path the button would show
+"could not copy" on a perfectly good click.
+
+Two layout details mattered in practice:
+
+- the app layout had no `@stack('scripts')`, so the page's `@vite('resources/js/share.js')` had nowhere to
+  go; the stack was added (it was already present in the public layout);
+- `qrcode` sets `canvas.width/height` from the `width` option, which overrides CSS sizing. The display
+  size is set inline in JS after the draw (`200px`), and the template's `style` attribute covers the
+  first paint before the module runs.
+
+### 39.3 Attribution: one column, exact counts
+
+Migration `2026_11_19_000200` adds a nullable `assessment_link_id` to `needs_assessments`
+(`nullOnDelete`), filled by `AssessmentSubmission` from the link the POST came through.
+
+This is deliberately part of 4a rather than 4b: the live-arrivals counter is only exact if links can be
+counted from the day they start being used, and answers must outlive the link (revoking a link must not
+delete its rows). With `nullOnDelete`, a deleted link leaves its answers attributed to nobody rather than
+cascading them away. Links are revoked, not deleted, so this is a safety net.
+
+### 39.4 A bug SQLite cannot see: MySQL rewrote `expires_at`
+
+The first version of the migration created `expires_at` as `timestamp NOT NULL` with no default. On MySQL
+with `explicit_defaults_for_timestamp = OFF` — the XAMPP default, and common on shared hosts — the **first**
+such column in a table is silently given `DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`.
+
+The visible effect: every `UPDATE` on a link rewrote `expires_at` to *now*. Revoking a link on 19 Nov made
+it display as expired the same minute; extending a link on 23 Nov lost the new date on the next edit.
+Nothing in the test suite caught it because the suite runs on SQLite, which ignores the quirk.
+
+Migration `2026_11_19_000300` changes the column to `nullable()` — which removes the implicit default and
+`ON UPDATE` — and the column is now `timestamp NULL DEFAULT NULL`. Because null is now representable,
+`isExpired()` treats a null expiry as **expired**: a row that somehow lost its date must not read as open
+forever. Regressions pin the column shape, the null semantics and the behaviour:
+
+- `test_the_expiry_column_has_no_database_managed_default` asserts the schema (nullable, no default);
+- `test_a_link_without_an_expiry_is_not_open` asserts that null is refused by both GET and POST;
+- `test_revoking_does_not_move_the_expiry_date` asserts the behaviour.
+
+This is the general lesson: a green suite on SQLite says nothing about MySQL column semantics. Schema
+tests that assert the *shape* are worth their line count when production is a different engine.
+
+### 39.5 A test-order leak, not a page defect
+
+Adding the new suite made `PublicAssessmentFormTest::test_the_form_is_client_side_and_has_no_livewire`
+fail — but only when run after other feature tests. Livewire 3 keeps per-request flags in static properties
+(`hasRenderedAComponentThisRequest`, asset injection), and those reset when a real request's process ends.
+The test runner shares one process, so a `Livewire::test()` render in one test made the next plain HTML
+response — the public form — receive `<!-- Livewire Styles -->` and `wire:` attributes it never had in
+production.
+
+`tests/TestCase::tearDown()` now calls `Livewire::flushState()`, which is what a fresh process would do.
+The fix is in the harness, not the public page: the page was always clean.
+
+### 39.6 What 4a does not do (Step 4b)
+
+- live arrivals (count + last-answer time) on the share screen, polled by a nested child component so the
+  QR canvas is not redrawn every cycle;
+- a printable A4 sheet (QR + barangay + instructions);
+- "Answer for another household" on the success card, and share entry points from the wizard/review;
+- per-link response counts in the UI (the column is already collecting the data).
+
+### 39.7 Tests
+
+`AssessmentLinkTest` — **18 passed**: faculty and secretary can open the screen, admin gets 403 and guests
+are redirected; generation records community, period, creator and a 32-character token; validity rejects
+0/6/30 days; a community is required; everyone's links are listed with the creator's name; the card carries
+the public URL; an expired link reopens with the **same token**; a revoked link cannot be reopened; revoking
+returns `410` on both GET and POST immediately; a public submission stores its link id; revoking keeps the
+answers; a null expiry does not mean "open forever"; the expiry column has no database-managed default;
+revoking does not move the expiry; a revoked row offers no Reopen action; every action is logged, and the
+token never appears in the log.
+
+`PublicAssessmentSubmitTest` gained the assertion that a public row carries `assessment_link_id`.
+
+Manual on localhost, through the real controls: generated a link (QR drew immediately, 79k dark pixels),
+generated a second (canvas was genuinely redrawn, not reused), extended it to 4 days (URL and QR unchanged,
+closes date moved, toast confirmed), revoked it (badge flipped, Reopen disappeared, the public URL returned
+`410`), and repeated as faculty (sidebar entry, QR, and the same list of four links visible). The copy
+handler received exactly the card's URL and showed "Link copied"; the clipboard write itself was stubbed,
+because the automation browser refuses real writes without a trusted click. Screenshot checked for
+layout: QR 200×200, URL input full width, no horizontal table scroll at 912px.
+
+Affected suites: 139 tests / 1,853 assertions across the public form, public submit, route surface,
+validated-only summaries, wizard, import and review.
+
 ---
 
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,

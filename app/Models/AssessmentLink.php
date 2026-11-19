@@ -66,6 +66,18 @@ class AssessmentLink extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** The submissions collected through this link. */
+    public function assessments()
+    {
+        return $this->hasMany(NeedsAssessment::class);
+    }
+
+    /** Live links only — what the share screen lists first. */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('revoked_at')->where('expires_at', '>', now());
+    }
+
     public function isRevoked(): bool
     {
         return $this->revoked_at !== null;
@@ -73,7 +85,10 @@ class AssessmentLink extends Model
 
     public function isExpired(): bool
     {
-        return $this->expires_at !== null && $this->expires_at->isPast();
+        // A null expiry is not "never expires": the column is nullable only to
+        // stop MySQL from managing it (see the 2026_11_19_000300 migration).
+        // No recorded expiry means the link was never properly opened.
+        return $this->expires_at === null || $this->expires_at->isPast();
     }
 
     public function isActive(): bool

@@ -553,6 +553,7 @@ return [
                 'section' => 'Validation',
                 'items' => [
                     ['key' => 'assessment-review', 'label' => 'Assessment Review', 'route' => 'assessments.review', 'icon' => 'doc'],
+                    ['key' => 'assessment-share', 'label' => 'Share Assessment', 'route' => 'assessments.share', 'icon' => 'qr'],
                 ],
             ],
             [
@@ -577,6 +578,7 @@ return [
                     ['key' => 'proposal-new', 'label' => 'Submit Proposal', 'route' => 'proposals.create', 'icon' => 'doc'],
                     ['key' => 'proposals', 'label' => 'My Proposals', 'route' => 'proposals.index', 'icon' => 'folder'],
                     ['key' => 'assessment-form', 'label' => 'Encode Assessment', 'route' => 'assessments.create', 'icon' => 'clipboard'],
+                    ['key' => 'assessment-share', 'label' => 'Share Assessment', 'route' => 'assessments.share', 'icon' => 'qr'],
                     ['key' => 'availability', 'label' => 'Availability Requests', 'route' => 'availability.index', 'icon' => 'clock'],
                     ['key' => 'rendered-hours', 'label' => 'Rendered Hours', 'route' => 'rendered-hours.my', 'icon' => 'clock'],
                 ],

@@ -42,6 +42,7 @@ class NeedsAssessment extends Model
     ];
 
     protected $fillable = [
+        'assessment_link_id',
         'community_id',
         'quarter',
         'year',
@@ -138,6 +139,12 @@ class NeedsAssessment extends Model
     public function community()
     {
         return $this->belongsTo(Community::class);
+    }
+
+    /** The public share link this row arrived through, if any. */
+    public function assessmentLink()
+    {
+        return $this->belongsTo(AssessmentLink::class);
     }
 
     protected static function booted(): void

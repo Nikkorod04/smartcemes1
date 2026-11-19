@@ -129,6 +129,7 @@ class PublicAssessmentController extends Controller
             'source' => NeedsAssessment::SOURCE_PUBLIC,
             'uploaded_by' => null,
             'client_uuid' => $clientUuid,
+            'assessment_link_id' => $link->id,
             'captured_at' => $this->capturedAt($data['captured_at'] ?? null, $link),
         ]);
 

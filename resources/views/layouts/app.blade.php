@@ -22,6 +22,7 @@
 
         <div id="sc-toasts" class="fixed bottom-5 right-5 z-[90] space-y-2 no-print"></div>
 
+        @stack('scripts')
         @livewireScripts
     </body>
 </html>

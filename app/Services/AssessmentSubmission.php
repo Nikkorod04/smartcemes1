@@ -19,7 +19,7 @@ class AssessmentSubmission
 {
     /**
      * @param  array<string, mixed>  $form  Answers keyed by template field.
-     * @param  array{community_id: int, quarter: int, year: int, source: string, uploaded_by?: int|null, client_uuid?: string|null, captured_at?: mixed}  $context
+     * @param  array{community_id: int, quarter: int, year: int, source: string, uploaded_by?: int|null, client_uuid?: string|null, captured_at?: mixed, assessment_link_id?: int|null}  $context
      */
     public static function create(array $form, array $context): NeedsAssessment
     {
@@ -33,6 +33,7 @@ class AssessmentSubmission
             'source' => $context['source'],
             'uploaded_by' => $context['uploaded_by'] ?? null,
             'client_uuid' => $context['client_uuid'] ?? null,
+            'assessment_link_id' => $context['assessment_link_id'] ?? null,
             'captured_at' => $context['captured_at'] ?? now(),
             'review_status' => 'pending',
         ]);

@@ -14,6 +14,7 @@ use App\Livewire\AiAnalysisCommunity;
 use App\Livewire\AiAnalysisReview;
 use App\Livewire\Assessments\Import;
 use App\Livewire\Assessments\Review;
+use App\Livewire\Assessments\ShareLinks;
 use App\Livewire\Assessments\Wizard;
 use App\Livewire\AuditLogs\Index as AuditLogsIndex;
 use App\Livewire\Availability\Index;
@@ -234,6 +235,10 @@ Route::get('/assessments/import', Import::class)
 
 Route::get('/assessments/review', Review::class)
     ->middleware(['auth', 'role:secretary'])->name('assessments.review');
+
+// Share links/QR for the public form — Secretary + Faculty (after-defense D6).
+Route::get('/assessments/share', ShareLinks::class)
+    ->middleware(['auth', 'role:faculty,secretary'])->name('assessments.share');
 
 Route::get('/assessments/template', AssessmentTemplateController::class)
     ->middleware(['auth'])->name('assessments.template');
