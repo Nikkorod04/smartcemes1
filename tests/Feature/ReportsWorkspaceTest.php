@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 /**
  * The 2026-11-20 Reports workspace: four reports, a shared scope, an A4 print
- * layout, and the annual report restored as the flagship.
+ * layout, and the annual report restored as the default report.
  */
 class ReportsWorkspaceTest extends TestCase
 {
@@ -36,7 +36,7 @@ class ReportsWorkspaceTest extends TestCase
         ], $overrides));
     }
 
-    public function test_the_index_offers_the_four_reports_and_the_annual_flagship(): void
+    public function test_the_index_offers_the_four_reports(): void
     {
         $this->project();
 
@@ -47,7 +47,6 @@ class ReportsWorkspaceTest extends TestCase
             ->assertSee('Community Partner Impact')
             ->assertSee('Faculty Rendered Hours')
             ->assertSee('Project Performance')
-            ->assertSee('Flagship')
             ->assertSee('Download PDF');
     }
 

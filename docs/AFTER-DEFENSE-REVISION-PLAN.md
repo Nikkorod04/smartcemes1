@@ -279,7 +279,7 @@ separate.
 ## 7b. Reports workspace refresh (implemented 2026-11-20 - `revisions.md` 52)
 
 `/reports` is now a workspace: report catalog + shared scope (year, college, program, community) + an A4
-landscape paper preview. The Annual report is restored as the flagship and the annual 500 (a summary
+landscape paper preview. The Annual report is restored as the default report and the annual 500 (a summary
 pointing at a deleted community) is fixed. Empty communities, zero-participation faculty, developer notes,
 the placeholder narratives section, and the technical trainee-source column are removed; summaries and
 signatures are trimmed to what a reader needs. Signature lines stay blank and read "Name and Signature".

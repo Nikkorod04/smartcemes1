@@ -6052,7 +6052,7 @@ Full suite after the follow-up: **782 passed, 4,444 assertions**.
 ### 52.1 The index is a workspace, not four cards
 
 `/reports` is now a two-column workspace: a report catalog and scope on the left, an **A4 landscape
-paper preview** on the right. The four reports are Annual (restored as the **flagship**), Community
+paper preview** on the right. The four reports are Annual (restored as the **default report**), Community
 Partner Impact, Faculty Rendered Hours, and Project Performance. Project Performance uses one project
 selector instead of 15 separate preview buttons.
 
@@ -6099,7 +6099,7 @@ view is null-safe.
 
 ### 52.6 Tests
 
-`ReportMetricDictionaryTest` was updated for the four-report index and the annual flagship.
+`ReportMetricDictionaryTest` was updated for the four-report index and the annual report.
 `ReportsWorkspaceTest` covers the index catalog, the annual null-community regression, college and
 community filters, empty-community exclusion, preview toolbar hiding, A4 landscape, blank signature
 lines, and the trimmed annual content. `ReportPdfTest` covers the real PDF stream, the attachment

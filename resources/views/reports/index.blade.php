@@ -21,10 +21,10 @@
 
                 <div class="mt-4 space-y-2">
                     @foreach ([
-                        ['key' => 'annual', 'label' => 'Annual Extension Performance', 'flagship' => true, 'desc' => 'The flagship institutional report: projects, reach, training delivery, faculty and budget.'],
-                        ['key' => 'community-impact', 'label' => 'Community Partner Impact', 'flagship' => false, 'desc' => 'Projects, people reached and validated assessment outcomes per community.'],
-                        ['key' => 'rendered-hours', 'label' => 'Faculty Rendered Hours', 'flagship' => false, 'desc' => 'Approved service-credit entries by faculty, activity and project.'],
-                        ['key' => 'project-performance', 'label' => 'Project Performance', 'flagship' => false, 'desc' => 'One project against its annual hours target and allocated budget.'],
+                        ['key' => 'annual', 'label' => 'Annual Extension Performance', 'desc' => 'The annual institutional report: projects, reach, training delivery, faculty and budget.'],
+                        ['key' => 'community-impact', 'label' => 'Community Partner Impact', 'desc' => 'Projects, people reached and validated assessment outcomes per community.'],
+                        ['key' => 'rendered-hours', 'label' => 'Faculty Rendered Hours', 'desc' => 'Approved service-credit entries by faculty, activity and project.'],
+                        ['key' => 'project-performance', 'label' => 'Project Performance', 'desc' => 'One project against its annual hours target and allocated budget.'],
                     ] as $r)
                         <button type="button"
                                 x-on:click="selectReport('{{ $r['key'] }}')"
@@ -34,9 +34,6 @@
                                 class="w-full rounded-xl border px-3.5 py-3 text-left transition">
                             <span class="flex items-center justify-between gap-2">
                                 <span class="text-[12.5px] font-extrabold leading-snug">{{ $r['label'] }}</span>
-                                @if ($r['flagship'])
-                                    <span class="badge badge-gold !text-[9px]">Flagship</span>
-                                @endif
                             </span>
                             <span class="mt-1 block text-[10.5px] leading-snug"
                                   x-bind:class="report === '{{ $r['key'] }}' ? 'text-white/70' : 'text-gray-400'">{{ $r['desc'] }}</span>

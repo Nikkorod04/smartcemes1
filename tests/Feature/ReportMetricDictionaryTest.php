@@ -172,7 +172,7 @@ class ReportMetricDictionaryTest extends TestCase
         $this->assertNull($project->fresh()->hoursTarget(), 'the fixture genuinely has no target');
     }
 
-    public function test_the_reports_index_lists_all_four_reports_including_the_annual_flagship(): void
+    public function test_the_reports_index_lists_all_four_reports_including_the_annual_report(): void
     {
         // The Project Performance selector needs a project to be meaningful.
         $this->project();
@@ -190,8 +190,7 @@ class ReportMetricDictionaryTest extends TestCase
             $this->assertStringContainsString($title, $body, "the index does not offer \"{$title}\"");
         }
 
-        // The annual report is the flagship again (2026-11-20).
-        $this->assertStringContainsString('Flagship', $body);
+        // The annual report is offered on the index and still renders.
         $this->actingAs($this->admin())->get('/reports/annual')->assertOk();
     }
 }
