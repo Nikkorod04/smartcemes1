@@ -72,6 +72,17 @@ class Index extends Component
 
     public function updatedFormExtensionProjectId(): void
     {
+        // Editing an already-assigned beneficiary never changes the assignment.
+        $assignedProject = $this->editingId !== null
+            ? Beneficiary::find($this->editingId)?->extension_project_id
+            : null;
+
+        if ($assignedProject !== null) {
+            $this->form['extension_project_id'] = $assignedProject;
+
+            return;
+        }
+
         $projectId = (int) ($this->form['extension_project_id'] ?? 0);
         $first = ExtensionProject::find($projectId)?->communities()->orderBy('name')->first();
 
@@ -129,16 +140,32 @@ class Index extends Component
             $this->guardEdit();
         }
 
+        $editing = $this->editingId !== null
+            ? Beneficiary::findOrFail($this->editingId)
+            : null;
+
+        // A beneficiary's project is fixed once assigned: editing resolves the
+        // project from the stored record and ignores the submitted value. An
+        // unassigned legacy row may still be assigned here.
+        $projectIsFixed = $editing?->extension_project_id !== null;
+
         $this->validate(
-            BeneficiaryRules::rules(true, 'form', true),
+            BeneficiaryRules::rules(true, 'form', ! $projectIsFixed),
             BeneficiaryRules::messages('form'),
         );
 
+        $project = $projectIsFixed
+            ? $editing->extensionProject
+            : ExtensionProject::find($this->form['extension_project_id']);
+
+        if ($projectIsFixed) {
+            $this->form['extension_project_id'] = $project?->id;
+        }
+
         $community = Community::find($this->form['community_id']);
-        $project = ExtensionProject::find($this->form['extension_project_id']);
 
         if ($community === null || $project === null || ! $project->communities()->whereKey($community->id)->exists()) {
-            $this->addError('form.community_id', 'Choose a community or partner school linked to the selected project.');
+            $this->addError('form.community_id', 'Choose a community or partner school linked to the person\'s project.');
 
             return;
         }
@@ -237,12 +264,18 @@ class Index extends Component
             ->orderBy('last_name')
             ->orderBy('first_name');
 
+        $editingBeneficiary = $this->editingId !== null ? Beneficiary::find($this->editingId) : null;
+        $projectLocked = $editingBeneficiary?->extension_project_id !== null;
+        $formProject = $projectLocked
+            ? $editingBeneficiary->extensionProject
+            : ExtensionProject::find($this->form['extension_project_id'] ?? 0);
+
         return view('livewire.beneficiaries.index', [
             'beneficiaries' => $query->paginate(15),
             'projects' => ExtensionProject::orderBy('code')->get(['id', 'code', 'title']),
             'communities' => Community::orderBy('name')->get(['id', 'name', 'municipality', 'type']),
-            'formCommunities' => ExtensionProject::find($this->form['extension_project_id'] ?? 0)
-                ?->communities()->orderBy('name')->get() ?? collect(),
+            'formCommunities' => $formProject?->communities()->orderBy('name')->get() ?? collect(),
+            'projectLocked' => $projectLocked,
             'categories' => config('smartcemes.beneficiary_categories'),
             'activeCount' => Beneficiary::count(),
             'archivedCount' => Beneficiary::onlyTrashed()->count(),

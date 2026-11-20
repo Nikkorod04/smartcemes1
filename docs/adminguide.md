@@ -183,7 +183,7 @@ leaves the existing aggregate untouched.
 **Expected:** a **de-duplication warning** appears and requires explicit confirmation — never a
 silent merge.
 
-2. Note the **Import XLSX** button (v2 template, 500 rows max, per-row New/Update/Other project/Skip
+2. Note the **Import beneficiaries** button (v2 template, 500 rows max, per-row New/Update/Other project/Skip
    preview) and **Export PDF** (the project roster as an A4 portrait sheet). Editing a beneficiary
    profile stays Secretary-only; the Admin creates, archives, imports and exports.
 

@@ -236,7 +236,7 @@ Tabs: Overview | Activities | Beneficiaries | Budget.
 **Beneficiaries tab:**
 - **Add beneficiary**: type a name/community matching an existing beneficiary → **dedup warning requires
   explicit confirm** (5.4).
-- **Import XLSX** (mention): v2 template, 500 rows max, per-row New/Update/Other project/Skip preview.
+- **Import beneficiaries** (mention): v2 template, 500 rows max, per-row New/Update/Other project/Skip preview.
 - **Export PDF** (mention): the project roster as an A4 portrait sheet with the seal and contacts;
   attendance is intentionally excluded.
 

@@ -140,11 +140,11 @@ category and status (Active / Archived / All). Administrators and Secretaries ca
 **Expected:** the project hub opens on its **Beneficiaries** tab. Here you can:
 - **Add beneficiary** — create one person inside this project. A first + last + community match warns
   you and requires explicit confirmation; it is **never a silent merge**.
-- **Edit** — correct a person's details (Secretary only; Admin cannot edit). Moving a beneficiary to a
-  different project is allowed and warns that past attendance stays with the old activities.
+- **Edit** — correct a person's details (Secretary only; Admin cannot edit). The project is **fixed
+  once assigned**; you can still change their community/partner school within that project.
 - **Archive** — hide a person from active rosters. Attendance history stays. Use **Restore** on the
   registry page's Archived tab to bring them back.
-- **Import XLSX** — download the **v2** beneficiary template (one row = one beneficiary, 500 max),
+- **Import beneficiaries** — download the **v2** beneficiary template (one row = one beneficiary, 500 max),
   upload it, review the per-row **New / Update / Other project / Skip** preview, then confirm. Old
   templates are rejected. An existing person in this project is **updated**; a person already in
   another project is **skipped**; errors skip per row, never the whole file. Unknown categories

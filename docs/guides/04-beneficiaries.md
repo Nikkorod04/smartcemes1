@@ -1,124 +1,123 @@
-# Guide 04 — Beneficiaries: Register, Enroll, Dedup & XLSX Import (with real examples)
+# Guide 04 — Beneficiaries: Add, Edit, Archive & Import (v2)
 
-**Role: Admin** · Path: project hub → **Beneficiaries** tab
+**Role: Admin or Secretary** · Path: **Manage Beneficiaries** (or a project hub → **Beneficiaries** tab)
 · Prerequisite: guide 01 (SIKAD-DIGITAL exists)
 
-You will register 5 beneficiaries (auto-enrolled), trigger the
-de-duplication warning, enroll someone from the global registry, and bulk
-import a spreadsheet.
+You will add five beneficiaries to one project, trigger the de-duplication
+warning, correct a profile, archive/restore one person, and bulk import a
+spreadsheet. Every beneficiary belongs to **one project** and **one community /
+partner school**.
 
-## 1. Register these 5 beneficiaries
+## 1. Add these 5 beneficiaries
 
-On the **Beneficiaries** tab, click **Register new** and fill each row (the
-municipality pre-fills from the project's community — Tacloban City). The
-contact number may stay at its default `09123456789`.
+On the **Beneficiaries** tab, click **Add beneficiary** and fill each row. The
+project is fixed to the project you opened. Choose the project's community or
+partner school (for the seeded SIKAD-DIGITAL project, `Brgy. Sagkahan`). The
+contact number may stay blank — it will show as **“No contact provided.”**
 
-| First name | Last name | Age | Sex | Barangay | Category |
+| First name | Last name | Age | Sex | Community / Partner School | Category |
 |---|---|---|---|---|---|
-| Maria | Santos | 42 | Female | `Sagkahan` | Parent |
-| Josefina | Bautista | 38 | Female | `Sagkahan` | Parent |
-| Rogelio | Lim | 45 | Male | `Sagkahan` | Parent |
-| Analyn | Custodio | 29 | Female | `Sagkahan` | Parent |
-| Eduardo | Navarro | 51 | Male | `Sagkahan` | Parent |
+| Maria | Santos | 42 | Female | `Brgy. Sagkahan` | Parent |
+| Josefina | Bautista | 38 | Female | `Brgy. Sagkahan` | Parent |
+| Rogelio | Lim | 45 | Male | `Brgy. Sagkahan` | Parent |
+| Analyn | Custodio | 29 | Female | `Brgy. Sagkahan` | Parent |
+| Eduardo | Navarro | 51 | Male | `Brgy. Sagkahan` | Parent |
 
-**Expected per save:** toast "Beneficiary registered & enrolled"; the row
-appears in the table and the enrolled count climbs to **5 enrolled**.
+**Expected per save:** toast "Beneficiary added"; the row appears in the table and
+the active count climbs to **5 active**.
 
-Required fields: First name, Last name, Barangay, Beneficiary Category.
-Valid categories: Farmer, Fisherfolk, Fisherman, Housewife, Parent, Senior
-Citizen, Out-of-School Youth, Student, Vendor, Tricycle Driver, Construction
-Worker, Barangay Worker, Unemployed, Other. Sex: Female / Male / Prefer not
-to say.
+Required fields: First name, Last name, Age, Community / Partner School,
+Beneficiary Category. Names accept letters, spaces, periods, hyphens and
+apostrophes only; digits are rejected. Contact numbers accept digits, spaces,
+`+`, hyphens and parentheses, with at least seven digits.
 
 ## 2. Trigger the de-duplication warning (5.4)
 
-1. Click **Register new** again; type first name `Maria`, last name
-   `Santos`, barangay `Sagkahan`, any category; save.
+1. Click **Add beneficiary** again; type first name `Maria`, last name `Santos`,
+   the same community, any category; save.
 
-**Expected:** a **warning appears** — "A beneficiary with the same first
-name, last name, and barangay already exists: Maria Santos." — and you must
-**explicitly confirm** to proceed (never a silent merge). Confirm or cancel,
-your choice: confirming creates a second Maria Santos (allowed, but recorded);
-canceling aborts.
+**Expected:** a **warning appears** — "This person is already in this project:
+Maria Santos." — and you must **explicitly confirm** to proceed (never a silent
+merge). Confirm or cancel, your choice: confirming creates a second Maria Santos
+(allowed, but recorded); canceling aborts.
 
-## 3. Enroll an existing beneficiary from the registry
+## 3. Edit a profile (Secretary only)
 
-1. Click **Enroll existing**; search `Tan` (Roberto G. Tan — a seeded
-   beneficiary from Brgy. San Jose, enrolled in other projects).
-2. Click **Enroll** on his row.
+1. As the **Secretary**, click **Edit** on a row and change the phone number.
 
-**Expected:** toast "Beneficiary enrolled"; Roberto appears in the project's
-beneficiary table. The registry is global — one person can be enrolled in
-multiple projects.
+**Expected:** the change saves and is audited. The **Project** selector is
+disabled and labelled **“Fixed once assigned.”** The community can still be
+changed within the same project; a community outside that project is rejected.
 
-2. Try enrolling him again.
+> **Admin:** you can add, archive, import and export. Editing a profile stays
+> with the Secretary (D8).
 
-**Expected:** nothing happens / he is not duplicated (the pivot is
-set-unique).
+## 4. Archive and restore
 
-## 4. Unenroll someone
+1. Click **Archive** on a row. Confirm the prompt.
 
-Click **Unenroll** on any row you don't want (e.g. Roberto, or the duplicate
-Maria).
+**Expected:** the row leaves the active roster, but its attendance history stays.
+Open the **Beneficiaries** registry page, switch the status filter to
+**Archived**, and click **Restore** to bring the person back.
 
-**Expected:** toast "Beneficiary unenrolled"; the row leaves the table. (He
-stays in the global registry — only the project link is removed.)
-
-## 5. Bulk import via XLSX (v4.7 pattern)
+## 5. Bulk import via XLSX (v2)
 
 ### 5.1 Download the official template
 
-Click **Import XLSX** → **Download template**. Open the `.xlsx` — it has
-exactly these fixed headers (do not rename them):
+Click **Import beneficiaries** → **Download v2 template**. Open the `.xlsx` — it
+has exactly these fixed headers (do not rename them):
 
-`First Name | Middle Name | Last Name | Age | Sex | Contact Number | Barangay | Municipality / City | Beneficiary Category`
+`First Name | Middle Name | Last Name | Age | Sex | Contact Number | Community / Partner School | Beneficiary Category`
+
+The community must already exist and be linked to the target project. The old
+v1 template (Barangay + Municipality columns) is rejected.
 
 ### 5.2 Enter these 5 sample rows
 
-| First | Middle | Last | Age | Sex | Contact | Barangay | Municipality / City | Category |
-|---|---|---|---|---|---|---|---|---|
-| Lourdes | D. | Amper | 39 | Female | *(blank)* | Sagkahan | Tacloban City | Housewife |
-| Nelson | | Padilla | 44 | Male | 09171234567 | Sagkahan | Tacloban City | Vendor |
-| Precious | R. | Villar | 22 | Female | *(blank)* | Sagkahan | Tacloban City | Solo Parent |
-| Maria | | Santos | 42 | Female | *(blank)* | Sagkahan | Tacloban City | Parent |
-| Greg | | Mendoza | | Male | | Sagkahan | Tacloban City | *(blank)* |
+| First | Middle | Last | Age | Sex | Contact | Community / Partner School | Category |
+|---|---|---|---|---|---|---|---|
+| Lourdes | D. | Amper | 39 | Female | *(blank)* | Brgy. Sagkahan | Housewife |
+| Nelson | | Padilla | 44 | Male | 09171234567 | Brgy. Sagkahan | Vendor |
+| Precious | R. | Villar | 22 | Female | *(blank)* | Brgy. Sagkahan | Solo Parent |
+| Maria | | Santos | 42 | Female | *(blank)* | Brgy. Sagkahan | Parent |
+| Greg | | Mendoza | | Male | | Brgy. Sagkahan | *(blank)* |
 
 What each row demonstrates:
-- **Lourdes** — blank contact → defaults to `09123456789` on create.
+- **Lourdes** — blank contact stays blank on create and displays as “No contact provided.”
 - **Nelson** — a fully valid row with a real contact number.
 - **Precious** — "Solo Parent" is **not a known category** → auto-maps to
   **Other** (shown in the preview with the raw label kept).
-- **Maria Santos** — duplicate (same first + last + barangay as the registry)
-  → skipped with a **Duplicate** status.
-- **Greg** — missing Beneficiary Category (required) → **row error**,
-  skipped; the file is NOT rejected.
+- **Maria Santos** — already in this project → **Update** status, not a duplicate row.
+- **Greg** — missing Beneficiary Category (required) → **row error**, skipped;
+  the file is NOT rejected.
 
 Save the file (max 500 data rows per file).
 
 ### 5.3 Upload and preview
 
-Back in the Import modal: choose the file → the preview appears after
-parsing. Each row shows **Import / Duplicate / Skip** status, per-field
-errors, and "kept as Other" notes.
+Back in the Import modal: choose the file → the preview appears after parsing.
+Each row shows **New / Update / Other project / Skip** status, per-field errors,
+and "kept as Other" notes.
 
 ### 5.4 Confirm
 
-Click **Confirm & create** (records are only created on explicit confirm).
+Click **Confirm import** (records are only written on explicit confirm).
 
-**Expected:** toast: **"3 imported & enrolled · 1 duplicate skipped · 1 row
-with errors skipped"** — Lourdes, Nelson, and Precious (as Other) import and
-auto-enroll; Maria Santos is skipped as a duplicate; Greg is skipped for the
-missing category. The three new beneficiaries appear in the table.
+**Expected:** toast reports created/updated/skipped counts. Lourdes, Nelson and
+Precious (as Other) are created; Maria Santos is updated; Greg is skipped for the
+missing category. A person already owned by **another project** is skipped and
+the other project's code is shown.
 
 ## Report back
 
 | Check | Pass? |
 |---|---|
-| 5 registrations auto-enroll ("5 enrolled") | ☐ |
+| 5 additions create project-owned rows | ☐ |
 | Dedup warning requires explicit confirm | ☐ |
-| Enroll-existing search + enroll works | ☐ |
-| Double-enroll does not duplicate | ☐ |
-| Template download has the 9 fixed headers | ☐ |
-| Preview shows per-row Import/Duplicate/Skip statuses | ☐ |
+| Edit works for the Secretary and the project selector is disabled | ☐ |
+| Archive removes the row; Restore brings it back | ☐ |
+| Template download has the 8 v2 headers | ☐ |
+| Preview shows New/Update/Other project/Skip statuses | ☐ |
 | Unknown category auto-maps to Other | ☐ |
 | Error rows skipped, file not rejected | ☐ |
+| Blank contact shows “No contact provided” | ☐ |

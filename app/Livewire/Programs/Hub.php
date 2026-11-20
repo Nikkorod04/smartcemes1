@@ -468,8 +468,9 @@ class Hub extends Component
             'allCommunities' => Community::orderBy('name')->get(),
             'allProjects' => ExtensionProject::orderBy('code')->get(['id', 'code', 'title']),
             'projectCommunities' => $this->program->communities()->orderBy('name')->get(),
-            'editCommunities' => ExtensionProject::find($this->beneficiaryEditForm['extension_project_id'] ?? $this->program->id)
-                ?->communities()->orderBy('name')->get() ?? collect(),
+            'editCommunities' => $this->editingBeneficiaryId !== null
+                ? (Beneficiary::find($this->editingBeneficiaryId)?->extensionProject?->communities()->orderBy('name')->get() ?? collect())
+                : collect(),
             'beneficiaryCategories' => config('smartcemes.beneficiary_categories'),
             'served' => $performance['trainees'],
             // R4 performance payload
@@ -1525,19 +1526,17 @@ class Hub extends Component
         $this->showBeneficiaryEdit = true;
     }
 
-    /** Keep the edit community list honest when the Secretary moves the person. */
-    public function updatedBeneficiaryEditFormExtensionProjectId(): void
-    {
-        $projectId = (int) ($this->beneficiaryEditForm['extension_project_id'] ?? 0);
-        $first = ExtensionProject::find($projectId)?->communities()->orderBy('name')->first();
-
-        $this->beneficiaryEditForm['community_id'] = $first?->id ?? '';
-        $this->resetErrorBag('beneficiaryEditForm.community_id');
-    }
-
+    /** Keep the edit community list tied to the project the person already belongs to. */
     public function checkEditDedup(): void
     {
         $this->abortUnlessBeneficiaryEdit();
+
+        $beneficiary = $this->enrolledBeneficiary($this->editingBeneficiaryId);
+        $project = $beneficiary->extensionProject;
+
+        // The project is fixed once assigned (2026-11-20): ignore any tampered
+        // form value and use the stored project for validation and dedup.
+        $this->beneficiaryEditForm['extension_project_id'] = $project?->id;
 
         $this->editConfirmed = false;
         $this->editDedupWarning = '';
@@ -1546,10 +1545,8 @@ class Hub extends Component
 
         $this->validate($this->editRules(), BeneficiaryRules::messages('beneficiaryEditForm'));
 
-        $project = ExtensionProject::find($this->beneficiaryEditForm['extension_project_id']);
-
         if ($project === null || ! $project->communities()->whereKey($this->beneficiaryEditForm['community_id'])->exists()) {
-            $this->addError('beneficiaryEditForm.community_id', 'Choose a community or partner school linked to the selected project.');
+            $this->addError('beneficiaryEditForm.community_id', 'Choose a community or partner school linked to the person\'s project.');
 
             return;
         }
@@ -1558,7 +1555,7 @@ class Hub extends Component
             $this->beneficiaryEditForm['first_name'],
             $this->beneficiaryEditForm['last_name'],
             (int) $this->beneficiaryEditForm['community_id'],
-            (int) $this->beneficiaryEditForm['extension_project_id'],
+            $project->id,
         )->reject(fn (Beneficiary $dupe) => $dupe->id === $this->editingBeneficiaryId);
 
         $this->editCheckedKey = $this->editKey();
@@ -1582,16 +1579,20 @@ class Hub extends Component
         $this->abortUnlessBeneficiaryEdit();
 
         $beneficiary = $this->enrolledBeneficiary($this->editingBeneficiaryId);
+        $project = $beneficiary->extensionProject;
+
+        // The assignment is fixed once the person belongs to a project. A
+        // tampered form value is overwritten, never trusted.
+        $this->beneficiaryEditForm['extension_project_id'] = $project?->id;
 
         $this->trimBeneficiaryEditForm();
 
         $this->validate($this->editRules(), BeneficiaryRules::messages('beneficiaryEditForm'));
 
         $community = Community::find($this->beneficiaryEditForm['community_id']);
-        $project = ExtensionProject::find($this->beneficiaryEditForm['extension_project_id']);
 
         if ($community === null || $project === null || ! $project->communities()->whereKey($community->id)->exists()) {
-            $this->addError('beneficiaryEditForm.community_id', 'Choose a community or partner school linked to the selected project.');
+            $this->addError('beneficiaryEditForm.community_id', 'Choose a community or partner school linked to the person\'s project.');
 
             return;
         }
@@ -1609,7 +1610,6 @@ class Hub extends Component
         }
 
         $form = $this->beneficiaryEditForm;
-        $oldProjectId = $beneficiary->extension_project_id;
 
         $beneficiary->update([
             'first_name' => $form['first_name'],
@@ -1622,7 +1622,6 @@ class Hub extends Component
             'municipality' => $community->municipality,
             'province' => $community->province,
             'community_id' => $community->id,
-            'extension_project_id' => $project->id,
             'beneficiary_category' => $form['beneficiary_category'],
         ]);
 
@@ -1631,8 +1630,6 @@ class Hub extends Component
         activity()->performedOn($this->program)->event('beneficiary_updated')
             ->withProperties([
                 'beneficiary_id' => $beneficiary->id,
-                'project_from' => $oldProjectId,
-                'project_to' => $project->id,
             ])
             ->log("Beneficiary '{$beneficiary->fullName()}' updated from the project roster");
 
@@ -1661,7 +1658,8 @@ class Hub extends Component
     /** @return array<string, array<int, string>> */
     protected function editRules(): array
     {
-        return BeneficiaryRules::rules(true, 'beneficiaryEditForm', true);
+        // The project is fixed, so it is not part of the editable field set.
+        return BeneficiaryRules::rules(true, 'beneficiaryEditForm', false);
     }
 
     protected function trimBeneficiaryEditForm(): void

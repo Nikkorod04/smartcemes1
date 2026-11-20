@@ -265,7 +265,7 @@ class BeneficiaryEditTest extends TestCase
         $this->assertSame('Maria', $beneficiary->fresh()->first_name);
     }
 
-    public function test_the_secretary_can_move_a_beneficiary_and_history_stays_with_the_old_project(): void
+    public function test_the_project_is_fixed_once_assigned_and_tampering_is_ignored(): void
     {
         $program = $this->program();
         $beneficiary = $this->beneficiary();
@@ -296,20 +296,37 @@ class BeneficiaryEditTest extends TestCase
         ]);
         $otherProject->communities()->attach($otherCommunity->id);
 
+        // Even a tampered project value is ignored: the stored project wins.
         Livewire::actingAs($this->secretary())
             ->test(Hub::class, ['project' => $program])
             ->call('openBeneficiaryEdit', $beneficiary->id)
             ->set('beneficiaryEditForm.extension_project_id', $otherProject->id)
-            ->assertSet('beneficiaryEditForm.community_id', $otherCommunity->id)
             ->call('saveBeneficiaryEdit')
             ->assertHasNoErrors()
             ->assertSet('showBeneficiaryEdit', false);
 
         $beneficiary->refresh();
-        $this->assertSame($otherProject->id, $beneficiary->extension_project_id);
-        $this->assertSame($otherCommunity->id, $beneficiary->community_id);
+        $this->assertSame($program->id, $beneficiary->extension_project_id, 'The project must not change.');
+        $this->assertSame($this->currentCommunity->id, $beneficiary->community_id);
         $this->assertSame(1, $beneficiary->attendances()->count(), 'Past attendance stays with the old activity.');
         $this->assertSame(1, $activity->attendances()->count());
+    }
+
+    public function test_the_edit_rejects_a_community_from_another_project(): void
+    {
+        $program = $this->program();
+        $beneficiary = $this->beneficiary();
+
+        $otherCommunity = Community::factory()->create(['name' => 'Brgy. Elsewhere']);
+
+        Livewire::actingAs($this->secretary())
+            ->test(Hub::class, ['project' => $program])
+            ->call('openBeneficiaryEdit', $beneficiary->id)
+            ->set('beneficiaryEditForm.community_id', $otherCommunity->id)
+            ->call('saveBeneficiaryEdit')
+            ->assertHasErrors('beneficiaryEditForm.community_id');
+
+        $this->assertSame($this->currentCommunity->id, $beneficiary->fresh()->community_id);
     }
 
     public function test_a_registry_only_beneficiary_cannot_be_edited_from_a_project_roster(): void

@@ -33,7 +33,7 @@ Status legend: **LOCKED** = agreed, safe to build against. **PROPOSED** = recomm
 | D8 | Beneficiary edit scope | Secretary only; Admin keeps create/archive/import/export. | LOCKED (implemented 2026-11-19) |
 | D9 | Project-creation required set | ≥1 community, target beneficiaries, allocated budget, project lead, description (min ~20 chars). | LOCKED (implemented 2026-11-19) |
 | D10 | Manuscript scope | Restructure Results & Discussion per Specific Objective **and** correct the factual contradictions (stack, hierarchy, import scope, test counts). | LOCKED (implemented 2026-11-19) |
-| D11 | Beneficiary ownership | One project and one community/partner school per person. No enroll/unenroll; use create/edit/archive/restore. v2 XLSX only; per-project A4 portrait PDF roster. | LOCKED (implemented 2026-11-20, `revisions.md` §53) |
+| D11 | Beneficiary ownership | One project and one community/partner school per person. The project is fixed once assigned. No enroll/unenroll; use create/edit/archive/restore. v2 XLSX only; per-project A4 portrait PDF roster. | LOCKED (implemented 2026-11-20, `revisions.md` §53) |
 
 ### Why D3 matters
 

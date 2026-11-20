@@ -19,7 +19,7 @@
             @if ($canManageBeneficiaries)
                 <div class="flex flex-wrap gap-2 mt-3">
                     <button wire:click="openRegister" class="btn btn-primary !py-1.5 !text-[11.5px]"><x-sc.icon name="people" class="w-4 h-4" /> Add beneficiary</button>
-                    <button wire:click="openImport" class="btn btn-outline !py-1.5 !text-[11.5px]"><x-sc.icon name="upload" class="w-4 h-4" /> Import XLSX</button>
+                    <button wire:click="openImport" class="btn btn-outline !py-1.5 !text-[11.5px]"><x-sc.icon name="upload" class="w-4 h-4" /> Import beneficiaries</button>
                     <a href="{{ route('beneficiaries.export', $program) }}" class="btn btn-outline !py-1.5 !text-[11.5px]"><x-sc.icon name="download" class="w-4 h-4" /> Export PDF</a>
                     <a href="{{ route('beneficiaries.index') }}" class="btn btn-ghost !py-1.5 !text-[11.5px]">All beneficiaries</a>
                 </div>

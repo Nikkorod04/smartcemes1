@@ -185,7 +185,7 @@ class BeneficiaryExportTest extends TestCase
         $this->assertStringNotContainsString('wire:click="openEnroll"', $html);
 
         $this->assertStringContainsString('Add beneficiary', $html);
-        $this->assertStringContainsString('Import XLSX', $html);
+        $this->assertStringContainsString('Import beneficiaries', $html);
         $this->assertStringContainsString('Export PDF', $html);
         $this->assertStringContainsString('All beneficiaries', $html);
         $this->assertStringNotContainsString('Export XLSX', $html);

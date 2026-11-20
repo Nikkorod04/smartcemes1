@@ -655,6 +655,48 @@ class BeneficiaryManagementTest extends TestCase
             ->assertSet('form.community_id', $otherCommunity->id);
     }
 
+    public function test_registry_edit_keeps_the_assigned_project_even_if_tampered(): void
+    {
+        $data = $this->seedBase();
+        $beneficiary = $this->beneficiary($data['program'], $data['community']);
+
+        $otherProject = ExtensionProject::create([
+            'code' => 'EXT-2026-013',
+            'title' => 'Other Project',
+            'planned_start_date' => '2026-01-01',
+            'planned_end_date' => '2026-12-31',
+            'status' => 'ongoing',
+            'allocated_budget' => 10000,
+        ]);
+        $otherProject->communities()->attach(Community::factory()->create(['name' => 'Brgy. Elsewhere'])->id);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openEdit', $beneficiary->id)
+            ->set('form.extension_project_id', $otherProject->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame($data['program']->id, $beneficiary->fresh()->extension_project_id);
+        $this->assertSame($data['community']->id, $beneficiary->fresh()->community_id);
+    }
+
+    public function test_registry_edit_rejects_a_community_from_another_project(): void
+    {
+        $data = $this->seedBase();
+        $beneficiary = $this->beneficiary($data['program'], $data['community']);
+        $outside = Community::factory()->create(['name' => 'Brgy. Elsewhere']);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openEdit', $beneficiary->id)
+            ->set('form.community_id', $outside->id)
+            ->call('save')
+            ->assertHasErrors('form.community_id');
+
+        $this->assertSame($data['community']->id, $beneficiary->fresh()->community_id);
+    }
+
     public function test_registry_page_keeps_editing_secretary_only(): void
     {
         $data = $this->seedBase();

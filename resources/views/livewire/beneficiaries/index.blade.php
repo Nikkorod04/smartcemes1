@@ -185,10 +185,16 @@
                 </div>
 
                 <div class="mt-4 grid grid-cols-2 gap-3">
-                    <div><label class="label" for="ben-project">Project <span class="text-red-500">*</span></label><x-sc.select id="ben-project" model="form.extension_project_id" :value="$form['extension_project_id'] ?? null" :options="$projects->mapWithKeys(fn ($p) => [$p->id => $p->code.' — '.$p->title])->all()" placeholder="Choose project" :search="$projects->count() > 12" /></div>
+                    <div><label class="label" for="ben-project">Project <span class="text-red-500">*</span></label><x-sc.select id="ben-project" model="form.extension_project_id" :value="$form['extension_project_id'] ?? null" :options="$projects->mapWithKeys(fn ($p) => [$p->id => $p->code.' — '.$p->title])->all()" placeholder="Choose project" :search="$projects->count() > 12" :disabled="$projectLocked" /><p class="mt-1 text-[10.5px] font-medium text-gray-400">{{ $projectLocked ? 'Fixed once assigned.' : 'One project per beneficiary.' }}</p></div>
                     <div><label class="label" for="ben-community">Community / Partner School <span class="text-red-500">*</span></label><x-sc.select id="ben-community" model="form.community_id" :value="$form['community_id'] ?? null" :options="$formCommunities->mapWithKeys(fn ($c) => [$c->id => $c->name.($c->municipality ? ' — '.$c->municipality : '')])->all()" placeholder="Choose community or school" :search="$formCommunities->count() > 12" /></div>
                 </div>
-                <p class="mt-2 text-[11px] leading-relaxed text-gray-400">The community must be linked to the chosen project. Moving a beneficiary keeps past attendance under the old activities.</p>
+                <p class="mt-2 text-[11px] leading-relaxed text-gray-400">
+                    @if ($projectLocked)
+                        The project is fixed once a beneficiary is assigned. The community must belong to that project.
+                    @else
+                        The community must be linked to the chosen project.
+                    @endif
+                </p>
 
                 <div class="mt-4 grid grid-cols-2 gap-3">
                     <div><label class="label" for="ben-phone">Contact number</label><input id="ben-phone" maxlength="20" inputmode="tel" class="input" wire:model="form.phone" placeholder="0917 123 4567">@error('form.phone') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
