@@ -2345,15 +2345,8 @@ button.pn-portfolio-stat:focus-visible { outline:3px solid rgba(246,184,0,.55); 
 .faculty-calendar-page .calendar-event-meta { color:#718096; font-weight:650; }
 
 /* ============================================================
-   PRINT — reports use #print-area to produce clean hard copies
+   PRINT
+   Report pages own their print rules in layouts.report: A4 landscape,
+   page-break control, and the paper frame. A global `body * { visibility:
+   hidden }` rule here would clip multi-page reports, so it lives there.
    ============================================================ */
-@media print {
-  body * { visibility:hidden; }
-  #print-area, #print-area * { visibility:visible; }
-  #print-area {
-    position:absolute; inset:0; margin:0;
-    box-shadow:none !important; border:none !important; border-radius:0 !important;
-  }
-  .no-print { display:none !important; }
-  @page { size:A4 landscape; margin:12mm; }
-}

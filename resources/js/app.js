@@ -52,6 +52,153 @@ window.SC = {
 // registering its components (an early start races Livewire and breaks
 // $wire/@this expressions evaluated before component registration).
 
+/**
+ * Reports workspace (2026-11-20): report catalog + scope filters + A4 paper.
+ *
+ * The report itself is server-rendered; this only builds the preview URL and
+ * scales the A4 landscape page (1123 x 794 CSS px) into the available width.
+ * "Print / Save as PDF" prints the iframe document, whose @media print rules
+ * are the same rules used by the standalone report page.
+ */
+window.reportsWorkspace = function (config) {
+    return {
+        report: 'annual',
+        year: config.year,
+        college: '',
+        program: '',
+        community: '',
+        projectId: config.projects[0]?.id ?? '',
+        scale: 1,
+        frameHeight: 794,
+        reports: [
+            { key: 'annual', label: 'Annual Extension Performance' },
+            { key: 'community-impact', label: 'Community Partner Impact' },
+            { key: 'rendered-hours', label: 'Faculty Rendered Hours' },
+            { key: 'project-performance', label: 'Project Performance' },
+        ],
+
+        get selectedReport() {
+            return this.reports.find((r) => r.key === this.report) || this.reports[0];
+        },
+
+        get filteredProjects() {
+            return config.projects.filter((p) =>
+                (!this.college || String(p.college) === String(this.college)) &&
+                (!this.program || String(p.program) === String(this.program)) &&
+                (!this.community || p.communities.map(String).includes(String(this.community)))
+            );
+        },
+
+        get selectedProject() {
+            return this.filteredProjects.find((p) => String(p.id) === String(this.projectId))
+                || this.filteredProjects[0]
+                || null;
+        },
+
+        get previewUrl() {
+            if (this.report === 'project-performance') {
+                return this.selectedProject
+                    ? `/reports/results-framework/${this.selectedProject.id}?preview=1`
+                    : null;
+            }
+
+            const params = new URLSearchParams({ year: String(this.year), preview: '1' });
+
+            if (this.college) params.set('college', this.college);
+            if (this.program) params.set('program', this.program);
+            if (this.community) params.set('community', this.community);
+
+            return `/reports/${this.report}?${params.toString()}`;
+        },
+
+        get fullUrl() {
+            if (!this.previewUrl) return '#';
+
+            const url = new URL(this.previewUrl, window.location.origin);
+            url.searchParams.delete('preview');
+
+            return url.pathname + (url.search || '');
+        },
+
+        get scopeLabel() {
+            const parts = this.report === 'project-performance'
+                ? ['All years']
+                : [String(this.year)];
+
+            parts.push(this.college ? (config.collegeNames[this.college] || 'Selected college') : 'All colleges');
+            parts.push(this.program ? (config.programNames[this.program] || 'Selected program') : 'All programs');
+            parts.push(this.community ? (config.communityNames[this.community] || 'Selected community') : 'All communities');
+
+            return parts.join(' · ');
+        },
+
+        get paperStyle() {
+            return `width:${Math.round(1123 * this.scale)}px;height:${Math.round(this.frameHeight * this.scale)}px;`;
+        },
+
+        get frameStyle() {
+            return `width:1123px;height:${this.frameHeight}px;transform:scale(${this.scale});transform-origin:top left;border:0;`;
+        },
+
+        selectReport(key) {
+            this.report = key;
+            this.$nextTick(() => this.fit());
+        },
+
+        reset() {
+            this.year = config.year;
+            this.college = '';
+            this.program = '';
+            this.community = '';
+            this.projectId = config.projects[0]?.id ?? '';
+            this.$nextTick(() => this.fit());
+        },
+
+        init() {
+            this.$nextTick(() => this.fit());
+            this.$watch('previewUrl', () => this.$nextTick(() => setTimeout(() => this.fit(), 180)));
+            this.$watch('filteredProjects', (projects) => {
+                if (projects.length && !projects.some((p) => String(p.id) === String(this.projectId))) {
+                    this.projectId = projects[0].id;
+                }
+            });
+
+            if (window.ResizeObserver && this.$refs.viewport) {
+                new ResizeObserver(() => this.fit()).observe(this.$refs.viewport);
+            }
+        },
+
+        fit() {
+            const frame = this.$refs.frame;
+            const viewport = this.$refs.viewport;
+
+            if (!frame || !viewport) {
+                return;
+            }
+
+            let contentHeight = 794;
+
+            try {
+                contentHeight = Math.max(794, frame.contentDocument?.documentElement?.scrollHeight || 0);
+            } catch (e) {
+                // Same-origin should be readable; a failure falls back to one page.
+            }
+
+            this.frameHeight = contentHeight;
+            this.scale = Math.min(1, viewport.clientWidth > 0 ? viewport.clientWidth / 1123 : 1);
+        },
+
+        printReport() {
+            const win = this.$refs.frame?.contentWindow;
+
+            if (win) {
+                win.focus();
+                win.print();
+            }
+        },
+    };
+};
+
 document.addEventListener('livewire:init', () => {
     Livewire.on('sc-toast', ({ message, type }) => SC.toast(message, type));
 });

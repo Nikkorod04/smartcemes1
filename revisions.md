@@ -6047,6 +6047,66 @@ Full suite after the follow-up: **782 passed, 4,444 assertions**.
 
 ---
 
+## 52. REPORTS WORKSPACE REFRESH (2026-11-20)
+
+### 52.1 The index is a workspace, not four cards
+
+`/reports` is now a two-column workspace: a report catalog and scope on the left, an **A4 landscape
+paper preview** on the right. The four reports are Annual (restored as the **flagship**), Community
+Partner Impact, Faculty Rendered Hours, and Project Performance. Project Performance uses one project
+selector instead of 15 separate preview buttons.
+
+### 52.2 Shared scope
+
+Every report accepts the same scope: **year, college, broad program, community**. Project Performance
+also selects a project (filtered by college/program/community). The report header prints the resolved
+scope line, e.g. `2026 · Arts and Sciences · All programs · Anibong Elementary School`.
+
+### 52.3 A4 landscape paper
+
+`layouts.report` now owns the print rules:
+
+- `@page { size: A4 landscape; margin: 12mm; }`;
+- a paper frame that is `297mm × 210mm` on screen;
+- table rows cannot split, table headers repeat, headings stay with their section;
+- the real university seal, a **Generated** timestamp, and three signature blocks with blank
+  **“Name and Signature”** lines;
+- `?preview=1` hides the toolbar so the workspace iframe shows only the paper.
+
+The workspace scales the 1123 × 794 CSS-px page into the preview column and grows the paper to the
+content height, so a long report is readable in one continuous sheet. “Print / Save as PDF” prints the
+iframe document; no PDF engine was added.
+
+### 52.4 Content trim
+
+- **Annual:** summary band (projects, trainees, training hours, budget utilization), then portfolio,
+  training delivery, faculty participation, budget, and assessment outcomes. The placeholder “Project
+  Narratives” section and the long compliance paragraph are gone. Faculty with zero participation and
+  summaries from other years are excluded.
+- **Community Impact:** only communities with linked projects or validated assessments; 57 sections
+  became 6 in the live data. Contact details were removed; totals were added.
+- **Rendered Hours:** summary band with faculty, entries, and total approved hours; per-faculty tables;
+  the internal “never summed” note became a plain sentence.
+- **Project Performance:** the technical “Trainee source” column moved to a footnote; internal
+  reassurance text was removed; the annual-hours-target and allocated-budget wording is unchanged.
+
+### 52.5 Bug fixed
+
+`/reports/annual` returned **500** in production because a summary pointed at a deleted community and
+the view read `$s->community->name`. The query now excludes summaries without a live community and the
+view is null-safe.
+
+### 52.6 Tests
+
+`ReportMetricDictionaryTest` was updated for the four-report index and the annual flagship.
+`ReportsWorkspaceTest` covers the index catalog, the annual null-community regression, college and
+community filters, empty-community exclusion, preview toolbar hiding, A4 landscape, blank signature
+lines, and the trimmed annual content. Report suites: **13 passed, 76 assertions**.
+
+Full suite after the reports refresh: **789 passed, 4,475 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

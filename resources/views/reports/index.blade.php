@@ -1,108 +1,162 @@
 <x-app-layout>
-<div x-data="{ previewOpen: false, previewUrl: '', previewTitle: '' }" @keydown.escape.window="previewOpen = false">
-    <section class="pt-6 grid gap-4 md:grid-cols-2">
-        {{-- Annual Extension Performance card — hidden from the index for now.
-             The /reports/annual route and page still exist; re-enable by
-             uncommenting. --}}
-        {{-- <article class="sc-card group relative overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-pop">
-            <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-lnu-50/80"></div>
-            <div class="relative flex h-full flex-col justify-between gap-6">
-                <div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-lnu-50 text-lnu-800"><x-sc.icon name="doc" class="w-5 h-5" /></span>
-                        <span class="badge badge-blue">Annual</span>
-                    </div>
-                    <h2 class="font-extrabold text-[15px] tracking-tight mt-4">Annual Extension Performance</h2>
-                    <p class="text-[12px] text-gray-500 leading-relaxed mt-1.5">Projects, trainees reached, faculty participation, training delivery, and budget utilization for the reporting year.</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" @click="previewOpen = true; previewUrl = @js(route('reports.annual')); previewTitle = 'Annual Extension Performance Report'" class="btn btn-outline !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="eye" class="w-3.5 h-3.5" />Preview</button>
-                    <a href="{{ route('reports.annual') }}" target="_blank" rel="noopener" class="btn btn-primary !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="link" class="w-3.5 h-3.5" />Open report</a>
-                </div>
-            </div>
-        </article> --}}
+<div
+    x-data="reportsWorkspace({
+        year: {{ (int) $defaultYear }},
+        projects: @js($projects),
+        collegeNames: @js($collegeNames),
+        programNames: @js($programNames),
+        communityNames: @js($communityNames),
+    })"
+    x-init="init()"
+    class="pt-6"
+>
+    <div class="grid items-start gap-5 xl:grid-cols-12">
+        {{-- ===================== LEFT: CATALOG + SCOPE ===================== --}}
+        <aside class="space-y-4 xl:col-span-3">
+            <section class="sc-card p-5">
+                <h1 class="text-[20px] font-extrabold tracking-tight text-charcoal">Reports</h1>
+                <p class="mt-1 text-[11.5px] leading-relaxed text-gray-500">
+                    Choose a report, set the scope, then print or save it as a PDF.
+                </p>
 
-        <article class="sc-card group relative overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:border-gold-200 hover:shadow-pop">
-            <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gold-50/80"></div>
-            <div class="relative flex h-full flex-col justify-between gap-6">
-                <div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-50 text-gold-700"><x-sc.icon name="clock" class="w-5 h-5" /></span>
-                        <span class="badge badge-gold">Approved only</span>
-                    </div>
-                    <h2 class="font-extrabold text-[15px] tracking-tight mt-4">Faculty Rendered Hours</h2>
-                    <p class="text-[12px] text-gray-500 leading-relaxed mt-1.5">Approved service-credit entries grouped by faculty, activity, project, date, and rendered hours.</p>
+                <div class="mt-4 space-y-2">
+                    @foreach ([
+                        ['key' => 'annual', 'label' => 'Annual Extension Performance', 'flagship' => true, 'desc' => 'The flagship institutional report: projects, reach, training delivery, faculty and budget.'],
+                        ['key' => 'community-impact', 'label' => 'Community Partner Impact', 'flagship' => false, 'desc' => 'Projects, people reached and validated assessment outcomes per community.'],
+                        ['key' => 'rendered-hours', 'label' => 'Faculty Rendered Hours', 'flagship' => false, 'desc' => 'Approved service-credit entries by faculty, activity and project.'],
+                        ['key' => 'project-performance', 'label' => 'Project Performance', 'flagship' => false, 'desc' => 'One project against its annual hours target and allocated budget.'],
+                    ] as $r)
+                        <button type="button"
+                                x-on:click="selectReport('{{ $r['key'] }}')"
+                                x-bind:class="report === '{{ $r['key'] }}'
+                                    ? 'border-lnu-800 bg-lnu-800 text-white shadow-sm'
+                                    : 'border-gray-200 bg-white text-charcoal hover:border-lnu-300 hover:bg-lnu-50/40'"
+                                class="w-full rounded-xl border px-3.5 py-3 text-left transition">
+                            <span class="flex items-center justify-between gap-2">
+                                <span class="text-[12.5px] font-extrabold leading-snug">{{ $r['label'] }}</span>
+                                @if ($r['flagship'])
+                                    <span class="badge badge-gold !text-[9px]">Flagship</span>
+                                @endif
+                            </span>
+                            <span class="mt-1 block text-[10.5px] leading-snug"
+                                  x-bind:class="report === '{{ $r['key'] }}' ? 'text-white/70' : 'text-gray-400'">{{ $r['desc'] }}</span>
+                        </button>
+                    @endforeach
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" @click="previewOpen = true; previewUrl = @js(route('reports.rendered-hours')); previewTitle = 'Faculty Rendered Hours Report'" class="btn btn-outline !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="eye" class="w-3.5 h-3.5" />Preview</button>
-                    <a href="{{ route('reports.rendered-hours') }}" target="_blank" rel="noopener" class="btn btn-primary !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="link" class="w-3.5 h-3.5" />Open report</a>
-                </div>
-            </div>
-        </article>
+            </section>
 
-        <article class="sc-card group relative overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-pop">
-            <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-emerald-50/80"></div>
-            <div class="relative flex h-full flex-col justify-between gap-6">
-                <div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><x-sc.icon name="people" class="w-5 h-5" /></span>
-                        <span class="badge badge-green">Community</span>
-                    </div>
-                    <h2 class="font-extrabold text-[15px] tracking-tight mt-4">Community Partner Impact</h2>
-                    <p class="text-[12px] text-gray-500 leading-relaxed mt-1.5">Projects per community, people served, and the latest validated assessment outcomes and recommendations.</p>
+            <section class="sc-card p-5">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-[13px] font-extrabold tracking-tight">Scope</h2>
+                    <button type="button" x-on:click="reset()" class="text-[10.5px] font-bold text-lnu-700 underline">Reset</button>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" @click="previewOpen = true; previewUrl = @js(route('reports.community-impact')); previewTitle = 'Community Partner Impact Summary'" class="btn btn-outline !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="eye" class="w-3.5 h-3.5" />Preview</button>
-                    <a href="{{ route('reports.community-impact') }}" target="_blank" rel="noopener" class="btn btn-primary !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="link" class="w-3.5 h-3.5" />Open report</a>
-                </div>
-            </div>
-        </article>
 
-        <article class="sc-card group relative overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-pop">
-            <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-violet-50/80"></div>
-            <div class="relative">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><x-sc.icon name="chart" class="w-5 h-5" /></span>
-                        <div><h2 class="font-extrabold text-[15px] tracking-tight">Project Performance</h2><p class="text-[11px] text-gray-400 mt-0.5">Select a project to inspect</p></div>
-                    </div>
-                    <span class="badge badge-gray">{{ $programs->count() }} projects</span>
+                <div class="mt-3 space-y-3">
+                    <label class="block" x-bind:class="report === 'project-performance' ? 'opacity-50' : ''">
+                        <span class="mb-1 block text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Year</span>
+                        <select x-model.number="year" class="input !py-2 text-[12px]">
+                            @foreach ($years as $y)
+                                <option value="{{ $y }}">{{ $y }}</option>
+                            @endforeach
+                        </select>
+                        <span class="mt-1 block text-[10px] text-gray-400">Used by the annual, community and rendered-hours reports.</span>
+                    </label>
+
+                    <label class="block">
+                        <span class="mb-1 block text-[10.5px] font-bold uppercase tracking-wide text-gray-400">College</span>
+                        <select x-model="college" class="input !py-2 text-[12px]">
+                            <option value="">All colleges</option>
+                            @foreach ($colleges as $c)
+                                <option value="{{ $c->id }}">{{ $c->short_name ?: $c->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    <label class="block">
+                        <span class="mb-1 block text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Program</span>
+                        <select x-model="program" class="input !py-2 text-[12px]">
+                            <option value="">All programs</option>
+                            @foreach ($programs as $p)
+                                <option value="{{ $p->id }}">{{ $p->code }} — {{ $p->title }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    <label class="block">
+                        <span class="mb-1 block text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Community</span>
+                        <select x-model="community" class="input !py-2 text-[12px]">
+                            <option value="">All communities</option>
+                            @foreach ($communities as $c)
+                                <option value="{{ $c->id }}">{{ $c->name }}@if ($c->municipality) — {{ $c->municipality }}@endif</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    <label class="block" x-bind:class="report === 'project-performance' ? '' : 'opacity-60'">
+                        <span class="mb-1 block text-[10.5px] font-bold uppercase tracking-wide text-gray-400">Project</span>
+                        <select x-model="projectId" class="input !py-2 text-[12px]">
+                            <template x-for="p in filteredProjects" x-bind:key="p.id">
+                                <option x-bind:value="p.id" x-text="p.code + ' — ' + p.title"></option>
+                            </template>
+                        </select>
+                        <span class="mt-1 block text-[10px] text-gray-400">Used by Project Performance only.</span>
+                        <span class="mt-1 block text-[10.5px] text-amber-700" style="display:none"
+                              x-bind:style="filteredProjects.length ? 'display:none' : ''">
+                            No project matches this scope.
+                        </span>
+                    </label>
                 </div>
-                <div class="relative mt-5 grid gap-2 sm:grid-cols-2">
-                    @forelse ($programs as $p)
-                        <div class="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2.5 transition hover:border-lnu-200 hover:bg-lnu-50/50">
-                            <div class="min-w-0"><p class="text-[11px] font-bold text-lnu-800">{{ $p->code }}</p><p class="truncate text-[12px] font-semibold text-charcoal" title="{{ $p->title }}">{{ $p->title }}</p></div>
-                            <button type="button" @click="previewOpen = true; previewUrl = @js(route('reports.results-framework', $p)); previewTitle = @js('Project Performance · '.$p->code)" class="btn btn-ghost !shrink-0 !px-2 !py-1.5 !text-[11px]">Preview</button>
+            </section>
+        </aside>
+
+        {{-- ===================== RIGHT: A4 PAPER ===================== --}}
+        <section class="min-w-0 xl:col-span-9">
+            <div class="sc-card overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-[13px] font-extrabold tracking-tight" x-text="selectedReport.label"></p>
+                        <p class="mt-0.5 truncate text-[10.5px] font-medium text-gray-400" x-text="scopeLabel"></p>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-2">
+                        <a x-bind:href="fullUrl" target="_blank" rel="noopener"
+                           class="btn btn-outline !px-3 !py-2 !text-[11.5px]">
+                            <x-sc.icon name="eye" class="w-3.5 h-3.5" />Open full
+                        </a>
+                        <button type="button" x-on:click="printReport()"
+                                class="btn btn-primary !px-3 !py-2 !text-[11.5px]">
+                            <x-sc.icon name="doc" class="w-3.5 h-3.5" />Print / Save as PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-[#e9edf4] p-3 sm:p-4" x-bind:style="previewUrl ? '' : 'display:none'">
+                    <div x-ref="viewport" class="mx-auto max-w-full overflow-x-auto">
+                        <div class="mx-auto overflow-hidden bg-white shadow-xl ring-1 ring-black/10"
+                             x-bind:style="paperStyle">
+                            <iframe x-ref="frame"
+                                    x-bind:src="previewUrl"
+                                    x-on:load="fit()"
+                                    x-bind:style="frameStyle"
+                                    title="A4 report preview"></iframe>
                         </div>
-                    @empty
-                        <p class="text-[12px] text-gray-400 italic sm:col-span-2">No projects are available for reporting yet.</p>
-                    @endforelse
-                </div>
-                @if ($programs->isNotEmpty())
-                    <p class="relative text-[11px] text-gray-400 mt-3">Each project opens its own performance report with project-level metrics and activity detail.</p>
-                @endif
-            </div>
-        </article>
-    </section>
+                    </div>
 
-    <footer class="mt-8 text-center text-[11px] text-gray-300 font-medium no-print">
-        SmartCEMES · Community Extension Services Office · Leyte Normal University
-    </footer>
-
-    <div x-cloak x-show="previewOpen" x-transition.opacity.duration.150ms class="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="report-preview-title">
-        <div class="absolute inset-0 sc-modal-backdrop" @click="previewOpen = false"></div>
-        <section class="relative flex h-[min(92vh,920px)] w-full max-w-[1180px] flex-col overflow-hidden rounded-2xl bg-white shadow-pop" @click.stop>
-            <header class="sc-modal-header !shrink-0 !border-b-0 !px-4 !py-3 sm:!px-5">
-                <div class="min-w-0"><p class="rh-filter-label">Print-ready preview</p><h2 id="report-preview-title" class="truncate sc-modal-title !text-[15px]" x-text="previewTitle"></h2></div>
-                <div class="flex shrink-0 items-center gap-2">
-                    <a :href="previewUrl" target="_blank" rel="noopener" class="btn btn-primary !px-3 !py-2 !text-[11.5px]"><x-sc.icon name="link" class="w-3.5 h-3.5" />Open full report</a>
-                    <button type="button" @click="previewOpen = false" aria-label="Close report preview" class="sc-modal-close"><x-sc.icon name="x" class="w-4 h-4" /></button>
+                    <p class="mt-2 text-center text-[10.5px] font-medium text-gray-400">
+                        A4 landscape · the preview is the print layout · use <b>Print / Save as PDF</b> in the browser dialog
+                    </p>
                 </div>
-            </header>
-            <div class="min-h-0 flex-1 bg-gray-100 p-2 sm:p-4">
-                <iframe :src="previewUrl" title="Report preview" class="h-full w-full rounded-xl border border-gray-200 bg-white shadow-sm"></iframe>
             </div>
-            <p class="shrink-0 border-t border-gray-100 px-4 py-2 text-center text-[11px] text-gray-400">Use <b>Print report</b> in the full report, then choose <b>Save as PDF</b> in your browser.</p>
+
+            <div class="sc-card mt-4 p-9 text-center" style="display:none"
+                 x-bind:style="previewUrl ? 'display:none' : ''">
+                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gold-50 text-gold-600">
+                    <x-sc.icon name="doc" class="h-6 w-6" />
+                </span>
+                <p class="mt-3 text-[13px] font-extrabold">Choose a project</p>
+                <p class="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-gray-400">
+                    Project Performance needs one project. Set the scope on the left and pick a project to see its A4 report.
+                </p>
+            </div>
         </section>
     </div>
 </div>

@@ -30,10 +30,6 @@
      project's ALLOCATION (budget has no annual target — owner decision 2026-09-26). --}}
 <section class="mb-6">
     <h2 class="font-extrabold text-[14px] tracking-tight text-lnu-800 uppercase mb-1">Performance against the annual hours target and the allocation</h2>
-    <p class="text-[11.5px] text-gray-500 mb-3">
-        Formula: <span class="font-semibold">trainors × trainees × days</span> — hours are <span class="font-semibold">not</span> multiplied by 8.
-        Days carry the duration (1.0 full day, 0.5 half day). Trainees resolve from imported attendance first, then the manual participant count, then 0.
-    </p>
     <table class="sc-table">
         <thead>
             <tr>
@@ -93,7 +89,6 @@
                 <th>Date</th>
                 <th class="!text-right">Trainors</th>
                 <th class="!text-right">Trainees</th>
-                <th>Trainee source</th>
                 <th class="!text-right">Days</th>
                 <th class="!text-right">Training hrs</th>
                 <th>Status</th>
@@ -106,16 +101,15 @@
                     <td>{{ $activityDates[$row['activity_id']] ?? '—' }}</td>
                     <td class="!text-right font-semibold">{{ $row['trainors'] }}</td>
                     <td class="!text-right font-semibold">{{ $row['trainees'] > 0 ? number_format($row['trainees']) : '—' }}</td>
-                    <td class="text-[11.5px]">{{ $row['trainees_source_label'] }}</td>
                     <td class="!text-right">{{ $hoursSvc->formatDays($row['days']) }}</td>
                     <td class="!text-right font-bold">{{ number_format($row['hours']) }}</td>
                     <td>{{ ucfirst($row['status']) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="text-center text-gray-400 py-6">No activities recorded for this project.</td></tr>
+                <tr><td colspan="7" class="text-center text-gray-400 py-6">No activities recorded for this project.</td></tr>
             @endforelse
         </tbody>
     </table>
-    <p class="text-[11px] text-gray-500 mt-2">Actual figures roll up from the activities recorded inside this project. Nothing on this report is an estimate.</p>
+    <p class="text-[10.5px] leading-relaxed text-gray-500 mt-2">Figures roll up from the activities recorded in this project. Trainees use present/late attendance where recorded, otherwise the recorded participant count. Days carry the duration: 1.0 full day, 0.5 half day.</p>
 </section>
 @endsection
