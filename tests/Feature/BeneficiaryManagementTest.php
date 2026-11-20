@@ -338,6 +338,54 @@ class BeneficiaryManagementTest extends TestCase
         $this->assertSame(1, Beneficiary::count(), 'The other project’s record must not be duplicated or moved.');
     }
 
+    /* ==================== registry import ==================== */
+
+    public function test_registry_page_imports_for_the_chosen_project(): void
+    {
+        $data = $this->seedBase();
+
+        $file = $this->makeXlsx([
+            ['Pedro', '', 'Ramos', '50', 'Male', '09171234567', 'San Jose', 'Farmer'],
+        ]);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openImport')
+            ->assertSet('showImport', true)
+            ->set('importProjectId', (string) $data['program']->id)
+            ->set('importFile', $file)
+            ->call('parseImport')
+            ->assertSet('importPreview', true)
+            ->assertCount('importRows', 1)
+            ->call('confirmImport')
+            ->assertSet('showImport', false);
+
+        $beneficiary = Beneficiary::sole();
+        $this->assertSame($data['program']->id, $beneficiary->extension_project_id);
+        $this->assertSame($data['community']->id, $beneficiary->community_id);
+        $this->assertSame('09171234567', $beneficiary->phone);
+    }
+
+    public function test_registry_import_requires_a_target_project(): void
+    {
+        $data = $this->seedBase();
+
+        $file = $this->makeXlsx([
+            ['Pedro', '', 'Ramos', '50', 'Male', '', 'San Jose', 'Farmer'],
+        ]);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openImport')
+            ->set('importProjectId', '')
+            ->set('importFile', $file)
+            ->call('parseImport')
+            ->assertHasErrors('importProjectId')
+            ->assertSet('importPreview', false);
+
+        $this->assertSame(0, Beneficiary::count());
+    }
+
     /* ==================== attendance import still works ==================== */
 
     public function test_secretary_can_import_activity_attendance(): void
@@ -528,7 +576,8 @@ class BeneficiaryManagementTest extends TestCase
             ->assertSee('Juan Dela Cruz')
             ->assertSee('San Jose')
             ->assertSee('EXT-2026-010')
-            ->assertSee('Add beneficiary');
+            ->assertSee('Add beneficiary')
+            ->assertSee('Import beneficiaries');
 
         Livewire::actingAs($data['secretary'])
             ->test(BeneficiariesIndex::class)

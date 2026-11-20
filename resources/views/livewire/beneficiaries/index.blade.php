@@ -9,9 +9,14 @@
                 </p>
             </div>
             @if ($status !== 'archived')
-                <button type="button" wire:click="openCreate" class="btn btn-primary">
-                    <x-sc.icon name="plus" class="h-4 w-4" /> Add beneficiary
-                </button>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" wire:click="openImport" class="btn btn-outline">
+                        <x-sc.icon name="upload" class="h-4 w-4" /> Import beneficiaries
+                    </button>
+                    <button type="button" wire:click="openCreate" class="btn btn-primary">
+                        <x-sc.icon name="plus" class="h-4 w-4" /> Add beneficiary
+                    </button>
+                </div>
             @endif
         </div>
 
@@ -135,7 +140,7 @@
                                     <p class="text-[13px] font-semibold text-gray-400">No archived beneficiaries.</p>
                                 @else
                                     <p class="text-[13px] font-semibold text-gray-400">No beneficiaries yet.</p>
-                                    <p class="mt-1 text-[11.5px] text-gray-300">Add one, or import the v2 XLSX template from a project hub.</p>
+                                    <p class="mt-1 text-[11.5px] text-gray-300">Add one, or import the v2 template here.</p>
                                 @endif
                             </td>
                         </tr>
@@ -218,4 +223,9 @@
             </footer>
         </form>
     </div>
+
+    @include('livewire.partials.beneficiary-import-modal', [
+        'showImportProjectPicker' => true,
+        'importProjects' => $projects,
+    ])
 </div>

@@ -5,10 +5,12 @@ namespace App\Livewire\Beneficiaries;
 use App\Models\Beneficiary;
 use App\Models\Community;
 use App\Models\ExtensionProject;
+use App\Services\BeneficiaryImporter;
 use App\Services\BeneficiaryRules;
 use App\Models\User;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 /**
@@ -21,6 +23,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use WithFileUploads;
     use WithPagination;
 
     public string $search = '';
@@ -37,6 +40,16 @@ class Index extends Component
     public bool $showForm = false;
 
     public ?int $editingId = null;
+
+    public bool $showImport = false;
+
+    public $importFile = null;
+
+    public array $importRows = [];
+
+    public bool $importPreview = false;
+
+    public $importProjectId = '';
 
     public array $form = [
         'first_name' => '', 'middle_name' => '', 'last_name' => '',
@@ -130,6 +143,86 @@ class Index extends Component
         $this->showForm = false;
         $this->editingId = null;
         $this->resetErrorBag();
+    }
+
+    public function openImport(): void
+    {
+        $this->guard();
+
+        $this->resetErrorBag();
+        $this->importFile = null;
+        $this->importRows = [];
+        $this->importPreview = false;
+        $this->importProjectId = $this->projectId !== '' ? $this->projectId : '';
+        $this->showImport = true;
+    }
+
+    public function updatedImportFile(): void
+    {
+        $this->resetErrorBag('importFile');
+    }
+
+    public function updatedImportProjectId(): void
+    {
+        $this->resetErrorBag('importProjectId');
+    }
+
+    public function parseImport(): void
+    {
+        $this->guard();
+
+        $this->validate([
+            'importProjectId' => ['required', 'integer', 'exists:extension_projects,id'],
+            'importFile' => 'required|file|mimes:xlsx|max:'.config('smartcemes.uploads.max_kb'),
+        ], [
+            'importProjectId.required' => 'Choose the project this import belongs to.',
+        ]);
+
+        $project = ExtensionProject::findOrFail((int) $this->importProjectId);
+        $result = app(BeneficiaryImporter::class)->parse($this->importFile, $project);
+
+        if ($result['error'] !== null) {
+            $this->addError('importFile', $result['error']);
+
+            return;
+        }
+
+        $this->importRows = $result['rows'];
+        $this->importPreview = true;
+    }
+
+    public function confirmImport(): void
+    {
+        $this->guard();
+
+        if ($this->importRows === []) {
+            $this->addError('importFile', 'Nothing parsed to import.');
+
+            return;
+        }
+
+        $project = ExtensionProject::findOrFail((int) $this->importProjectId);
+        $importer = app(BeneficiaryImporter::class);
+        $counts = $importer->confirm($this->importRows, $project);
+
+        $this->dispatch(
+            'sc-toast',
+            message: $importer->summary($counts),
+            type: ($counts['created'] + $counts['updated']) > 0 ? 'success' : 'warn',
+        );
+
+        $this->showImport = false;
+        $this->importPreview = false;
+        $this->importRows = [];
+        $this->importFile = null;
+
+        // Show the roster the rows were just written to.
+        $this->projectId = (string) $project->id;
+        $this->communityId = '';
+        $this->category = '';
+        $this->search = '';
+        $this->status = 'active';
+        $this->resetPage();
     }
 
     public function save(): void

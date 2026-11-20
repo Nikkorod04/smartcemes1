@@ -135,24 +135,27 @@ queue (§2), ready to validate. The source file is archived for audit.
 searchable table of every beneficiary you can see, and filters for project, community/partner school,
 category and status (Active / Archived / All). Administrators and Secretaries can open it.
 
-2. Use **Add beneficiary** to add one person, or open a project hub's **Beneficiaries** tab.
+2. Use **Add beneficiary** to add one person, or **Import beneficiaries** to bulk-load a spreadsheet.
 
-**Expected:** the project hub opens on its **Beneficiaries** tab. Here you can:
+**Expected for import:** the modal asks for the **target project** first, then the v2 `.xlsx`. Download
+the template, fill one row per person, upload it, review the per-row **New / Update / Other project /
+Skip** preview, then confirm. Old templates are rejected. An existing person in that project is
+**updated**; a person already in another project is **skipped**; errors skip per row, never the whole
+file. Unknown categories auto-map to "Other". A blank contact stays blank and displays as
+**“No contact provided.”**
+
+3. You can also open a project hub's **Beneficiaries** tab. The project is already fixed there, and the
+same import is available. In the hub you can:
 - **Add beneficiary** — create one person inside this project. A first + last + community match warns
   you and requires explicit confirmation; it is **never a silent merge**.
 - **Edit** — correct a person's details (Secretary only; Admin cannot edit). The project is **fixed
   once assigned**; you can still change their community/partner school within that project.
 - **Archive** — hide a person from active rosters. Attendance history stays. Use **Restore** on the
   registry page's Archived tab to bring them back.
-- **Import beneficiaries** — download the **v2** beneficiary template (one row = one beneficiary, 500 max),
-  upload it, review the per-row **New / Update / Other project / Skip** preview, then confirm. Old
-  templates are rejected. An existing person in this project is **updated**; a person already in
-  another project is **skipped**; errors skip per row, never the whole file. Unknown categories
-  auto-map to "Other". A blank contact stays blank and displays as **“No contact provided.”**
 - **Export PDF** — print or download this project's active roster as an A4 portrait PDF with the
   university seal, project details and contact numbers. Attendance is not part of this sheet.
 
-3. Go back and click **Attendance** on a project instead.
+4. Go back and click **Attendance** on a project instead.
 
 **Expected:** the hub opens on its **Activities** tab. Open an activity's **Records** modal to serve
 the generated **attendance** template (the enrolled roster is pre-filled) or the **evaluation**

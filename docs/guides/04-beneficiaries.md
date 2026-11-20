@@ -64,8 +64,9 @@ Open the **Beneficiaries** registry page, switch the status filter to
 
 ### 5.1 Download the official template
 
-Click **Import beneficiaries** → **Download v2 template**. Open the `.xlsx` — it
-has exactly these fixed headers (do not rename them):
+On **Manage Beneficiaries**, click **Import beneficiaries** and choose the **target project** in the
+modal (the project hub already knows its project). Then click **Download v2 template**. Open the
+`.xlsx` — it has exactly these fixed headers (do not rename them):
 
 `First Name | Middle Name | Last Name | Age | Sex | Contact Number | Community / Partner School | Beneficiary Category`
 

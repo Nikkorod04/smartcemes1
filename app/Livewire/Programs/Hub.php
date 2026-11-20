@@ -15,8 +15,8 @@ use App\Models\RenderedHours;
 use App\Notifications\SmartCemesNotification;
 use App\Services\ActivityAttendanceImport;
 use App\Services\ActivityEvaluationImport;
+use App\Services\BeneficiaryImporter;
 use App\Services\BeneficiaryRules;
-use App\Services\BeneficiaryTemplate;
 use App\Services\KpiService;
 use App\Services\ProgramNarrativeService;
 use App\Services\TrainingHoursService;
@@ -30,7 +30,6 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 #[Layout('layouts.app')]
 class Hub extends Component
@@ -1702,160 +1701,15 @@ class Hub extends Component
             'importFile' => 'required|file|mimes:xlsx|max:'.config('smartcemes.uploads.max_kb'),
         ]);
 
-        // Livewire tmp paths can exceed Windows MAX_PATH (uploads encode
-        // metadata in the filename) and PhpSpreadsheet's ZipArchive cannot
-        // read those — copy to a short temp path first (§14 gotcha).
-        $tmp = tempnam(sys_get_temp_dir(), 'sc_ben_').'.xlsx';
-        $spreadsheet = null;
-        try {
-            copy($this->importFile->getRealPath(), $tmp);
-            $spreadsheet = IOFactory::load($tmp);
-        } catch (\Throwable) {
-            $spreadsheet = null;
-        } finally {
-            @unlink($tmp);
-        }
+        $result = app(BeneficiaryImporter::class)->parse($this->importFile, $this->program);
 
-        if ($spreadsheet === null) {
-            $this->addError('importFile', 'Could not read the file as an XLSX workbook.');
+        if ($result['error'] !== null) {
+            $this->addError('importFile', $result['error']);
 
             return;
         }
 
-        $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-
-        $fieldByHeader = [];
-        foreach (BeneficiaryTemplate::COLUMNS as $field => $col) {
-            $fieldByHeader[$col['header']] = $field;
-        }
-
-        // Locate the fixed header row and map column letter -> field.
-        $columnField = null;
-        $dataRows = [];
-        foreach ($rows as $row) {
-            if ($columnField === null) {
-                $mapped = [];
-                foreach ($row as $colLetter => $header) {
-                    $header = trim((string) $header);
-                    if (isset($fieldByHeader[$header])) {
-                        $mapped[$colLetter] = $fieldByHeader[$header];
-                    }
-                }
-                if (count($mapped) >= 6) {
-                    $columnField = $mapped;
-                }
-
-                continue;
-            }
-
-            $isEmpty = true;
-            foreach ($row as $value) {
-                if (trim((string) $value) !== '') {
-                    $isEmpty = false;
-                    break;
-                }
-            }
-            if (! $isEmpty) {
-                $dataRows[] = $row;
-            }
-        }
-
-        // v2 needs both the community and category headers. Older templates fail
-        // here rather than importing rows with a guessed community.
-        if ($columnField === null
-            || ! in_array('community', $columnField, true)
-            || ! in_array('beneficiary_category', $columnField, true)) {
-            $this->addError('importFile', 'This file does not use the v2 beneficiary template. Download the new template and do not rename columns.');
-
-            return;
-        }
-
-        if ($dataRows === []) {
-            $this->addError('importFile', 'No data rows found under the template headers.');
-
-            return;
-        }
-
-        if (count($dataRows) > BeneficiaryTemplate::MAX_ROWS) {
-            $this->addError('importFile', 'Too many rows — the import accepts at most '.BeneficiaryTemplate::MAX_ROWS.' beneficiaries per file.');
-
-            return;
-        }
-
-        $communities = $this->program->communities()->get();
-        $communityByName = [];
-        foreach ($communities as $community) {
-            $communityByName[$this->communityKey($community->name)] = $community;
-        }
-
-        $existing = $this->program->beneficiaries()->get()
-            ->keyBy(fn (Beneficiary $b) => $this->beneficiaryKey($b->first_name, $b->last_name, $b->community_id));
-
-        $otherProjects = Beneficiary::query()
-            ->where('extension_project_id', '!=', $this->program->id)
-            ->with('extensionProject')
-            ->get()
-            ->keyBy(fn (Beneficiary $b) => $this->beneficiaryKey($b->first_name, $b->last_name, $b->community_id));
-
-        $seen = [];
-        $this->importRows = [];
-
-        foreach ($dataRows as $row) {
-            $raw = [];
-            foreach ($columnField as $colLetter => $field) {
-                $raw[$field] = trim((string) ($row[$colLetter] ?? ''));
-            }
-
-            $result = BeneficiaryTemplate::normalizeRow($raw);
-            $data = $result['data'];
-            $errors = $result['errors'];
-            $community = null;
-            $status = 'new';
-            $existingId = null;
-            $otherProject = null;
-
-            if ($errors === []) {
-                $community = $communityByName[$this->communityKey((string) $data['community'])] ?? null;
-
-                if ($community === null) {
-                    $errors['community'] = 'This community/partner school is not linked to the project. Add the link first.';
-                }
-            }
-
-            if ($errors === []) {
-                $key = $this->beneficiaryKey($data['first_name'], $data['last_name'], $community->id);
-
-                if (isset($seen[$key])) {
-                    $errors['first_name'] = 'Duplicate person in this file — only the first row will be used.';
-                } else {
-                    $seen[$key] = true;
-
-                    if ($existing->has($key)) {
-                        $status = 'update';
-                        $existingId = $existing->get($key)->id;
-                    } elseif ($otherProjects->has($key)) {
-                        $status = 'other_project';
-                        $otherProject = $otherProjects->get($key)->extensionProject?->code ?? 'another project';
-                    }
-                }
-            }
-
-            if ($errors !== []) {
-                $status = 'error';
-            }
-
-            $this->importRows[] = [
-                'data' => $data,
-                'errors' => $errors,
-                'category_other' => $result['category_other'],
-                'status' => $status,
-                'existing_id' => $existingId,
-                'community_id' => $community?->id,
-                'community_name' => $community?->name ?? ($data['community'] ?? null),
-                'other_project' => $otherProject,
-            ];
-        }
-
+        $this->importRows = $result['rows'];
         $this->importPreview = true;
     }
 
@@ -1870,115 +1724,20 @@ class Hub extends Component
             return;
         }
 
-        $created = 0;
-        $updated = 0;
-        $otherProject = 0;
-        $failed = 0;
+        $importer = app(BeneficiaryImporter::class);
+        $counts = $importer->confirm($this->importRows, $this->program);
 
-        DB::transaction(function () use (&$created, &$updated, &$otherProject, &$failed) {
-            foreach ($this->importRows as $row) {
-                if ($row['status'] === 'error') {
-                    $failed++;
-
-                    continue;
-                }
-
-                if ($row['status'] === 'other_project') {
-                    $otherProject++;
-
-                    continue;
-                }
-
-                $data = $row['data'];
-                $community = Community::find($row['community_id']);
-
-                if ($community === null) {
-                    $failed++;
-
-                    continue;
-                }
-
-                if ($row['status'] === 'update' && $row['existing_id'] !== null) {
-                    $beneficiary = Beneficiary::query()
-                        ->where('extension_project_id', $this->program->id)
-                        ->find($row['existing_id']);
-
-                    if ($beneficiary !== null) {
-                        // Only filled cells update; a blank cell never erases data.
-                        $updates = [
-                            'community_id' => $community->id,
-                            'barangay' => $community->name,
-                            'municipality' => $community->municipality,
-                            'province' => $community->province,
-                        ];
-
-                        foreach (['first_name', 'middle_name', 'last_name', 'gender', 'beneficiary_category'] as $field) {
-                            if (($data[$field] ?? null) !== null) {
-                                $updates[$field] = $data[$field];
-                            }
-                        }
-
-                        if (($data['age'] ?? null) !== null) {
-                            $updates['age'] = (int) $data['age'];
-                        }
-
-                        if (($data['phone'] ?? null) !== null) {
-                            $updates['phone'] = BeneficiaryRules::normaliseContact($data['phone']);
-                        }
-
-                        $beneficiary->update($updates);
-                        $updated++;
-                    }
-
-                    continue;
-                }
-
-                Beneficiary::create([
-                    'first_name' => $data['first_name'],
-                    'middle_name' => $data['middle_name'] ?: null,
-                    'last_name' => $data['last_name'],
-                    'age' => $data['age'] !== null ? (int) $data['age'] : null,
-                    'gender' => $data['gender'],
-                    'phone' => BeneficiaryRules::normaliseContact($data['phone'] ?? null),
-                    'barangay' => $community->name,
-                    'municipality' => $community->municipality,
-                    'province' => $community->province,
-                    'community_id' => $community->id,
-                    'extension_project_id' => $this->program->id,
-                    'beneficiary_category' => $data['beneficiary_category'],
-                ]);
-
-                $created++;
-            }
-        });
-
-        if ($created > 0 || $updated > 0) {
-            activity()->performedOn($this->program)->event('beneficiary_import')
-                ->withProperties(['created' => $created, 'updated' => $updated])
-                ->log("{$created} beneficiaries created and {$updated} updated from the XLSX template");
-        }
-
-        $summary = "{$created} created · {$updated} updated";
-        $summary .= $otherProject > 0 ? " · {$otherProject} skipped (exists in another project)" : '';
-        $summary .= $failed > 0 ? " · {$failed} skipped (errors)" : '';
-        $this->dispatch('sc-toast', message: $summary, type: ($created + $updated) > 0 ? 'success' : 'warn');
+        $this->dispatch(
+            'sc-toast',
+            message: $importer->summary($counts),
+            type: ($counts['created'] + $counts['updated']) > 0 ? 'success' : 'warn',
+        );
 
         $this->showImport = false;
         $this->importPreview = false;
         $this->importRows = [];
         $this->importFile = null;
     }
-
-    protected function communityKey(?string $name): string
-    {
-        return mb_strtolower(preg_replace('/\s+/', ' ', trim((string) $name)) ?? '');
-    }
-
-    protected function beneficiaryKey(?string $firstName, ?string $lastName, ?int $communityId): string
-    {
-        return mb_strtolower(trim((string) $firstName).'|'.trim((string) $lastName).'|'.(int) $communityId);
-    }
-
     /* ==================== BUDGET ==================== */
 
     public function openBudgetForm(): void
