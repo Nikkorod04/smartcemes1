@@ -1,11 +1,11 @@
-@extends('layouts.report', [
+@extends($pdfLayout ?? 'layouts.report', [
     'reportTitle' => 'Faculty Rendered Hours Report',
     'subtitle' => 'Approved entries only · by faculty, activity and project',
     'scopeLabel' => $scopeLabel,
 ])
 
 @section('content')
-    <section class="report-section mb-6 grid grid-cols-3 gap-3">
+    <section class="report-section mb-6 grid grid-cols-3 gap-3 pdf-tiles">
         <div class="rounded-xl border border-lnu-100 bg-lnu-50/60 px-4 py-3">
             <p class="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-lnu-800">Faculty</p>
             <p class="mt-1 text-[22px] font-extrabold leading-none text-lnu-900">{{ number_format($entries->count()) }}</p>

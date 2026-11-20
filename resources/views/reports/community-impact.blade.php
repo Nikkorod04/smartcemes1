@@ -1,4 +1,4 @@
-@extends('layouts.report', [
+@extends($pdfLayout ?? 'layouts.report', [
     'reportTitle' => 'Community Partner Impact Summary',
     'subtitle' => 'Projects, reach, and validated assessment outcomes per community',
     'scopeLabel' => $scopeLabel,
@@ -6,7 +6,7 @@
 
 @section('content')
     {{-- At a glance --}}
-    <section class="report-section mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <section class="report-section mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4 pdf-tiles">
         <div class="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
             <p class="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-emerald-800">Communities</p>
             <p class="mt-1 text-[22px] font-extrabold leading-none text-emerald-900">{{ number_format($totals['communities']) }}</p>

@@ -6073,9 +6073,10 @@ scope line, e.g. `2026 · Arts and Sciences · All programs · Anibong Elementar
   **“Name and Signature”** lines;
 - `?preview=1` hides the toolbar so the workspace iframe shows only the paper.
 
-The workspace scales the 1123 × 794 CSS-px page into the preview column and grows the paper to the
-content height, so a long report is readable in one continuous sheet. “Print / Save as PDF” prints the
-iframe document; no PDF engine was added.
+The workspace embeds the real PDF (`?pdf=1`) in the browser’s PDF viewer; **Download PDF** returns
+the attachment. mPDF (pure PHP, no Chromium) renders A4 landscape with a repeated letterhead and a
+**Page X of Y** footer. The HTML report stays reachable through **Open report** for quick reading or
+browser printing.
 
 ### 52.4 Content trim
 
@@ -6101,9 +6102,22 @@ view is null-safe.
 `ReportMetricDictionaryTest` was updated for the four-report index and the annual flagship.
 `ReportsWorkspaceTest` covers the index catalog, the annual null-community regression, college and
 community filters, empty-community exclusion, preview toolbar hiding, A4 landscape, blank signature
-lines, and the trimmed annual content. Report suites: **13 passed, 76 assertions**.
+lines, and the trimmed annual content. `ReportPdfTest` covers the real PDF stream, the attachment
+header, admin-only access, and the workspace’s PDF affordances. Report suites after the PDF engine:
+**17 passed, 100 assertions**.
 
-Full suite after the reports refresh: **789 passed, 4,475 assertions**.
+### 52.7 PDF engine (mPDF)
+
+- `mpdf/mpdf ^8.3` is a **pure-PHP** dependency; the VM needs no Chromium or Node for PDFs.
+- `?pdf=1` streams the PDF inline; `?download=1` returns it as an attachment.
+- `ReportPdfService` owns the A4 landscape format, the repeated letterhead, the generated timestamp,
+  and the **Page X of Y** footer. `layouts.pdf` supplies print-friendly CSS; the report views choose it
+  through `$pdfLayout`.
+- The workspace iframe now points at the PDF, and **Download PDF** uses the attachment route.
+- The deploy script runs `composer install` when `composer.lock` is newer than the installed vendor
+  manifest, so the package reaches the VM.
+
+Full suite after the reports refresh and PDF engine: **793 passed, 4,499 assertions**.
 
 ---
 

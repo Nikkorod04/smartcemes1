@@ -120,29 +120,22 @@
                     <div class="flex shrink-0 items-center gap-2">
                         <a x-bind:href="fullUrl" target="_blank" rel="noopener"
                            class="btn btn-outline !px-3 !py-2 !text-[11.5px]">
-                            <x-sc.icon name="eye" class="w-3.5 h-3.5" />Open full
+                            <x-sc.icon name="eye" class="w-3.5 h-3.5" />Open report
                         </a>
-                        <button type="button" x-on:click="printReport()"
-                                class="btn btn-primary !px-3 !py-2 !text-[11.5px]">
-                            <x-sc.icon name="doc" class="w-3.5 h-3.5" />Print / Save as PDF
-                        </button>
+                        <a x-bind:href="downloadUrl"
+                           class="btn btn-primary !px-3 !py-2 !text-[11.5px]">
+                            <x-sc.icon name="doc" class="w-3.5 h-3.5" />Download PDF
+                        </a>
                     </div>
                 </div>
 
                 <div class="bg-[#e9edf4] p-3 sm:p-4" x-bind:style="previewUrl ? '' : 'display:none'">
-                    <div x-ref="viewport" class="mx-auto max-w-full overflow-x-auto">
-                        <div class="mx-auto overflow-hidden bg-white shadow-xl ring-1 ring-black/10"
-                             x-bind:style="paperStyle">
-                            <iframe x-ref="frame"
-                                    x-bind:src="previewUrl"
-                                    x-on:load="fit()"
-                                    x-bind:style="frameStyle"
-                                    title="A4 report preview"></iframe>
-                        </div>
-                    </div>
+                    <iframe x-bind:src="previewUrl"
+                            class="h-[min(80vh,900px)] w-full rounded-lg border border-gray-200 bg-white"
+                            title="A4 PDF preview"></iframe>
 
                     <p class="mt-2 text-center text-[10.5px] font-medium text-gray-400">
-                        A4 landscape · the preview is the print layout · use <b>Print / Save as PDF</b> in the browser dialog
+                        A4 landscape PDF &middot; page numbers &middot; use <b>Download PDF</b> for the file
                     </p>
                 </div>
             </div>

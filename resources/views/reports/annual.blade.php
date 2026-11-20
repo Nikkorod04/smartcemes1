@@ -1,4 +1,4 @@
-@extends('layouts.report', [
+@extends($pdfLayout ?? 'layouts.report', [
     'reportTitle' => 'Annual Extension Performance Report',
     'subtitle' => 'Academic Year '.$year.' · Institutional report',
     'scopeLabel' => $scopeLabel,
@@ -6,7 +6,7 @@
 
 @section('content')
     {{-- At a glance: the four figures a reader needs from this report. --}}
-    <section class="report-section mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <section class="report-section mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4 pdf-tiles">
         <div class="rounded-xl border border-lnu-100 bg-lnu-50/60 px-4 py-3">
             <p class="text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-lnu-800">Projects</p>
             <p class="mt-1 text-[22px] font-extrabold leading-none text-lnu-900">{{ number_format($summary['projects']) }}</p>

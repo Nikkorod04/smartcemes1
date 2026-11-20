@@ -48,7 +48,7 @@ class ReportsWorkspaceTest extends TestCase
             ->assertSee('Faculty Rendered Hours')
             ->assertSee('Project Performance')
             ->assertSee('Flagship')
-            ->assertSee('Print / Save as PDF');
+            ->assertSee('Download PDF');
     }
 
     public function test_the_annual_report_survives_a_summary_whose_community_was_removed(): void

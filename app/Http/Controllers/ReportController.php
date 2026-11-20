@@ -9,8 +9,10 @@ use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\Program;
 use App\Models\RenderedHours;
+use App\Services\ReportPdfService;
 use App\Services\TrainingHoursService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 /**
@@ -74,7 +76,7 @@ class ReportController extends Controller
     }
 
     /** 1. Annual Extension Performance Report — the flagship institutional report. */
-    public function annual(): View
+    public function annual(): View|Response
     {
         abort_unless(auth()->user()->isAdmin(), 403);
 
@@ -164,39 +166,51 @@ class ReportController extends Controller
             ? round($summary['utilized'] / $summary['allocation'] * 100, 1)
             : null;
 
-        return view('reports.annual', compact(
-            'filters',
-            'programs',
-            'trainingDelivery',
-            'budgetUtilization',
-            'facultyParticipation',
-            'summaries',
-            'summary',
-        ) + [
-            'year' => $filters['year'],
-            'totalServed' => $summary['trainees'],
-            'scopeLabel' => $this->scopeLabel($filters),
-        ]);
+        return $this->respond(
+            'reports.annual',
+            compact(
+                'filters',
+                'programs',
+                'trainingDelivery',
+                'budgetUtilization',
+                'facultyParticipation',
+                'summaries',
+                'summary',
+            ) + [
+                'year' => $filters['year'],
+                'totalServed' => $summary['trainees'],
+                'scopeLabel' => $this->scopeLabel($filters),
+            ],
+            'Annual Extension Performance Report',
+            'Academic Year '.$filters['year'].' · Institutional report',
+            'annual-extension-performance-'.$filters['year'].'.pdf',
+        );
     }
 
     /** 2. Project Performance Report. */
-    public function resultsFramework(ExtensionProject $program): View
+    public function resultsFramework(ExtensionProject $program): View|Response
     {
         abort_unless(auth()->user()->isAdmin(), 403);
 
         $program->load(['programLead.user', 'communities', 'college', 'program']);
 
-        return view('reports.results-framework', [
-            'program' => $program,
-            'activityDates' => $program->activities()
-                ->orderBy('planned_start_date')
-                ->get()
-                ->mapWithKeys(fn ($a) => [$a->id => $a->planned_start_date->format('M j, Y')]),
-        ]);
+        return $this->respond(
+            'reports.results-framework',
+            [
+                'program' => $program,
+                'activityDates' => $program->activities()
+                    ->orderBy('planned_start_date')
+                    ->get()
+                    ->mapWithKeys(fn ($a) => [$a->id => $a->planned_start_date->format('M j, Y')]),
+            ],
+            'Project Performance Report',
+            $program->code.' · '.$program->title,
+            'project-performance-'.$program->code.'.pdf',
+        );
     }
 
     /** 3. Faculty Rendered Hours (approved only, by activity and project). */
-    public function renderedHours(): View
+    public function renderedHours(): View|Response
     {
         abort_unless(auth()->user()->isAdmin(), 403);
 
@@ -216,17 +230,23 @@ class ReportController extends Controller
             ->get()
             ->groupBy(fn (RenderedHours $e) => $e->faculty?->user?->name ?? 'Unassigned faculty');
 
-        return view('reports.rendered-hours', [
-            'filters' => $filters,
-            'entries' => $entries,
-            'grandTotal' => (float) $entries->flatten()->sum('hours'),
-            'entryCount' => $entries->flatten()->count(),
-            'scopeLabel' => $this->scopeLabel($filters),
-        ]);
+        return $this->respond(
+            'reports.rendered-hours',
+            [
+                'filters' => $filters,
+                'entries' => $entries,
+                'grandTotal' => (float) $entries->flatten()->sum('hours'),
+                'entryCount' => $entries->flatten()->count(),
+                'scopeLabel' => $this->scopeLabel($filters),
+            ],
+            'Faculty Rendered Hours Report',
+            'Approved entries only · by faculty, activity and project',
+            'faculty-rendered-hours-'.$filters['year'].'.pdf',
+        );
     }
 
     /** 4. Community Partner Impact Summary. */
-    public function communityImpact(): View
+    public function communityImpact(): View|Response
     {
         abort_unless(auth()->user()->isAdmin(), 403);
 
@@ -265,17 +285,51 @@ class ReportController extends Controller
                 'training_hours' => $c->extensionPrograms->sum(fn ($p) => $hours->forProject($p)['actual_hours']),
             ]);
 
-        return view('reports.community-impact', [
-            'filters' => $filters,
-            'communities' => $communities,
-            'totals' => [
-                'communities' => $communities->count(),
-                'projects' => $communities->sum(fn ($c) => $c->programs->count()),
-                'served' => (int) $communities->sum('served'),
-                'training_hours' => (float) $communities->sum('training_hours'),
+        return $this->respond(
+            'reports.community-impact',
+            [
+                'filters' => $filters,
+                'communities' => $communities,
+                'totals' => [
+                    'communities' => $communities->count(),
+                    'projects' => $communities->sum(fn ($c) => $c->programs->count()),
+                    'served' => (int) $communities->sum('served'),
+                    'training_hours' => (float) $communities->sum('training_hours'),
+                ],
+                'scopeLabel' => $this->scopeLabel($filters),
             ],
-            'scopeLabel' => $this->scopeLabel($filters),
-        ]);
+            'Community Partner Impact Summary',
+            'Projects, reach, and validated assessment outcomes per community',
+            'community-partner-impact-'.$filters['year'].'.pdf',
+        );
+    }
+
+    /**
+     * Render the HTML report, or stream the real PDF when `?pdf=1` is present.
+     *
+     * `?download=1` turns the same PDF into an attachment. The view is chosen
+     * by the controller (never by the request), so the PDF route cannot render
+     * an arbitrary template.
+     */
+    private function respond(
+        string $view,
+        array $data,
+        string $title,
+        string $subtitle,
+        string $filename,
+    ): View|Response {
+        if (request()->boolean('pdf')) {
+            return app(ReportPdfService::class)->stream(
+                $view,
+                $data,
+                $title,
+                $subtitle,
+                $filename,
+                request()->boolean('download'),
+            );
+        }
+
+        return view($view, $data);
     }
 
     /** @return array{year:int,college:?int,program:?int,community:?int} */

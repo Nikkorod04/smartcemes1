@@ -89,6 +89,16 @@ git pull --ff-only
 git log --oneline -1
 "@
 
+# ------------------------------------------------------------ php dependencies
+Write-Step 'Installing PHP dependencies'
+Invoke-Remote @"
+set -e
+cd $RemotePath
+if [ ! -f vendor/composer/installed.json ] || [ composer.lock -nt vendor/composer/installed.json ]; then
+    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+fi
+"@
+
 # --------------------------------------------------------------- build assets
 if ($SkipBuild) {
     Write-Step 'Skipping asset build (-SkipBuild)'

@@ -53,12 +53,12 @@ window.SC = {
 // $wire/@this expressions evaluated before component registration).
 
 /**
- * Reports workspace (2026-11-20): report catalog + scope filters + A4 paper.
+ * Reports workspace (2026-11-20): report catalog + scope filters + real PDF.
  *
- * The report itself is server-rendered; this only builds the preview URL and
- * scales the A4 landscape page (1123 x 794 CSS px) into the available width.
- * "Print / Save as PDF" prints the iframe document, whose @media print rules
- * are the same rules used by the standalone report page.
+ * The iframe points at the PDF route (`?pdf=1`); the browser's PDF viewer shows
+ * the actual A4 landscape document, including its page count and page numbers.
+ * `downloadUrl` adds `download=1` for the attachment version. The HTML report
+ * stays available through `fullUrl` for quick reading or browser printing.
  */
 window.reportsWorkspace = function (config) {
     return {
@@ -68,8 +68,6 @@ window.reportsWorkspace = function (config) {
         program: '',
         community: '',
         projectId: config.projects[0]?.id ?? '',
-        scale: 1,
-        frameHeight: 794,
         reports: [
             { key: 'annual', label: 'Annual Extension Performance' },
             { key: 'community-impact', label: 'Community Partner Impact' },
@@ -98,11 +96,11 @@ window.reportsWorkspace = function (config) {
         get previewUrl() {
             if (this.report === 'project-performance') {
                 return this.selectedProject
-                    ? `/reports/results-framework/${this.selectedProject.id}?preview=1`
+                    ? `/reports/results-framework/${this.selectedProject.id}?pdf=1`
                     : null;
             }
 
-            const params = new URLSearchParams({ year: String(this.year), preview: '1' });
+            const params = new URLSearchParams({ year: String(this.year), pdf: '1' });
 
             if (this.college) params.set('college', this.college);
             if (this.program) params.set('program', this.program);
@@ -111,11 +109,21 @@ window.reportsWorkspace = function (config) {
             return `/reports/${this.report}?${params.toString()}`;
         },
 
+        get downloadUrl() {
+            if (!this.previewUrl) return '#';
+
+            const url = new URL(this.previewUrl, window.location.origin);
+            url.searchParams.set('download', '1');
+
+            return url.pathname + (url.search || '');
+        },
+
         get fullUrl() {
             if (!this.previewUrl) return '#';
 
             const url = new URL(this.previewUrl, window.location.origin);
-            url.searchParams.delete('preview');
+            url.searchParams.delete('pdf');
+            url.searchParams.delete('download');
 
             return url.pathname + (url.search || '');
         },
@@ -132,17 +140,8 @@ window.reportsWorkspace = function (config) {
             return parts.join(' · ');
         },
 
-        get paperStyle() {
-            return `width:${Math.round(1123 * this.scale)}px;height:${Math.round(this.frameHeight * this.scale)}px;`;
-        },
-
-        get frameStyle() {
-            return `width:1123px;height:${this.frameHeight}px;transform:scale(${this.scale});transform-origin:top left;border:0;`;
-        },
-
         selectReport(key) {
             this.report = key;
-            this.$nextTick(() => this.fit());
         },
 
         reset() {
@@ -151,50 +150,14 @@ window.reportsWorkspace = function (config) {
             this.program = '';
             this.community = '';
             this.projectId = config.projects[0]?.id ?? '';
-            this.$nextTick(() => this.fit());
         },
 
         init() {
-            this.$nextTick(() => this.fit());
-            this.$watch('previewUrl', () => this.$nextTick(() => setTimeout(() => this.fit(), 180)));
             this.$watch('filteredProjects', (projects) => {
                 if (projects.length && !projects.some((p) => String(p.id) === String(this.projectId))) {
                     this.projectId = projects[0].id;
                 }
             });
-
-            if (window.ResizeObserver && this.$refs.viewport) {
-                new ResizeObserver(() => this.fit()).observe(this.$refs.viewport);
-            }
-        },
-
-        fit() {
-            const frame = this.$refs.frame;
-            const viewport = this.$refs.viewport;
-
-            if (!frame || !viewport) {
-                return;
-            }
-
-            let contentHeight = 794;
-
-            try {
-                contentHeight = Math.max(794, frame.contentDocument?.documentElement?.scrollHeight || 0);
-            } catch (e) {
-                // Same-origin should be readable; a failure falls back to one page.
-            }
-
-            this.frameHeight = contentHeight;
-            this.scale = Math.min(1, viewport.clientWidth > 0 ? viewport.clientWidth / 1123 : 1);
-        },
-
-        printReport() {
-            const win = this.$refs.frame?.contentWindow;
-
-            if (win) {
-                win.focus();
-                win.print();
-            }
         },
     };
 };

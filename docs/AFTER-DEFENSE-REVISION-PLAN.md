@@ -283,7 +283,9 @@ landscape paper preview. The Annual report is restored as the flagship and the a
 pointing at a deleted community) is fixed. Empty communities, zero-participation faculty, developer notes,
 the placeholder narratives section, and the technical trainee-source column are removed; summaries and
 signatures are trimmed to what a reader needs. Signature lines stay blank and read "Name and Signature".
-"Print / Save as PDF" remains the browser print dialog; no PDF package was added.
+The real PDF is rendered by **mPDF** (pure PHP): the workspace embeds it, page numbers and the letterhead
+are repeated, and **Download PDF** returns the attachment. Browser printing of the HTML report remains
+available.
 
 ---
 

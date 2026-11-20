@@ -43,6 +43,10 @@
             </a>
             <div class="flex items-center gap-2">
                 <span class="hidden text-[11px] text-gray-400 sm:inline">A4 landscape &middot; use Save as PDF</span>
+                <a href="{{ request()->fullUrlWithQuery(['pdf' => 1, 'download' => 1]) }}"
+                   class="btn btn-outline !px-3 !py-2 !text-[11.5px]">
+                    <x-sc.icon name="doc" class="w-3.5 h-3.5" />Download PDF
+                </a>
                 <button type="button" onclick="window.print()" class="btn btn-primary !px-3 !py-2 !text-[11.5px]">
                     <x-sc.icon name="doc" class="w-3.5 h-3.5" />Print / Save as PDF
                 </button>

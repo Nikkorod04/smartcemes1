@@ -1,4 +1,4 @@
-@extends('layouts.report', ['reportTitle' => 'Project Performance Report', 'subtitle' => $program->code.' · '.$program->title])
+@extends($pdfLayout ?? 'layouts.report', ['reportTitle' => 'Project Performance Report', 'subtitle' => $program->code.' · '.$program->title])
 
 @section('content')
 @php
