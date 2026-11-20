@@ -7,11 +7,11 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * The BLANK beneficiary import template (blueprint v4.7, 5.4).
+ * The BLANK beneficiary import template, v2 (2026-11-20).
  *
- * The workbook layout lives in `BeneficiaryTemplate::build()` so this and
- * `BeneficiaryExportController` cannot drift — the export is the same sheet with
- * the project's enrolled list where the grey example row would be.
+ * The workbook layout lives in `BeneficiaryTemplate::build()`, so the blank file
+ * and any future export-shaped sheet share one definition. The per-project
+ * roster itself is now a PDF (`BeneficiaryExportController`), not a workbook.
  */
 class BeneficiaryTemplateController extends Controller
 {

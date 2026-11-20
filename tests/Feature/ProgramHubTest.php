@@ -130,27 +130,34 @@ class ProgramHubTest extends TestCase
         $this->assertStringContainsString('assessment-template', $response->headers->get('content-disposition'));
     }
 
-    public function test_dedup_matches_first_last_and_barangay(): void
+    public function test_dedup_matches_first_last_and_community(): void
     {
+        $community = Community::factory()->create(['name' => 'San Jose']);
+
         Beneficiary::create([
             'first_name' => 'Lucia', 'last_name' => 'Amistoso', 'barangay' => 'San Jose',
+            'community_id' => $community->id,
             'beneficiary_category' => 'Housewife', 'gender' => 'Female', 'age' => 41,
         ]);
 
-        $dupes = Beneficiary::duplicatesFor('Lucia', 'Amistoso', 'San Jose');
+        $dupes = Beneficiary::duplicatesFor('Lucia', 'Amistoso', $community->id);
 
         $this->assertCount(1, $dupes);
         $this->assertSame('Lucia', $dupes->first()->first_name);
     }
 
-    public function test_dedup_ignores_different_barangay(): void
+    public function test_dedup_ignores_a_different_community(): void
     {
+        $sanJose = Community::factory()->create(['name' => 'San Jose']);
+        $sagkahan = Community::factory()->create(['name' => 'Sagkahan']);
+
         Beneficiary::create([
             'first_name' => 'Lucia', 'last_name' => 'Amistoso', 'barangay' => 'San Jose',
+            'community_id' => $sanJose->id,
             'beneficiary_category' => 'Housewife', 'gender' => 'Female', 'age' => 41,
         ]);
 
-        $this->assertCount(0, Beneficiary::duplicatesFor('Lucia', 'Amistoso', 'Sagkahan'));
+        $this->assertCount(0, Beneficiary::duplicatesFor('Lucia', 'Amistoso', $sagkahan->id));
     }
 
     /* ==================== PROGRAM EDIT (hub) ==================== */

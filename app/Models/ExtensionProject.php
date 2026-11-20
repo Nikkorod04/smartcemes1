@@ -130,7 +130,12 @@ class ExtensionProject extends Model
 
     public function beneficiaries()
     {
-        return $this->belongsToMany(Beneficiary::class, 'extension_project_beneficiary');
+        return new \App\Relations\ProjectBeneficiariesRelation(
+            $this->newRelatedInstance(Beneficiary::class)->newQuery(),
+            $this,
+            'extension_project_id',
+            'id'
+        );
     }
 
     public function programNarratives()

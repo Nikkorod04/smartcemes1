@@ -6,6 +6,7 @@ use App\Livewire\Beneficiaries\Index as BeneficiariesIndex;
 use App\Livewire\Programs\Hub;
 use App\Models\Activity;
 use App\Models\Beneficiary;
+use App\Models\Community;
 use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\User;
@@ -29,6 +30,14 @@ class BeneficiaryManagementTest extends TestCase
         $facultyUser = User::factory()->create(['role' => 'faculty']);
         $faculty = Faculty::create(['user_id' => $facultyUser->id, 'employee_id' => 'LNU-2026-0009']);
 
+        $community = Community::factory()->create([
+            'name' => 'San Jose',
+            'municipality' => 'Tacloban City',
+            'province' => 'Leyte',
+            'type' => Community::TYPE_COMMUNITY,
+            'status' => 'active',
+        ]);
+
         $program = ExtensionProject::create([
             'code' => 'EXT-2026-010',
             'title' => 'Beneficiary Management Program',
@@ -38,8 +47,25 @@ class BeneficiaryManagementTest extends TestCase
             'allocated_budget' => 50000,
             'program_lead_id' => $faculty->id,
         ]);
+        $program->communities()->attach($community->id);
 
-        return compact('admin', 'secretary', 'facultyUser', 'faculty', 'program');
+        return compact('admin', 'secretary', 'facultyUser', 'faculty', 'program', 'community');
+    }
+
+    protected function beneficiary(ExtensionProject $project, Community $community, array $overrides = []): Beneficiary
+    {
+        return Beneficiary::create(array_merge([
+            'first_name' => 'Juan',
+            'last_name' => 'Dela Cruz',
+            'age' => 40,
+            'gender' => 'Male',
+            'barangay' => $community->name,
+            'municipality' => $community->municipality,
+            'province' => $community->province,
+            'community_id' => $community->id,
+            'extension_project_id' => $project->id,
+            'beneficiary_category' => 'Farmer',
+        ], $overrides));
     }
 
     protected function makeXlsx(array $rows): UploadedFile
@@ -49,12 +75,30 @@ class BeneficiaryManagementTest extends TestCase
         $sheet->fromArray(BeneficiaryTemplate::headers(), null, 'A1');
         $sheet->fromArray($rows, null, 'A2');
 
+        return $this->uploadedSpreadsheet($spreadsheet, 'beneficiaries.xlsx');
+    }
+
+    protected function makeOldXlsx(array $rows): UploadedFile
+    {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->fromArray([
+            'First Name', 'Middle Name', 'Last Name', 'Age', 'Sex', 'Contact Number',
+            'Barangay', 'Municipality / City', 'Beneficiary Category',
+        ], null, 'A1');
+        $sheet->fromArray($rows, null, 'A2');
+
+        return $this->uploadedSpreadsheet($spreadsheet, 'old-beneficiaries.xlsx');
+    }
+
+    protected function uploadedSpreadsheet(Spreadsheet $spreadsheet, string $name): UploadedFile
+    {
         $path = tempnam(sys_get_temp_dir(), 'sc_ben_').'.xlsx';
         (new XlsxWriter($spreadsheet))->save($path);
         $contents = file_get_contents($path);
         unlink($path);
 
-        return UploadedFile::fake()->createWithContent('beneficiaries.xlsx', $contents);
+        return UploadedFile::fake()->createWithContent($name, $contents);
     }
 
     protected function makeAttendanceXlsx(array $rows): UploadedFile
@@ -64,12 +108,7 @@ class BeneficiaryManagementTest extends TestCase
         $sheet->fromArray(ActivityAttendanceTemplate::HEADERS, null, 'A1');
         $sheet->fromArray($rows, null, 'A2');
 
-        $path = tempnam(sys_get_temp_dir(), 'sc_att_').'.xlsx';
-        (new XlsxWriter($spreadsheet))->save($path);
-        $contents = file_get_contents($path);
-        unlink($path);
-
-        return UploadedFile::fake()->createWithContent('attendance.xlsx', $contents);
+        return $this->uploadedSpreadsheet($spreadsheet, 'attendance.xlsx');
     }
 
     /* ==================== policy ==================== */
@@ -88,46 +127,120 @@ class BeneficiaryManagementTest extends TestCase
         $this->assertFalse($data['facultyUser']->can('manage', $data['program']));
     }
 
-    /* ==================== secretary hub powers ==================== */
+    /* ==================== add / edit / archive ==================== */
 
-    public function test_secretary_can_enroll_register_and_unenroll(): void
+    public function test_secretary_can_add_edit_and_archive(): void
     {
         $data = $this->seedBase();
-        $existing = Beneficiary::create([
-            'first_name' => 'Juan', 'last_name' => 'Dela Cruz',
-            'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
-        ]);
 
         $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['project' => $data['program']]);
 
-        // Enroll existing from the global registry.
-        $test->call('openEnroll')->assertSet('showEnroll', true)
-            ->call('enrollExisting', $existing->id);
-        $this->assertSame(1, $data['program']->beneficiaries()->count());
-
-        // Register new (dedup check, then confirmed save).
-        $test->call('openRegister')->assertSet('showRegister', true)
+        $test->call('openRegister')
             ->set('registerForm.first_name', 'Maria')
             ->set('registerForm.last_name', 'Santos')
-            ->set('registerForm.barangay', 'Sagkahan')
             ->set('registerForm.age', '35')
-            ->set('registerForm.municipality', 'Tacloban City')
+            ->set('registerForm.gender', 'Female')
+            ->set('registerForm.community_id', $data['community']->id)
             ->set('registerForm.beneficiary_category', 'Housewife')
-            ->call('saveRegister');
-        $this->assertSame(2, $data['program']->beneficiaries()->count());
+            ->call('saveRegister')
+            ->assertSet('showRegister', false);
 
-        // Unenroll the registered beneficiary.
-        $maria = Beneficiary::where('first_name', 'Maria')->first();
-        $test->call('unenroll', $maria->id);
+        $maria = Beneficiary::where('first_name', 'Maria')->firstOrFail();
+        $this->assertSame($data['program']->id, $maria->extension_project_id);
+        $this->assertSame($data['community']->id, $maria->community_id);
+        $this->assertNull($maria->phone, 'Blank contact must stay blank.');
         $this->assertSame(1, $data['program']->beneficiaries()->count());
+
+        // Secretary can correct a profile.
+        $test->call('openBeneficiaryEdit', $maria->id)
+            ->set('beneficiaryEditForm.phone', '0917 123 4567')
+            ->call('saveBeneficiaryEdit');
+
+        $this->assertSame('0917 123 4567', $maria->fresh()->phone);
+
+        // Archive keeps history and removes it from the active roster.
+        $activity = Activity::create([
+            'extension_project_id' => $data['program']->id,
+            'title' => 'Session',
+            'planned_start_date' => '2026-03-01',
+            'planned_end_date' => '2026-03-01',
+            'start_time' => '08:00',
+            'end_time' => '12:00',
+            'status' => 'completed',
+        ]);
+        $activity->attendances()->create([
+            'beneficiary_id' => $maria->id,
+            'attendance_date' => '2026-03-01',
+            'status' => 'present',
+        ]);
+
+        $test->call('archiveBeneficiary', $maria->id);
+        $this->assertSoftDeleted($maria);
+        $this->assertSame(0, $data['program']->beneficiaries()->count());
+        $this->assertSame(1, $maria->fresh()->attendances()->count(), 'Attendance history must survive an archive.');
     }
 
-    public function test_secretary_can_import_beneficiaries_from_xlsx(): void
+    public function test_admin_can_add_but_cannot_edit_a_beneficiary(): void
+    {
+        $data = $this->seedBase();
+
+        Livewire::actingAs($data['admin'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openRegister')
+            ->set('registerForm.first_name', 'Ana')
+            ->set('registerForm.last_name', 'Reyes')
+            ->set('registerForm.age', '28')
+            ->set('registerForm.community_id', $data['community']->id)
+            ->set('registerForm.beneficiary_category', 'Vendor')
+            ->call('saveRegister');
+
+        $ana = Beneficiary::where('first_name', 'Ana')->firstOrFail();
+
+        // D8 stays: Admin creates, the Secretary edits.
+        Livewire::actingAs($data['admin'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openBeneficiaryEdit', $ana->id)
+            ->assertForbidden();
+    }
+
+    public function test_names_and_contact_are_validated(): void
+    {
+        $data = $this->seedBase();
+
+        Livewire::actingAs($data['secretary'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openRegister')
+            ->set('registerForm.first_name', 'Juan2')
+            ->set('registerForm.last_name', 'Dela Cruz')
+            ->set('registerForm.age', '35')
+            ->set('registerForm.community_id', $data['community']->id)
+            ->set('registerForm.beneficiary_category', 'Farmer')
+            ->call('saveRegister')
+            ->assertHasErrors('registerForm.first_name');
+
+        Livewire::actingAs($data['secretary'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openRegister')
+            ->set('registerForm.first_name', 'Juan')
+            ->set('registerForm.last_name', 'Dela Cruz')
+            ->set('registerForm.age', '35')
+            ->set('registerForm.phone', 'call me maybe')
+            ->set('registerForm.community_id', $data['community']->id)
+            ->set('registerForm.beneficiary_category', 'Farmer')
+            ->call('saveRegister')
+            ->assertHasErrors('registerForm.phone');
+
+        $this->assertSame(0, Beneficiary::count());
+    }
+
+    /* ==================== import ==================== */
+
+    public function test_secretary_can_import_beneficiaries_from_the_v2_template(): void
     {
         $data = $this->seedBase();
 
         $file = $this->makeXlsx([
-            ['Pedro', '', 'Ramos', '50', 'Male', '09171234567', 'San Jose', 'Tacloban City', 'Farmer'],
+            ['Pedro', '', 'Ramos', '50', 'Male', '09171234567', 'San Jose', 'Farmer'],
         ]);
 
         Livewire::actingAs($data['secretary'])
@@ -138,9 +251,94 @@ class BeneficiaryManagementTest extends TestCase
             ->assertSet('importPreview', true)
             ->call('confirmImport');
 
-        $this->assertSame(1, Beneficiary::count());
+        $beneficiary = Beneficiary::sole();
+        $this->assertSame($data['program']->id, $beneficiary->extension_project_id);
+        $this->assertSame($data['community']->id, $beneficiary->community_id);
         $this->assertSame(1, $data['program']->beneficiaries()->count());
     }
+
+    public function test_import_rejects_the_old_template(): void
+    {
+        $data = $this->seedBase();
+
+        $file = $this->makeOldXlsx([
+            ['Pedro', '', 'Ramos', '50', 'Male', '09171234567', 'San Jose', 'Tacloban City', 'Farmer'],
+        ]);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openImport')
+            ->set('importFile', $file)
+            ->call('parseImport')
+            ->assertSet('importPreview', false)
+            ->assertHasErrors('importFile')
+            ->assertSee('v2 beneficiary template');
+
+        $this->assertSame(0, Beneficiary::count());
+    }
+
+    public function test_import_updates_an_existing_person_without_clearing_blank_fields(): void
+    {
+        $data = $this->seedBase();
+        $existing = $this->beneficiary($data['program'], $data['community'], [
+            'first_name' => 'Pedro',
+            'last_name' => 'Ramos',
+            'age' => 50,
+            'phone' => '09170000000',
+        ]);
+
+        $file = $this->makeXlsx([
+            ['Pedro', '', 'Ramos', '51', 'Male', '', 'San Jose', 'Farmer'],
+        ]);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openImport')
+            ->set('importFile', $file)
+            ->call('parseImport')
+            ->assertSet('importRows.0.status', 'update')
+            ->call('confirmImport');
+
+        $existing->refresh();
+        $this->assertSame(51, $existing->age);
+        $this->assertSame('09170000000', $existing->phone, 'A blank import cell must not erase the saved number.');
+        $this->assertSame(1, Beneficiary::count());
+    }
+
+    public function test_import_skips_a_person_in_another_project(): void
+    {
+        $data = $this->seedBase();
+
+        $otherProject = ExtensionProject::create([
+            'code' => 'EXT-2026-011',
+            'title' => 'Other Project',
+            'planned_start_date' => '2026-01-01',
+            'planned_end_date' => '2026-12-31',
+            'status' => 'ongoing',
+            'allocated_budget' => 10000,
+        ]);
+        $otherProject->communities()->attach($data['community']->id);
+        $this->beneficiary($otherProject, $data['community'], [
+            'first_name' => 'Pedro',
+            'last_name' => 'Ramos',
+        ]);
+
+        $file = $this->makeXlsx([
+            ['Pedro', '', 'Ramos', '50', 'Male', '', 'San Jose', 'Farmer'],
+        ]);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(Hub::class, ['project' => $data['program']])
+            ->call('openImport')
+            ->set('importFile', $file)
+            ->call('parseImport')
+            ->assertSet('importRows.0.status', 'other_project')
+            ->call('confirmImport');
+
+        $this->assertSame(1, Beneficiary::count(), 'The other project’s record must not be duplicated or moved.');
+    }
+
+    /* ==================== attendance import still works ==================== */
 
     public function test_secretary_can_import_activity_attendance(): void
     {
@@ -154,13 +352,8 @@ class BeneficiaryManagementTest extends TestCase
             'end_time' => '12:00',
             'status' => 'ongoing',
         ]);
-        $beneficiary = Beneficiary::create([
-            'first_name' => 'Juan', 'last_name' => 'Dela Cruz',
-            'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
-        ]);
-        $data['program']->beneficiaries()->syncWithoutDetaching([$beneficiary->id]);
+        $beneficiary = $this->beneficiary($data['program'], $data['community']);
 
-        // v4.13: attendance is import-only via the official XLSX template.
         Livewire::actingAs($data['secretary'])
             ->test(Hub::class, ['project' => $data['program']])
             ->call('openRecords', $activity->id)
@@ -194,18 +387,12 @@ class BeneficiaryManagementTest extends TestCase
     public function test_faculty_cannot_manage_beneficiaries(): void
     {
         $data = $this->seedBase();
-        $beneficiary = Beneficiary::create([
-            'first_name' => 'Juan', 'last_name' => 'Dela Cruz',
-            'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
-        ]);
+        $beneficiary = $this->beneficiary($data['program'], $data['community']);
 
-        // Faculty passes view() as program lead, but must be refused writes.
-        // One Testable per call — an aborted action invalidates the instance.
         $cases = [
-            ['openEnroll', []],
             ['openRegister', []],
             ['checkDedup', []],
-            ['unenroll', [$beneficiary->id]],
+            ['archiveBeneficiary', [$beneficiary->id]],
             ['openImport', []],
             ['parseAttendanceImport', []],
             ['confirmAttendanceImport', []],
@@ -226,10 +413,7 @@ class BeneficiaryManagementTest extends TestCase
     public function test_register_new_warns_on_duplicate_and_requires_confirmation(): void
     {
         $data = $this->seedBase();
-        Beneficiary::create([
-            'first_name' => 'Juan', 'last_name' => 'Dela Cruz',
-            'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
-        ]);
+        $this->beneficiary($data['program'], $data['community']);
 
         $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['project' => $data['program']]);
 
@@ -237,9 +421,8 @@ class BeneficiaryManagementTest extends TestCase
         $test->call('openRegister')
             ->set('registerForm.first_name', 'Juan')
             ->set('registerForm.last_name', 'Dela Cruz')
-            ->set('registerForm.barangay', 'San Jose')
             ->set('registerForm.age', '35')
-            ->set('registerForm.municipality', 'Tacloban City')
+            ->set('registerForm.community_id', $data['community']->id)
             ->set('registerForm.beneficiary_category', 'Farmer')
             ->call('saveRegister')
             ->assertSet('showRegister', true)
@@ -247,11 +430,9 @@ class BeneficiaryManagementTest extends TestCase
             ->assertSee('Juan Dela Cruz');
         $this->assertSame(1, Beneficiary::count());
 
-        // Confirming ("this is a different person") creates the record and enrolls it.
-        $test->call('registerConfirmedSave')
-            ->assertSet('showRegister', false);
+        $test->call('registerConfirmedSave')->assertSet('showRegister', false);
         $this->assertSame(2, Beneficiary::count());
-        $this->assertSame(1, $data['program']->beneficiaries()->count());
+        $this->assertSame(2, $data['program']->beneficiaries()->count());
     }
 
     public function test_register_new_unique_name_saves_directly(): void
@@ -263,9 +444,8 @@ class BeneficiaryManagementTest extends TestCase
             ->call('openRegister')
             ->set('registerForm.first_name', 'Maria')
             ->set('registerForm.last_name', 'Santos')
-            ->set('registerForm.barangay', 'Sagkahan')
             ->set('registerForm.age', '35')
-            ->set('registerForm.municipality', 'Tacloban City')
+            ->set('registerForm.community_id', $data['community']->id)
             ->set('registerForm.beneficiary_category', 'Housewife')
             ->call('saveRegister')
             ->assertSet('showRegister', false)
@@ -278,27 +458,21 @@ class BeneficiaryManagementTest extends TestCase
     public function test_register_new_trims_input_and_dedup_matches_despite_padding(): void
     {
         $data = $this->seedBase();
-        Beneficiary::create([
-            'first_name' => 'Juan', 'last_name' => 'Dela Cruz',
-            'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
-        ]);
+        $this->beneficiary($data['program'], $data['community']);
 
-        // Padded input still matches the registry entry…
         Livewire::actingAs($data['secretary'])
             ->test(Hub::class, ['project' => $data['program']])
             ->call('openRegister')
             ->set('registerForm.first_name', '  Juan  ')
             ->set('registerForm.last_name', ' Dela Cruz ')
-            ->set('registerForm.barangay', ' San Jose ')
             ->set('registerForm.age', '35')
-            ->set('registerForm.municipality', 'Tacloban City')
+            ->set('registerForm.community_id', $data['community']->id)
             ->set('registerForm.beneficiary_category', 'Farmer')
             ->call('saveRegister')
             ->assertSee('Possible duplicate found')
             ->call('registerConfirmedSave');
-        $this->assertSame(2, Beneficiary::count());
 
-        // …and the created record stores trimmed values.
+        $this->assertSame(2, Beneficiary::count());
         $created = Beneficiary::orderByDesc('id')->first();
         $this->assertSame('Juan', $created->first_name);
         $this->assertSame('Dela Cruz', $created->last_name);
@@ -308,27 +482,19 @@ class BeneficiaryManagementTest extends TestCase
     public function test_editing_form_after_duplicate_warning_rechecks_before_confirmed_save(): void
     {
         $data = $this->seedBase();
-        foreach ([['Juan', 'Dela Cruz'], ['Pedro', 'Ramos']] as [$first, $last]) {
-            Beneficiary::create([
-                'first_name' => $first, 'last_name' => $last,
-                'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
-            ]);
-        }
+        $this->beneficiary($data['program'], $data['community'], ['first_name' => 'Juan']);
+        $this->beneficiary($data['program'], $data['community'], ['first_name' => 'Pedro', 'last_name' => 'Ramos']);
 
-        // First submit warns on Juan Dela Cruz…
         $test = Livewire::actingAs($data['secretary'])->test(Hub::class, ['project' => $data['program']]);
         $test->call('openRegister')
             ->set('registerForm.first_name', 'Juan')
             ->set('registerForm.last_name', 'Dela Cruz')
-            ->set('registerForm.barangay', 'San Jose')
             ->set('registerForm.age', '35')
-            ->set('registerForm.municipality', 'Tacloban City')
+            ->set('registerForm.community_id', $data['community']->id)
             ->set('registerForm.beneficiary_category', 'Farmer')
             ->call('saveRegister')
             ->assertSee('Possible duplicate found');
 
-        // …then the user swaps in a DIFFERENT duplicate while the warning is
-        // visible — "save anyway" must not bypass the new name's check.
         $test->set('registerForm.first_name', 'Pedro')
             ->set('registerForm.last_name', 'Ramos')
             ->call('registerConfirmedSave')
@@ -340,56 +506,172 @@ class BeneficiaryManagementTest extends TestCase
 
     /* ==================== /beneficiaries page ==================== */
 
-    public function test_beneficiaries_page_is_secretary_only(): void
+    public function test_beneficiaries_page_is_admin_and_secretary_only(): void
     {
         $data = $this->seedBase();
 
-        // Guest check first — actingAs persists across requests in a test.
         $this->get('/beneficiaries')->assertRedirect('/login');
 
         $this->actingAs($data['secretary'])->get('/beneficiaries')->assertOk();
-        $this->actingAs($data['admin'])->get('/beneficiaries')->assertForbidden();
+        $this->actingAs($data['admin'])->get('/beneficiaries')->assertOk();
         $this->actingAs($data['facultyUser'])->get('/beneficiaries')->assertForbidden();
     }
 
-    public function test_beneficiaries_page_lists_programs_with_deep_links(): void
+    public function test_beneficiaries_page_lists_and_filters_records(): void
     {
         $data = $this->seedBase();
-        $beneficiary = Beneficiary::create([
-            'first_name' => 'Juan', 'last_name' => 'Dela Cruz',
-            'gender' => 'Male', 'barangay' => 'San Jose', 'beneficiary_category' => 'Farmer',
-        ]);
-        $data['program']->beneficiaries()->syncWithoutDetaching([$beneficiary->id]);
+        $this->beneficiary($data['program'], $data['community']);
 
         $this->actingAs($data['secretary'])
             ->get('/beneficiaries')
             ->assertOk()
-            ->assertSee('Beneficiary Management Program')
-            ->assertSee('1 enrolled')
-            ->assertSee('tab=beneficiaries')
-            ->assertSee('tab=activities')
-            ->assertSee('Manage Beneficiaries'); // sidebar nav item
+            ->assertSee('Juan Dela Cruz')
+            ->assertSee('San Jose')
+            ->assertSee('EXT-2026-010')
+            ->assertSee('Add beneficiary');
 
-        // Search filter narrows the list.
         Livewire::actingAs($data['secretary'])
             ->test(BeneficiariesIndex::class)
-            ->set('search', 'Nonexistent Program')
-            ->assertDontSee('Beneficiary Management Program');
+            ->set('search', 'Nonexistent Person')
+            ->assertDontSee('Juan Dela Cruz');
     }
 
-    public function test_hub_tab_deep_links_render_the_right_panel(): void
+    public function test_hub_tab_renders_the_project_roster(): void
     {
         $data = $this->seedBase();
+        $this->beneficiary($data['program'], $data['community'], ['phone' => null]);
 
         $this->actingAs($data['secretary'])
             ->get(route('projects.show', ['project' => $data['program'], 'tab' => 'beneficiaries']))
             ->assertOk()
-            ->assertSee('Enrolled Beneficiaries')
-            ->assertSee('Enroll existing');
+            ->assertSee('Beneficiaries in this project')
+            ->assertSee('Add beneficiary')
+            ->assertSee('Export PDF')
+            ->assertSee('No contact provided')
+            ->assertDontSee('Enroll existing');
+    }
 
-        $this->actingAs($data['secretary'])
-            ->get(route('projects.show', ['project' => $data['program'], 'tab' => 'activities']))
-            ->assertOk()
-            ->assertSee('Project Activities');
+    /* ==================== registry page actions ==================== */
+
+    public function test_registry_page_creates_a_project_owned_beneficiary(): void
+    {
+        $data = $this->seedBase();
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openCreate')
+            ->set('form.first_name', 'Nico')
+            ->set('form.last_name', 'Alegre')
+            ->set('form.age', '30')
+            ->set('form.gender', 'Male')
+            ->set('form.community_id', $data['community']->id)
+            ->set('form.extension_project_id', $data['program']->id)
+            ->set('form.beneficiary_category', 'Farmer')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('showForm', false);
+
+        $beneficiary = Beneficiary::sole();
+        $this->assertSame($data['program']->id, $beneficiary->extension_project_id);
+        $this->assertSame($data['community']->id, $beneficiary->community_id);
+        $this->assertNull($beneficiary->phone);
+    }
+
+    public function test_registry_page_rejects_a_community_outside_the_project(): void
+    {
+        $data = $this->seedBase();
+        $outside = Community::factory()->create(['name' => 'Not Linked']);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openCreate')
+            ->set('form.first_name', 'Nico')
+            ->set('form.last_name', 'Alegre')
+            ->set('form.age', '30')
+            ->set('form.extension_project_id', $data['program']->id)
+            ->set('form.community_id', $outside->id)
+            ->set('form.beneficiary_category', 'Farmer')
+            ->call('save')
+            ->assertHasErrors('form.community_id');
+
+        $this->assertSame(0, Beneficiary::count());
+    }
+
+    public function test_registry_page_archives_and_restores_with_history(): void
+    {
+        $data = $this->seedBase();
+        $beneficiary = $this->beneficiary($data['program'], $data['community']);
+
+        $activity = Activity::create([
+            'extension_project_id' => $data['program']->id,
+            'title' => 'Session',
+            'planned_start_date' => '2026-03-01',
+            'planned_end_date' => '2026-03-01',
+            'start_time' => '08:00',
+            'end_time' => '12:00',
+            'status' => 'completed',
+        ]);
+        $activity->attendances()->create([
+            'beneficiary_id' => $beneficiary->id,
+            'attendance_date' => '2026-03-01',
+            'status' => 'present',
+        ]);
+
+        Livewire::actingAs($data['admin'])
+            ->test(BeneficiariesIndex::class)
+            ->call('archive', $beneficiary->id);
+
+        $this->assertSoftDeleted($beneficiary);
+        $this->assertSame(1, $beneficiary->fresh()->attendances()->count());
+
+        Livewire::actingAs($data['admin'])
+            ->test(BeneficiariesIndex::class)
+            ->set('status', 'archived')
+            ->call('restore', $beneficiary->id);
+
+        $this->assertFalse($beneficiary->fresh()->trashed());
+        $this->assertSame(1, $beneficiary->fresh()->attendances()->count());
+    }
+
+    public function test_registry_form_resets_the_community_when_the_project_changes(): void
+    {
+        $data = $this->seedBase();
+
+        $otherCommunity = Community::factory()->create(['name' => 'Brgy. Other']);
+        $otherProject = ExtensionProject::create([
+            'code' => 'EXT-2026-012',
+            'title' => 'Other Project',
+            'planned_start_date' => '2026-01-01',
+            'planned_end_date' => '2026-12-31',
+            'status' => 'ongoing',
+            'allocated_budget' => 10000,
+        ]);
+        $otherProject->communities()->attach($otherCommunity->id);
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openCreate')
+            ->set('form.extension_project_id', $otherProject->id)
+            ->assertSet('form.community_id', $otherCommunity->id);
+    }
+
+    public function test_registry_page_keeps_editing_secretary_only(): void
+    {
+        $data = $this->seedBase();
+        $beneficiary = $this->beneficiary($data['program'], $data['community']);
+
+        Livewire::actingAs($data['admin'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openEdit', $beneficiary->id)
+            ->assertForbidden();
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openEdit', $beneficiary->id)
+            ->set('form.phone', '0917 555 1234')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('0917 555 1234', $beneficiary->fresh()->phone);
     }
 }

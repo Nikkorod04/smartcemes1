@@ -17,7 +17,7 @@ class BeneficiaryFactory extends Factory
             'last_name' => fake()->lastName(),
             'age' => fake()->numberBetween(18, 75),
             'gender' => fake()->randomElement(['Female', 'Male']),
-            'phone' => '09123456789',
+            'phone' => fake()->unique()->numerify('09#########'),
             'barangay' => 'San Jose',
             'municipality' => 'Tacloban City',
             'province' => 'Leyte',

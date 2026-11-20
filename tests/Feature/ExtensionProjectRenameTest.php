@@ -50,10 +50,10 @@ class ExtensionProjectRenameTest extends TestCase
             $this->assertFalse(Schema::hasColumn($table, 'extension_program_id'), "$table still has the pre-R2 column");
         }
 
-        /* Both pivots were renamed, table and column. */
-        $this->assertTrue(Schema::hasTable('extension_project_beneficiary'));
+        /* The project link now lives on the beneficiary itself. */
+        $this->assertFalse(Schema::hasTable('extension_project_beneficiary'));
+        $this->assertTrue(Schema::hasColumn('beneficiaries', 'extension_project_id'));
         $this->assertTrue(Schema::hasTable('community_extension_project'));
-        $this->assertTrue(Schema::hasColumn('extension_project_beneficiary', 'extension_project_id'));
 
         /* The new columns exist. */
         $this->assertTrue(Schema::hasColumn('extension_projects', 'college_id'));
@@ -112,6 +112,7 @@ class ExtensionProjectRenameTest extends TestCase
         $this->seed(Phase2Seeder::class);
 
         $migrations = app('migrator');
+        $migrations->rollback([base_path('database/migrations/2026_11_20_000300_move_beneficiaries_to_projects.php')]);
         $migrations->rollback([base_path('database/migrations/2026_09_25_000200_add_hierarchy_links_to_extension_projects.php')]);
         $migrations->rollback([base_path('database/migrations/2026_09_25_000100_rename_extension_programs_to_extension_projects.php')]);
 

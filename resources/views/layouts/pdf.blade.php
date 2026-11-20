@@ -37,24 +37,41 @@
 <body>
     @yield('content')
 
-    <table class="pdf-signatures">
-        <tr>
-            <td>
-                <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Prepared by</div>
-                <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
-                <div style="font-size:7pt; color:#555;">Name and Signature</div>
-            </td>
-            <td>
-                <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Reviewed by</div>
-                <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
-                <div style="font-size:7pt; color:#555;">Name and Signature</div>
-            </td>
-            <td>
-                <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Approved by</div>
-                <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
-                <div style="font-size:7pt; color:#555;">Name and Signature</div>
-            </td>
-        </tr>
-    </table>
+    @if (($signatureMode ?? 'report') === 'beneficiary')
+        <table class="pdf-signatures">
+            <tr>
+                <td style="width:50%;">
+                    <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Prepared by</div>
+                    <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
+                    <div style="font-size:7pt; color:#555;">Name and Signature</div>
+                </td>
+                <td style="width:50%;">
+                    <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Noted by</div>
+                    <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
+                    <div style="font-size:7pt; color:#555;">Name and Signature</div>
+                </td>
+            </tr>
+        </table>
+    @else
+        <table class="pdf-signatures">
+            <tr>
+                <td>
+                    <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Prepared by</div>
+                    <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
+                    <div style="font-size:7pt; color:#555;">Name and Signature</div>
+                </td>
+                <td>
+                    <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Reviewed by</div>
+                    <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
+                    <div style="font-size:7pt; color:#555;">Name and Signature</div>
+                </td>
+                <td>
+                    <div style="font-size:6.5pt; font-weight:bold; text-transform:uppercase; color:#475569;">Approved by</div>
+                    <div style="margin-top:18px; border-top:1px solid #333; width:80%; margin-left:auto; margin-right:auto;"></div>
+                    <div style="font-size:7pt; color:#555;">Name and Signature</div>
+                </td>
+            </tr>
+        </table>
+    @endif
 </body>
 </html>

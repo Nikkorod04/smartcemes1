@@ -190,60 +190,27 @@
     </form>
 </div>
 
-{{-- Enroll existing --}}
-<div x-data="{ open: false }" x-init="$wire.$watch('showEnroll', v => open = v)" @keydown.escape.window="$wire.set('showEnroll', false)"
-     x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="enroll-beneficiary-title">
-    <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showEnroll', false)"></div>
-    <section class="sc-modal relative z-10 flex w-full max-w-2xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
-        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="users" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="enroll-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Enroll existing beneficiary</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Find a profile in the global registry and link it to this project.</p></div></div><button type="button" wire:click="$set('showEnroll', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close enroll beneficiary dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
-        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-            <div class="mb-4 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-[11px] leading-relaxed text-blue-900"><x-sc.icon name="users" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-600" /><p>Search the global registry, including beneficiaries not yet linked to any project.</p></div>
-            <label class="label" for="enroll-beneficiary-search">Search registry</label>
-            <input id="enroll-beneficiary-search" type="text" class="input mb-4" wire:model.live.debounce.300ms="enrollSearch" placeholder="Search by name or barangay…">
-            <div class="space-y-1.5 pr-1">
-            @forelse ($registry as $b)
-                <div class="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition">
-                    <div class="min-w-0 flex-1">
-                        <p class="text-[13px] font-semibold">{{ $b->fullName() }}</p>
-                        <p class="text-[11px] text-gray-400">{{ $b->barangay }} · {{ $b->beneficiary_category }}</p>
-                    </div>
-                    @if ($program->beneficiaries->contains($b->id))
-                        <span class="badge badge-gray shrink-0">Already enrolled</span>
-                    @else
-                        <button wire:click="enrollExisting({{ $b->id }})" class="btn btn-outline !px-2 !py-1 !text-[11px] shrink-0">Enroll</button>
-                    @endif
-                </div>
-            @empty
-                <p class="text-[12.5px] text-gray-400 italic py-2">No registry matches for this search.</p>
-            @endforelse
-            </div>
-        </div>
-        <footer class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6"><div class="flex justify-end"><button type="button" class="btn btn-ghost" wire:click="$set('showEnroll', false)">Close</button></div></footer>
-    </section>
-</div>
-
 {{-- Register new (with dedup confirm) --}}
 <div x-data="{ open: false }" x-init="$wire.$watch('showRegister', v => open = v)" @keydown.escape.window="$wire.set('showRegister', false)"
      x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="register-beneficiary-title">
     <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showRegister', false)"></div>
     <form wire:submit="saveRegister" class="sc-modal relative z-10 flex w-full max-w-3xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
-        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="people" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="register-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Register new beneficiary</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Create a registry profile and enroll it into this project in one step.</p></div></div><button type="button" wire:click="$set('showRegister', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close register beneficiary dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="people" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="register-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Add beneficiary</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Add one person to this project. Archive instead of deleting when they leave.</p></div></div><button type="button" wire:click="$set('showRegister', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close register beneficiary dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-        <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-[11px] leading-relaxed text-blue-900"><x-sc.icon name="users" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-600" /><p>Complete the profile fields below. Required fields are validated before the profile is enrolled.</p></div>
+        <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-[11px] leading-relaxed text-blue-900"><x-sc.icon name="users" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-600" /><p>Add one person to this project. Name fields accept letters only; contact numbers accept digits and common separators. Blank contact is saved as “No contact provided”.</p></div>
         <div class="grid grid-cols-3 gap-3">
-            <div><label class="label" for="register-first-name">First name <span class="text-red-500">*</span></label><input id="register-first-name" maxlength="100" class="input" wire:model="registerForm.first_name" aria-invalid="{{ $errors->has('registerForm.first_name') ? 'true' : 'false' }}">@error('registerForm.first_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
-            <div><label class="label" for="register-middle-name">Middle name</label><input id="register-middle-name" maxlength="100" class="input" wire:model="registerForm.middle_name"></div>
-            <div><label class="label" for="register-last-name">Last name <span class="text-red-500">*</span></label><input id="register-last-name" maxlength="100" class="input" wire:model="registerForm.last_name" aria-invalid="{{ $errors->has('registerForm.last_name') ? 'true' : 'false' }}">@error('registerForm.last_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="register-first-name">First name <span class="text-red-500">*</span></label><input id="register-first-name" maxlength="255" inputmode="text" class="input" wire:model="registerForm.first_name" aria-invalid="{{ $errors->has('registerForm.first_name') ? 'true' : 'false' }}">@error('registerForm.first_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="register-middle-name">Middle name</label><input id="register-middle-name" maxlength="255" inputmode="text" class="input" wire:model="registerForm.middle_name">@error('registerForm.middle_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="register-last-name">Last name <span class="text-red-500">*</span></label><input id="register-last-name" maxlength="255" inputmode="text" class="input" wire:model="registerForm.last_name" aria-invalid="{{ $errors->has('registerForm.last_name') ? 'true' : 'false' }}">@error('registerForm.last_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
         <div class="grid grid-cols-3 gap-3 mt-4">
             <div><label class="label" for="register-age">Age <span class="text-red-500">*</span></label><input id="register-age" required type="number" min="0" max="120" class="input" wire:model="registerForm.age">@error('registerForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
             <div><label class="label" for="register-gender">Sex</label><x-sc.select id="register-gender" model="registerForm.gender" :value="$registerForm['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
             <div><label class="label" for="register-category">Category <span class="text-red-500">*</span></label><x-sc.select id="register-category" model="registerForm.beneficiary_category" :value="$registerForm['beneficiary_category'] ?? null" :options="collect(config('smartcemes.beneficiary_categories'))->mapWithKeys(fn ($cat) => [$cat => $cat])->all()" placeholder="Select category" :invalid="$errors->has('registerForm.beneficiary_category')" />@error('registerForm.beneficiary_category') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
-        <div class="grid grid-cols-3 gap-3 mt-4">
-            <div><label class="label" for="register-phone">Contact number</label><input id="register-phone" maxlength="30" class="input" wire:model="registerForm.phone" placeholder="0912…"></div>
-            <div><label class="label" for="register-barangay">Barangay <span class="text-red-500">*</span></label><input id="register-barangay" maxlength="150" class="input" wire:model="registerForm.barangay" aria-invalid="{{ $errors->has('registerForm.barangay') ? 'true' : 'false' }}">@error('registerForm.barangay') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
-            <div><label class="label" for="register-municipality">Municipality <span class="text-red-500">*</span></label><input id="register-municipality" required maxlength="150" class="input" wire:model="registerForm.municipality">@error('registerForm.municipality') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <div><label class="label" for="register-phone">Contact number</label><input id="register-phone" maxlength="20" inputmode="tel" class="input" wire:model="registerForm.phone" placeholder="0917 123 4567">@error('registerForm.phone') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="register-community">Community / Partner School <span class="text-red-500">*</span></label><x-sc.select id="register-community" model="registerForm.community_id" :value="$registerForm['community_id'] ?? null" :options="$projectCommunities->mapWithKeys(fn ($c) => [$c->id => $c->name.($c->municipality ? ' — '.$c->municipality : '')])->all()" placeholder="Choose community or school" :search="$projectCommunities->count() > 12" :invalid="$errors->has('registerForm.community_id')" />@error('registerForm.community_id') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
 
         @if ($dedupWarning !== '' && ! $registerConfirmed)
@@ -259,7 +226,7 @@
         @endif
 
         </div>
-        <footer class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6"><div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"><p class="text-[10.5px] font-medium text-gray-400"><span class="text-red-500">*</span> Required fields</p><div class="flex justify-end gap-2"><button type="button" class="btn btn-ghost" wire:click="$set('showRegister', false)">Cancel</button><button type="submit" class="btn btn-primary min-w-[142px]" wire:loading.attr="disabled" wire:target="saveRegister"><span wire:loading.remove wire:target="saveRegister">Register &amp; enroll</span><span wire:loading wire:target="saveRegister" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Saving…</span></button></div></div></footer>
+        <footer class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6"><div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"><p class="text-[10.5px] font-medium text-gray-400"><span class="text-red-500">*</span> Required fields</p><div class="flex justify-end gap-2"><button type="button" class="btn btn-ghost" wire:click="$set('showRegister', false)">Cancel</button><button type="submit" class="btn btn-primary min-w-[142px]" wire:loading.attr="disabled" wire:target="saveRegister"><span wire:loading.remove wire:target="saveRegister">Add beneficiary</span><span wire:loading wire:target="saveRegister" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Saving…</span></button></div></div></footer>
     </form>
 </div>
 
@@ -268,7 +235,7 @@
      x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="edit-beneficiary-title">
     <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showBeneficiaryEdit', false)"></div>
     <form wire:submit="saveBeneficiaryEdit" class="sc-modal relative z-10 flex w-full max-w-3xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
-        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="edit" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="edit-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Edit beneficiary</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Correct the registry profile. The change is visible everywhere this person appears.</p></div></div><button type="button" wire:click="$set('showBeneficiaryEdit', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close edit beneficiary dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="edit" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="edit-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Edit beneficiary</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Correct this beneficiary. Only the Secretary can edit; the change is audited.</p></div></div><button type="button" wire:click="$set('showBeneficiaryEdit', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close edit beneficiary dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
         <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-[11px] leading-relaxed text-blue-900"><x-sc.icon name="edit" class="mt-0.5 h-4 w-4 shrink-0 text-lnu-600" /><p>This updates the shared registry profile, not a copy. Edits are audited; only the Secretary can change a beneficiary.</p></div>
         <div class="grid grid-cols-3 gap-3">
@@ -281,11 +248,16 @@
             <div><label class="label" for="edit-gender">Sex</label><x-sc.select id="edit-gender" model="beneficiaryEditForm.gender" :value="$beneficiaryEditForm['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
             <div><label class="label" for="edit-category">Category <span class="text-red-500">*</span></label><x-sc.select id="edit-category" model="beneficiaryEditForm.beneficiary_category" :value="$beneficiaryEditForm['beneficiary_category'] ?? null" :options="collect(config('smartcemes.beneficiary_categories'))->mapWithKeys(fn ($cat) => [$cat => $cat])->all()" placeholder="Select category" :invalid="$errors->has('beneficiaryEditForm.beneficiary_category')" />@error('beneficiaryEditForm.beneficiary_category') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
-        <div class="grid grid-cols-3 gap-3 mt-4">
-            <div><label class="label" for="edit-phone">Contact number</label><input id="edit-phone" maxlength="30" class="input" wire:model="beneficiaryEditForm.phone" placeholder="0912…">@error('beneficiaryEditForm.phone') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
-            <div><label class="label" for="edit-barangay">Barangay <span class="text-red-500">*</span></label><input id="edit-barangay" maxlength="150" class="input" wire:model="beneficiaryEditForm.barangay" aria-invalid="{{ $errors->has('beneficiaryEditForm.barangay') ? 'true' : 'false' }}">@error('beneficiaryEditForm.barangay') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
-            <div><label class="label" for="edit-municipality">Municipality <span class="text-red-500">*</span></label><input id="edit-municipality" required maxlength="150" class="input" wire:model="beneficiaryEditForm.municipality">@error('beneficiaryEditForm.municipality') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <div><label class="label" for="edit-project">Project <span class="text-red-500">*</span></label><x-sc.select id="edit-project" model="beneficiaryEditForm.extension_project_id" :value="$beneficiaryEditForm['extension_project_id'] ?? null" :options="$allProjects->mapWithKeys(fn ($p) => [$p->id => $p->code.' — '.$p->title])->all()" placeholder="Choose project" :search="$allProjects->count() > 12" :invalid="$errors->has('beneficiaryEditForm.extension_project_id')" />@error('beneficiaryEditForm.extension_project_id') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="edit-community">Community / Partner School <span class="text-red-500">*</span></label><x-sc.select id="edit-community" model="beneficiaryEditForm.community_id" :value="$beneficiaryEditForm['community_id'] ?? null" :options="$editCommunities->mapWithKeys(fn ($c) => [$c->id => $c->name.($c->municipality ? ' — '.$c->municipality : '')])->all()" placeholder="Choose community or school" :search="$editCommunities->count() > 12" :invalid="$errors->has('beneficiaryEditForm.community_id')" />@error('beneficiaryEditForm.community_id') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <div><label class="label" for="edit-phone">Contact number</label><input id="edit-phone" maxlength="20" inputmode="tel" class="input" wire:model="beneficiaryEditForm.phone" placeholder="0917 123 4567">@error('beneficiaryEditForm.phone') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+        </div>
+        <p class="mt-3 text-[11px] leading-relaxed text-amber-700">
+            Moving this beneficiary changes their project roster. Attendance already recorded stays with the old project activities.
+        </p>
 
         @if ($editDedupWarning !== '' && ! $editConfirmed)
             <div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
@@ -309,16 +281,20 @@
      x-cloak x-show="open" x-transition.opacity.duration.150ms class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print" role="dialog" aria-modal="true" aria-labelledby="import-beneficiary-title">
     <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showImport', false)"></div>
     <section class="sc-modal relative z-10 flex w-full max-w-3xl max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
-        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="upload" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="import-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Import beneficiaries from XLSX</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Review the official template rows before enrolling them into this project.</p></div></div><button type="button" wire:click="$set('showImport', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close beneficiary import dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
+        <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6"><div class="flex items-start justify-between gap-4"><div class="flex min-w-0 items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="upload" class="h-5 w-5" /></span><div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Project beneficiaries</p><h3 id="import-beneficiary-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Import beneficiaries from XLSX</h3><p class="mt-1 max-w-lg text-[12px] font-medium leading-relaxed text-white/72">Review the official v2 template rows before adding them to this project.</p></div></div><button type="button" wire:click="$set('showImport', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close beneficiary import dialog"><x-sc.icon name="x" class="h-4 w-4" /></button></div></header>
         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
         @if (! $importPreview)
             <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3.5 mb-5">
                 <x-sc.icon name="clipboard" class="w-4 h-4 text-lnu-600 shrink-0 mt-0.5" />
-                <p class="text-[12px] text-gray-500 leading-snug">Use the official template with fixed column headers. Required: First Name, Last Name, Barangay, Beneficiary Category. Blank contact numbers default to <b>09123456789</b>; unknown categories auto-map to <b>Other</b>. Rows with errors or duplicates (first + last name + barangay) are skipped — never a whole-file reject.</p>
+                <p class="text-[12px] text-gray-500 leading-snug">
+                    Use the <b>v2 template</b>. Required: First Name, Last Name, <b>Community / Partner School</b>, Beneficiary Category.
+                    Contact Number is optional; blank means “No contact provided.” Existing people in this project are <b>updated</b>;
+                    people already in another project are <b>skipped</b>. Old templates are rejected — download the new one.
+                </p>
             </div>
 
             <div>
-                <label class="label">Official template (.xlsx) *</label>
+                <label class="label">Official v2 template (.xlsx) *</label>
                 <input type="file" wire:model="importFile"
                        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                        class="input !py-2.5 bg-gray-50">
@@ -329,12 +305,18 @@
         @else
             <div class="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-3 mb-4">
                 <x-sc.icon name="clipboard" class="w-4 h-4 text-lnu-600 shrink-0 mt-0.5" />
-                <p class="text-[12px] text-gray-500 leading-snug">Parsed <b>{{ $importFile?->getClientOriginalName() }}</b> — review the rows below, then confirm. Rows marked <span class="badge badge-red !text-[10px]">Skip</span> (errors) or <span class="badge badge-yellow !text-[10px]">Duplicate</span> will not be imported.</p>
+                <p class="text-[12px] text-gray-500 leading-snug">
+                    Parsed <b>{{ $importFile?->getClientOriginalName() }}</b> — review the rows below, then confirm.
+                    <span class="badge badge-green !text-[10px]">New</span> creates,
+                    <span class="badge badge-yellow !text-[10px]">Update</span> corrects an existing person in this project,
+                    <span class="badge badge-gray !text-[10px]">Other project</span> and
+                    <span class="badge badge-red !text-[10px]">Skip</span> are not imported.
+                </p>
             </div>
 
             <div class="rounded-xl border border-gray-100 max-h-80 overflow-y-auto">
                 <table class="sc-table !text-[12px]">
-                    <thead><tr><th>#</th><th>Name</th><th>Barangay</th><th>Category</th><th>Contact</th><th>Status</th></tr></thead>
+                    <thead><tr><th>#</th><th>Name</th><th>Community</th><th>Category</th><th>Contact</th><th>Status</th></tr></thead>
                     <tbody>
                         @foreach ($importRows as $i => $row)
                             <tr wire:key="imp-{{ $i }}">
@@ -346,16 +328,18 @@
                                         <p class="text-[10.5px] text-red-600 mt-0.5">{{ ucfirst(str_replace('_', ' ', $field)) }}: {{ $err }}</p>
                                     @endforeach
                                 </td>
-                                <td class="text-gray-500">{{ $row['data']['barangay'] ?? '—' }}</td>
+                                <td class="text-gray-500">{{ $row['community_name'] ?? '—' }}</td>
                                 <td class="text-gray-500">{{ $row['data']['beneficiary_category'] ?? '—' }}</td>
-                                <td class="text-gray-500">{{ $row['data']['phone'] ?? '—' }}</td>
+                                <td class="text-gray-500">{{ $row['data']['phone'] ?: 'No contact provided' }}</td>
                                 <td>
-                                    @if ($row['errors'] !== [])
+                                    @if ($row['status'] === 'error')
                                         <span class="badge badge-red">Skip</span>
-                                    @elseif ($row['duplicate'])
-                                        <span class="badge badge-yellow">Duplicate</span>
+                                    @elseif ($row['status'] === 'update')
+                                        <span class="badge badge-yellow">Update</span>
+                                    @elseif ($row['status'] === 'other_project')
+                                        <span class="badge badge-gray">Other project: {{ $row['other_project'] }}</span>
                                     @else
-                                        <span class="badge badge-green">Import</span>
+                                        <span class="badge badge-green">New</span>
                                     @endif
                                 </td>
                             </tr>
@@ -368,9 +352,9 @@
         </div>
         <footer class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
             @if (! $importPreview)
-                <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"><a href="{{ route('beneficiaries.template') }}" class="btn btn-ghost !px-3 text-[12px]"><x-sc.icon name="download" class="w-4 h-4" /> Download official template</a><div class="flex justify-end gap-2"><button type="button" class="btn btn-ghost" wire:click="$set('showImport', false)">Cancel</button><button type="button" wire:click="parseImport" wire:loading.attr="disabled" wire:target="parseImport" class="btn btn-primary min-w-[120px]"><span wire:loading.remove wire:target="parseImport">Parse file →</span><span wire:loading wire:target="parseImport" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Parsing…</span></button></div></div>
+                <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"><a href="{{ route('beneficiaries.template') }}" class="btn btn-ghost !px-3 text-[12px]"><x-sc.icon name="download" class="w-4 h-4" /> Download v2 template</a><div class="flex justify-end gap-2"><button type="button" class="btn btn-ghost" wire:click="$set('showImport', false)">Cancel</button><button type="button" wire:click="parseImport" wire:loading.attr="disabled" wire:target="parseImport" class="btn btn-primary min-w-[120px]"><span wire:loading.remove wire:target="parseImport">Parse file →</span><span wire:loading wire:target="parseImport" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Parsing…</span></button></div></div>
             @else
-                <div class="flex justify-end gap-2"><button type="button" wire:click="$set('importPreview', false)" class="btn btn-ghost">← Back</button><button type="button" wire:click="confirmImport" wire:loading.attr="disabled" wire:target="confirmImport" class="btn btn-primary min-w-[142px]"><span wire:loading.remove wire:target="confirmImport">Confirm &amp; import</span><span wire:loading wire:target="confirmImport" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Importing…</span></button></div>
+                <div class="flex justify-end gap-2"><button type="button" wire:click="$set('importPreview', false)" class="btn btn-ghost">← Back</button><button type="button" wire:click="confirmImport" wire:loading.attr="disabled" wire:target="confirmImport" class="btn btn-primary min-w-[142px]"><span wire:loading.remove wire:target="confirmImport">Confirm import</span><span wire:loading wire:target="confirmImport" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Importing…</span></button></div>
             @endif
         </footer>
     </section>

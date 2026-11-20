@@ -23,6 +23,10 @@ class BeneficiaryEditTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected ?ExtensionProject $currentProgram = null;
+
+    protected ?Community $currentCommunity = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -55,6 +59,9 @@ class BeneficiaryEditTest extends TestCase
 
         $program->communities()->attach($community->id);
 
+        $this->currentProgram = $program;
+        $this->currentCommunity = $community;
+
         return $program;
     }
 
@@ -69,6 +76,8 @@ class BeneficiaryEditTest extends TestCase
             'phone' => '0917 000 0000',
             'barangay' => 'San Jose',
             'municipality' => 'Tacloban City',
+            'community_id' => $this->currentCommunity?->id,
+            'extension_project_id' => $this->currentProgram?->id,
             'beneficiary_category' => 'Housewife',
         ], $overrides));
     }
@@ -84,7 +93,7 @@ class BeneficiaryEditTest extends TestCase
             ->call('openBeneficiaryEdit', $beneficiary->id)
             ->assertSet('showBeneficiaryEdit', true)
             ->assertSet('beneficiaryEditForm.first_name', 'Maria')
-            ->assertSet('beneficiaryEditForm.barangay', 'San Jose')
+            ->assertSet('beneficiaryEditForm.community_id', $this->currentCommunity->id)
             ->set('beneficiaryEditForm.last_name', 'Santos-Reyes')
             ->set('beneficiaryEditForm.age', '35')
             ->set('beneficiaryEditForm.phone', '0918 111 2222')
@@ -244,22 +253,69 @@ class BeneficiaryEditTest extends TestCase
             ->test(Hub::class, ['project' => $program])
             ->call('openBeneficiaryEdit', $beneficiary->id)
             ->set('beneficiaryEditForm.first_name', '')
-            ->set('beneficiaryEditForm.barangay', '')
+            ->set('beneficiaryEditForm.community_id', '')
             ->set('beneficiaryEditForm.beneficiary_category', '')
             ->call('saveBeneficiaryEdit')
             ->assertHasErrors([
                 'beneficiaryEditForm.first_name',
-                'beneficiaryEditForm.barangay',
+                'beneficiaryEditForm.community_id',
                 'beneficiaryEditForm.beneficiary_category',
             ]);
 
         $this->assertSame('Maria', $beneficiary->fresh()->first_name);
     }
 
+    public function test_the_secretary_can_move_a_beneficiary_and_history_stays_with_the_old_project(): void
+    {
+        $program = $this->program();
+        $beneficiary = $this->beneficiary();
+
+        $activity = \App\Models\Activity::create([
+            'extension_project_id' => $program->id,
+            'title' => 'Old project session',
+            'planned_start_date' => '2026-03-01',
+            'planned_end_date' => '2026-03-01',
+            'start_time' => '08:00',
+            'end_time' => '12:00',
+            'status' => 'completed',
+        ]);
+        $activity->attendances()->create([
+            'beneficiary_id' => $beneficiary->id,
+            'attendance_date' => '2026-03-01',
+            'status' => 'present',
+        ]);
+
+        $otherCommunity = Community::factory()->create(['name' => 'Brgy. Destination']);
+        $otherProject = ExtensionProject::create([
+            'code' => 'EXT-2026-888',
+            'title' => 'Destination Project',
+            'planned_start_date' => '2026-01-01',
+            'planned_end_date' => '2026-12-31',
+            'status' => 'ongoing',
+            'allocated_budget' => 10000,
+        ]);
+        $otherProject->communities()->attach($otherCommunity->id);
+
+        Livewire::actingAs($this->secretary())
+            ->test(Hub::class, ['project' => $program])
+            ->call('openBeneficiaryEdit', $beneficiary->id)
+            ->set('beneficiaryEditForm.extension_project_id', $otherProject->id)
+            ->assertSet('beneficiaryEditForm.community_id', $otherCommunity->id)
+            ->call('saveBeneficiaryEdit')
+            ->assertHasNoErrors()
+            ->assertSet('showBeneficiaryEdit', false);
+
+        $beneficiary->refresh();
+        $this->assertSame($otherProject->id, $beneficiary->extension_project_id);
+        $this->assertSame($otherCommunity->id, $beneficiary->community_id);
+        $this->assertSame(1, $beneficiary->attendances()->count(), 'Past attendance stays with the old activity.');
+        $this->assertSame(1, $activity->attendances()->count());
+    }
+
     public function test_a_registry_only_beneficiary_cannot_be_edited_from_a_project_roster(): void
     {
         $program = $this->program();
-        $beneficiary = $this->beneficiary(); // not attached
+        $beneficiary = $this->beneficiary(['extension_project_id' => null]); // not enrolled
 
         Livewire::actingAs($this->secretary())
             ->test(Hub::class, ['project' => $program])

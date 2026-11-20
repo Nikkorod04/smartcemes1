@@ -458,22 +458,23 @@ class ValidationAuditTest extends TestCase
         $this->assertDatabaseHas('activity_proposals', ['title' => 'Audit proposal']);
     }
 
-    public function test_beneficiary_registration_requires_age_and_municipality(): void
+    public function test_beneficiary_registration_requires_age_and_community(): void
     {
         $admin = $this->admin();
         $project = $this->project();
+        $community = Community::factory()->create(['name' => 'San Jose']);
+        $project->communities()->attach($community->id);
 
         $component = Livewire::actingAs($admin)
             ->test(Hub::class, ['project' => $project])
             ->call('openRegister')
             ->set('registerForm.first_name', 'Audit')
             ->set('registerForm.last_name', 'Beneficiary')
-            ->set('registerForm.barangay', 'San Jose')
-            ->set('registerForm.municipality', '')
+            ->set('registerForm.community_id', '')
             ->set('registerForm.beneficiary_category', 'Farmer')
             ->set('registerForm.age', '')
             ->call('saveRegister')
-            ->assertHasErrors(['registerForm.age', 'registerForm.municipality']);
+            ->assertHasErrors(['registerForm.age', 'registerForm.community_id']);
 
         $this->assertDatabaseMissing('beneficiaries', [
             'first_name' => 'Audit',
@@ -482,7 +483,7 @@ class ValidationAuditTest extends TestCase
 
         $component
             ->set('registerForm.age', '38')
-            ->set('registerForm.municipality', 'Tacloban City')
+            ->set('registerForm.community_id', $community->id)
             ->call('saveRegister')
             ->assertHasNoErrors();
 
@@ -492,11 +493,13 @@ class ValidationAuditTest extends TestCase
         ]);
     }
 
-    public function test_beneficiary_edit_requires_age_and_municipality(): void
+    public function test_beneficiary_edit_requires_age_and_community(): void
     {
         $this->admin();
         $secretary = User::factory()->create(['role' => User::ROLE_SECRETARY]);
         $project = $this->project();
+        $community = Community::factory()->create(['name' => 'San Jose']);
+        $project->communities()->attach($community->id);
 
         $beneficiary = Beneficiary::create([
             'first_name' => 'Audit',
@@ -506,19 +509,20 @@ class ValidationAuditTest extends TestCase
             'phone' => '09170000000',
             'barangay' => 'San Jose',
             'municipality' => 'Tacloban City',
+            'community_id' => $community->id,
+            'extension_project_id' => $project->id,
             'beneficiary_category' => 'Housewife',
         ]);
-        $project->beneficiaries()->attach($beneficiary->id);
 
         Livewire::actingAs($secretary)
             ->test(Hub::class, ['project' => $project])
             ->call('openBeneficiaryEdit', $beneficiary->id)
             ->set('beneficiaryEditForm.age', '')
-            ->set('beneficiaryEditForm.municipality', '')
+            ->set('beneficiaryEditForm.community_id', '')
             ->call('saveBeneficiaryEdit')
             ->assertHasErrors([
                 'beneficiaryEditForm.age',
-                'beneficiaryEditForm.municipality',
+                'beneficiaryEditForm.community_id',
             ]);
     }
 

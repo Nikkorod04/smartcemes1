@@ -4,30 +4,26 @@ namespace Tests\Feature;
 
 use App\Livewire\Programs\Hub;
 use App\Models\Beneficiary;
+use App\Models\Community;
 use App\Models\ExtensionProject;
 use App\Models\Faculty;
 use App\Models\User;
-use App\Services\BeneficiaryTemplate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 /**
- * Beneficiary export + the beneficiary tab's 2026-10-05 changes.
+ * Per-project beneficiary roster export (2026-11-20).
  *
- * Owner request: export the enrolled list as XLSX **using the same template** as
- * the import, hide the "Enroll existing" action, reword the panel, and paginate
- * the table.
- *
- * The export and the blank template are built by ONE method
- * (`BeneficiaryTemplate::build()`), so the two cannot drift — which is what most
- * of these tests are really pinning. The export is deliberately round-trippable:
- * download the list, edit it in Excel, import it back.
+ * The XLSX export is replaced by an A4 portrait PDF that carries the university
+ * seal, the project information and each person's contact number. Attendance is
+ * deliberately absent; the signature block is blank "Prepared by" / "Noted by".
  */
 class BeneficiaryExportTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected ?Community $community = null;
 
     private function admin(): User
     {
@@ -36,7 +32,7 @@ class BeneficiaryExportTest extends TestCase
 
     private function program(): ExtensionProject
     {
-        return ExtensionProject::create([
+        $program = ExtensionProject::create([
             'code' => 'EXT-2026-001',
             'title' => 'Beneficiary Export Test Program',
             'planned_start_date' => '2026-01-01',
@@ -44,109 +40,113 @@ class BeneficiaryExportTest extends TestCase
             'status' => 'draft',
             'allocated_budget' => 10000,
         ]);
+
+        $this->community = Community::factory()->create(['name' => 'Brgy. San Jose']);
+        $program->communities()->attach($this->community->id);
+
+        return $program;
     }
 
-    private function beneficiary(string $first, string $last, string $barangay = 'San Jose'): Beneficiary
-    {
+    private function beneficiary(
+        ExtensionProject $program,
+        string $first,
+        string $last,
+        ?string $phone = '09171234567',
+        ?string $community = null,
+    ): Beneficiary {
+        $communityModel = $community === null ? $this->community : Community::factory()->create(['name' => $community]);
+
+        if ($community !== null && ! $program->communities()->whereKey($communityModel->id)->exists()) {
+            $program->communities()->attach($communityModel->id);
+        }
+
         return Beneficiary::create([
             'first_name' => $first,
             'last_name' => $last,
             'age' => 40,
             'gender' => 'Male',
-            'phone' => '09123456789',
-            'barangay' => $barangay,
-            'municipality' => 'Tacloban City',
+            'phone' => $phone,
+            'barangay' => $communityModel->name,
+            'municipality' => $communityModel->municipality,
+            'province' => $communityModel->province,
+            'community_id' => $communityModel->id,
+            'extension_project_id' => $program->id,
             'beneficiary_category' => 'Farmer',
         ]);
     }
 
-    /** Read a downloaded workbook the way the other template tests do. */
-    protected function loadStreamedSheet($response)
-    {
-        ob_start();
-        $response->baseResponse->sendContent();
-        $content = ob_get_clean();
-
-        $path = tempnam(sys_get_temp_dir(), 'sc_export_').'.xlsx';
-        file_put_contents($path, $content);
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        @unlink($path);
-
-        return $sheet;
-    }
-
     /* ==================== the export ==================== */
 
-    public function test_the_export_carries_the_import_templates_headers(): void
+    public function test_the_export_is_a_pdf_named_for_the_project(): void
     {
         $admin = $this->admin();
         $program = $this->program();
+        $this->beneficiary($program, 'Maria', 'Santos');
 
         $response = $this->actingAs($admin)->get(route('beneficiaries.export', $program));
 
         $response->assertOk();
-        $this->assertStringContainsString('beneficiaries-ext-2026-001.xlsx', $response->headers->get('content-disposition'));
-
-        $sheet = $this->loadStreamedSheet($response);
-
-        // The SAME sheet shape as the import template: headers on row 5.
-        // `array_values` because `headers()` is keyed by field name (a quirk
-        // `fromArray` ignores), while a sheet range reads back as a plain list.
-        $this->assertSame(
-            array_values(BeneficiaryTemplate::headers()),
-            $sheet->rangeToArray('A5:I5', null, true, false)[0]
+        $response->assertHeader('content-type', 'application/pdf');
+        $this->assertStringContainsString(
+            'beneficiaries-ext-2026-001.pdf',
+            $response->headers->get('content-disposition'),
         );
+        $this->assertStringStartsWith('%PDF', $response->getContent());
     }
 
-    public function test_the_export_lists_the_programs_enrolled_beneficiaries(): void
+    public function test_the_rendered_roster_lists_people_by_last_name_with_contacts(): void
+    {
+        $program = $this->program();
+        $this->beneficiary($program, 'Maria', 'Santos', '09170000002');
+        $this->beneficiary($program, 'Juan', 'Dela Cruz', null);
+
+        $html = view('reports.beneficiaries-pdf', [
+            'project' => $program,
+            'beneficiaries' => $program->beneficiaries()->with('community')->orderBy('last_name')->orderBy('first_name')->get(),
+            'scopeLabel' => '2 active beneficiaries',
+            'signatureMode' => 'beneficiary',
+        ])->render();
+
+        $this->assertStringContainsString('Beneficiary List', $html);
+        $this->assertStringContainsString('EXT-2026-001', $html);
+        $this->assertStringContainsString('Beneficiary Export Test Program', $html);
+        $this->assertStringContainsString('Leyte Normal University', $html);
+
+        // Order: Dela Cruz before Santos.
+        $this->assertLessThan(strpos($html, 'Maria Santos'), strpos($html, 'Juan Dela Cruz'));
+
+        // Contacts are shown; a blank one says so instead of a fake number.
+        $this->assertStringContainsString('09170000002', $html);
+        $this->assertStringContainsString('No contact provided', $html);
+        $this->assertStringNotContainsString('09123456789', $html);
+
+        // Attendance is intentionally not part of this roster.
+        $this->assertStringNotContainsString('>Attendance<', $html);
+
+        // Blank signature lines: Prepared by / Noted by.
+        $this->assertStringContainsString('Prepared by', $html);
+        $this->assertStringContainsString('Noted by', $html);
+        $this->assertStringNotContainsString('Reviewed by', $html);
+        $this->assertStringNotContainsString('Approved by', $html);
+    }
+
+    public function test_archived_beneficiaries_are_excluded_from_the_roster(): void
     {
         $admin = $this->admin();
         $program = $this->program();
+        $archived = $this->beneficiary($program, 'Archived', 'Person');
+        $active = $this->beneficiary($program, 'Active', 'Person');
+        $archived->delete();
 
-        // Deliberately enrolled out of alphabetical order, so the export's own
-        // ordering (last name, then first name) is what is asserted.
-        $program->beneficiaries()->attach($this->beneficiary('Maria', 'Santos')->id);
-        $program->beneficiaries()->attach($this->beneficiary('Juan', 'Dela Cruz')->id);
+        $html = view('reports.beneficiaries-pdf', [
+            'project' => $program,
+            'beneficiaries' => $program->beneficiaries()->with('community')->orderBy('last_name')->get(),
+            'scopeLabel' => '1 active beneficiary',
+            'signatureMode' => 'beneficiary',
+        ])->render();
 
-        $sheet = $this->loadStreamedSheet(
-            $this->actingAs($admin)->get(route('beneficiaries.export', $program))
-        );
-
-        $this->assertSame(
-            ['Dela Cruz', 'Juan'],
-            [$sheet->getCell('C6')->getValue(), $sheet->getCell('A6')->getValue()],
-            'Rows are ordered by last name, then first name — the same order the hub table uses.'
-        );
-
-        $this->assertSame('Santos', $sheet->getCell('C7')->getValue());
-        $this->assertNull($sheet->getCell('A8')->getValue(), 'Only the enrolled rows are written.');
-    }
-
-    public function test_the_export_does_not_carry_the_blank_templates_example_row(): void
-    {
-        $admin = $this->admin();
-        $program = $this->program();
-        $program->beneficiaries()->attach($this->beneficiary('Maria', 'Santos')->id);
-
-        $sheet = $this->loadStreamedSheet(
-            $this->actingAs($admin)->get(route('beneficiaries.export', $program))
-        );
-
-        // 'Dela Cruz' is the blank template's grey example; it must not leak in.
-        $this->assertNotSame('Dela Cruz', $sheet->getCell('C6')->getValue());
-    }
-
-    public function test_the_blank_template_still_carries_the_example_row(): void
-    {
-        // Regression guard for the refactor that extracted build(): pulling the
-        // layout into a shared method must not have removed the encoder's
-        // example row from the BLANK template.
-        $sheet = $this->loadStreamedSheet(
-            $this->actingAs($this->admin())->get(route('beneficiaries.template'))
-        );
-
-        $this->assertSame(array_values(BeneficiaryTemplate::headers()), $sheet->rangeToArray('A5:I5', null, true, false)[0]);
-        $this->assertSame('Dela Cruz', $sheet->getCell('C6')->getValue());
+        $this->assertStringContainsString('Active Person', $html);
+        $this->assertStringNotContainsString('Archived Person', $html);
     }
 
     /* ==================== access ==================== */
@@ -173,7 +173,7 @@ class BeneficiaryExportTest extends TestCase
 
     /* ==================== the tab ==================== */
 
-    public function test_the_tab_hides_the_enroll_existing_action(): void
+    public function test_the_tab_offers_add_import_and_pdf_export_only(): void
     {
         $program = $this->program();
 
@@ -182,15 +182,13 @@ class BeneficiaryExportTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // The BUTTON is what was hidden (owner: "just hide the button"). Asserting
-        // the trigger, not the string: the enroll modal itself is still in the
-        // DOM — it is an always-rendered Alpine `x-cloak` panel, so its heading
-        // ("Enroll existing beneficiary") remains in the markup by design.
         $this->assertStringNotContainsString('wire:click="openEnroll"', $html);
 
-        $this->assertStringContainsString('Register new', $html);
+        $this->assertStringContainsString('Add beneficiary', $html);
         $this->assertStringContainsString('Import XLSX', $html);
-        $this->assertStringContainsString('Export XLSX', $html);
+        $this->assertStringContainsString('Export PDF', $html);
+        $this->assertStringContainsString('All beneficiaries', $html);
+        $this->assertStringNotContainsString('Export XLSX', $html);
     }
 
     public function test_the_tab_uses_the_new_manage_beneficiaries_wording(): void
@@ -203,9 +201,7 @@ class BeneficiaryExportTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('Manage Beneficiaries', $html);
-        $this->assertStringContainsString('Import or export the list of beneficiaries', $html);
-
-        // The old heading is gone.
+        $this->assertStringContainsString('print the project roster as a PDF', $html);
         $this->assertStringNotContainsString('Enrollment is program-scoped', $html);
     }
 
@@ -221,10 +217,6 @@ class BeneficiaryExportTest extends TestCase
 
         $this->assertStringContainsString($url, $adminHtml);
 
-        // A faculty viewer sees the tab read-only, so the link must not render
-        // — otherwise they get a link the route 403s (§29). The faculty has to
-        // LEAD the project, or `ProgramPolicy::view()` refuses the hub outright
-        // and this would prove nothing about the link.
         $facultyUser = User::factory()->create(['role' => 'faculty']);
         $faculty = Faculty::create(['user_id' => $facultyUser->id, 'employee_id' => 'LNU-2026-0011']);
         $program->update(['program_lead_id' => $faculty->id]);
@@ -237,7 +229,7 @@ class BeneficiaryExportTest extends TestCase
         $this->assertStringNotContainsString($url, $facultyHtml);
     }
 
-    /* ==================== pagination ==================== */
+    /* ==================== search + pagination ==================== */
 
     public function test_the_enrolled_table_paginates_at_ten(): void
     {
@@ -245,17 +237,37 @@ class BeneficiaryExportTest extends TestCase
         $program = $this->program();
 
         for ($i = 1; $i <= 12; $i++) {
-            $program->beneficiaries()->attach(
-                $this->beneficiary('Person', sprintf('Number%02d', $i))->id
-            );
+            $this->beneficiary($program, 'Person', sprintf('Number%02d', $i));
         }
 
         Livewire::actingAs($admin)
             ->test(Hub::class, ['project' => $program])
             ->assertViewHas('enrolledPaginator', fn ($p) => $p->count() === 10 && $p->total() === 12)
             ->assertViewHas('enrolledCount', 12)
-            // Its OWN page name, so it cannot collide with another paginator.
             ->assertSet('paginators.beneficiariesPage', 1);
+    }
+
+    public function test_the_roster_can_be_searched_and_filtered(): void
+    {
+        $admin = $this->admin();
+        $program = $this->program();
+        $this->beneficiary($program, 'Maria', 'Santos');
+        $this->beneficiary($program, 'Juan', 'Dela Cruz', null, 'Brgy. Sagkahan');
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $program])
+            ->set('beneficiarySearch', 'Santos')
+            ->assertViewHas('enrolledPaginator', fn ($p) => $p->total() === 1 && $p->first()->last_name === 'Santos')
+            ->set('beneficiarySearch', '')
+            ->set('beneficiaryCommunityId', (string) $this->community->id)
+            ->assertViewHas('enrolledPaginator', fn ($p) => $p->total() === 1 && $p->first()->last_name === 'Santos')
+            ->set('beneficiaryCommunityId', '')
+            ->set('beneficiaryCategory', 'Farmer')
+            ->assertViewHas('enrolledPaginator', fn ($p) => $p->total() === 2)
+            ->call('clearBeneficiaryFilters')
+            ->assertSet('beneficiarySearch', '')
+            ->assertSet('beneficiaryCommunityId', '')
+            ->assertSet('beneficiaryCategory', '');
     }
 
     public function test_the_enrolled_count_reflects_the_whole_list_not_the_page(): void
@@ -264,7 +276,7 @@ class BeneficiaryExportTest extends TestCase
         $program = $this->program();
 
         for ($i = 1; $i <= 12; $i++) {
-            $program->beneficiaries()->attach($this->beneficiary('Person', sprintf('Number%02d', $i))->id);
+            $this->beneficiary($program, 'Person', sprintf('Number%02d', $i));
         }
 
         $html = $this->actingAs($admin)
@@ -272,8 +284,7 @@ class BeneficiaryExportTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // The tile and the table badge count the LIST, not the visible page.
-        $this->assertStringContainsString('12 enrolled', $html);
+        $this->assertStringContainsString('12 active', $html);
         $this->assertStringContainsString('of 12', $html);
     }
 }

@@ -171,6 +171,7 @@ class GraduateProgramSeeder extends Seeder
 
             // ---- The cohort -------------------------------------------------
             $beneficiaryIds = [];
+            $phoneSequence = 2000000;
 
             foreach (self::COHORT as [$first, $middle, $last, $age, $sex, $category]) {
                 $beneficiaryIds[] = Beneficiary::create([
@@ -179,7 +180,7 @@ class GraduateProgramSeeder extends Seeder
                     'last_name' => $last,
                     'age' => $age,
                     'gender' => $sex,
-                    'phone' => '09123456789',
+                    'phone' => '0917'.str_pad((string) $phoneSequence++, 7, '0', STR_PAD_LEFT),
                     'barangay' => self::BARANGAY,
                     'municipality' => 'Tacloban City',
                     'province' => 'Leyte',

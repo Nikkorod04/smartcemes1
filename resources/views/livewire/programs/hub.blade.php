@@ -36,7 +36,7 @@
     <section class="mt-2">
         <div class="project-detail-notice sc-card p-3.5 !border-gold-200 !bg-gold-50/60 flex items-center gap-3">
             <span class="w-8 h-8 rounded-lg bg-gold-100 text-gold-700 flex items-center justify-center shrink-0"><x-sc.icon name="shield" class="w-4 h-4" /></span>
-            <p class="text-[12.5px] text-gold-800 font-semibold">You can enroll, register, and unenroll beneficiaries, import them from XLSX, and record activity attendance. Project editing, activities, and budget remain with the Director's office.</p>
+            <p class="text-[12.5px] text-gold-800 font-semibold">You can add, correct, archive, and restore beneficiary records, import the v2 XLSX template, export the project roster as PDF, and record activity attendance. Project editing, activities, and budget remain with the Director's office.</p>
         </div>
     </section>
 @endif

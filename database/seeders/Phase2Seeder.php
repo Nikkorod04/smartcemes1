@@ -241,11 +241,13 @@ class Phase2Seeder extends Seeder
             ['first_name' => 'Nestor', 'middle_name' => 'C.', 'last_name' => 'De Paz', 'barangay' => 'Salvacion', 'sex' => 'Male', 'age' => 52, 'category' => 'Fisherman', 'program' => 'EXT-2026-003', 'municipality' => 'Tacloban City'],
             ['first_name' => 'Analyn', 'middle_name' => 'T.', 'last_name' => 'Catugas', 'barangay' => 'San Jose', 'sex' => 'Female', 'age' => 26, 'category' => 'Out-of-School Youth', 'program' => 'EXT-2026-001', 'municipality' => 'Tacloban City'],
             ['first_name' => 'Rodrigo', 'middle_name' => 'E.', 'last_name' => 'Balila', 'barangay' => 'San Rafael', 'sex' => 'Male', 'age' => 59, 'category' => 'Tricycle Driver', 'program' => 'EXT-2026-005', 'municipality' => 'Dulag'],
-            ['first_name' => 'Rosario', 'middle_name' => 'T.', 'last_name' => 'Ebdane', 'barangay' => 'San Jose', 'sex' => 'Female', 'age' => 47, 'category' => 'Barangay Worker', 'program' => null, 'municipality' => 'Tacloban City'],
-            ['first_name' => 'Danilo', 'middle_name' => 'P.', 'last_name' => 'Ondoy', 'barangay' => 'Apitong', 'sex' => 'Male', 'age' => 35, 'category' => 'Construction Worker', 'program' => null, 'municipality' => 'Tacloban City'],
+            ['first_name' => 'Rosario', 'middle_name' => 'T.', 'last_name' => 'Ebdane', 'barangay' => 'San Jose', 'sex' => 'Female', 'age' => 47, 'category' => 'Barangay Worker', 'program' => 'EXT-2026-002', 'municipality' => 'Tacloban City'],
+            ['first_name' => 'Danilo', 'middle_name' => 'P.', 'last_name' => 'Ondoy', 'barangay' => 'Apitong', 'sex' => 'Male', 'age' => 35, 'category' => 'Construction Worker', 'program' => 'EXT-2026-001', 'municipality' => 'Tacloban City'],
         ];
 
         $enrolled = [];
+        $phoneSequence = 1000000;
+
         foreach ($rows as $row) {
             $programCode = $row['program'];
             unset($row['program']);
@@ -256,22 +258,19 @@ class Phase2Seeder extends Seeder
                 'last_name' => $row['last_name'],
                 'age' => $row['age'],
                 'gender' => $row['sex'],
-                'phone' => '09123456789',
+                // A distinct demo number per person; the old shared placeholder
+                // ("09123456789") is gone from the seed data.
+                'phone' => '0917'.str_pad((string) $phoneSequence++, 7, '0', STR_PAD_LEFT),
                 'barangay' => $row['barangay'],
                 'municipality' => $row['municipality'],
                 'province' => 'Leyte',
                 'community_id' => $communityIds['Brgy. '.$row['barangay']] ?? null,
+                'extension_project_id' => $programCode ? ($programIds[$programCode] ?? null) : null,
                 'beneficiary_category' => $row['category'],
                 'occupation' => $row['category'],
             ]);
 
             if ($programCode) {
-                DB::table('extension_project_beneficiary')->insert([
-                    'extension_project_id' => $programIds[$programCode],
-                    'beneficiary_id' => $beneficiary->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
                 $enrolled[$programCode][] = $beneficiary->id;
             }
         }

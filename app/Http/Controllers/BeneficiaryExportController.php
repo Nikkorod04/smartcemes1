@@ -3,43 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExtensionProject;
-use App\Services\BeneficiaryTemplate;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Services\ReportPdfService;
+use Illuminate\Http\Response;
 
 /**
- * Export a project's ENROLLED beneficiaries as XLSX (owner request 2026-10-05).
+ * Per-project beneficiary roster as an A4 portrait PDF (2026-11-20).
  *
- * Deliberately the SAME workbook as the import template — headers, widths,
- * freeze pane and all — with the project's list where the grey example row would
- * be. That makes it round-trip: download the list, edit it in Excel, import it
- * straight back. Both workbooks come from `BeneficiaryTemplate::build()`, so the
- * two can never drift.
- *
- * The ORDER matches the hub's Enrolled Beneficiaries table (last name, then
- * first name) so the export and the screen agree row for row.
+ * Replaces the old XLSX export. Uses the same PDF engine as the institutional
+ * reports so the seal, page numbers, and signature lines are consistent.
  */
 class BeneficiaryExportController extends Controller
 {
-    public function __invoke(ExtensionProject $project): BinaryFileResponse
+    public function __invoke(ExtensionProject $project): Response
     {
         $beneficiaries = $project->beneficiaries()
-            ->whereNull('beneficiaries.deleted_at')
-            ->orderBy('beneficiaries.last_name')
-            ->orderBy('beneficiaries.first_name')
+            ->with('community')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
             ->get();
 
-        $spreadsheet = BeneficiaryTemplate::build(
-            BeneficiaryTemplate::rowsFor($beneficiaries),
-            $project->code,
+        return app(ReportPdfService::class)->stream(
+            'reports.beneficiaries-pdf',
+            [
+                'project' => $project,
+                'beneficiaries' => $beneficiaries,
+                'scopeLabel' => $beneficiaries->count().' active beneficiaries',
+            ],
+            'Beneficiary List',
+            $project->code.' · '.$project->title,
+            'beneficiaries-'.strtolower($project->code).'.pdf',
+            false,
+            'A4',
+            'beneficiary',
         );
-
-        $path = tempnam(sys_get_temp_dir(), 'sc_beneficiary_export_').'.xlsx';
-
-        (new XlsxWriter($spreadsheet))->save($path);
-
-        return response()
-            ->download($path, 'beneficiaries-'.strtolower($project->code).'.xlsx')
-            ->deleteFileAfterSend();
     }
 }

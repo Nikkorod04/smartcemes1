@@ -15,6 +15,7 @@ use App\Models\RenderedHours;
 use App\Notifications\SmartCemesNotification;
 use App\Services\ActivityAttendanceImport;
 use App\Services\ActivityEvaluationImport;
+use App\Services\BeneficiaryRules;
 use App\Services\BeneficiaryTemplate;
 use App\Services\KpiService;
 use App\Services\ProgramNarrativeService;
@@ -136,24 +137,27 @@ class Hub extends Component
     public array $evaluationCurrent = [];
 
     /* ---------------- beneficiaries ---------------- */
-    public bool $showEnroll = false;
-
-    public string $enrollSearch = '';
-
     public bool $showRegister = false;
 
     public bool $registerConfirmed = false;
 
     public string $dedupWarning = '';
 
-    /** Lowercased first|last|barangay the warning was raised for; editing the form invalidates the confirmation. */
+    /** Lowercased first|last|community key the warning was raised for; editing the form invalidates the confirmation. */
     public string $registerCheckedKey = '';
 
     public array $registerForm = [
         'first_name' => '', 'middle_name' => '', 'last_name' => '',
-        'age' => '', 'gender' => 'Female', 'phone' => BeneficiaryTemplate::DEFAULT_CONTACT_NUMBER,
-        'beneficiary_category' => '', 'barangay' => '', 'municipality' => '',
+        'age' => '', 'gender' => '', 'phone' => '',
+        'beneficiary_category' => '', 'community_id' => '',
     ];
+
+    /** Roster search/filters (2026-11-20). */
+    public string $beneficiarySearch = '';
+
+    public string $beneficiaryCommunityId = '';
+
+    public string $beneficiaryCategory = '';
 
     /* ---------------- beneficiary edit (Secretary only, D8) ---------------- */
     public bool $showBeneficiaryEdit = false;
@@ -164,7 +168,7 @@ class Hub extends Component
 
     public string $editDedupWarning = '';
 
-    /** The first|last|barangay key when the modal opened; unchanged means no dedup pass. */
+    /** The first|last|community|project key when the modal opened. */
     public string $editOriginalKey = '';
 
     public string $editCheckedKey = '';
@@ -172,7 +176,7 @@ class Hub extends Component
     public array $beneficiaryEditForm = [
         'first_name' => '', 'middle_name' => '', 'last_name' => '',
         'age' => '', 'gender' => '', 'phone' => '',
-        'beneficiary_category' => '', 'barangay' => '', 'municipality' => '',
+        'beneficiary_category' => '', 'community_id' => '', 'extension_project_id' => '',
     ];
 
     /* ---------------- beneficiary XLSX import ---------------- */
@@ -259,7 +263,20 @@ class Hub extends Component
         // The order is shared with `BeneficiaryExportController`, so the
         // exported sheet and this table agree row for row.
         $enrolledPaginator = $this->program->beneficiaries()
-            ->whereNull('beneficiaries.deleted_at')
+            ->with('community')
+            ->when(trim($this->beneficiarySearch) !== '', function ($query) {
+                $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], trim($this->beneficiarySearch)).'%';
+
+                $query->where(function ($inner) use ($term) {
+                    $inner->where('beneficiaries.first_name', 'like', $term)
+                        ->orWhere('beneficiaries.middle_name', 'like', $term)
+                        ->orWhere('beneficiaries.last_name', 'like', $term)
+                        ->orWhere('beneficiaries.barangay', 'like', $term)
+                        ->orWhereHas('community', fn ($community) => $community->where('name', 'like', $term));
+                });
+            })
+            ->when($this->beneficiaryCommunityId !== '', fn ($query) => $query->where('community_id', $this->beneficiaryCommunityId))
+            ->when($this->beneficiaryCategory !== '', fn ($query) => $query->where('beneficiary_category', $this->beneficiaryCategory))
             ->orderBy('beneficiaries.last_name')
             ->orderBy('beneficiaries.first_name')
             ->paginate(10, ['*'], 'beneficiariesPage');
@@ -449,8 +466,11 @@ class Hub extends Component
             'over' => $over,
             'facultyOptions' => $facultyOptions,
             'allCommunities' => Community::orderBy('name')->get(),
+            'allProjects' => ExtensionProject::orderBy('code')->get(['id', 'code', 'title']),
+            'projectCommunities' => $this->program->communities()->orderBy('name')->get(),
+            'editCommunities' => ExtensionProject::find($this->beneficiaryEditForm['extension_project_id'] ?? $this->program->id)
+                ?->communities()->orderBy('name')->get() ?? collect(),
             'beneficiaryCategories' => config('smartcemes.beneficiary_categories'),
-            'registry' => $this->showEnroll ? $this->registryResults() : collect(),
             'served' => $performance['trainees'],
             // R4 performance payload
             'performance' => $performance,
@@ -1287,45 +1307,51 @@ class Hub extends Component
 
     /* ==================== BENEFICIARIES ==================== */
 
-    public function openEnroll(): void
+    public function archiveBeneficiary(int $beneficiaryId): void
     {
         $this->abortUnlessBeneficiaryManage();
-        $this->enrollSearch = '';
-        $this->showEnroll = true;
+
+        $beneficiary = $this->program->beneficiaries()->whereKey($beneficiaryId)->firstOrFail();
+        $beneficiary->delete();
+
+        activity()->performedOn($this->program)->event('beneficiary_archived')
+            ->log("Beneficiary '{$beneficiary->fullName()}' archived from the project roster");
+
+        $this->dispatch('sc-toast', message: 'Beneficiary archived. Attendance history stays.', type: 'warn');
     }
 
-    public function enrollExisting(int $beneficiaryId): void
+    public function updatedBeneficiarySearch(): void
     {
-        $this->abortUnlessBeneficiaryManage();
-        $beneficiary = Beneficiary::findOrFail($beneficiaryId);
-
-        if ($this->program->beneficiaries()->whereKey($beneficiaryId)->exists()) {
-            return;
-        }
-
-        $this->program->beneficiaries()->syncWithoutDetaching([$beneficiaryId]);
-        activity()->performedOn($this->program)->event('enroll')
-            ->log("Beneficiary '{$beneficiary->fullName()}' enrolled into program");
-        $this->dispatch('sc-toast', message: 'Beneficiary enrolled', type: 'success');
+        $this->resetPage('beneficiariesPage');
     }
 
-    public function unenroll(int $beneficiaryId): void
+    public function updatedBeneficiaryCommunityId(): void
     {
-        $this->abortUnlessBeneficiaryManage();
-        $beneficiary = Beneficiary::findOrFail($beneficiaryId);
-        $this->program->beneficiaries()->detach([$beneficiaryId]);
-        activity()->performedOn($this->program)->event('unenroll')
-            ->log("Beneficiary '{$beneficiary->fullName()}' unenrolled from program");
-        $this->dispatch('sc-toast', message: 'Beneficiary unenrolled', type: 'warn');
+        $this->resetPage('beneficiariesPage');
+    }
+
+    public function updatedBeneficiaryCategory(): void
+    {
+        $this->resetPage('beneficiariesPage');
+    }
+
+    public function clearBeneficiaryFilters(): void
+    {
+        $this->beneficiarySearch = '';
+        $this->beneficiaryCommunityId = '';
+        $this->beneficiaryCategory = '';
+        $this->resetPage('beneficiariesPage');
     }
 
     public function openRegister(): void
     {
         $this->abortUnlessBeneficiaryManage();
+
         $this->registerForm = [
             'first_name' => '', 'middle_name' => '', 'last_name' => '',
-            'age' => '', 'gender' => 'Female', 'phone' => BeneficiaryTemplate::DEFAULT_CONTACT_NUMBER,
-            'beneficiary_category' => '', 'barangay' => '', 'municipality' => $this->program->communities->first()?->municipality ?? '',
+            'age' => '', 'gender' => '', 'phone' => '',
+            'beneficiary_category' => '',
+            'community_id' => $this->program->communities->first()?->id ?? '',
         ];
         $this->dedupWarning = '';
         $this->registerCheckedKey = '';
@@ -1343,24 +1369,27 @@ class Hub extends Component
         $this->trimRegisterForm();
 
         $this->validate([
-            'registerForm.first_name' => 'required|string|max:255',
-            'registerForm.last_name' => 'required|string|max:255',
-            'registerForm.barangay' => 'required|string|max:255',
-            'registerForm.beneficiary_category' => 'required|in:'.implode(',', config('smartcemes.beneficiary_categories')),
-        ]);
+            'registerForm.first_name' => BeneficiaryRules::name(),
+            'registerForm.middle_name' => BeneficiaryRules::name(false),
+            'registerForm.last_name' => BeneficiaryRules::name(),
+            'registerForm.community_id' => ['required', 'integer', 'exists:communities,id'],
+            'registerForm.beneficiary_category' => ['required', 'in:'.implode(',', config('smartcemes.beneficiary_categories'))],
+        ], BeneficiaryRules::messages('registerForm'));
+
+        if (! $this->program->communities()->whereKey($this->registerForm['community_id'])->exists()) {
+            $this->addError('registerForm.community_id', 'Choose a community or partner school linked to this project.');
+
+            return;
+        }
 
         $dupes = Beneficiary::duplicatesFor(
             $this->registerForm['first_name'],
             $this->registerForm['last_name'],
-            $this->registerForm['barangay']
+            (int) $this->registerForm['community_id'],
         );
 
         $this->registerCheckedKey = $this->registerKey();
-
-        if ($dupes->isNotEmpty()) {
-            $names = $dupes->map(fn ($d) => $d->fullName())->implode(', ');
-            $this->dedupWarning = 'A beneficiary with the same first name, last name, and barangay already exists: '.$names.'.';
-        }
+        $this->dedupWarning = $this->dedupWarningFor($dupes);
     }
 
     /** 5.4: dedup warns and requires explicit confirmation; never silently merges. */
@@ -1377,15 +1406,18 @@ class Hub extends Component
 
         $this->trimRegisterForm();
 
-        $this->validate([
-            'registerForm.first_name' => 'required|string|max:255',
-            'registerForm.last_name' => 'required|string|max:255',
-            'registerForm.age' => 'required|integer|min:0|max:120',
-            'registerForm.barangay' => 'required|string|max:255',
-            'registerForm.municipality' => 'required|string|max:255',
-            'registerForm.phone' => 'nullable|string|max:20',
-            'registerForm.beneficiary_category' => 'required|in:'.implode(',', config('smartcemes.beneficiary_categories')),
-        ]);
+        $this->validate(
+            BeneficiaryRules::rules(true, 'registerForm', false),
+            BeneficiaryRules::messages('registerForm'),
+        );
+
+        $community = $this->program->communities()->whereKey($this->registerForm['community_id'])->first();
+
+        if ($community === null) {
+            $this->addError('registerForm.community_id', 'Choose a community or partner school linked to this project.');
+
+            return;
+        }
 
         // Confirmation only covers the exact values that were checked;
         // editing the form after the warning requires a fresh dedup pass.
@@ -1405,40 +1437,60 @@ class Hub extends Component
             'first_name' => $this->registerForm['first_name'],
             'middle_name' => $this->registerForm['middle_name'] ?: null,
             'last_name' => $this->registerForm['last_name'],
-            'age' => $this->registerForm['age'] ?: null,
-            'gender' => $this->registerForm['gender'],
-            'phone' => $this->registerForm['phone'] ?: BeneficiaryTemplate::DEFAULT_CONTACT_NUMBER,
-            'barangay' => $this->registerForm['barangay'],
-            'municipality' => $this->registerForm['municipality'] ?: null,
-            'community_id' => $this->program->communities->first()?->id,
+            'age' => $this->registerForm['age'] !== '' ? (int) $this->registerForm['age'] : null,
+            'gender' => $this->registerForm['gender'] ?: null,
+            'phone' => BeneficiaryRules::normaliseContact($this->registerForm['phone']),
+            'barangay' => $community->name,
+            'municipality' => $community->municipality,
+            'province' => $community->province,
+            'community_id' => $community->id,
+            'extension_project_id' => $this->program->id,
             'beneficiary_category' => $this->registerForm['beneficiary_category'],
         ]);
 
-        $this->program->beneficiaries()->syncWithoutDetaching([$beneficiary->id]);
-
         activity()->performedOn($this->program)->event('register')
-            ->log("New beneficiary '{$beneficiary->fullName()}' registered and enrolled");
+            ->log("New beneficiary '{$beneficiary->fullName()}' registered in the project");
 
         $this->showRegister = false;
         $this->registerConfirmed = false;
         $this->dedupWarning = '';
         $this->registerCheckedKey = '';
-        $this->dispatch('sc-toast', message: 'Beneficiary registered & enrolled', type: 'success');
+        $this->dispatch('sc-toast', message: 'Beneficiary added', type: 'success');
+    }
+
+    /** Build the same-project and other-project duplicate warning, if any. */
+    protected function dedupWarningFor(\Illuminate\Support\Collection $dupes): string
+    {
+        $same = $dupes->where('extension_project_id', $this->program->id);
+        $other = $dupes->where('extension_project_id', '!=', $this->program->id);
+
+        $messages = [];
+
+        if ($same->isNotEmpty()) {
+            $messages[] = 'This person is already in this project: '.$same->map(fn ($d) => $d->fullName())->implode(', ').'.';
+        }
+
+        if ($other->isNotEmpty()) {
+            $messages[] = 'A person with the same name and community is in another project: '
+                .$other->map(fn ($d) => $d->fullName().' ('.($d->extensionProject?->code ?? 'unknown project').')')->implode(', ').'.';
+        }
+
+        return $messages === [] ? '' : implode(' ', $messages).' Use "This is a different person" only if you are sure.';
     }
 
     /** Stored values and dedup keys must be whitespace-free (import path parity). */
     protected function trimRegisterForm(): void
     {
-        foreach (['first_name', 'middle_name', 'last_name', 'phone', 'barangay', 'municipality'] as $field) {
+        foreach (['first_name', 'middle_name', 'last_name', 'phone'] as $field) {
             $this->registerForm[$field] = trim((string) ($this->registerForm[$field] ?? ''));
         }
     }
 
-    /** Same key shape as the XLSX import registry check (first|last|barangay, lowercased). */
+    /** Same key shape as the XLSX import check (first|last|community, lowercased). */
     protected function registerKey(): string
     {
         return mb_strtolower(
-            $this->registerForm['first_name'].'|'.$this->registerForm['last_name'].'|'.$this->registerForm['barangay']
+            $this->registerForm['first_name'].'|'.$this->registerForm['last_name'].'|'.$this->registerForm['community_id']
         );
     }
 
@@ -1447,7 +1499,6 @@ class Hub extends Component
     public function openBeneficiaryEdit(int $beneficiaryId): void
     {
         $this->abortUnlessBeneficiaryEdit();
-
         $beneficiary = $this->enrolledBeneficiary($beneficiaryId);
 
         $this->editingBeneficiaryId = $beneficiary->id;
@@ -1459,8 +1510,8 @@ class Hub extends Component
             'gender' => $beneficiary->gender ?? '',
             'phone' => $beneficiary->phone ?? '',
             'beneficiary_category' => $beneficiary->beneficiary_category ?? '',
-            'barangay' => $beneficiary->barangay ?? '',
-            'municipality' => $beneficiary->municipality ?? '',
+            'community_id' => $beneficiary->community_id ?? '',
+            'extension_project_id' => $beneficiary->extension_project_id ?? $this->program->id,
         ];
 
         // The identity key at open time. If it does not change, the save skips
@@ -1474,6 +1525,16 @@ class Hub extends Component
         $this->showBeneficiaryEdit = true;
     }
 
+    /** Keep the edit community list honest when the Secretary moves the person. */
+    public function updatedBeneficiaryEditFormExtensionProjectId(): void
+    {
+        $projectId = (int) ($this->beneficiaryEditForm['extension_project_id'] ?? 0);
+        $first = ExtensionProject::find($projectId)?->communities()->orderBy('name')->first();
+
+        $this->beneficiaryEditForm['community_id'] = $first?->id ?? '';
+        $this->resetErrorBag('beneficiaryEditForm.community_id');
+    }
+
     public function checkEditDedup(): void
     {
         $this->abortUnlessBeneficiaryEdit();
@@ -1483,19 +1544,28 @@ class Hub extends Component
 
         $this->trimBeneficiaryEditForm();
 
-        $this->validate($this->editRules());
+        $this->validate($this->editRules(), BeneficiaryRules::messages('beneficiaryEditForm'));
+
+        $project = ExtensionProject::find($this->beneficiaryEditForm['extension_project_id']);
+
+        if ($project === null || ! $project->communities()->whereKey($this->beneficiaryEditForm['community_id'])->exists()) {
+            $this->addError('beneficiaryEditForm.community_id', 'Choose a community or partner school linked to the selected project.');
+
+            return;
+        }
 
         $dupes = Beneficiary::duplicatesFor(
             $this->beneficiaryEditForm['first_name'],
             $this->beneficiaryEditForm['last_name'],
-            $this->beneficiaryEditForm['barangay']
+            (int) $this->beneficiaryEditForm['community_id'],
+            (int) $this->beneficiaryEditForm['extension_project_id'],
         )->reject(fn (Beneficiary $dupe) => $dupe->id === $this->editingBeneficiaryId);
 
         $this->editCheckedKey = $this->editKey();
 
         if ($dupes->isNotEmpty()) {
             $names = $dupes->map(fn ($dupe) => $dupe->fullName())->implode(', ');
-            $this->editDedupWarning = 'Another beneficiary with the same first name, last name, and barangay already exists: '.$names.'.';
+            $this->editDedupWarning = 'Another beneficiary with the same first name, last name, and community already exists in this project: '.$names.'.';
         }
     }
 
@@ -1515,7 +1585,16 @@ class Hub extends Component
 
         $this->trimBeneficiaryEditForm();
 
-        $this->validate($this->editRules());
+        $this->validate($this->editRules(), BeneficiaryRules::messages('beneficiaryEditForm'));
+
+        $community = Community::find($this->beneficiaryEditForm['community_id']);
+        $project = ExtensionProject::find($this->beneficiaryEditForm['extension_project_id']);
+
+        if ($community === null || $project === null || ! $project->communities()->whereKey($community->id)->exists()) {
+            $this->addError('beneficiaryEditForm.community_id', 'Choose a community or partner school linked to the selected project.');
+
+            return;
+        }
 
         if ($this->editCheckedKey !== $this->editKey()) {
             $this->editConfirmed = false;
@@ -1530,6 +1609,7 @@ class Hub extends Component
         }
 
         $form = $this->beneficiaryEditForm;
+        $oldProjectId = $beneficiary->extension_project_id;
 
         $beneficiary->update([
             'first_name' => $form['first_name'],
@@ -1537,16 +1617,23 @@ class Hub extends Component
             'last_name' => $form['last_name'],
             'age' => ($form['age'] === '' || $form['age'] === null) ? null : (int) $form['age'],
             'gender' => $form['gender'] ?: null,
-            'phone' => $form['phone'] ?: null,
-            'barangay' => $form['barangay'],
-            'municipality' => $form['municipality'] ?: null,
+            'phone' => BeneficiaryRules::normaliseContact($form['phone']),
+            'barangay' => $community->name,
+            'municipality' => $community->municipality,
+            'province' => $community->province,
+            'community_id' => $community->id,
+            'extension_project_id' => $project->id,
             'beneficiary_category' => $form['beneficiary_category'],
         ]);
 
         // The Beneficiary model logs its own fillable changes; this project-level
         // entry mirrors registration so the project history shows the edit.
         activity()->performedOn($this->program)->event('beneficiary_updated')
-            ->withProperties(['beneficiary_id' => $beneficiary->id])
+            ->withProperties([
+                'beneficiary_id' => $beneficiary->id,
+                'project_from' => $oldProjectId,
+                'project_to' => $project->id,
+            ])
             ->log("Beneficiary '{$beneficiary->fullName()}' updated from the project roster");
 
         $this->showBeneficiaryEdit = false;
@@ -1571,23 +1658,15 @@ class Hub extends Component
         return $beneficiary;
     }
 
-    /** @return array<string, string> */
+    /** @return array<string, array<int, string>> */
     protected function editRules(): array
     {
-        return [
-            'beneficiaryEditForm.first_name' => 'required|string|max:255',
-            'beneficiaryEditForm.last_name' => 'required|string|max:255',
-            'beneficiaryEditForm.age' => 'required|integer|min:0|max:120',
-            'beneficiaryEditForm.barangay' => 'required|string|max:255',
-            'beneficiaryEditForm.municipality' => 'required|string|max:255',
-            'beneficiaryEditForm.phone' => 'nullable|string|max:20',
-            'beneficiaryEditForm.beneficiary_category' => 'required|in:'.implode(',', config('smartcemes.beneficiary_categories')),
-        ];
+        return BeneficiaryRules::rules(true, 'beneficiaryEditForm', true);
     }
 
     protected function trimBeneficiaryEditForm(): void
     {
-        foreach (['first_name', 'middle_name', 'last_name', 'phone', 'barangay', 'municipality'] as $field) {
+        foreach (['first_name', 'middle_name', 'last_name', 'phone'] as $field) {
             $this->beneficiaryEditForm[$field] = trim((string) ($this->beneficiaryEditForm[$field] ?? ''));
         }
     }
@@ -1595,7 +1674,10 @@ class Hub extends Component
     protected function editKey(): string
     {
         return mb_strtolower(
-            $this->beneficiaryEditForm['first_name'].'|'.$this->beneficiaryEditForm['last_name'].'|'.$this->beneficiaryEditForm['barangay']
+            $this->beneficiaryEditForm['first_name'].'|'
+            .$this->beneficiaryEditForm['last_name'].'|'
+            .$this->beneficiaryEditForm['community_id'].'|'
+            .$this->beneficiaryEditForm['extension_project_id']
         );
     }
 
@@ -1680,8 +1762,12 @@ class Hub extends Component
             }
         }
 
-        if ($columnField === null) {
-            $this->addError('importFile', 'This file does not use the official beneficiary template headers. Download the template and do not rename columns.');
+        // v2 needs both the community and category headers. Older templates fail
+        // here rather than importing rows with a guessed community.
+        if ($columnField === null
+            || ! in_array('community', $columnField, true)
+            || ! in_array('beneficiary_category', $columnField, true)) {
+            $this->addError('importFile', 'This file does not use the v2 beneficiary template. Download the new template and do not rename columns.');
 
             return;
         }
@@ -1698,13 +1784,24 @@ class Hub extends Component
             return;
         }
 
-        // Dedup keys already in the global registry (5.4: first + last + barangay).
-        $registryKeys = Beneficiary::query()
-            ->get(['first_name', 'last_name', 'barangay'])
-            ->map(fn ($b) => mb_strtolower($b->first_name.'|'.$b->last_name.'|'.$b->barangay))
-            ->flip()->all();
+        $communities = $this->program->communities()->get();
+        $communityByName = [];
+        foreach ($communities as $community) {
+            $communityByName[$this->communityKey($community->name)] = $community;
+        }
 
+        $existing = $this->program->beneficiaries()->get()
+            ->keyBy(fn (Beneficiary $b) => $this->beneficiaryKey($b->first_name, $b->last_name, $b->community_id));
+
+        $otherProjects = Beneficiary::query()
+            ->where('extension_project_id', '!=', $this->program->id)
+            ->with('extensionProject')
+            ->get()
+            ->keyBy(fn (Beneficiary $b) => $this->beneficiaryKey($b->first_name, $b->last_name, $b->community_id));
+
+        $seen = [];
         $this->importRows = [];
+
         foreach ($dataRows as $row) {
             $raw = [];
             foreach ($columnField as $colLetter => $field) {
@@ -1712,26 +1809,59 @@ class Hub extends Component
             }
 
             $result = BeneficiaryTemplate::normalizeRow($raw);
+            $data = $result['data'];
+            $errors = $result['errors'];
+            $community = null;
+            $status = 'new';
+            $existingId = null;
+            $otherProject = null;
 
-            $duplicate = false;
-            if ($result['errors'] === []) {
-                $key = mb_strtolower($result['data']['first_name'].'|'.$result['data']['last_name'].'|'.$result['data']['barangay']);
-                $duplicate = isset($registryKeys[$key]);
-                $registryKeys[$key] = true;
+            if ($errors === []) {
+                $community = $communityByName[$this->communityKey((string) $data['community'])] ?? null;
+
+                if ($community === null) {
+                    $errors['community'] = 'This community/partner school is not linked to the project. Add the link first.';
+                }
+            }
+
+            if ($errors === []) {
+                $key = $this->beneficiaryKey($data['first_name'], $data['last_name'], $community->id);
+
+                if (isset($seen[$key])) {
+                    $errors['first_name'] = 'Duplicate person in this file — only the first row will be used.';
+                } else {
+                    $seen[$key] = true;
+
+                    if ($existing->has($key)) {
+                        $status = 'update';
+                        $existingId = $existing->get($key)->id;
+                    } elseif ($otherProjects->has($key)) {
+                        $status = 'other_project';
+                        $otherProject = $otherProjects->get($key)->extensionProject?->code ?? 'another project';
+                    }
+                }
+            }
+
+            if ($errors !== []) {
+                $status = 'error';
             }
 
             $this->importRows[] = [
-                'data' => $result['data'],
-                'errors' => $result['errors'],
+                'data' => $data,
+                'errors' => $errors,
                 'category_other' => $result['category_other'],
-                'duplicate' => $duplicate,
+                'status' => $status,
+                'existing_id' => $existingId,
+                'community_id' => $community?->id,
+                'community_name' => $community?->name ?? ($data['community'] ?? null),
+                'other_project' => $otherProject,
             ];
         }
 
         $this->importPreview = true;
     }
 
-    /** Records are only created when the uploader confirms the preview (D10). */
+    /** Records are only created or updated when the uploader confirms the preview (D10). */
     public function confirmImport(): void
     {
         $this->abortUnlessBeneficiaryManage();
@@ -1742,68 +1872,113 @@ class Hub extends Component
             return;
         }
 
-        $communityByBarangay = [];
-        $defaultCommunity = $this->program->communities->first();
-        $defaultMunicipality = $defaultCommunity?->municipality;
-
         $created = 0;
-        $duplicates = 0;
+        $updated = 0;
+        $otherProject = 0;
         $failed = 0;
 
-        DB::transaction(function () use (&$created, &$duplicates, &$failed, $communityByBarangay, $defaultCommunity, $defaultMunicipality) {
+        DB::transaction(function () use (&$created, &$updated, &$otherProject, &$failed) {
             foreach ($this->importRows as $row) {
-                if ($row['errors'] !== []) {
+                if ($row['status'] === 'error') {
                     $failed++;
 
                     continue;
                 }
 
-                if ($row['duplicate']) {
-                    $duplicates++;
+                if ($row['status'] === 'other_project') {
+                    $otherProject++;
 
                     continue;
                 }
 
                 $data = $row['data'];
-                $barangay = $data['barangay'];
+                $community = Community::find($row['community_id']);
 
-                if (! isset($communityByBarangay[$barangay])) {
-                    $communityByBarangay[$barangay] = Community::where('name', 'like', "%{$barangay}%")->first() ?? $defaultCommunity;
+                if ($community === null) {
+                    $failed++;
+
+                    continue;
                 }
 
-                $beneficiary = Beneficiary::create([
+                if ($row['status'] === 'update' && $row['existing_id'] !== null) {
+                    $beneficiary = Beneficiary::query()
+                        ->where('extension_project_id', $this->program->id)
+                        ->find($row['existing_id']);
+
+                    if ($beneficiary !== null) {
+                        // Only filled cells update; a blank cell never erases data.
+                        $updates = [
+                            'community_id' => $community->id,
+                            'barangay' => $community->name,
+                            'municipality' => $community->municipality,
+                            'province' => $community->province,
+                        ];
+
+                        foreach (['first_name', 'middle_name', 'last_name', 'gender', 'beneficiary_category'] as $field) {
+                            if (($data[$field] ?? null) !== null) {
+                                $updates[$field] = $data[$field];
+                            }
+                        }
+
+                        if (($data['age'] ?? null) !== null) {
+                            $updates['age'] = (int) $data['age'];
+                        }
+
+                        if (($data['phone'] ?? null) !== null) {
+                            $updates['phone'] = BeneficiaryRules::normaliseContact($data['phone']);
+                        }
+
+                        $beneficiary->update($updates);
+                        $updated++;
+                    }
+
+                    continue;
+                }
+
+                Beneficiary::create([
                     'first_name' => $data['first_name'],
-                    'middle_name' => $data['middle_name'],
+                    'middle_name' => $data['middle_name'] ?: null,
                     'last_name' => $data['last_name'],
                     'age' => $data['age'] !== null ? (int) $data['age'] : null,
                     'gender' => $data['gender'],
-                    'phone' => $data['phone'] ?? BeneficiaryTemplate::DEFAULT_CONTACT_NUMBER,
-                    'barangay' => $barangay,
-                    'municipality' => $data['municipality'] ?? $defaultMunicipality,
-                    'province' => 'Leyte',
-                    'community_id' => $communityByBarangay[$barangay]?->id,
+                    'phone' => BeneficiaryRules::normaliseContact($data['phone'] ?? null),
+                    'barangay' => $community->name,
+                    'municipality' => $community->municipality,
+                    'province' => $community->province,
+                    'community_id' => $community->id,
+                    'extension_project_id' => $this->program->id,
                     'beneficiary_category' => $data['beneficiary_category'],
                 ]);
 
-                $this->program->beneficiaries()->syncWithoutDetaching([$beneficiary->id]);
                 $created++;
             }
         });
 
-        if ($created > 0) {
+        if ($created > 0 || $updated > 0) {
             activity()->performedOn($this->program)->event('beneficiary_import')
-                ->log("{$created} beneficiaries imported from the XLSX template and enrolled");
+                ->withProperties(['created' => $created, 'updated' => $updated])
+                ->log("{$created} beneficiaries created and {$updated} updated from the XLSX template");
         }
 
-        $summary = "{$created} imported & enrolled";
-        $summary .= $duplicates > 0 ? " · {$duplicates} duplicate".($duplicates === 1 ? '' : 's').' skipped' : '';
-        $summary .= $failed > 0 ? " · {$failed} row".($failed === 1 ? '' : 's').' with errors skipped' : '';
-        $this->dispatch('sc-toast', message: $summary, type: $created > 0 ? 'success' : 'warn');
+        $summary = "{$created} created · {$updated} updated";
+        $summary .= $otherProject > 0 ? " · {$otherProject} skipped (exists in another project)" : '';
+        $summary .= $failed > 0 ? " · {$failed} skipped (errors)" : '';
+        $this->dispatch('sc-toast', message: $summary, type: ($created + $updated) > 0 ? 'success' : 'warn');
 
         $this->showImport = false;
         $this->importPreview = false;
         $this->importRows = [];
         $this->importFile = null;
+    }
+
+    protected function communityKey(?string $name): string
+    {
+        return mb_strtolower(preg_replace('/\s+/', ' ', trim((string) $name)) ?? '');
+    }
+
+    protected function beneficiaryKey(?string $firstName, ?string $lastName, ?int $communityId): string
+    {
+        return mb_strtolower(trim((string) $firstName).'|'.trim((string) $lastName).'|'.(int) $communityId);
     }
 
     /* ==================== BUDGET ==================== */
@@ -2066,18 +2241,6 @@ class Hub extends Component
     protected function abortUnlessBeneficiaryEdit(): void
     {
         abort_unless(auth()->user()->can('editBeneficiary', $this->program), 403, 'Only the Secretary can edit a beneficiary profile.');
-    }
-
-    protected function registryResults()
-    {
-        return Beneficiary::query()
-            ->when($this->enrollSearch, fn ($q) => $q->where(fn ($w) => $w
-                ->where('first_name', 'like', "%{$this->enrollSearch}%")
-                ->orWhere('last_name', 'like', "%{$this->enrollSearch}%")
-                ->orWhere('barangay', 'like', "%{$this->enrollSearch}%")))
-            ->orderBy('last_name')
-            ->limit(20)
-            ->get();
     }
 
     protected function findScheduleConflict(int $facultyId): ?string

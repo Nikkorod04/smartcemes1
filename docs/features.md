@@ -234,9 +234,11 @@ Tabs: Overview | Activities | Beneficiaries | Budget.
   the activity's aggregate columns (D13).
 
 **Beneficiaries tab:**
-- **Register new**: type a name/barangay matching an existing beneficiary → **dedup warning requires
+- **Add beneficiary**: type a name/community matching an existing beneficiary → **dedup warning requires
   explicit confirm** (5.4).
-- **Import XLSX** (mention): 500 rows max, per-row Import/Duplicate/Skip preview, auto-enrollment.
+- **Import XLSX** (mention): v2 template, 500 rows max, per-row New/Update/Other project/Skip preview.
+- **Export PDF** (mention): the project roster as an A4 portrait sheet with the seal and contacts;
+  attendance is intentionally excluded.
 
 **Budget tab:**
 - Open **EXT-2026-002 HANDA** instead: it is seeded **over-allocated by ₱2,000** (₱64,500 utilized

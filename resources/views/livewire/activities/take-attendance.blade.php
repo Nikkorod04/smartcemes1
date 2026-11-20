@@ -85,7 +85,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-[12px] text-gray-500">{{ $beneficiary->barangay ?: '—' }}</td>
+                                <td class="text-[12px] text-gray-500">{{ $beneficiary->community?->name ?? ($beneficiary->barangay ?: '—') }}</td>
                                 <td><span class="badge badge-gray">{{ $beneficiary->beneficiary_category }}</span></td>
                                 <td class="!text-right">
                                     <div class="inline-flex flex-wrap justify-end gap-1.5">
@@ -115,10 +115,10 @@
                             <tr>
                                 <td colspan="4" class="!py-12 text-center">
                                     @if ($enrolledTotal === 0)
-                                        <p class="text-[13px] font-semibold text-gray-400">No beneficiaries are enrolled in this project yet.</p>
+                                        <p class="text-[13px] font-semibold text-gray-400">No beneficiaries are listed for this project yet.</p>
                                         <a href="{{ route('projects.show', $project) }}?tab=beneficiaries"
                                            class="mt-2 inline-block text-[11.5px] font-bold text-lnu-700 underline">
-                                            Enroll beneficiaries first
+                                            Add beneficiaries first
                                         </a>
                                     @else
                                         <p class="text-[13px] font-semibold text-gray-400">No beneficiary matches that search.</p>

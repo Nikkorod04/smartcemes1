@@ -177,14 +177,15 @@ leaves the existing aggregate untouched.
 
 ### 3.3 Beneficiaries tab — dedup warning + import
 
-1. Click **Register new**; type a first/last name and barangay that matches an existing beneficiary
-   (look at the table first), then save.
+1. Click **Add beneficiary**; type a first/last name and community/partner school that matches an
+   existing beneficiary (look at the table first), then save.
 
 **Expected:** a **de-duplication warning** appears and requires explicit confirmation — never a
 silent merge.
 
-2. Note the **Import XLSX** button (bulk import, 500 rows max, per-row Import/Duplicate/Skip preview)
-   and **Enroll existing** (search + enroll from the global registry). Try either if you like.
+2. Note the **Import XLSX** button (v2 template, 500 rows max, per-row New/Update/Other project/Skip
+   preview) and **Export PDF** (the project roster as an A4 portrait sheet). Editing a beneficiary
+   profile stays Secretary-only; the Admin creates, archives, imports and exports.
 
 ### 3.4 Budget tab — over-allocation warning (D7)
 

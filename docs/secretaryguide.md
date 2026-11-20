@@ -131,22 +131,26 @@ queue (§2), ready to validate. The source file is archived for audit.
 
 1. Sidebar → **Manage Beneficiaries**.
 
-**Expected:** three cards (**Projects** · **Beneficiary enrollments** · a "What you can do" explainer)
-and a table of **projects** with a search box. Each row shows status, linked communities, the enrolled
-count and the scheduled-activity count, with two actions: **Beneficiaries** and **Attendance**.
+**Expected:** the **Beneficiaries** registry page — three counters (Active · Archived · Projects), a
+searchable table of every beneficiary you can see, and filters for project, community/partner school,
+category and status (Active / Archived / All). Administrators and Secretaries can open it.
 
-2. Click **Beneficiaries** on a project.
+2. Use **Add beneficiary** to add one person, or open a project hub's **Beneficiaries** tab.
 
 **Expected:** the project hub opens on its **Beneficiaries** tab. Here you can:
-- **Enroll existing** — search the global registry (including beneficiaries not yet linked to any
-  project) and attach them to this project.
-- **Register new** — create a profile and auto-enroll it. A first + last + barangay match warns you
-  and requires explicit confirmation; it is **never a silent merge**.
-- **Import XLSX** — download the official beneficiary template (one row = one beneficiary, 500 max),
-  upload it, review the per-row **Import / Duplicate / Skip** preview, then confirm. Rows with errors
-  or duplicates are **skipped per row** — never a whole-file reject. Unknown categories auto-map to
-  "Other". A blank contact number defaults to `09123456789`.
-- **Unenroll** — detach from this project (the beneficiary stays in the global registry).
+- **Add beneficiary** — create one person inside this project. A first + last + community match warns
+  you and requires explicit confirmation; it is **never a silent merge**.
+- **Edit** — correct a person's details (Secretary only; Admin cannot edit). Moving a beneficiary to a
+  different project is allowed and warns that past attendance stays with the old activities.
+- **Archive** — hide a person from active rosters. Attendance history stays. Use **Restore** on the
+  registry page's Archived tab to bring them back.
+- **Import XLSX** — download the **v2** beneficiary template (one row = one beneficiary, 500 max),
+  upload it, review the per-row **New / Update / Other project / Skip** preview, then confirm. Old
+  templates are rejected. An existing person in this project is **updated**; a person already in
+  another project is **skipped**; errors skip per row, never the whole file. Unknown categories
+  auto-map to "Other". A blank contact stays blank and displays as **“No contact provided.”**
+- **Export PDF** — print or download this project's active roster as an A4 portrait PDF with the
+  university seal, project details and contact numbers. Attendance is not part of this sheet.
 
 3. Go back and click **Attendance** on a project instead.
 
@@ -215,8 +219,8 @@ Secretary cannot reach Admin-only pages even by typing the URL.
 | 7 | Template download (vertical, Sections I–IX, non-strict dropdowns) | ☐ |
 | 8 | Import: parse → preview → confirm → pending | ☐ |
 | 9 | Auto-map to "Other" on unknown values | ☐ |
-| 10 | Manage Beneficiaries lists **projects** with both deep links | ☐ |
-| 11 | Enroll / register (dedup warns) / XLSX import / unenroll | ☐ |
+| 10 | Manage Beneficiaries opens the registry with active/archived counters | ☐ |
+| 11 | Add / edit (dedup warns) / archive / restore / v2 XLSX import / PDF export | ☐ |
 | 12 | Activity Records: attendance + evaluation import | ☐ |
 | 13 | Calendar renders (3 feeds, conflict markers) | ☐ |
 | 14 | 403 on all seven Admin-only URLs; 200 on a project hub | ☐ |

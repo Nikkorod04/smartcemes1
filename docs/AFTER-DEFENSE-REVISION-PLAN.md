@@ -30,9 +30,10 @@ Status legend: **LOCKED** = agreed, safe to build against. **PROPOSED** = recomm
 | D5 | Share-link lifetime | **1–5 days**, chosen at generation (default 5), expiring end-of-day. A stored token, not a signed URL, so the link can be **extended/reopened** without changing the URL or printed QR, and **revoked** immediately. | LOCKED |
 | D6 | Who can generate share links | **Secretary + Faculty**, any community (parity with the encode wizard). Admin not included. Every generation is logged. | LOCKED |
 | D7 | AI/summary input | Summaries aggregate **validated** assessments only (implemented 2026-11-19; live totals 663 → 151). | LOCKED |
-| D8 | Beneficiary edit scope | Secretary only; Admin keeps create/enroll/import. | LOCKED (implemented 2026-11-19) |
+| D8 | Beneficiary edit scope | Secretary only; Admin keeps create/archive/import/export. | LOCKED (implemented 2026-11-19) |
 | D9 | Project-creation required set | ≥1 community, target beneficiaries, allocated budget, project lead, description (min ~20 chars). | LOCKED (implemented 2026-11-19) |
 | D10 | Manuscript scope | Restructure Results & Discussion per Specific Objective **and** correct the factual contradictions (stack, hierarchy, import scope, test counts). | LOCKED (implemented 2026-11-19) |
+| D11 | Beneficiary ownership | One project and one community/partner school per person. No enroll/unenroll; use create/edit/archive/restore. v2 XLSX only; per-project A4 portrait PDF roster. | LOCKED (implemented 2026-11-20, `revisions.md` §53) |
 
 ### Why D3 matters
 

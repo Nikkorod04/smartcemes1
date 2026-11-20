@@ -517,6 +517,7 @@ return [
                         'subs' => ['faculty.directory'],
                     ],
                     ['key' => 'manage-users', 'label' => 'Manage Users', 'route' => 'users.index', 'icon' => 'people'],
+                    ['key' => 'beneficiaries', 'label' => 'Beneficiaries', 'route' => 'beneficiaries.index', 'icon' => 'people'],
                     ['key' => 'communities', 'label' => 'Communities & Partner Schools', 'route' => 'communities.index', 'icon' => 'pin'],
                 ],
             ],

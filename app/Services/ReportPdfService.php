@@ -30,8 +30,11 @@ class ReportPdfService
         string $subtitle,
         string $filename,
         bool $download = false,
+        string $format = 'A4-L',
+        string $signatureMode = 'report',
     ): Response {
         $data['pdfLayout'] = 'layouts.pdf';
+        $data['signatureMode'] = $signatureMode;
 
         // The filename comes from controller data (year/project code); keep it
         // safe for Content-Disposition.
@@ -42,12 +45,16 @@ class ReportPdfService
         $tempDir = storage_path('app/mpdf');
         File::ensureDirectoryExists($tempDir);
 
+        // The beneficiary roster draws its own letterhead inside the view, so
+        // it does not need the institutional header above it.
+        $beneficiaryMode = $signatureMode === 'beneficiary';
+
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
-            'format' => 'A4-L',
+            'format' => $format,
             'margin_left' => 10,
             'margin_right' => 10,
-            'margin_top' => 23,
+            'margin_top' => $beneficiaryMode ? 12 : 23,
             'margin_bottom' => 15,
             'margin_header' => 6,
             'margin_footer' => 6,
@@ -61,7 +68,7 @@ class ReportPdfService
         $mpdf->SetCreator('SmartCEMES');
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->shrink_tables_to_fit = 1;
-        $mpdf->SetHTMLHeader($this->header($title, $subtitle, $data['scopeLabel'] ?? null));
+        $mpdf->SetHTMLHeader($beneficiaryMode ? '' : $this->header($title, $subtitle, $data['scopeLabel'] ?? null));
         $mpdf->SetHTMLFooter($this->footer());
         $mpdf->WriteHTML($html);
 

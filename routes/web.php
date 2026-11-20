@@ -290,7 +290,7 @@ Route::get('/assessments/template', AssessmentTemplateController::class)
 
 // Beneficiary management — Secretary entry point to the program hubs (5.4, v4.12)
 Route::get('/beneficiaries', App\Livewire\Beneficiaries\Index::class)
-    ->middleware(['auth', 'role:secretary'])->name('beneficiaries.index');
+    ->middleware(['auth', 'role:admin,secretary'])->name('beneficiaries.index');
 
 // Beneficiary import template — Admin AND Secretary (import lives in the program
 // hub, 5.4). The Secretary's documented scope includes importing from this
@@ -302,11 +302,11 @@ Route::get('/beneficiaries', App\Livewire\Beneficiaries\Index::class)
 Route::get('/beneficiaries/template', BeneficiaryTemplateController::class)
     ->middleware(['auth', 'role:admin,secretary'])->name('beneficiaries.template');
 
-// Beneficiary EXPORT — the same workbook, pre-filled with a program's enrolled
-// list (owner request 2026-10-05). Gated exactly like the button that links to
-// it: the hub renders the export link under $canManageBeneficiaries (admin +
-// secretary), so any narrower role here would show a role a link it cannot
-// reach — the §29 class of bug.
+// Beneficiary EXPORT — an A4 portrait PDF of a project's active roster
+// (2026-11-20, replacing the old XLSX export). Gated exactly like the button
+// that links to it: the hub renders the export link under
+// $canManageBeneficiaries (admin + secretary), so any narrower role here would
+// show a role a link it cannot reach — the §29 class of bug.
 Route::get('/projects/{project}/beneficiaries/export', BeneficiaryExportController::class)
     ->middleware(['auth', 'role:admin,secretary'])->name('beneficiaries.export');
 
