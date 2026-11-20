@@ -4,126 +4,94 @@ namespace App\Livewire;
 
 use App\Models\AssessmentAnalysis;
 use App\Models\AssessmentSummary;
-use App\Services\AssessmentAnalysisService;
+use App\Models\Community;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * The AI analysis QUEUE — the index of the split introduced 2026-10-07
- * (`docs/AI-ANALYSIS-REDESIGN-PLAN.md`).
+ * The AI analysis INDEX, redesigned 2026-11-20 as a COMMUNITY LIST.
  *
- * It replaces a single page that did three jobs at once (pick a summary and
- * generate / review one analysis / browse history) and could only ever show ONE
- * reviewable analysis: its hero was `$drafts->first()`, where `$drafts` was
- * `completed` + `draft`. So an APPROVED analysis had no reading surface at all.
+ * The previous queue listed every analysis row grouped by community, which made
+ * the Director read the pipeline before choosing a barangay. This surface answers
+ * the first question instead: *which communities have data, and which need
+ * attention?* One row per community, one page of communities, and the work
+ * happens on the community dossier (`ai-analysis.community`).
  *
- * This surface answers one question — *what analyses exist and what state is each
- * in* — and hands the reading to `AiAnalysisReview`.
+ * A community's state is derived, never stored:
+ *   draft     - a completed draft is waiting for review (highest priority)
+ *   pending   - a generation was interrupted and will never resolve alone
+ *   failed    - the only attempts failed
+ *   needs     - validated data exists but no usable analysis (never analysed,
+ *               or every attempt was discarded/failed)
+ *   approved  - at least one approved analysis, nothing newer waiting
+ *   no_data   - no validated summary yet
  *
- * Two things worth knowing:
- *  - An analysis is keyed to a **community + period** (`assessment_summaries` is
- *    unique on community_id/quarter/year), never to a faculty member. Several
- *    contributors roll up into one summary and one analysis.
- *  - **`awaiting_analysis` is a derived state, not a row.** It is every validated
- *    summary with no analysis yet — the pipeline's commonest real state (26 of 30
- *    in the live data), which the old dropdown buried as one option among thirty.
+ * The list is paginated by COMMUNITY (not by analysis row), so a community can
+ * never straddle a page break.
  */
 #[Layout('layouts.app')]
 class AiAnalysis extends Component
 {
     use WithPagination;
 
-    /**
-     * How many COMMUNITY GROUPS a page holds — not how many rows.
-     *
-     * The queue is grouped, so paginating rows would let a community's
-     * generations straddle a page break: you would see "gen 2 of 3" on one page
-     * and "gen 3 of 3" on the next with nothing tying them together. Bounding the
-     * page by groups keeps lineage intact, which is the point of the grouping.
-     */
-    private const GROUPS_PER_PAGE = 8;
+    private const PER_PAGE = 12;
 
-    /**
-     * The active filter chip. `''` is "All"; an unknown value resets to it in
-     * `mount()`, so a hand-edited `?state=` cannot render an empty page.
-     */
+    /** Attention first, then alphabetical inside the state. */
+    private const STATE_RANK = [
+        'draft' => 0,
+        'pending' => 1,
+        'failed' => 2,
+        'needs' => 3,
+        'approved' => 4,
+        'no_data' => 5,
+    ];
+
     #[Url(as: 'state', except: '')]
     public string $state = '';
 
-    /**
-     * Free-text search over the COMMUNITY name.
-     *
-     * The queue groups by community, so this is how you find one barangay among
-     * 21. `q` is the house URL alias (`Faculty\Directory`, `Communities\Index`),
-     * which keeps the query string consistent across the app.
-     */
+    /** Free-text search over the community name, municipality or province. */
     #[Url(as: 'q', except: '')]
     public string $search = '';
-
-    public ?string $generationResult = null;
-
-    public string $generationResultMessage = '';
-
-    public ?int $generationResultAnalysisId = null;
 
     public function mount(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403, 'Admin-only AI access (D4).');
 
-        if (! array_key_exists($this->state, $this->stateFilters())) {
-            $this->state = '';
-        }
+        // Older bookmarks used the row-level state names. Map them onto the new
+        // community states instead of dumping the Director on an empty page.
+        $this->state = match ($this->state) {
+            'awaiting_review' => 'draft',
+            'awaiting_analysis', 'discarded' => 'needs',
+            'draft', 'pending', 'failed', 'approved', 'no_data' => $this->state,
+            default => '',
+        };
     }
 
-    /**
-     * The filter chips. Counts are DERIVED from the rows on every render — there
-     * is no stored counter to drift.
-     *
-     * ⚠️ `pending` IS a chip, added 2026-10-07 (revisions.md §34.1a). This page
-     * originally omitted it, reasoning that generation is synchronous (v4.4) so a
-     * pending row resolves inside the request that made it. That holds only while
-     * the request COMPLETES: if the process is killed mid-generation — a timeout
-     * against the client's 120s wall-clock budget, a fatal, an aborted request —
-     * `queueState()` maps the row to `pending` and nothing will ever move it. The
-     * narratives page had two such rows in the dev database. Without a chip those
-     * rows are unreachable, and the row itself offers no way in — so a state the
-     * page RENDERS that no chip can REACH is a filter that lies by omission.
-     *
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     public function stateFilters(): array
     {
         return [
             '' => 'All',
-            'awaiting_review' => 'Awaiting review',
-            'approved' => 'Approved',
-            'failed' => 'Failed',
+            'draft' => 'Draft awaiting review',
             'pending' => 'Generating',
-            'discarded' => 'Discarded',
-            'awaiting_analysis' => 'Awaiting analysis',
+            'failed' => 'Failed',
+            'needs' => 'Needs analysis',
+            'approved' => 'Approved',
+            'no_data' => 'No validated data',
         ];
     }
 
     public function filterBy(string $state): void
     {
         $this->state = array_key_exists($state, $this->stateFilters()) ? $state : '';
-
-        // A filter change must not leave you on a page that no longer exists.
-        // (House pattern — Faculty\Directory resets the page in every setter.)
         $this->resetPage();
     }
 
-    /**
-     * Typing must also reset the page: narrowing the search can leave the current
-     * page beyond the last one, which renders an empty list that looks like a
-     * failed search. (House pattern — `Faculty\Directory::updatedSearch`.)
-     */
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -135,204 +103,144 @@ class AiAnalysis extends Component
         $this->resetPage();
     }
 
-    /**
-     * Generate for one summary — the per-row action.
-     *
-     * The queue is now the only entry point: the old toolbar select is gone, so a
-     * summary can be analysed from the row that says it is awaiting one.
-     */
-    public function generate(int $summaryId): void
-    {
-        $cancelKey = $this->generationCancelKey();
-        Cache::put($cancelKey, false, now()->addMinutes(10));
-        $this->resetGenerationResult();
-
-        try {
-            $summary = AssessmentSummary::findOrFail($summaryId);
-            $service = app(AssessmentAnalysisService::class);
-
-            $analysis = $service->generateFor($summary->fresh(), $service->batchIdFor($summary));
-            $analysis->refresh();
-
-            if (Cache::pull($cancelKey) === true) {
-                $analysis->update([
-                    'status' => AssessmentAnalysis::STATUS_FAILED,
-                    'error_message' => 'Generation canceled by the Director.',
-                ]);
-                $this->setGenerationResult('canceled', 'The AI generation was canceled. No analysis was published.');
-
-                return;
-            }
-
-            if ($analysis->status === AssessmentAnalysis::STATUS_COMPLETED) {
-                $this->generationResultAnalysisId = $analysis->id;
-                $this->setGenerationResult('success', 'The AI analysis was generated from validated aggregate responses and is ready for review.');
-
-                return;
-            }
-
-            $this->setGenerationResult('error', $analysis->failureSummary());
-        } catch (\Throwable $e) {
-            Cache::forget($cancelKey);
-            $this->setGenerationResult('error', 'Analysis unavailable — '.$e->getMessage());
-        }
-    }
-
-    /** Request cancellation for the current synchronous generation. */
-    public function cancelGeneration(): void
-    {
-        Cache::put($this->generationCancelKey(), true, now()->addMinutes(10));
-    }
-
-    public function closeGenerationResult(): void
-    {
-        $this->resetGenerationResult();
-    }
-
-    private function generationCancelKey(): string
-    {
-        return 'ai-analysis:generation-cancel:'.auth()->id();
-    }
-
-    private function resetGenerationResult(): void
-    {
-        $this->generationResult = null;
-        $this->generationResultMessage = '';
-        $this->generationResultAnalysisId = null;
-    }
-
-    private function setGenerationResult(string $type, string $message): void
-    {
-        $this->generationResult = $type;
-        $this->generationResultMessage = $message;
-    }
-
-    /**
-     * Retry a failed row WITHOUT opening it.
-     *
-     * Nine of the eleven live analyses are `failed`, so making the Director open
-     * each one to retry would be the wrong default. Delegates to the service, so
-     * this and the review surface cannot drift.
-     */
-    public function retry(int $id): void
-    {
-        $analysis = AssessmentAnalysis::findOrFail($id);
-
-        $failed = app(AssessmentAnalysisService::class)->retry($analysis)->status === AssessmentAnalysis::STATUS_FAILED;
-        $analysis->refresh();
-
-        $this->dispatch(
-            'sc-toast',
-            message: $failed ? $analysis->failureSummary() : 'Retry complete — the draft is ready to review',
-            type: $failed ? 'error' : 'info'
-        );
-    }
-
     public function render()
     {
-        $analyses = AssessmentAnalysis::query()
-            ->with(['assessmentSummary.community', 'approver'])
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->get();
+        $rows = $this->communityRows();
 
-        $analysedSummaryIds = $analyses->pluck('assessment_summary_id')->filter()->unique()->all();
-
-        $awaiting = AssessmentSummary::query()
-            ->with('community')
-            ->whereNotIn('id', $analysedSummaryIds)
-            ->orderByDesc('year')
-            ->orderByDesc('quarter')
-            ->get();
-
-        $rows = collect();
-
-        foreach ($analyses as $analysis) {
-            $summary = $analysis->assessmentSummary;
-
-            $rows->push([
-                'kind' => 'analysis',
-                'community' => $summary?->community?->name ?? '— unknown community —',
-                // Carried so the group header can link to that community's history page.
-                'communityId' => $summary?->community?->id,
-                'analysis' => $analysis,
-                'summary' => $summary,
-                'state' => $analysis->queueState(),
-                'period' => $summary ? 'Q'.$summary->quarter.' '.$summary->year : '—',
-                'sort' => sprintf('%04d%02d', $summary?->year ?? 0, $summary?->quarter ?? 0),
-                'at' => $analysis->created_at,
-            ]);
-        }
-
-        foreach ($awaiting as $summary) {
-            $rows->push([
-                'kind' => 'awaiting',
-                'community' => $summary->community?->name ?? '—',
-                'communityId' => $summary->community?->id,
-                'analysis' => null,
-                'summary' => $summary,
-                'state' => 'awaiting_analysis',
-                'period' => 'Q'.$summary->quarter.' '.$summary->year,
-                'sort' => sprintf('%04d%02d', $summary->year, $summary->quarter),
-                'at' => $summary->updated_at ?? $summary->created_at,
-            ]);
-        }
-
-        // Search narrows the whole queue FIRST, so the chips describe what you are
-        // actually looking at rather than the unfiltered set. Matching is on the
-        // COMMUNITY name only — the queue groups by community, so that is the axis
-        // a Director searches on. No LIKE escaping here: this is a Collection
-        // filter, not SQL (contrast Faculty\Directory, which escapes % and _).
         $needle = mb_strtolower(trim($this->search));
         $matched = $needle === ''
             ? $rows
-            : $rows->filter(fn (array $r) => str_contains(mb_strtolower($r['community']), $needle))->values();
+            : $rows->filter(fn (array $row) => str_contains(mb_strtolower($row['haystack']), $needle))->values();
 
-        // Counts are taken BEFORE the state filter, so the chips never collapse to
-        // the active filter's own count.
+        // Counts are taken BEFORE the state filter, so the chips describe the
+        // searched set rather than collapsing to the active filter.
         $counts = $matched->countBy('state')->all();
         $counts[''] = $matched->count();
 
-        $visible = $this->state === '' ? $matched : $matched->where('state', $this->state);
+        $visible = $this->state === '' ? $matched : $matched->where('state', $this->state)->values();
 
-        $groups = $this->groupByCommunity($visible);
-
-        // Paginate the GROUP KEYS, then hand the page's slice to the paginator, so
-        // a community's rows always travel together. `Collection::paginate()` does
-        // not exist in this Laravel version, hence the manual paginator.
         $page = Paginator::resolveCurrentPage('page');
-        $perPage = self::GROUPS_PER_PAGE;
-
         $paginator = new LengthAwarePaginator(
-            $groups->slice(($page - 1) * $perPage, $perPage)->all(),
-            $groups->count(),
-            $perPage,
+            $visible->slice(($page - 1) * self::PER_PAGE, self::PER_PAGE)->values()->all(),
+            $visible->count(),
+            self::PER_PAGE,
             $page,
             ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page']
         );
 
         return view('livewire.ai-analysis', [
-            'groups' => $paginator,
+            'communities' => $paginator,
             'counts' => $counts,
             'filters' => $this->stateFilters(),
-            // The pager's "of N" counts COMMUNITIES, not rows — so say so.
-            'communityCount' => $groups->count(),
-            'rowCount' => $visible->count(),
+            'communityCount' => $visible->count(),
+            'attentionCount' => $visible->whereIn('state', ['draft', 'pending', 'failed', 'needs'])->count(),
         ]);
     }
 
     /**
-     * Community first, then the newest period — so a community's previous
-     * quarters and previous generations read together.
+     * Every community with its derived work state.
      *
-     * @param  Collection<int, array<string, mixed>>  $rows
-     * @return Collection<string, Collection<int, array<string, mixed>>>
+     * The dataset is small (tens of communities, not thousands), so the state is
+     * computed in memory after one aggregate query. The expensive part — loading
+     * analyses — is reduced to counts and a few columns, never the narrative.
+     *
+     * @return Collection<int, array<string, mixed>>
      */
-    private function groupByCommunity(Collection $rows): Collection
+    private function communityRows(): Collection
     {
-        return $rows
-            ->sortByDesc(fn (array $r) => $r['sort'].'|'.str_pad((string) ($r['at'] ? $r['at']->timestamp : 0), 12, '0', STR_PAD_LEFT))
-            ->groupBy('community')
-            ->sortKeys();
+        $communities = Community::query()
+            ->with(['assessmentSummaries' => function ($query) {
+                $query->withCount([
+                    'analyses as analyses_count',
+                    'analyses as draft_count' => fn ($q) => $q
+                        ->where('status', AssessmentAnalysis::STATUS_COMPLETED)
+                        ->where('approval_status', AssessmentAnalysis::APPROVAL_DRAFT),
+                    'analyses as pending_count' => fn ($q) => $q
+                        ->where('status', AssessmentAnalysis::STATUS_PENDING),
+                    'analyses as failed_count' => fn ($q) => $q
+                        ->where('status', AssessmentAnalysis::STATUS_FAILED),
+                    'analyses as approved_count' => fn ($q) => $q
+                        ->where('approval_status', AssessmentAnalysis::APPROVAL_APPROVED),
+                ])->orderByDesc('year')->orderByDesc('quarter');
+            }])
+            ->orderBy('name')
+            ->get();
+
+        // One readable failure per summary, so a failed row says WHY without the
+        // Director opening the dossier first.
+        $failedBySummary = AssessmentAnalysis::query()
+            ->whereIn('assessment_summary_id', $communities->flatMap->assessmentSummaries->pluck('id'))
+            ->where('status', AssessmentAnalysis::STATUS_FAILED)
+            ->orderByDesc('id')
+            ->get(['id', 'assessment_summary_id', 'error_message'])
+            ->unique('assessment_summary_id')
+            ->keyBy('assessment_summary_id');
+
+        return $communities->map(function (Community $community) use ($failedBySummary) {
+            /** @var Collection<int, AssessmentSummary> $summaries */
+            $summaries = $community->assessmentSummaries;
+            $withData = $summaries->where('total_responses', '>', 0);
+
+            $draft = (int) $summaries->sum('draft_count');
+            $pending = (int) $summaries->sum('pending_count');
+            $failed = (int) $summaries->sum('failed_count');
+            $approved = (int) $summaries->sum('approved_count');
+
+            // "Needs analysis" means a period with validated data but no usable
+            // analysis. A failed or discarded-only period still needs one.
+            $needs = $withData->filter(function ($summary) {
+                $usable = $summary->draft_count > 0 || $summary->approved_count > 0;
+
+                return ! $usable && $summary->pending_count === 0;
+            })->count();
+
+            $state = match (true) {
+                $draft > 0 => 'draft',
+                $pending > 0 => 'pending',
+                $failed > 0 => 'failed',
+                $needs > 0 => 'needs',
+                $approved > 0 => 'approved',
+                default => 'no_data',
+            };
+
+            $latest = $withData->first();
+            $lastActivity = $summaries
+                ->map(fn ($s) => $s->last_calculated_at ?? $s->updated_at)
+                ->filter()
+                ->sortDesc()
+                ->first();
+
+            $failure = $summaries
+                ->map(fn ($s) => $failedBySummary->get($s->id))
+                ->filter()
+                ->first();
+
+            return [
+                'id' => $community->id,
+                'name' => $community->name,
+                'type' => $community->isSchool() ? 'School' : 'Barangay',
+                'location' => trim(implode(', ', array_filter([$community->municipality, $community->province]))),
+                'periods' => $withData->count(),
+                'validated' => (int) $withData->sum('total_responses'),
+                'latest' => $latest ? 'Q'.$latest->quarter.' '.$latest->year : null,
+                'last_activity' => $lastActivity,
+                'draft' => $draft,
+                'pending' => $pending,
+                'failed' => $failed,
+                'needs' => $needs,
+                'approved' => $approved,
+                'state' => $state,
+                'failure' => $failure?->failureSummary(),
+                'haystack' => implode(' ', array_filter([
+                    $community->name,
+                    $community->municipality,
+                    $community->province,
+                ])),
+            ];
+        })->sortBy(fn (array $row) => sprintf(
+            '%d|%s',
+            self::STATE_RANK[$row['state']] ?? 99,
+            mb_strtolower($row['name'])
+        ))->values();
     }
 }

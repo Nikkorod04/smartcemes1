@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\AiAnalysis;
+use App\Livewire\AiAnalysisCommunity;
 use App\Livewire\AiAnalysisReview;
 use App\Models\AssessmentAnalysis;
 use App\Models\AssessmentSummary;
@@ -121,9 +122,9 @@ class AiAnalysisQueueTest extends TestCase
             ->get('/ai-analysis')
             ->assertOk()
             ->assertSee('Brgy. San Jose')
-            ->assertSee('Q2 2026')
-            ->assertSee('awaiting review')
-            ->assertSee('Review →');
+            ->assertSee('draft awaiting review')
+            ->assertSee('1 draft')
+            ->assertSee('/ai-analysis/community/'.$data['summary']->community_id, false);
     }
 
     /**
@@ -138,9 +139,27 @@ class AiAnalysisQueueTest extends TestCase
         $this->actingAs($data['admin'])
             ->get('/ai-analysis')
             ->assertOk()
-            ->assertSee('awaiting analysis')
-            ->assertSee('13 validated responses')
-            ->assertSee('Generate');
+            ->assertSee('needs analysis')
+            ->assertSee('13')
+            ->assertSee('validated')
+            ->assertSee('/ai-analysis/community/'.$data['summary']->community_id, false);
+    }
+
+    /** A community with a draft and a failed attempt is a DRAFT first; both are still visible. */
+    public function test_the_community_state_prioritises_a_draft_over_a_failed_attempt(): void
+    {
+        $data = $this->fixture();
+        $this->analysis($data);
+        $this->analysis($data, [
+            'status' => AssessmentAnalysis::STATUS_FAILED,
+            'error_message' => 'HTTP 503 overloaded',
+        ]);
+
+        Livewire::actingAs($data['admin'])
+            ->test(AiAnalysis::class)
+            ->assertViewHas('counts', fn ($c) => ($c['draft'] ?? 0) === 1 && ($c['failed'] ?? 0) === 0)
+            ->assertSee('1 draft')
+            ->assertSee('1 failed');
     }
 
     public function test_the_state_filter_narrows_the_queue(): void
@@ -202,15 +221,19 @@ class AiAnalysisQueueTest extends TestCase
     {
         $data = $this->fixture();
         $this->analysis($data, ['status' => AssessmentAnalysis::STATUS_PENDING]);
-        $this->analysis($data); // a completed draft, so the filter has something to exclude
 
         Livewire::actingAs($data['admin'])
             ->test(AiAnalysis::class)
-            ->assertViewHas('counts', fn ($c) => ($c['pending'] ?? 0) === 1 && ($c['awaiting_review'] ?? 0) === 1)
-            ->assertViewHas('rowCount', fn ($n) => $n === 2)
+            ->assertViewHas('counts', fn ($c) => ($c['pending'] ?? 0) === 1)
             ->call('filterBy', 'pending')
-            ->assertViewHas('rowCount', fn ($n) => $n === 1)
-            ->assertSee('Start a new generation');
+            ->assertSee('generating')
+            ->assertSee('Brgy. San Jose');
+
+        // Recovery lives on the dossier: a pending-only period offers a fresh
+        // generation, and the interrupted attempt stays as history.
+        Livewire::actingAs($data['admin'])
+            ->test(AiAnalysisCommunity::class, ['community' => $data['summary']->community])
+            ->assertSee('Generate analysis');
     }
 
     /* =====================================================================
@@ -273,9 +296,9 @@ class AiAnalysisQueueTest extends TestCase
 
             // The approval gate is offered for a DRAFT only.
             if ($state === 'awaiting_review') {
-                $response->assertSee('APPROVE ANALYSIS');
+                $response->assertSee('Approve & save for reports');
             } else {
-                $response->assertDontSee('APPROVE ANALYSIS');
+                $response->assertDontSee('Approve & save for reports');
             }
         }
     }
@@ -394,9 +417,9 @@ class AiAnalysisQueueTest extends TestCase
             ->assertOk()
             ->assertDontSee('Director-only')
             ->assertDontSee('Every community needs-analysis')
-            // …but the controls and the legend survive.
-            ->assertSee('Awaiting analysis')
-            ->assertSee('Pipeline states are first-class UI states');
+            // ...but the controls and the legend survive.
+            ->assertSee('Needs analysis')
+            ->assertSee('Each row is one community');
     }
 
     /**
@@ -407,7 +430,7 @@ class AiAnalysisQueueTest extends TestCase
     {
         $admin = $this->admin();
 
-        foreach (range(1, 10) as $i) {
+        foreach (range(1, 14) as $i) {
             $community = Community::factory()->create(['name' => 'Brgy. Test '.str_pad((string) $i, 2, '0', STR_PAD_LEFT)]);
 
             NeedsAssessment::create([
@@ -421,22 +444,22 @@ class AiAnalysisQueueTest extends TestCase
             ]);
         }
 
-        // Page 1 — the first 8 groups, and a pager that knows the total.
+        // Page 1 — 12 communities, and a pager that knows the total.
         $this->actingAs($admin)
             ->get('/ai-analysis')
             ->assertOk()
             ->assertSee('Brgy. Test 01')
-            ->assertSee('Brgy. Test 08')
-            ->assertDontSee('Brgy. Test 09')
-            ->assertSee('of 10')
+            ->assertSee('Brgy. Test 12')
+            ->assertDontSee('Brgy. Test 13')
+            ->assertSee('of 14')
             ->assertSee('Next');
 
         // Page 2 — the remaining 2.
         $this->actingAs($admin)
             ->get('/ai-analysis?page=2')
             ->assertOk()
-            ->assertSee('Brgy. Test 09')
-            ->assertSee('Brgy. Test 10')
+            ->assertSee('Brgy. Test 13')
+            ->assertSee('Brgy. Test 14')
             ->assertDontSee('Brgy. Test 01');
     }
 
@@ -533,18 +556,18 @@ class AiAnalysisQueueTest extends TestCase
         $this->analysis($data);                 // Brgy. San Jose → 1 analysis
         $this->secondCommunity('Brgy. Sagkahan'); // → 1 awaiting-analysis row
 
-        // Unsearched: 2 rows total.
+        // Unsearched: 2 communities total.
         $this->actingAs($data['admin'])
             ->get('/ai-analysis')
             ->assertOk()
-            ->assertSee('2 rows');
+            ->assertSee('2 communities');
 
-        // Searched to Sagkahan: 1 row, and the state chip follows it.
+        // Searched to Sagkahan: 1 community, and the state chip follows it.
         $this->actingAs($data['admin'])
             ->get('/ai-analysis?q=Sagkahan')
             ->assertOk()
-            ->assertSee('1 row')
-            ->assertSee('Awaiting analysis');
+            ->assertSee('1 community')
+            ->assertSee('Needs analysis');
     }
 
     /** Typing must reset the page, or a narrowed search can render empty. */

@@ -90,100 +90,20 @@
             <p class="mt-2 leading-relaxed text-[14px] text-charcoal font-medium">{{ $hero->summary ?? '—' }}</p>
 
             {{-- Community response data (the exact aggregates sent to the model, D3).
-                 CARRIED OVER VERBATIM — do not restructure. --}}
+                 Shared with the community dossier so there is one definition. --}}
             @php($aggRaw = $hero->raw_extracted_data ?? [])
             @if (! empty($aggRaw))
-                @php($aggTotal = max(1, (int) ($aggRaw['total_responses'] ?? 0)))
-                @php($aggGroups = [
-                    'Respondent profile' => [
-                        'gender_distribution' => 'Sex',
-                        'civil_status_distribution' => 'Civil status',
-                        'religion_distribution' => 'Religion',
-                        'education_distribution' => 'Educational attainment',
-                    ],
-                    'Household & utilities' => [
-                        'water_sources' => 'Water sources',
-                        'house_types' => 'House types',
-                    ],
-                    'Priority problems reported' => [
-                        'health_problems' => 'Health',
-                        'family_problems' => 'Family',
-                        'employment_problems' => 'Employment',
-                        'infrastructure_problems' => 'Infrastructure',
-                        'economic_problems' => 'Economic',
-                        'security_problems' => 'Security',
-                    ],
-                    'Interests & training' => [
-                        'livelihood_interests' => 'Desired livelihood training',
-                        'educational_interests' => 'Areas of educational interest',
-                    ],
-                ])
-                @php($aggShown = collect($aggGroups)->map(fn ($f) => array_keys($f))->flatten()->filter(fn ($f) => ! empty($aggRaw[$f]))->count())
-                @php($aggPct = collect([
-                    'Has electricity' => $aggRaw['electricity_access_percentage'] ?? null,
-                    'Available for training' => $aggRaw['training_availability_percentage'] ?? null,
-                ])->filter(fn ($v) => $v !== null))
                 <div class="mt-5">
-                    <details class="sc-acc" wire:key="ai-agg-{{ $hero->id }}">
-                        <summary>
-                            <x-sc.icon name="chart" class="w-4 h-4 text-lnu-700" />
-                            Community response data
-                            <span class="text-[11px] font-semibold text-gray-400">{{ $aggTotal }} respondent{{ $aggTotal === 1 ? '' : 's' }} · {{ $aggShown }} datasets</span>
-                            <svg class="acc-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
-                        </summary>
-                        <div class="px-4 pb-4 pt-3 border-t border-gray-50">
-                            @if ($aggPct->isNotEmpty() || ($aggRaw['avg_service_satisfaction'] ?? null) !== null)
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Key indicators</p>
-                                <div class="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2.5">
-                                    @foreach ($aggPct as $aggLabel => $aggValue)
-                                        <div class="rounded-xl bg-lnu-50/60 border border-lnu-100 px-3.5 py-2.5">
-                                            <p class="text-[10.5px] font-bold uppercase tracking-wide text-lnu-800 truncate">{{ $aggLabel }}</p>
-                                            <p class="text-[16px] font-extrabold text-lnu-900 mt-0.5">{{ round((float) $aggValue) }}%</p>
-                                            <p class="text-[10.5px] text-gray-500 font-medium">{{ (int) round((float) $aggValue / 100 * $aggTotal) }} of {{ $aggTotal }} respondents</p>
-                                        </div>
-                                    @endforeach
-                                    @if (($aggRaw['avg_service_satisfaction'] ?? null) !== null)
-                                        <div class="rounded-xl bg-gold-50 border border-gold-100 px-3.5 py-2.5">
-                                            <p class="text-[10.5px] font-bold uppercase tracking-wide text-gold-800 truncate">Avg service satisfaction</p>
-                                            <p class="text-[16px] font-extrabold text-gold-900 mt-0.5">{{ number_format((float) $aggRaw['avg_service_satisfaction'], 2) }}<span class="text-[11px] font-bold text-gold-700"> / 5</span></p>
-                                            <p class="text-[10.5px] text-gray-500 font-medium">barangay service ratings</p>
-                                        </div>
-                                    @endif
-                                </div>
-                            @endif
-
-                            @foreach ($aggGroups as $aggHeading => $aggFields)
-                                @php($aggFields = collect($aggFields)->filter(fn ($label, $field) => ! empty($aggRaw[$field])))
-                                @if ($aggFields->isNotEmpty())
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-5">{{ $aggHeading }}</p>
-                                    <div class="mt-2 grid lg:grid-cols-2 gap-x-6 gap-y-4">
-                                        @foreach ($aggFields as $aggField => $aggLabel)
-                                            @php($aggItems = collect($aggRaw[$aggField] ?? [])->sortDesc())
-                                            @php($aggMax = max(1, (int) $aggItems->max()))
-                                            <div>
-                                                <p class="text-[11.5px] font-bold text-charcoal mb-1.5">{{ $aggLabel }} <span class="font-semibold text-gray-400">· multi-select</span></p>
-                                                <div class="space-y-1.5">
-                                                    @foreach ($aggItems as $aggKey => $aggCount)
-                                                        <div>
-                                                            <div class="flex items-center justify-between gap-3">
-                                                                <p class="text-[12px] text-gray-600 font-medium truncate">{{ $aggKey }}</p>
-                                                                <p class="text-[11.5px] font-bold text-charcoal shrink-0">{{ $aggCount }} <span class="text-gray-400 font-semibold">({{ (int) round($aggCount / $aggTotal * 100) }}%)</span></p>
-                                                            </div>
-                                                            <div class="h-1 rounded-full bg-gray-100 overflow-hidden mt-1"><div class="h-full rounded-full bg-lnu-300" style="width: {{ (int) round($aggCount / $aggMax * 100) }}%"></div></div>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            @endforeach
-                            <p class="mt-4 pt-3 border-t border-gray-50 text-[11px] text-gray-400 leading-relaxed">Counts and percentages over the {{ $aggTotal }} validated responses for {{ $aggRaw['community'] ?? $hero->assessmentSummary->community->name }} · Q{{ $aggRaw['quarter'] ?? $hero->assessmentSummary->quarter }} {{ $aggRaw['year'] ?? $hero->assessmentSummary->year }}. These are the exact aggregate statistics transmitted to the model (D3) — no individual response left the server. Multi-select fields may sum above 100%.</p>
-                        </div>
-                    </details>
+                    @include('livewire.partials.ai-community-data', [
+                        'aggRaw' => $aggRaw,
+                        'open' => false,
+                        'keySuffix' => $hero->id,
+                        'communityName' => $hero->assessmentSummary?->community?->name,
+                        'quarter' => $hero->assessmentSummary?->quarter,
+                        'year' => $hero->assessmentSummary?->year,
+                    ])
                 </div>
             @endif
-
             <div class="mt-6 pt-5 border-t border-gray-100">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2.5">Provenance</p>
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -437,7 +357,7 @@
             <span class="w-10 h-10 rounded-xl bg-lnu-50 text-lnu-800 flex items-center justify-center shrink-0"><x-sc.icon name="shield" class="w-5 h-5" /></span>
             <div class="min-w-0 flex-1">
                 @if ($state === 'awaiting_review')
-                    <p class="text-[13px] font-bold leading-snug">As CESO Director, your approval makes this analysis citable in reports.</p>
+                    <p class="text-[13px] font-bold leading-snug">Generated drafts are saved automatically. Your approval makes this analysis citable in reports.</p>
                     <p class="text-[11px] text-gray-400 mt-0.5">Approval is signed with your name and timestamp, then archived to the audit log.</p>
                 @elseif ($state === 'approved')
                     <p class="text-[13px] font-bold leading-snug">Approved and citable.</p>
@@ -460,7 +380,7 @@
                         <span wire:loading wire:target="regenerate" class="inline-flex items-center gap-1.5"><x-sc.icon name="loader" class="w-4 h-4 animate-spin" />Regenerating…</span>
                     </button>
                     <button wire:click="confirmDiscard" wire:loading.attr="disabled" class="btn btn-danger-soft">Discard</button>
-                    <button wire:click="approve" wire:loading.attr="disabled" class="btn btn-primary !px-4 tracking-wide"><x-sc.icon name="shield" class="w-4 h-4" />APPROVE ANALYSIS</button>
+                    <button wire:click="approve" wire:loading.attr="disabled" class="btn btn-primary !px-4 tracking-wide"><x-sc.icon name="shield" class="w-4 h-4" />Approve &amp; save for reports</button>
                 @elseif ($state === 'failed')
                     <button wire:click="retry" wire:loading.attr="disabled" class="btn btn-primary !px-4">
                         <span wire:loading.remove wire:target="retry" class="inline-flex items-center gap-1.5"><x-sc.icon name="loader" class="w-4 h-4" />Retry</span>

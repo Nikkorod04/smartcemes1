@@ -5972,6 +5972,70 @@ built. The XLSX imports remain untouched.
 
 ---
 
+## 51. COMMUNITY-FIRST AI ANALYSIS (2026-11-20)
+
+### 51.1 Why
+
+The old `/ai-analysis` index listed every analysis row grouped under its community. To choose a barangay,
+the Director had to read the pipeline first. The redesign turns the landing page into a **community
+list**: one row per community, ordered attention-first, with the work happening on a per-community
+dossier.
+
+No schema change. The service, the D3 aggregates-only rule, the D4 approval gate, and the existing
+review route are untouched.
+
+### 51.2 The community list (`/ai-analysis`)
+
+- **One row per community**, 12 per page, paginated by community — never by analysis row.
+- Status is derived, never stored:
+  `draft` (completed draft awaiting review) → `pending` (interrupted generation) → `failed` → `needs`
+  (validated data, no usable analysis) → `approved` → `no_data`.
+- The row shows location, latest period, validated count, period count, work badges (draft / need
+  analysis / failed / generating / approved), and the readable failure reason when there is one.
+- Search covers name, municipality, and province. Chips filter by state; counts are taken over the
+  searched set, before the state filter.
+- Legacy `?state=awaiting_review`, `awaiting_analysis`, and `discarded` bookmarks map onto the new
+  states instead of rendering an empty page.
+- Rows are ordered attention-first, then alphabetically within a state. A row links to the dossier.
+
+### 51.3 The community dossier (`/ai-analysis/community/{community}`)
+
+- **Period chips** because an analysis is keyed to a summary (community + quarter + year). The default
+  is the period with a live draft, else the newest period with validated responses.
+- The selected period shows validated count, **source mix** (public form / XLSX / manual), generation
+  count, and the unvalidated submissions that are **excluded** from the figures, with a link to review.
+- The **Community response data** panel is now shared with the review page
+  (`livewire.partials.ai-community-data`). It is expanded here so the Director can inspect exactly what
+  the model would receive (D3) before choosing to generate.
+- The action card is state-aware: **Review draft** when a draft exists (even a legacy draft whose period
+  now has zero validated rows), **Retry** plus **Start a new generation** after a failure, **View
+  approved analysis** when approved, **Generate analysis** when the period is ready. A period with no
+  validated responses cannot generate; the service guard enforces the same rule.
+- The generation history for the selected period keeps lineage, retry, review/view, and the existing
+  scoped delete rules. `clearFailed` remains at community level.
+
+### 51.4 Save / discard semantics
+
+Generation still persists a draft immediately, exactly as before, with provenance and lineage. The UI now
+says so, and the approval button is **Approve & save for reports** instead of "APPROVE ANALYSIS".
+Helper text: “Generated drafts are saved automatically. Your approval makes this analysis citable in
+reports.” Discard remains the provenance-preserving way to retire a draft.
+
+A true ephemeral “preview, then save” flow was rejected: it would lose the audit trail, lose the draft on
+a refresh or timeout, and break the lineage that makes regeneration auditable.
+
+### 51.5 Tests
+
+The AI surfaces were updated for the new semantics while keeping the invariants: lineage, the D4 gate,
+D3 evidence panel, authorization, scoped deletes, and the failed-attempt cleanup. New coverage includes
+the community state priority, the derived needs state, legacy state bookmarks, community pagination,
+the dossier response-data panel, period selection, the legacy zero-response draft, and the new approval
+label.
+
+Full suite after the redesign: **780 passed, 4,438 assertions**.
+
+---
+
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,
 and any decision that shifted. This file is the working record for the revision._
 

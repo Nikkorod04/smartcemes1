@@ -48,6 +48,8 @@ class AiAnalysisCommunityTest extends TestCase
             'review_status' => 'validated',
             'respondent_first_name' => 'Test',
             'respondent_last_name' => 'Respondent',
+            'respondent_sex' => 'Female',
+            'has_electricity' => 'Yes',
         ]);
 
         $summary = AssessmentSummary::where([
@@ -139,8 +141,65 @@ class AiAnalysisCommunityTest extends TestCase
         $this->actingAs($this->admin())
             ->get('/ai-analysis/community/'.$data['community']->id)
             ->assertOk()
-            ->assertSee('awaiting analysis')
-            ->assertSee('Generate');
+            ->assertSee('needs analysis')
+            ->assertSee('Generate analysis');
+    }
+
+    /** The dossier shows the validated response data before the Director generates. */
+    public function test_the_dossier_shows_the_response_data_before_generating(): void
+    {
+        $data = $this->communityWithSummary('Brgy. San Jose');
+
+        $this->actingAs($this->admin())
+            ->get('/ai-analysis/community/'.$data['community']->id)
+            ->assertOk()
+            ->assertSee('Community response data')
+            ->assertSee('13 respondents')
+            ->assertSee('Respondent profile')
+            ->assertSee('Sex')
+            ->assertSee('Female');
+    }
+
+    /** A legacy draft stays reviewable even if its period now has no validated rows. */
+    public function test_a_draft_is_reviewable_even_when_the_period_has_no_validated_responses(): void
+    {
+        $data = $this->communityWithSummary('Brgy. San Jose');
+        $data['summary']->update(['total_responses' => 0]);
+        $draft = $this->analysis($data);
+
+        $this->actingAs($this->admin())
+            ->get('/ai-analysis/community/'.$data['community']->id)
+            ->assertOk()
+            ->assertSee('Review draft')
+            ->assertSee(route('ai-analysis.show', ['analysis' => $draft]), false);
+    }
+
+    /** The newest period with validated data is selected by default, and switching works. */
+    public function test_the_dossier_defaults_to_the_newest_period_with_data(): void
+    {
+        $data = $this->communityWithSummary('Brgy. San Jose', 2, 2026);
+
+        NeedsAssessment::create([
+            'community_id' => $data['community']->id,
+            'quarter' => 3,
+            'year' => 2026,
+            'uploaded_by' => $this->admin()->id,
+            'review_status' => 'validated',
+            'respondent_first_name' => 'Newer',
+            'respondent_last_name' => 'Period',
+        ]);
+
+        $newer = AssessmentSummary::where([
+            'community_id' => $data['community']->id,
+            'quarter' => 3,
+            'year' => 2026,
+        ])->firstOrFail();
+
+        Livewire::actingAs($this->admin())
+            ->test(AiAnalysisCommunity::class, ['community' => $data['community']])
+            ->assertSet('summaryId', $newer->id)
+            ->call('selectPeriod', $data['summary']->id)
+            ->assertSet('summaryId', $data['summary']->id);
     }
 
     public function test_only_an_admin_can_open_a_community_page(): void

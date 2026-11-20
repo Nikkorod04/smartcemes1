@@ -13,6 +13,11 @@ produced is reachable, and the pipeline's real state is visible instead of impli
 **Grounded in measurement, not impression.** Every figure below was read from `smartcemes_v4` on
 2026-10-07.
 
+> **2026-11-20 update - community-first index.** The queue described here was redesigned again:
+> `/ai-analysis` is now a paginated community list, and the community page is a period-aware dossier
+> that shows the validated response data before an optional Generate. The split is now
+> list -> dossier -> review; the approval gate and the service are unchanged. See `revisions.md` §51.
+
 ---
 
 ## 1. What the page is today

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\GenerateAssessmentAnalysis;
 use App\Jobs\GenerateProgramNarrative;
-use App\Livewire\AiAnalysis;
+use App\Livewire\AiAnalysisCommunity;
 use App\Livewire\ProgramNarratives;
 use App\Models\AssessmentAnalysis;
 use App\Models\AssessmentSummary;
@@ -135,7 +135,7 @@ class Phase5AiTest extends TestCase
             'recommendations' => [['rank' => 1, 'title' => 'Food processing cohort', 'detail' => '5 sessions', 'priority' => 'High']],
         ]);
 
-        Livewire::test(AiAnalysis::class)
+        Livewire::test(AiAnalysisCommunity::class, ['community' => $data['community']])
             ->call('generate', $data['summary']->id)
             ->assertSet('generationResult', 'success')
             ->assertSet('generationResultAnalysisId', fn ($id) => is_int($id) && $id > 0)
@@ -149,7 +149,7 @@ class Phase5AiTest extends TestCase
         $this->actingAs($data['admin']);
         Http::fake(['*generativelanguage.googleapis.com*' => Http::response('quota exceeded', 429)]);
 
-        Livewire::test(AiAnalysis::class)
+        Livewire::test(AiAnalysisCommunity::class, ['community' => $data['community']])
             ->call('generate', $data['summary']->id)
             ->assertSet('generationResult', 'error')
             ->assertSee('Analysis unavailable');
@@ -356,11 +356,11 @@ class Phase5AiTest extends TestCase
             'metadata' => ['model' => 'test-model', 'api' => 'gemini', 'prompt_version' => 'v1'],
         ]);
 
-        // The queue lists it, grouped under its community, with a way in.
+        // The list shows the community and its work state, with a way in.
         $this->get('/ai-analysis')
             ->assertOk()
             ->assertSee($data['summary']->community->name)
-            ->assertSee('Review →');
+            ->assertSee('draft awaiting review');
 
         // …and the review route renders the analysis itself.
         $this->get('/ai-analysis/'.$analysis->id)

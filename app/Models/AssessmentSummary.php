@@ -66,4 +66,10 @@ class AssessmentSummary extends Model
     {
         return $this->belongsTo(Community::class);
     }
+
+    /** Every AI generation for this period, oldest first. */
+    public function analyses()
+    {
+        return $this->hasMany(AssessmentAnalysis::class, 'assessment_summary_id');
+    }
 }
