@@ -210,6 +210,37 @@ class BeneficiaryImportTest extends TestCase
         $this->assertSame($other->id, Beneficiary::sole()->extension_project_id);
     }
 
+    public function test_import_claims_an_unassigned_record_instead_of_duplicating_it(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $program = $this->programFor($admin);
+
+        $orphan = Beneficiary::create([
+            'first_name' => 'Pedro', 'last_name' => 'Cruz',
+            'barangay' => $this->community->name,
+            'community_id' => $this->community->id,
+            'extension_project_id' => null,
+            'beneficiary_category' => 'Farmer',
+        ]);
+
+        $file = $this->makeXlsx([
+            ['Pedro', '', 'Cruz', '50', 'Male', '09171234567', 'Brgy. San Jose', 'Farmer'],
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(Hub::class, ['project' => $program])
+            ->call('openImport')
+            ->set('importFile', $file)
+            ->call('parseImport')
+            ->assertSet('importRows.0.status', 'unassigned')
+            ->assertSet('importRows.0.existing_id', $orphan->id)
+            ->call('confirmImport');
+
+        $this->assertSame(1, Beneficiary::count(), 'The unassigned record must be claimed, not duplicated.');
+        $this->assertSame($program->id, $orphan->fresh()->extension_project_id);
+        $this->assertSame('09171234567', $orphan->fresh()->phone);
+    }
+
     public function test_import_maps_unknown_category_to_other(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

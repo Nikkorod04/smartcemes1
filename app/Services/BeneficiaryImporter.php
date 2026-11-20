@@ -114,7 +114,10 @@ class BeneficiaryImporter
             ->keyBy(fn (Beneficiary $b) => $this->beneficiaryKey($b->first_name, $b->last_name, $b->community_id));
 
         $otherProjects = Beneficiary::query()
-            ->where('extension_project_id', '!=', $project->id)
+            ->where(function ($query) use ($project) {
+                $query->whereNull('extension_project_id')
+                    ->orWhere('extension_project_id', '!=', $project->id);
+            })
             ->with('extensionProject')
             ->get()
             ->keyBy(fn (Beneficiary $b) => $this->beneficiaryKey($b->first_name, $b->last_name, $b->community_id));
@@ -156,8 +159,17 @@ class BeneficiaryImporter
                         $status = 'update';
                         $existingId = $existing->get($key)->id;
                     } elseif ($otherProjects->has($key)) {
-                        $status = 'other_project';
-                        $otherProject = $otherProjects->get($key)->extensionProject?->code ?? 'another project';
+                        $candidate = $otherProjects->get($key);
+
+                        if ($candidate->extension_project_id === null) {
+                            // A legacy registry-only record: claim it into this
+                            // project instead of creating a duplicate.
+                            $status = 'unassigned';
+                            $existingId = $candidate->id;
+                        } else {
+                            $status = 'other_project';
+                            $otherProject = $candidate->extensionProject?->code ?? 'another project';
+                        }
                     }
                 }
             }
@@ -182,19 +194,21 @@ class BeneficiaryImporter
     }
 
     /**
-     * Write the confirmed rows. Errors and other-project rows are skipped.
+     * Write the confirmed rows. Errors and other-project rows are skipped;
+     * unassigned legacy rows are claimed into the project.
      *
      * @param  array<int, array<string, mixed>>  $importRows
-     * @return array{created:int, updated:int, other_project:int, failed:int}
+     * @return array{created:int, updated:int, claimed:int, otherProject:int, failed:int}
      */
     public function confirm(array $importRows, ExtensionProject $project): array
     {
         $created = 0;
         $updated = 0;
+        $claimed = 0;
         $otherProject = 0;
         $failed = 0;
 
-        DB::transaction(function () use ($importRows, $project, &$created, &$updated, &$otherProject, &$failed) {
+        DB::transaction(function () use ($importRows, $project, &$created, &$updated, &$claimed, &$otherProject, &$failed) {
             foreach ($importRows as $row) {
                 if ($row['status'] === 'error') {
                     $failed++;
@@ -217,35 +231,31 @@ class BeneficiaryImporter
                     continue;
                 }
 
-                if ($row['status'] === 'update' && $row['existing_id'] !== null) {
-                    $beneficiary = Beneficiary::query()
-                        ->where('extension_project_id', $project->id)
-                        ->find($row['existing_id']);
+                if (in_array($row['status'], ['update', 'unassigned'], true) && $row['existing_id'] !== null) {
+                    $beneficiary = $row['status'] === 'update'
+                        ? Beneficiary::query()
+                            ->where('extension_project_id', $project->id)
+                            ->find($row['existing_id'])
+                        : Beneficiary::find($row['existing_id']);
 
-                    if ($beneficiary !== null) {
-                        // Only filled cells update; a blank cell never erases data.
-                        $updates = [
-                            'community_id' => $community->id,
-                            'barangay' => $community->name,
-                            'municipality' => $community->municipality,
-                            'province' => $community->province,
-                        ];
+                    // The person may have been assigned elsewhere while the
+                    // preview was open; never move them silently.
+                    if ($beneficiary === null
+                        || ($row['status'] === 'unassigned' && $beneficiary->extension_project_id !== null)) {
+                        $failed++;
 
-                        foreach (['first_name', 'middle_name', 'last_name', 'gender', 'beneficiary_category'] as $field) {
-                            if (($data[$field] ?? null) !== null) {
-                                $updates[$field] = $data[$field];
-                            }
-                        }
+                        continue;
+                    }
 
-                        if (($data['age'] ?? null) !== null) {
-                            $updates['age'] = (int) $data['age'];
-                        }
+                    $extra = $row['status'] === 'unassigned'
+                        ? ['extension_project_id' => $project->id]
+                        : [];
 
-                        if (($data['phone'] ?? null) !== null) {
-                            $updates['phone'] = BeneficiaryRules::normaliseContact($data['phone']);
-                        }
+                    $beneficiary->update($this->updatesFor($data, $community, $extra));
 
-                        $beneficiary->update($updates);
+                    if ($row['status'] === 'unassigned') {
+                        $claimed++;
+                    } else {
                         $updated++;
                     }
 
@@ -271,23 +281,57 @@ class BeneficiaryImporter
             }
         });
 
-        if ($created > 0 || $updated > 0) {
+        if ($created > 0 || $updated > 0 || $claimed > 0) {
             activity()->performedOn($project)->event('beneficiary_import')
-                ->withProperties(['created' => $created, 'updated' => $updated])
-                ->log("{$created} beneficiaries created and {$updated} updated from the XLSX template");
+                ->withProperties(['created' => $created, 'updated' => $updated, 'claimed' => $claimed])
+                ->log("{$created} beneficiaries created, {$updated} updated and {$claimed} unassigned records assigned from the XLSX template");
         }
 
-        return compact('created', 'updated', 'otherProject', 'failed');
+        return compact('created', 'updated', 'claimed', 'otherProject', 'failed');
     }
 
     /** Human summary for the toast. */
     public function summary(array $counts): string
     {
         $summary = "{$counts['created']} created · {$counts['updated']} updated";
+        $summary .= ($counts['claimed'] ?? 0) > 0 ? " · {$counts['claimed']} assigned from unassigned" : '';
         $summary .= $counts['otherProject'] > 0 ? " · {$counts['otherProject']} skipped (exists in another project)" : '';
         $summary .= $counts['failed'] > 0 ? " · {$counts['failed']} skipped (errors)" : '';
 
         return $summary;
+    }
+
+    /**
+     * Only filled cells update; a blank cell never erases saved data.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $extra
+     * @return array<string, mixed>
+     */
+    protected function updatesFor(array $data, Community $community, array $extra = []): array
+    {
+        $updates = array_merge([
+            'community_id' => $community->id,
+            'barangay' => $community->name,
+            'municipality' => $community->municipality,
+            'province' => $community->province,
+        ], $extra);
+
+        foreach (['first_name', 'middle_name', 'last_name', 'gender', 'beneficiary_category'] as $field) {
+            if (($data[$field] ?? null) !== null) {
+                $updates[$field] = $data[$field];
+            }
+        }
+
+        if (($data['age'] ?? null) !== null) {
+            $updates['age'] = (int) $data['age'];
+        }
+
+        if (($data['phone'] ?? null) !== null) {
+            $updates['phone'] = BeneficiaryRules::normaliseContact($data['phone']);
+        }
+
+        return $updates;
     }
 
     protected function communityKey(?string $name): string

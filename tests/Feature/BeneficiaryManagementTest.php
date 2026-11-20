@@ -357,6 +357,9 @@ class BeneficiaryManagementTest extends TestCase
             ->call('parseImport')
             ->assertSet('importPreview', true)
             ->assertCount('importRows', 1)
+            ->assertSee('Target:')
+            ->assertSee('EXT-2026-010')
+            ->assertSee('1 new')
             ->call('confirmImport')
             ->assertSet('showImport', false);
 
@@ -780,6 +783,100 @@ class BeneficiaryManagementTest extends TestCase
             ->set('exportProjectId', '')
             ->call('exportRoster')
             ->assertHasErrors('exportProjectId');
+    }
+
+    public function test_registry_trims_names_before_saving_and_deduping(): void
+    {
+        $data = $this->seedBase();
+        $this->beneficiary($data['program'], $data['community'], [
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+        ]);
+
+        // The padded duplicate still matches the stored person.
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openCreate')
+            ->set('form.first_name', '  Maria  ')
+            ->set('form.last_name', ' Santos ')
+            ->set('form.age', '35')
+            ->set('form.community_id', $data['community']->id)
+            ->set('form.extension_project_id', $data['program']->id)
+            ->set('form.beneficiary_category', 'Parent')
+            ->call('save')
+            ->assertHasErrors('form.first_name');
+
+        $this->assertSame(1, Beneficiary::count());
+
+        // A unique padded name is stored without the padding.
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openCreate')
+            ->set('form.first_name', '  Ana  ')
+            ->set('form.last_name', ' Reyes ')
+            ->set('form.age', '30')
+            ->set('form.community_id', $data['community']->id)
+            ->set('form.extension_project_id', $data['program']->id)
+            ->set('form.beneficiary_category', 'Vendor')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $ana = Beneficiary::where('first_name', 'Ana')->sole();
+        $this->assertSame('Ana', $ana->first_name);
+        $this->assertSame('Reyes', $ana->last_name);
+    }
+
+    public function test_registry_rejects_age_zero(): void
+    {
+        $data = $this->seedBase();
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openCreate')
+            ->set('form.first_name', 'Zero')
+            ->set('form.last_name', 'Age')
+            ->set('form.age', '0')
+            ->set('form.community_id', $data['community']->id)
+            ->set('form.extension_project_id', $data['program']->id)
+            ->set('form.beneficiary_category', 'Parent')
+            ->call('save')
+            ->assertHasErrors('form.age');
+
+        $this->assertSame(0, Beneficiary::count());
+    }
+
+    public function test_registry_project_code_links_to_the_hub(): void
+    {
+        $data = $this->seedBase();
+        $this->beneficiary($data['program'], $data['community']);
+
+        $this->actingAs($data['secretary'])
+            ->get('/beneficiaries')
+            ->assertOk()
+            ->assertSee(route('projects.show', $data['program']), false);
+    }
+
+    public function test_registry_filters_unassigned_records_and_warns_about_them(): void
+    {
+        $data = $this->seedBase();
+        $this->beneficiary($data['program'], $data['community'], ['first_name' => 'Assigned']);
+        $unassigned = $this->beneficiary($data['program'], $data['community'], [
+            'first_name' => 'Unassigned',
+            'extension_project_id' => null,
+        ]);
+
+        $this->actingAs($data['secretary'])
+            ->get('/beneficiaries')
+            ->assertOk()
+            ->assertSee('no project')
+            ->assertSee('Review unassigned');
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->set('projectId', 'unassigned')
+            ->assertViewHas('beneficiaries', fn ($page) => $page->total() === 1 && $page->first()->id === $unassigned->id)
+            ->call('openImport')
+            ->assertSet('importProjectId', '');
     }
 
     public function test_registry_page_keeps_editing_secretary_only(): void

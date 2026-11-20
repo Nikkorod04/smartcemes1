@@ -1,6 +1,6 @@
 # SmartCEMES — Adviser Revision Plan
 
-_Status (2026-11-20): **P0 ✅ · R1 ✅ · R2 ✅ · R3 ✅ (R3a/R3b §14, R3c §18) · R4 ✅ · R5 ✅ · R6 ✅ · R7 🔨 IN PROGRESS — only the production deploy remains (AI_HANDOFF §15.4).** Beneficiary redesign landed 2026-11-20 (§53): one project per person, community-owned records, v2 import, and a per-project PDF roster. Suite: **821 passed / 3,825 assertions**._
+_Status (2026-11-20): **P0 ✅ · R1 ✅ · R2 ✅ · R3 ✅ (R3a/R3b §14, R3c §18) · R4 ✅ · R5 ✅ · R6 ✅ · R7 🔨 IN PROGRESS — only the production deploy remains (AI_HANDOFF §15.4).** Beneficiary redesign landed 2026-11-20 (§53): one project per person, community-owned records, v2 import, and a per-project PDF roster. Suite: **826 passed / 3,851 assertions**._
 _Created 2026-09-22. Baseline: Phases 1–5 complete, **232 tests / 1184 assertions**, blueprint v4.14._
 _**Current: 572 tests / 3318 assertions passing, 0 failures** — growth: 276 (R1) → 286 (R2) → 339 (R3a/R3b) → 378 (R4) → 403 (R5) → 423 (R6) → 437 (R3c) → 444 (R7 route-surface) → 470 (R7 college seals) → 467 (R7 graduate set — 5 college-CRUD tests removed, 2 added, hence the dip) → 472 (R7 dashboard pass) → 472 / 2165 (v4.19 budget-basis correction — same tests, 4 net new assertions) → 467 / 2139 (v4.20 Analytics removal — the 5 tests that covered the page) → 468 / 2145 (the Graduate School seal — 1 new fallback test) → 476 / 2177 (the faculty self-edit widening — 1 test replaced, 9 added) → 484 / 2208 (the college hub Programs level — 8 new tests) → 485 / 2215 (the hub redesign — 1 new design-rule guard) → 485 / 2217 (§25 — 8 tests re-pointed at the hub, 2 replaced by 2) → **487 / 2233** (§26 — the
 hub's budget surfaces consolidated to one, the chart turned into a doughnut, and the annual hours target
@@ -6151,6 +6151,8 @@ part of the person's record.
   archive and restore. It also offers **Import beneficiaries** (with a target-project picker),
   **Download template** and **Export PDF** (with a target-project picker, downloaded as an attachment),
   so the Secretary does not have to find a project hub first. It is linked from both sidebars and from the hub.
+- The project code in the registry links to that project's hub. An **Unassigned** filter and a banner
+  expose legacy records with no project, and the Active counter reports assigned vs unassigned.
 
 ### 53.3 Community / Partner School replaces free text
 
@@ -6163,6 +6165,9 @@ the server rejects a mismatch even if the client sends it.
 
 - Names: letters (including ñ/Ñ), spaces, periods, hyphens and apostrophes; digits are rejected.
 - Contact numbers: digits, spaces, `+`, hyphens and parentheses, at least seven digits; letters are rejected.
+- Age is **1–120** on the form, the registry and the importer; `0` is rejected.
+- The registry trims names and contacts before validating and saving, so padded names cannot bypass
+  duplicate detection.
 - The same rules run on the form **and** on every imported row (`BeneficiaryRules`).
 - A blank contact is stored as `NULL` and rendered as **“No contact provided.”** The demo
   `09123456789` placeholder was removed from the form, factory and seeders.
@@ -6176,11 +6181,15 @@ hub and the registry page. On the registry page the modal asks for the **target 
 hub already knows it. On confirm:
 
 - an existing person **in this project** is updated (a blank cell never erases saved data);
+- a legacy person with **no project** is claimed into this project instead of being duplicated;
 - a new person is created in this project;
 - a person already owned by **another project** is skipped with the other project's code;
 - rows with errors are skipped, never a whole-file rejection;
 - an unknown category still maps to **Other**, and the original label is kept for review;
 - a community not linked to the project makes that row an error.
+
+The preview names the target project and shows counts (`new`, `update`, `unassigned`, `other project`,
+`skipped`) before the user confirms.
 
 ### 53.6 Roster export is a per-project PDF
 
@@ -6200,7 +6209,7 @@ ordering, contacts/“No contact provided”, excluded attendance, signature mod
 pagination and access. `BeneficiaryEditTest`, `ProgramHubTest` and `ValidationAuditTest` were
 re-pointed at `community_id`.
 
-Full suite after the beneficiary redesign: **821 passed, 3,825 assertions**.
+Full suite after the beneficiary redesign: **826 passed, 3,851 assertions**.
 
 ### 53.8 Deploying the cleanup
 

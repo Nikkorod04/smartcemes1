@@ -59,12 +59,39 @@
                 </div>
 
             @else
+                @php
+                    $previewCounts = collect($importRows)->countBy('status');
+                    $previewTarget = $importTargetLabel ?? null;
+                @endphp
+
+                <div class="mb-3 flex flex-wrap items-center gap-2">
+                    @if ($previewTarget)
+                        <p class="mr-1 text-[11.5px] font-medium text-gray-500">Target: <b class="text-charcoal">{{ $previewTarget }}</b></p>
+                    @endif
+                    @if (($previewCounts['new'] ?? 0) > 0)
+                        <span class="badge badge-green">{{ $previewCounts['new'] }} new</span>
+                    @endif
+                    @if (($previewCounts['update'] ?? 0) > 0)
+                        <span class="badge badge-yellow">{{ $previewCounts['update'] }} update</span>
+                    @endif
+                    @if (($previewCounts['unassigned'] ?? 0) > 0)
+                        <span class="badge badge-blue">{{ $previewCounts['unassigned'] }} unassigned</span>
+                    @endif
+                    @if (($previewCounts['other_project'] ?? 0) > 0)
+                        <span class="badge badge-gray">{{ $previewCounts['other_project'] }} other project</span>
+                    @endif
+                    @if (($previewCounts['error'] ?? 0) > 0)
+                        <span class="badge badge-red">{{ $previewCounts['error'] }} skipped</span>
+                    @endif
+                </div>
+
                 <div class="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-3 mb-4">
                     <x-sc.icon name="clipboard" class="w-4 h-4 text-lnu-600 shrink-0 mt-0.5" />
                     <p class="text-[12px] text-gray-500 leading-snug">
                         Parsed <b>{{ $importFile?->getClientOriginalName() }}</b> — review the rows below, then confirm.
                         <span class="badge badge-green !text-[10px]">New</span> creates,
                         <span class="badge badge-yellow !text-[10px]">Update</span> corrects an existing person in this project,
+                        <span class="badge badge-blue !text-[10px]">Unassigned</span> is claimed into this project,
                         <span class="badge badge-gray !text-[10px]">Other project</span> and
                         <span class="badge badge-red !text-[10px]">Skip</span> are not imported.
                     </p>
@@ -92,6 +119,8 @@
                                             <span class="badge badge-red">Skip</span>
                                         @elseif ($row['status'] === 'update')
                                             <span class="badge badge-yellow">Update</span>
+                                        @elseif ($row['status'] === 'unassigned')
+                                            <span class="badge badge-blue">Unassigned → assign</span>
                                         @elseif ($row['status'] === 'other_project')
                                             <span class="badge badge-gray">Other project: {{ $row['other_project'] }}</span>
                                         @else

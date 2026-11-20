@@ -45,8 +45,8 @@ class BeneficiaryRules
             $p.'middle_name' => self::name(false),
             $p.'last_name' => self::name(),
             $p.'age' => $ageRequired
-                ? ['required', 'integer', 'min:0', 'max:120']
-                : ['nullable', 'integer', 'min:0', 'max:120'],
+                ? ['required', 'integer', 'min:1', 'max:120']
+                : ['nullable', 'integer', 'min:1', 'max:120'],
             $p.'gender' => ['nullable', 'string', 'in:'.implode(',', config('smartcemes.beneficiary_genders'))],
             $p.'phone' => self::contact(),
             $p.'community_id' => ['required', 'integer', 'exists:communities,id'],

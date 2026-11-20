@@ -204,7 +204,7 @@
             <div><label class="label" for="register-last-name">Last name <span class="text-red-500">*</span></label><input id="register-last-name" maxlength="255" inputmode="text" class="input" wire:model="registerForm.last_name" aria-invalid="{{ $errors->has('registerForm.last_name') ? 'true' : 'false' }}">@error('registerForm.last_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
         <div class="grid grid-cols-3 gap-3 mt-4">
-            <div><label class="label" for="register-age">Age <span class="text-red-500">*</span></label><input id="register-age" required type="number" min="0" max="120" class="input" wire:model="registerForm.age">@error('registerForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="register-age">Age <span class="text-red-500">*</span></label><input id="register-age" required type="number" min="1" max="120" class="input" wire:model="registerForm.age">@error('registerForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
             <div><label class="label" for="register-gender">Sex</label><x-sc.select id="register-gender" model="registerForm.gender" :value="$registerForm['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
             <div><label class="label" for="register-category">Category <span class="text-red-500">*</span></label><x-sc.select id="register-category" model="registerForm.beneficiary_category" :value="$registerForm['beneficiary_category'] ?? null" :options="collect(config('smartcemes.beneficiary_categories'))->mapWithKeys(fn ($cat) => [$cat => $cat])->all()" placeholder="Select category" :invalid="$errors->has('registerForm.beneficiary_category')" />@error('registerForm.beneficiary_category') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
@@ -244,7 +244,7 @@
             <div><label class="label" for="edit-last-name">Last name <span class="text-red-500">*</span></label><input id="edit-last-name" maxlength="100" class="input" wire:model="beneficiaryEditForm.last_name" aria-invalid="{{ $errors->has('beneficiaryEditForm.last_name') ? 'true' : 'false' }}">@error('beneficiaryEditForm.last_name') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
         <div class="grid grid-cols-3 gap-3 mt-4">
-            <div><label class="label" for="edit-age">Age <span class="text-red-500">*</span></label><input id="edit-age" required type="number" min="0" max="120" class="input" wire:model="beneficiaryEditForm.age">@error('beneficiaryEditForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+            <div><label class="label" for="edit-age">Age <span class="text-red-500">*</span></label><input id="edit-age" required type="number" min="1" max="120" class="input" wire:model="beneficiaryEditForm.age">@error('beneficiaryEditForm.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
             <div><label class="label" for="edit-gender">Sex</label><x-sc.select id="edit-gender" model="beneficiaryEditForm.gender" :value="$beneficiaryEditForm['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
             <div><label class="label" for="edit-category">Category <span class="text-red-500">*</span></label><x-sc.select id="edit-category" model="beneficiaryEditForm.beneficiary_category" :value="$beneficiaryEditForm['beneficiary_category'] ?? null" :options="collect(config('smartcemes.beneficiary_categories'))->mapWithKeys(fn ($cat) => [$cat => $cat])->all()" placeholder="Select category" :invalid="$errors->has('beneficiaryEditForm.beneficiary_category')" />@error('beneficiaryEditForm.beneficiary_category') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
         </div>
@@ -277,7 +277,10 @@
 </div>
 
 {{-- Beneficiary v2 XLSX import (shared modal) --}}
-@include('livewire.partials.beneficiary-import-modal', ['showImportProjectPicker' => false])
+@include('livewire.partials.beneficiary-import-modal', [
+    'showImportProjectPicker' => false,
+    'importTargetLabel' => $program->code.' — '.$program->title,
+])
 
 {{-- Budget entry --}}
 <div x-data="{ open: false }" x-init="$wire.$watch('showBudgetForm', v => open = v)" @keydown.escape.window="$wire.set('showBudgetForm', false)"

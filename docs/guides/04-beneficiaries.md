@@ -97,16 +97,18 @@ Save the file (max 500 data rows per file).
 ### 5.3 Upload and preview
 
 Back in the Import modal: choose the file → the preview appears after parsing.
-Each row shows **New / Update / Other project / Skip** status, per-field errors,
-and "kept as Other" notes.
+It names the target project and shows counts, then each row shows **New / Update /
+Unassigned / Other project / Skip** status, per-field errors, and "kept as Other"
+notes.
 
 ### 5.4 Confirm
 
 Click **Confirm import** (records are only written on explicit confirm).
 
-**Expected:** toast reports created/updated/skipped counts. Lourdes, Nelson and
-Precious (as Other) are created; Maria Santos is updated; Greg is skipped for the
-missing category. A person already owned by **another project** is skipped and
+**Expected:** toast reports created / updated / claimed / skipped counts. Lourdes,
+Nelson and Precious (as Other) are created; Maria Santos is updated; Greg is
+skipped for the missing category. A legacy person with **no project** is claimed
+into this project; a person already owned by **another project** is skipped and
 the other project's code is shown.
 
 ## Report back
@@ -118,7 +120,7 @@ the other project's code is shown.
 | Edit works for the Secretary and the project selector is disabled | ☐ |
 | Archive removes the row; Restore brings it back | ☐ |
 | Template download has the 8 v2 headers | ☐ |
-| Preview shows New/Update/Other project/Skip statuses | ☐ |
+| Preview shows New/Update/Unassigned/Other project/Skip statuses | ☐ |
 | Unknown category auto-maps to Other | ☐ |
 | Error rows skipped, file not rejected | ☐ |
 | Blank contact shows “No contact provided” | ☐ |

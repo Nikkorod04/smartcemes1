@@ -133,16 +133,19 @@ queue (§2), ready to validate. The source file is archived for audit.
 
 **Expected:** the **Beneficiaries** registry page — three counters (Active · Archived · Projects), a
 searchable table of every beneficiary you can see, and filters for project, community/partner school,
-category and status (Active / Archived / All). Administrators and Secretaries can open it.
+category and status (Active / Archived / All). Administrators and Secretaries can open it. The
+project code in each row opens that project's hub. If records have no project, an amber banner shows
+the count with a **Review unassigned** shortcut; the **Unassigned** filter finds them.
 
 2. Use **Add beneficiary** to add one person, or **Import beneficiaries** to bulk-load a spreadsheet.
 
 **Expected for import:** the modal asks for the **target project** first, then the v2 `.xlsx`. Download
-the template, fill one row per person, upload it, review the per-row **New / Update / Other project /
-Skip** preview, then confirm. Old templates are rejected. An existing person in that project is
-**updated**; a person already in another project is **skipped**; errors skip per row, never the whole
-file. Unknown categories auto-map to "Other". A blank contact stays blank and displays as
-**“No contact provided.”**
+the template, fill one row per person, upload it, and review the preview — it names the target project
+and shows counts plus the per-row **New / Update / Unassigned / Other project / Skip** statuses. Then
+confirm. Old templates are rejected. An existing person in that project is **updated**; a legacy person
+with **no project** is **assigned** to the target project; a person already in another project is
+**skipped**; errors skip per row, never the whole file. Unknown categories auto-map to "Other". A blank
+contact stays blank and displays as **“No contact provided.”**
 
 **Download template** and **Export PDF** are also in the page header. The template button downloads
 the official v2 `.xlsx`; **Export PDF** asks for the project and downloads its active roster as an A4

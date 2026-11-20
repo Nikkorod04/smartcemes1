@@ -157,7 +157,7 @@ class Index extends Component
         $this->importFile = null;
         $this->importRows = [];
         $this->importPreview = false;
-        $this->importProjectId = $this->projectId !== '' ? $this->projectId : '';
+        $this->importProjectId = ($this->projectId !== '' && $this->projectId !== 'unassigned') ? $this->projectId : '';
         $this->showImport = true;
     }
 
@@ -234,7 +234,7 @@ class Index extends Component
         $this->guard();
 
         $this->resetErrorBag();
-        $this->exportProjectId = $this->projectId !== '' ? $this->projectId : '';
+        $this->exportProjectId = ($this->projectId !== '' && $this->projectId !== 'unassigned') ? $this->projectId : '';
         $this->showExport = true;
     }
 
@@ -267,6 +267,8 @@ class Index extends Component
         if ($this->editingId !== null) {
             $this->guardEdit();
         }
+
+        $this->trimForm();
 
         $editing = $this->editingId !== null
             ? Beneficiary::findOrFail($this->editingId)
@@ -377,7 +379,8 @@ class Index extends Component
             ->with(['community', 'extensionProject'])
             ->when($this->status === 'archived', fn ($q) => $q->onlyTrashed())
             ->when($this->status === 'all', fn ($q) => $q->withTrashed())
-            ->when($this->projectId !== '', fn ($q) => $q->where('extension_project_id', $this->projectId))
+            ->when($this->projectId === 'unassigned', fn ($q) => $q->whereNull('extension_project_id'))
+            ->when($this->projectId !== '' && $this->projectId !== 'unassigned', fn ($q) => $q->where('extension_project_id', $this->projectId))
             ->when($this->communityId !== '', fn ($q) => $q->where('community_id', $this->communityId))
             ->when($this->category !== '', fn ($q) => $q->where('beneficiary_category', $this->category))
             ->when(trim($this->search) !== '', function ($q) {
@@ -406,6 +409,8 @@ class Index extends Component
             'projectLocked' => $projectLocked,
             'categories' => config('smartcemes.beneficiary_categories'),
             'activeCount' => Beneficiary::count(),
+            'assignedCount' => Beneficiary::whereNotNull('extension_project_id')->count(),
+            'unassignedCount' => Beneficiary::whereNull('extension_project_id')->count(),
             'archivedCount' => Beneficiary::onlyTrashed()->count(),
             'projectCount' => ExtensionProject::count(),
         ]);
@@ -425,6 +430,14 @@ class Index extends Component
             'beneficiary_category' => '',
         ];
         $this->resetErrorBag();
+    }
+
+    /** Stored names and contacts must be whitespace-free (hub/import parity). */
+    protected function trimForm(): void
+    {
+        foreach (['first_name', 'middle_name', 'last_name', 'phone'] as $field) {
+            $this->form[$field] = trim((string) ($this->form[$field] ?? ''));
+        }
     }
 
     private function guard(): void

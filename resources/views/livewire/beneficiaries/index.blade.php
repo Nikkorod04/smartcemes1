@@ -30,7 +30,7 @@
             <div class="sc-card p-5">
                 <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Active</p>
                 <p class="mt-2 text-[24px] font-extrabold leading-none">{{ number_format($activeCount) }}</p>
-                <p class="mt-1 text-[11px] text-gray-400">beneficiaries in projects</p>
+                <p class="mt-1 text-[11px] text-gray-400">{{ number_format($assignedCount) }} in projects · {{ number_format($unassignedCount) }} unassigned</p>
             </div>
             <div class="sc-card p-5">
                 <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Archived</p>
@@ -43,6 +43,13 @@
                 <p class="mt-1 text-[11px] text-gray-400">beneficiaries must belong to one</p>
             </div>
         </div>
+
+        @if ($unassignedCount > 0)
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] leading-relaxed text-amber-900">
+                <p><b>{{ number_format($unassignedCount) }}</b> beneficiary {{ \Illuminate\Support\Str::plural('record', $unassignedCount) }} {{ $unassignedCount === 1 ? 'has' : 'have' }} no project. Assign one so the person appears on a project roster.</p>
+                <button type="button" wire:click="$set('projectId', 'unassigned')" class="btn btn-outline !border-amber-300 !bg-white/70 !py-1.5 !text-[11px]">Review unassigned</button>
+            </div>
+        @endif
     </section>
 
     <section class="mt-5 sc-card p-0 overflow-hidden">
@@ -56,6 +63,7 @@
                 </div>
                 <select wire:model.live="projectId" class="input !w-auto !py-2 text-[12px]" aria-label="Filter by project">
                     <option value="">All projects</option>
+                    <option value="unassigned">— Unassigned —</option>
                     @foreach ($projects as $project)
                         <option value="{{ $project->id }}">{{ $project->code }} — {{ $project->title }}</option>
                     @endforeach
@@ -111,7 +119,15 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-[12px] text-gray-500">{{ $beneficiary->extensionProject?->code ?? '—' }}</td>
+                            <td class="text-[12px] text-gray-500">
+                                @if ($beneficiary->extensionProject)
+                                    <a href="{{ route('projects.show', $beneficiary->extensionProject) }}"
+                                       title="{{ $beneficiary->extensionProject->title }}"
+                                       class="font-semibold text-lnu-700 hover:text-lnu-900 hover:underline">{{ $beneficiary->extensionProject->code }}</a>
+                                @else
+                                    <span class="text-amber-700">Unassigned</span>
+                                @endif
+                            </td>
                             <td class="text-[12px] text-gray-500">{{ $beneficiary->community?->name ?? $beneficiary->barangay ?? '—' }}</td>
                             <td><span class="badge badge-gray !text-[10px]">{{ $beneficiary->beneficiary_category }}</span></td>
                             <td class="text-[12px] text-gray-500">{{ $beneficiary->age ?? '—' }} · {{ $beneficiary->gender ?? '—' }}</td>
@@ -190,7 +206,7 @@
                 </div>
 
                 <div class="mt-4 grid grid-cols-3 gap-3">
-                    <div><label class="label" for="ben-age">Age <span class="text-red-500">*</span></label><input id="ben-age" type="number" min="0" max="120" class="input" wire:model="form.age">@error('form.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
+                    <div><label class="label" for="ben-age">Age <span class="text-red-500">*</span></label><input id="ben-age" type="number" min="1" max="120" class="input" wire:model="form.age">@error('form.age') <p class="sc-field-error">{{ $message }}</p> @enderror</div>
                     <div><label class="label" for="ben-gender">Sex</label><x-sc.select id="ben-gender" model="form.gender" :value="$form['gender'] ?? null" :options="['Female' => 'Female', 'Male' => 'Male', 'Prefer not to say' => 'Prefer not to say']" placeholder="Select sex" /></div>
                     <div><label class="label" for="ben-category">Category <span class="text-red-500">*</span></label><x-sc.select id="ben-category" model="form.beneficiary_category" :value="$form['beneficiary_category'] ?? null" :options="collect($categories)->mapWithKeys(fn ($c) => [$c => $c])->all()" placeholder="Select category" /></div>
                 </div>
@@ -230,9 +246,13 @@
         </form>
     </div>
 
+    @php
+        $importTarget = $projects->firstWhere('id', (int) $importProjectId);
+    @endphp
     @include('livewire.partials.beneficiary-import-modal', [
         'showImportProjectPicker' => true,
         'importProjects' => $projects,
+        'importTargetLabel' => $importTarget ? $importTarget->code.' — '.$importTarget->title : null,
     ])
 
     {{-- Export one project's roster as a PDF --}}
