@@ -10,6 +10,12 @@
             </div>
             @if ($status !== 'archived')
                 <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('beneficiaries.template') }}" class="btn btn-ghost">
+                        <x-sc.icon name="download" class="h-4 w-4" /> Download template
+                    </a>
+                    <button type="button" wire:click="openExport" class="btn btn-outline">
+                        <x-sc.icon name="doc" class="h-4 w-4" /> Export PDF
+                    </button>
                     <button type="button" wire:click="openImport" class="btn btn-outline">
                         <x-sc.icon name="upload" class="h-4 w-4" /> Import beneficiaries
                     </button>
@@ -228,4 +234,57 @@
         'showImportProjectPicker' => true,
         'importProjects' => $projects,
     ])
+
+    {{-- Export one project's roster as a PDF --}}
+    <div x-data="{ open: false }" x-init="$wire.$watch('showExport', v => open = v)" @keydown.escape.window="$wire.set('showExport', false)"
+         x-cloak x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 no-print"
+         role="dialog" aria-modal="true" aria-labelledby="export-roster-title">
+        <div class="fixed inset-0 sc-modal-backdrop" @click="$wire.set('showExport', false)"></div>
+        <form wire:submit="exportRoster" class="sc-modal relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-pop">
+            <header class="shrink-0 border-b border-gray-100 bg-gradient-to-br from-lnu-800 to-lnu-700 px-5 py-5 text-white sm:px-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12 ring-1 ring-white/15"><x-sc.icon name="doc" class="h-5 w-5" /></span>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/65">Beneficiary roster</p>
+                            <h3 id="export-roster-title" class="mt-1 text-[18px] font-extrabold tracking-tight">Export PDF</h3>
+                            <p class="mt-1 max-w-md text-[12px] font-medium leading-relaxed text-white/72">Print one project’s active roster with contacts and signature lines.</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="$set('showExport', false)" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/12 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50" aria-label="Close export dialog"><x-sc.icon name="x" class="h-4 w-4" /></button>
+                </div>
+            </header>
+
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                <div class="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3.5 mb-5">
+                    <x-sc.icon name="clipboard" class="w-4 h-4 text-lnu-600 shrink-0 mt-0.5" />
+                    <p class="text-[12px] text-gray-500 leading-snug">
+                        A4 portrait PDF with the university seal, project details and contact numbers.
+                        Blank <b>Prepared by</b> / <b>Noted by</b> lines are included. Archived beneficiaries and attendance are excluded.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="label" for="export-project">Project <span class="text-red-500">*</span></label>
+                    <x-sc.select id="export-project" model="exportProjectId"
+                                 :value="$exportProjectId ?? null"
+                                 :options="$projects->mapWithKeys(fn ($p) => [$p->id => $p->code.' — '.$p->title])->all()"
+                                 placeholder="Choose the project to export"
+                                 :search="$projects->count() > 12"
+                                 :invalid="$errors->has('exportProjectId')" />
+                    @error('exportProjectId') <p class="text-[11px] text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <footer class="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6">
+                <div class="flex justify-end gap-2">
+                    <button type="button" wire:click="$set('showExport', false)" class="btn btn-ghost">Cancel</button>
+                    <button type="submit" class="btn btn-primary min-w-[142px]" wire:loading.attr="disabled" wire:target="exportRoster">
+                        <span wire:loading.remove wire:target="exportRoster">Download PDF</span>
+                        <span wire:loading wire:target="exportRoster" class="inline-flex items-center gap-2"><span class="rh-spinner"></span>Preparing…</span>
+                    </button>
+                </div>
+            </footer>
+        </form>
+    </div>
 </div>

@@ -51,6 +51,10 @@ class Index extends Component
 
     public $importProjectId = '';
 
+    public bool $showExport = false;
+
+    public $exportProjectId = '';
+
     public array $form = [
         'first_name' => '', 'middle_name' => '', 'last_name' => '',
         'age' => '', 'gender' => '', 'phone' => '',
@@ -223,6 +227,37 @@ class Index extends Component
         $this->search = '';
         $this->status = 'active';
         $this->resetPage();
+    }
+
+    public function openExport(): void
+    {
+        $this->guard();
+
+        $this->resetErrorBag();
+        $this->exportProjectId = $this->projectId !== '' ? $this->projectId : '';
+        $this->showExport = true;
+    }
+
+    public function updatedExportProjectId(): void
+    {
+        $this->resetErrorBag('exportProjectId');
+    }
+
+    public function exportRoster(): void
+    {
+        $this->guard();
+
+        $this->validate([
+            'exportProjectId' => ['required', 'integer', 'exists:extension_projects,id'],
+        ], [
+            'exportProjectId.required' => 'Choose the project to export.',
+        ]);
+
+        $this->showExport = false;
+        $this->redirectRoute('beneficiaries.export', [
+            'project' => (int) $this->exportProjectId,
+            'download' => 1,
+        ]);
     }
 
     public function save(): void

@@ -239,6 +239,8 @@ Tabs: Overview | Activities | Beneficiaries | Budget.
 - **Import beneficiaries** (mention): on **Manage Beneficiaries** a target project is chosen in the
   modal; the project hub already knows it. v2 template, 500 rows max, per-row New/Update/Other
   project/Skip preview.
+- **Download template** and **Export PDF** are on **Manage Beneficiaries** too; Export PDF asks for
+  the project and downloads its active roster with contacts and signature lines.
 - **Export PDF** (mention): the project roster as an A4 portrait sheet with the seal and contacts;
   attendance is intentionally excluded.
 

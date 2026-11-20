@@ -78,6 +78,15 @@ class BeneficiaryImportTest extends TestCase
         $this->assertStringContainsString('beneficiary-import-template-v2', $response->headers->get('content-disposition'));
     }
 
+    public function test_template_downloads_for_secretary(): void
+    {
+        $secretary = User::factory()->create(['role' => 'secretary']);
+
+        $this->actingAs($secretary)
+            ->get('/beneficiaries/template')
+            ->assertOk();
+    }
+
     public function test_template_blocked_for_faculty(): void
     {
         $faculty = User::factory()->create(['role' => 'faculty']);

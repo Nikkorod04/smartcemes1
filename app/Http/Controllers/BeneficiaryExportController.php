@@ -32,7 +32,7 @@ class BeneficiaryExportController extends Controller
             'Beneficiary List',
             $project->code.' · '.$project->title,
             'beneficiaries-'.strtolower($project->code).'.pdf',
-            false,
+            request()->boolean('download'),
             'A4',
             'beneficiary',
         );

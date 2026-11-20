@@ -144,6 +144,11 @@ Skip** preview, then confirm. Old templates are rejected. An existing person in 
 file. Unknown categories auto-map to "Other". A blank contact stays blank and displays as
 **“No contact provided.”**
 
+**Download template** and **Export PDF** are also in the page header. The template button downloads
+the official v2 `.xlsx`; **Export PDF** asks for the project and downloads its active roster as an A4
+portrait PDF with the seal, contacts and blank signature lines. Archived beneficiaries and
+attendance are excluded.
+
 3. You can also open a project hub's **Beneficiaries** tab. The project is already fixed there, and the
 same import is available. In the hub you can:
 - **Add beneficiary** — create one person inside this project. A first + last + community match warns

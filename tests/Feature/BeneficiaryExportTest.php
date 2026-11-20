@@ -94,6 +94,25 @@ class BeneficiaryExportTest extends TestCase
         $this->assertStringStartsWith('%PDF', $response->getContent());
     }
 
+    public function test_the_export_can_be_downloaded_as_an_attachment(): void
+    {
+        $admin = $this->admin();
+        $program = $this->program();
+        $this->beneficiary($program, 'Maria', 'Santos');
+
+        $response = $this->actingAs($admin)->get(route('beneficiaries.export', [
+            'project' => $program,
+            'download' => 1,
+        ]));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+        $this->assertStringContainsString(
+            'attachment;',
+            $response->headers->get('content-disposition'),
+        );
+    }
+
     public function test_the_rendered_roster_lists_people_by_last_name_with_contacts(): void
     {
         $program = $this->program();

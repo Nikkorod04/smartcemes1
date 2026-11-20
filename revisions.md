@@ -1,6 +1,6 @@
 # SmartCEMES — Adviser Revision Plan
 
-_Status (2026-11-20): **P0 ✅ · R1 ✅ · R2 ✅ · R3 ✅ (R3a/R3b §14, R3c §18) · R4 ✅ · R5 ✅ · R6 ✅ · R7 🔨 IN PROGRESS — only the production deploy remains (AI_HANDOFF §15.4).** Beneficiary redesign landed 2026-11-20 (§53): one project per person, community-owned records, v2 import, and a per-project PDF roster. Suite: **816 passed / 3,811 assertions**._
+_Status (2026-11-20): **P0 ✅ · R1 ✅ · R2 ✅ · R3 ✅ (R3a/R3b §14, R3c §18) · R4 ✅ · R5 ✅ · R6 ✅ · R7 🔨 IN PROGRESS — only the production deploy remains (AI_HANDOFF §15.4).** Beneficiary redesign landed 2026-11-20 (§53): one project per person, community-owned records, v2 import, and a per-project PDF roster. Suite: **821 passed / 3,825 assertions**._
 _Created 2026-09-22. Baseline: Phases 1–5 complete, **232 tests / 1184 assertions**, blueprint v4.14._
 _**Current: 572 tests / 3318 assertions passing, 0 failures** — growth: 276 (R1) → 286 (R2) → 339 (R3a/R3b) → 378 (R4) → 403 (R5) → 423 (R6) → 437 (R3c) → 444 (R7 route-surface) → 470 (R7 college seals) → 467 (R7 graduate set — 5 college-CRUD tests removed, 2 added, hence the dip) → 472 (R7 dashboard pass) → 472 / 2165 (v4.19 budget-basis correction — same tests, 4 net new assertions) → 467 / 2139 (v4.20 Analytics removal — the 5 tests that covered the page) → 468 / 2145 (the Graduate School seal — 1 new fallback test) → 476 / 2177 (the faculty self-edit widening — 1 test replaced, 9 added) → 484 / 2208 (the college hub Programs level — 8 new tests) → 485 / 2215 (the hub redesign — 1 new design-rule guard) → 485 / 2217 (§25 — 8 tests re-pointed at the hub, 2 replaced by 2) → **487 / 2233** (§26 — the
 hub's budget surfaces consolidated to one, the chart turned into a doughnut, and the annual hours target
@@ -6148,7 +6148,9 @@ part of the person's record.
 - Faculty see the project roster read-only, including contact numbers, but no action buttons.
 - A standalone **Beneficiaries** page (`/beneficiaries`, Admin + Secretary) gives the registry a
   searchable table with project / community / category / status filters, pagination, create, edit,
-  archive and restore. It is linked from both sidebars and from the hub.
+  archive and restore. It also offers **Import beneficiaries** (with a target-project picker),
+  **Download template** and **Export PDF** (with a target-project picker, downloaded as an attachment),
+  so the Secretary does not have to find a project hub first. It is linked from both sidebars and from the hub.
 
 ### 53.3 Community / Partner School replaces free text
 
@@ -6198,7 +6200,7 @@ ordering, contacts/“No contact provided”, excluded attendance, signature mod
 pagination and access. `BeneficiaryEditTest`, `ProgramHubTest` and `ValidationAuditTest` were
 re-pointed at `community_id`.
 
-Full suite after the beneficiary redesign: **816 passed, 3,811 assertions**.
+Full suite after the beneficiary redesign: **821 passed, 3,825 assertions**.
 
 ### 53.8 Deploying the cleanup
 

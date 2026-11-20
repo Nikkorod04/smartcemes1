@@ -746,6 +746,42 @@ class BeneficiaryManagementTest extends TestCase
         $this->assertSame($data['community']->id, $beneficiary->fresh()->community_id);
     }
 
+    public function test_registry_page_offers_template_and_export_actions(): void
+    {
+        $data = $this->seedBase();
+
+        $this->actingAs($data['secretary'])
+            ->get('/beneficiaries')
+            ->assertOk()
+            ->assertSee('Download template')
+            ->assertSee('Export PDF');
+    }
+
+    public function test_registry_export_uses_the_chosen_project(): void
+    {
+        $data = $this->seedBase();
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openExport')
+            ->assertSet('showExport', true)
+            ->set('exportProjectId', (string) $data['program']->id)
+            ->call('exportRoster')
+            ->assertRedirect(route('beneficiaries.export', ['project' => $data['program'], 'download' => 1]));
+    }
+
+    public function test_registry_export_requires_a_project(): void
+    {
+        $data = $this->seedBase();
+
+        Livewire::actingAs($data['secretary'])
+            ->test(BeneficiariesIndex::class)
+            ->call('openExport')
+            ->set('exportProjectId', '')
+            ->call('exportRoster')
+            ->assertHasErrors('exportProjectId');
+    }
+
     public function test_registry_page_keeps_editing_secretary_only(): void
     {
         $data = $this->seedBase();
