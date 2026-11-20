@@ -6034,6 +6034,17 @@ label.
 
 Full suite after the redesign: **780 passed, 4,438 assertions**.
 
+### 51.6 Follow-up (2026-11-20)
+
+- The list now **opens on "Needs attention"** (draft, generating, failed, needs analysis) instead of the
+  full community directory. **All** still includes communities with no validated data; the attention chip
+  is computed over the searched set, so it stays accurate while searching.
+- The sidebar/topbar label is now **Community Analysis**; the review breadcrumb reads **All communities**.
+- Tests cover the default filter, the no-data exclusion, reset-to-attention for unknown `state` values,
+  and the empty attention state.
+
+Full suite after the follow-up: **782 passed, 4,444 assertions**.
+
 ---
 
 _End of plan. Update this file as each phase lands — record what actually changed, what broke,

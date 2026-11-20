@@ -531,7 +531,7 @@ return [
             [
                 'section' => 'Intelligence & Reports',
                 'items' => [
-                    ['key' => 'ai-analysis', 'label' => 'AI Analysis Review', 'route' => 'ai-analysis.index', 'icon' => 'sparkles'],
+                    ['key' => 'ai-analysis', 'label' => 'Community Analysis', 'route' => 'ai-analysis.index', 'icon' => 'sparkles'],
                     ['key' => 'program-narratives', 'label' => 'Project Narratives', 'route' => 'program-narratives.index', 'icon' => 'sparkles'],
                     ['key' => 'interagency', 'label' => 'Interagency Catalogue', 'route' => 'interagency.index', 'icon' => 'shield'],
                     ['key' => 'reports', 'label' => 'Reports', 'route' => 'reports.index', 'icon' => 'doc'],

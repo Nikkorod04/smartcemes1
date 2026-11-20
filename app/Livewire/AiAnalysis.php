@@ -52,7 +52,7 @@ class AiAnalysis extends Component
     ];
 
     #[Url(as: 'state', except: '')]
-    public string $state = '';
+    public string $state = 'attention';
 
     /** Free-text search over the community name, municipality or province. */
     #[Url(as: 'q', except: '')]
@@ -67,8 +67,8 @@ class AiAnalysis extends Component
         $this->state = match ($this->state) {
             'awaiting_review' => 'draft',
             'awaiting_analysis', 'discarded' => 'needs',
-            'draft', 'pending', 'failed', 'approved', 'no_data' => $this->state,
-            default => '',
+            'draft', 'pending', 'failed', 'approved', 'no_data', 'attention' => $this->state,
+            default => 'attention',
         };
     }
 
@@ -76,6 +76,7 @@ class AiAnalysis extends Component
     public function stateFilters(): array
     {
         return [
+            'attention' => 'Needs attention',
             '' => 'All',
             'draft' => 'Draft awaiting review',
             'pending' => 'Generating',
@@ -114,10 +115,17 @@ class AiAnalysis extends Component
 
         // Counts are taken BEFORE the state filter, so the chips describe the
         // searched set rather than collapsing to the active filter.
+        $attentionStates = ['draft', 'pending', 'failed', 'needs'];
+
         $counts = $matched->countBy('state')->all();
+        $counts['attention'] = $matched->whereIn('state', $attentionStates)->count();
         $counts[''] = $matched->count();
 
-        $visible = $this->state === '' ? $matched : $matched->where('state', $this->state)->values();
+        $visible = match ($this->state) {
+            'attention' => $matched->whereIn('state', $attentionStates)->values(),
+            '' => $matched,
+            default => $matched->where('state', $this->state)->values(),
+        };
 
         $page = Paginator::resolveCurrentPage('page');
         $paginator = new LengthAwarePaginator(
@@ -133,7 +141,7 @@ class AiAnalysis extends Component
             'counts' => $counts,
             'filters' => $this->stateFilters(),
             'communityCount' => $visible->count(),
-            'attentionCount' => $visible->whereIn('state', ['draft', 'pending', 'failed', 'needs'])->count(),
+            'attentionCount' => $counts['attention'],
         ]);
     }
 

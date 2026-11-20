@@ -32,7 +32,7 @@
          periods. --}}
     <section class="pt-6 reveal-item flex items-center gap-3 flex-wrap">
         <a href="{{ route('ai-analysis.index') }}" class="btn btn-outline !px-3 !py-2 text-[12px]">
-            <x-sc.icon name="chevron" class="w-3.5 h-3.5 rotate-90" /><span class="ml-1">Analysis queue</span>
+            <x-sc.icon name="chevron" class="w-3.5 h-3.5 rotate-90" /><span class="ml-1">All communities</span>
         </a>
         <a href="{{ route('ai-analysis.community', ['community' => $hero->assessmentSummary->community]) }}"
            class="btn btn-outline !px-3 !py-2 text-[12px]">

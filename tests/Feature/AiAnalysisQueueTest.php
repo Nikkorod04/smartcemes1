@@ -180,15 +180,38 @@ class AiAnalysisQueueTest extends TestCase
             ->assertSee('Nothing in this state');
     }
 
-    /** An unknown ?state= must reset, not render an empty queue. */
-    public function test_an_unknown_state_filter_resets_to_all(): void
+    /** An unknown ?state= must reset to the attention default, not render an empty page. */
+    public function test_an_unknown_state_filter_resets_to_attention(): void
     {
         $data = $this->fixture();
         $this->analysis($data);
 
         Livewire::actingAs($data['admin'])
             ->test(AiAnalysis::class, ['state' => 'nonsense'])
-            ->assertSet('state', '');
+            ->assertSet('state', 'attention');
+    }
+
+    /** The default view is the work list, not the 38 no-data communities. */
+    public function test_the_default_filter_is_needs_attention(): void
+    {
+        $data = $this->fixture();
+        Community::factory()->create(['name' => 'Brgy. Empty']);
+
+        Livewire::actingAs($data['admin'])
+            ->test(AiAnalysis::class)
+            ->assertSet('state', 'attention')
+            ->assertSee('Brgy. San Jose')
+            ->assertDontSee('Brgy. Empty')
+            ->call('filterBy', '')
+            ->assertSee('Brgy. Empty');
+    }
+
+    public function test_the_attention_filter_explains_when_nothing_needs_attention(): void
+    {
+        Livewire::actingAs($this->admin())
+            ->test(AiAnalysis::class)
+            ->assertSee('Nothing needs attention')
+            ->assertSee('Show all communities');
     }
 
     /** The failure reason is readable text; the raw body stays in the title. */

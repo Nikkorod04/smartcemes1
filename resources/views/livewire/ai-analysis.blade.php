@@ -38,8 +38,14 @@
                 </div>
 
                 <span class="ai-queue-summary ml-auto whitespace-nowrap">
-                    {{ $communityCount }} {{ \Illuminate\Support\Str::plural('community', $communityCount) }} &middot;
-                    <span class="font-bold text-amber-700">{{ $attentionCount }}</span> need{{ $attentionCount === 1 ? 's' : '' }} attention
+                    @if ($state === 'attention')
+                        {{ $communityCount }} {{ \Illuminate\Support\Str::plural('community', $communityCount) }}
+                        {{ $communityCount === 1 ? 'needs' : 'need' }} attention
+                    @else
+                        {{ $communityCount }} {{ \Illuminate\Support\Str::plural('community', $communityCount) }} &middot;
+                        <span class="font-bold text-amber-700">{{ $attentionCount }}</span>
+                        need{{ $attentionCount === 1 ? 's' : '' }} attention
+                    @endif
                 </span>
             </div>
 
@@ -133,6 +139,13 @@
                                 <button type="button" wire:click="filterBy('')" class="btn btn-ghost">Show all states</button>
                             @endif
                         </div>
+                    @elseif ($state === 'attention')
+                        <h2 class="ai-empty-title mt-4">Nothing needs attention</h2>
+                        <p class="ai-empty-note mt-1.5 max-w-md mx-auto">
+                            Every community with validated data is approved or already has a draft waiting.
+                            Choose <b>All</b> to include communities with no validated data yet.
+                        </p>
+                        <button type="button" wire:click="filterBy('')" class="btn btn-outline mt-5">Show all communities</button>
                     @elseif ($state !== '')
                         <h2 class="ai-empty-title mt-4">Nothing in this state</h2>
                         <p class="ai-empty-note mt-1.5 max-w-md mx-auto">
@@ -159,8 +172,9 @@
     </section>
 
     <p class="ai-pipeline-note reveal-item mt-4 max-w-4xl">
-        Each row is one community. Open it to inspect the validated response data and, if you choose,
-        generate an analysis. A generated draft is saved automatically; only an approved analysis is citable
-        in reports.
+        Each row is one community. The list opens on <b>Needs attention</b>; choose <b>All</b> to include
+        communities with no validated data yet. Open a community to inspect the validated response data and,
+        if you choose, generate an analysis. A generated draft is saved automatically; only an approved
+        analysis is citable in reports.
     </p>
 </div>
